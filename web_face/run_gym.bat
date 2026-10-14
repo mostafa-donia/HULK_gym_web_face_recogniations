@@ -19,14 +19,7 @@ if exist "venv\Scripts\python.exe" (
     set "PY_EXE=venv\Scripts\python.exe"
 )
 
-if exist "%~dp0startup.html" (
-    start "" "%~dp0startup.html"
-) else if exist "%~dp0..\startup.html" (
-    start "" "%~dp0..\startup.html"
-) else (
-    start http://127.0.0.1:8000
-)
-
 "%PY_EXE%" manage.py migrate --noinput
+start http://127.0.0.1:8000
 "%PY_EXE%" manage.py runserver 0.0.0.0:8000
 pause

@@ -37,18 +37,18 @@ class FaceEngine:
         self.detector = None
         self.recognizer = None
         self.last_input_size = (640, 480)
-        self.inference_lock = threading.Lock()
+        self.inference_lock = threading.RLock()
 
         # In-memory cached embeddings for sub-millisecond 1:N vector matching:
         # {member_id: [np.ndarray(128,), ...]}
-        self.cache_lock = threading.Lock()
+        self.cache_lock = threading.RLock()
         self.embeddings_cache: Dict[int, List[np.ndarray]] = {}
         self.cache_timestamp = 0
 
         # Persistent Independent Background Camera Worker State
-        self.camera_lock = threading.Lock()
-        self.frame_lock = threading.Lock()
-        self.event_lock = threading.Lock()
+        self.camera_lock = threading.RLock()
+        self.frame_lock = threading.RLock()
+        self.event_lock = threading.RLock()
         self.cap = None
         self.camera_running = False
         self.camera_index = 0
@@ -378,12 +378,18 @@ class FaceEngine:
 
     def _capture_worker(self):
         try:
-            # DirectShow on Windows opens camera instantly and smoothly
-            self.cap = cv2.VideoCapture(self.camera_index, cv2.CAP_DSHOW)
-            if not self.cap.isOpened():
-                self.cap = cv2.VideoCapture(self.camera_index)
+            self.cap = None
+            backends = [cv2.CAP_MSMF, cv2.CAP_ANY, cv2.CAP_DSHOW]
+            for backend in backends:
+                try:
+                    c = cv2.VideoCapture(self.camera_index, backend)
+                    if c and c.isOpened():
+                        self.cap = c
+                        break
+                except Exception:
+                    continue
 
-            if not self.cap.isOpened():
+            if not self.cap or not self.cap.isOpened():
                 self.camera_error = f"تعذر فتح الكاميرا رقم {self.camera_index}. تأكد من توصيل الكاميرا بالجهاز."
                 print(f"[FaceEngine] {self.camera_error}")
                 self.camera_running = False
