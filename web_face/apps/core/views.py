@@ -213,7 +213,6 @@ def manager_mobile_dashboard_view(request):
     debtors_count = Member.objects.filter(current_remaining__gt=0).count()
 
     today_checkins_count = CheckInEvent.objects.filter(checked_in_at__date=today).count()
-    pending_whatsapp_count = WhatsAppMessage.objects.filter(status="pending").count()
 
     recent_checkins = CheckInEvent.objects.select_related("member").order_by("-checked_in_at")[:6]
     recent_payments = Payment.objects.select_related("member").order_by("-created_at")[:6]
@@ -230,7 +229,6 @@ def manager_mobile_dashboard_view(request):
         "total_debt": total_debt,
         "debtors_count": debtors_count,
         "today_checkins_count": today_checkins_count,
-        "pending_whatsapp_count": pending_whatsapp_count,
         "recent_checkins": recent_checkins,
         "recent_payments": recent_payments,
     }

@@ -505,24 +505,6 @@
           <span class="action-desc">تصفح والبحث في المشتركين</span>
         </a>
 
-        <!-- Action 5: WhatsApp Queue -->
-        <a href="{% url 'messaging:whatsapp_queue' %}" class="action-btn">
-          <div class="action-icon" style="background: rgba(37, 211, 102, 0.12); color: #25d366;">
-            💬
-          </div>
-          <span class="action-label">رسائل الواتساب</span>
-          <span class="action-desc">{% if pending_whatsapp_count %}{{ pending_whatsapp_count }} رسالة معلقة{% else %}طابور الإرسال والحملات{% endif %}</span>
-        </a>
-
-        <!-- Action 6: Daily Report -->
-        <a href="{% url 'messaging:whatsapp_manager_report' %}" class="action-btn">
-          <div class="action-icon" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24;">
-            📋
-          </div>
-          <span class="action-label">تقرير اليوم</span>
-          <span class="action-desc">ملخص الإيرادات على الواتساب</span>
-        </a>
-
       </div>
     </div>
 
@@ -585,11 +567,6 @@
     <a href="{% url 'members:member_list' %}" class="nav-tab">
       <span class="nav-tab-icon">👥</span>
       <span>الأعضاء</span>
-    </a>
-
-    <a href="{% url 'messaging:whatsapp_queue' %}" class="nav-tab">
-      <span class="nav-tab-icon">💬</span>
-      <span>الواتساب</span>
     </a>
 
     <a href="{% url 'core:manager_dashboard' %}?view=desktop" class="nav-tab">
