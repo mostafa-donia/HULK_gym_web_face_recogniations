@@ -90,8 +90,8 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">أيام السماح (Grace Days)</label>
-            <input type="number" name="allowance_days" value="{{ subscription.allowance_days|default:0 }}" min="0" max="60" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">أيام السماح (Grace Days: 1 إلى 10)</label>
+            <input type="number" name="allowance_days" value="{{ subscription.allowance_days|default:0 }}" min="0" max="10" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
           </div>
         </div>
       </div>

@@ -97,6 +97,7 @@
                 value="{{ plan.id }}" 
                 data-price="{{ plan.price }}" 
                 data-days="{{ plan.duration_days }}" 
+                data-months="{{ plan.months|default:1 }}"
                 data-frequency="{{ plan.frequency }}"
                 data-name="{{ plan.name }}"
               >
@@ -146,8 +147,9 @@
 
         <!-- أيام السماح (Grace days when payment is not full) -->
         <div>
-          <label style="display: block; color: #A9B7C1; font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
-            أيام السماح
+          <label style="display: flex; justify-content: space-between; align-items: center; color: #A9B7C1; font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
+            <span>أيام السماح</span>
+            <span id="allowance-hint" style="color: #FF9F00; font-size: 0.78rem; font-weight: 800; display: none;">(إلزامي: 1 إلى 10 أيام)</span>
           </label>
           <input 
             type="number" 
@@ -155,11 +157,11 @@
             name="allowance_days" 
             value="0" 
             min="0" 
-            max="365" 
+            max="10" 
             class="form-control"
             style="background: #07131B; border: 1px solid #182834; height: 50px; font-size: 1.15rem; font-weight: 800; text-align: center;"
           >
-          <small style="color: #657786; font-size: 0.78rem;">مدة المهلة المسموح بها للدخول حتى سداد الباقي</small>
+          <small style="color: #657786; font-size: 0.78rem;">مهلة السداد للدخول عند وجود متبقي (من 1 إلى 10 أيام كحد أقصى)</small>
         </div>
       </div>
 
@@ -453,24 +455,47 @@ document.addEventListener("DOMContentLoaded", function() {
     const planName = selectedOpt ? selectedOpt.getAttribute("data-name") : "";
     const planPrice = selectedOpt ? parseFloat(selectedOpt.getAttribute("data-price") || 0) : 0;
     const planDuration = selectedOpt ? parseInt(selectedOpt.getAttribute("data-days") || 28) : 28;
+    const planMonths = selectedOpt ? parseInt(selectedOpt.getAttribute("data-months") || 1) : 1;
     const paid = parseFloat(fieldPaidAmount.value || 0);
     const remaining = Math.max(0, planPrice - paid);
-    const allowanceDays = parseInt(fieldAllowanceDays.value || 0);
+    let allowanceDays = parseInt(fieldAllowanceDays.value || 0);
+
+    const allowanceHint = document.getElementById("allowance-hint");
+    if (remaining > 0) {
+      if (allowanceHint) allowanceHint.style.display = "inline";
+      if (allowanceDays === 0) {
+        allowanceDays = 7;
+        fieldAllowanceDays.value = "7";
+      } else if (allowanceDays > 10) {
+        allowanceDays = 10;
+        fieldAllowanceDays.value = "10";
+      }
+    } else {
+      if (allowanceHint) allowanceHint.style.display = "none";
+      if (!fieldAllowanceDays.dataset.userModified) {
+        fieldAllowanceDays.value = "0";
+        allowanceDays = 0;
+      }
+    }
 
     const startDateStr = fieldStartDate.value;
-    const startDate = startDateStr ? new Date(startDateStr) : new Date();
-
-    let days = planDuration;
-    let endDate = new Date(startDate);
+    let endDate;
 
     if (planName === "جلسة واحدة" || planDuration === 1) {
-      days = 1;
-      endDate = new Date(startDate);
-    } else if (allowanceDays > 0 && remaining > 0) {
-      days = allowanceDays;
-      endDate.setDate(endDate.getDate() + allowanceDays);
+      endDate = startDateStr ? new Date(startDateStr) : new Date();
     } else {
-      endDate.setDate(endDate.getDate() + planDuration);
+      // Gym calculation rule:
+      // 14 days ("يوم ويوم" - day on, day off) & 28 days ("كل يوم") with Fridays off represent 1 full month.
+      // E.g., starting 13 Oct -> ends 12 Nov (start_date + 1 month - 1 day).
+      if (startDateStr) {
+        const parts = startDateStr.split("-").map(Number);
+        // parts[0]=year, parts[1]=month (1-12), parts[2]=day (1-31)
+        // JS Date month is 0-indexed: (parts[1] - 1) + planMonths, day is parts[2] - 1
+        endDate = new Date(parts[0], (parts[1] - 1) + planMonths, parts[2] - 1);
+      } else {
+        const now = new Date();
+        endDate = new Date(now.getFullYear(), now.getMonth() + planMonths, now.getDate() - 1);
+      }
     }
 
     const d = String(endDate.getDate()).padStart(2, '0');
@@ -479,9 +504,10 @@ document.addEventListener("DOMContentLoaded", function() {
     const formattedEnd = `${d}/${m}/${y}`;
 
     const opLabel = (fieldOpType.value === "renewal") ? "تجديد اشتراك" : "اشتراك جديد";
-    const allowanceNote = (allowanceDays > 0 && remaining > 0) ? ` (سماح ${allowanceDays} يوم)` : "";
+    const allowanceNote = (remaining > 0 && allowanceDays > 0) ? ` | مهلة السداد: ${allowanceDays} يوم (سماح)` : "";
 
-    calcSummary.innerText = `${opLabel} | سعر الخطة: ${planPrice.toFixed(0)} ج | الأيام: ${days} يوم | المتبقي: ${remaining.toFixed(0)} ج | النهاية: ${formattedEnd}${allowanceNote}`;
+    const freqBadge = (planDuration === 14) ? "يوم ويوم (شهر كامل)" : (planDuration === 1 ? "جلسة واحدة" : "شهر كامل");
+    calcSummary.innerText = `${opLabel} | باقة: ${planName} (${freqBadge}) | سعر الخطة: ${planPrice.toFixed(0)} ج | المدفوع: ${paid.toFixed(0)} ج | المتبقي: ${remaining.toFixed(0)} ج | النهاية: ${formattedEnd}${allowanceNote}`;
   }
 
   // Event Listeners for Live Recalculation
@@ -490,8 +516,32 @@ document.addEventListener("DOMContentLoaded", function() {
     updateLiveCalculation();
   });
   fieldPaidAmount.addEventListener("input", updateLiveCalculation);
-  fieldAllowanceDays.addEventListener("input", updateLiveCalculation);
+  fieldAllowanceDays.addEventListener("input", function() {
+    this.dataset.userModified = "true";
+    updateLiveCalculation();
+  });
   fieldStartDate.addEventListener("change", updateLiveCalculation);
+
+  // Form Submission Validation
+  const smartForm = document.getElementById("smart-op-form");
+  if (smartForm) {
+    smartForm.addEventListener("submit", function(e) {
+      if (fieldOpType.value === "remaining") return true;
+      const selectedOpt = fieldPlan.options[fieldPlan.selectedIndex];
+      const planPrice = selectedOpt ? parseFloat(selectedOpt.getAttribute("data-price") || 0) : 0;
+      const paid = parseFloat(fieldPaidAmount.value || 0);
+      const remaining = Math.max(0, planPrice - paid);
+      if (remaining > 0) {
+        const allowance = parseInt(fieldAllowanceDays.value || 0);
+        if (allowance < 1 || allowance > 10) {
+          alert("تنبيه: عند وجود متبقي (دفع جزئي)، يجب تحديد مهلة سداد (أيام السماح) بحيث تكون من 1 إلى 10 أيام كحد أقصى.");
+          fieldAllowanceDays.focus();
+          e.preventDefault();
+          return false;
+        }
+      }
+    });
+  }
 
   // Initialize
   {% if pre_member %}

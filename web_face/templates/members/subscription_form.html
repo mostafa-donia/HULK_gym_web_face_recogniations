@@ -48,7 +48,7 @@
         <select name="plan_id" id="plan_select" class="form-control" required onchange="updatePlanCalculations()">
           <option value="">-- اختر الباقة --</option>
           {% for p in plans %}
-            <option value="{{ p.id }}" data-price="{{ p.price }}" data-days="{{ p.duration_days }}">
+            <option value="{{ p.id }}" data-price="{{ p.price }}" data-days="{{ p.duration_days }}" data-months="{{ p.months|default:1 }}" data-name="{{ p.name }}">
               {{ p.name }} — {{ p.price }} {{ gym_profile.currency|default:"ج.م" }} ({{ p.duration_days }} يوم)
             </option>
           {% endfor %}
@@ -97,13 +97,21 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">طريقة الدفع</label>
-          <select name="payment_method" class="form-control">
-            {% for pm in payment_methods %}
-              <option value="{{ pm.name }}">{{ pm.name }}</option>
-            {% endfor %}
-          </select>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">مهلة السداد (أيام السماح) <span id="allowance_req_msg" style="color: var(--danger); font-size: 0.8rem; display: none;">(إلزامي: 1 إلى 10 أيام)</span></label>
+            <input type="number" id="allowance_days" name="allowance_days" value="0" min="0" max="10" class="form-control" style="font-weight: 700;">
+            <small style="color: var(--text-muted); font-size: 0.75rem;">الحد الأقصى 10 أيام في حال وجود متبقي</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">طريقة الدفع</label>
+            <select name="payment_method" class="form-control">
+              {% for pm in payment_methods %}
+                <option value="{{ pm.name }}">{{ pm.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -129,6 +137,8 @@ function updatePlanCalculations() {
 
   const price = parseFloat(selectedOpt.dataset.price) || 0;
   const days = parseInt(selectedOpt.dataset.days) || 28;
+  const months = parseInt(selectedOpt.dataset.months) || 1;
+  const planName = selectedOpt.dataset.name || selectedOpt.text;
   const discount = parseFloat(document.getElementById('discount_input').value) || 0;
 
   document.getElementById('plan_price_disp').value = price.toFixed(2);
@@ -141,13 +151,22 @@ function updatePlanCalculations() {
     paidInput.value = net.toFixed(2);
   }
 
-  // End Date calculation
+  // End Date calculation:
+  // 1 session: ends on start_date
+  // 14 days ("يوم ويوم") & 28 days ("كل يوم") & monthly: 1 month minus 1 day (13 Oct -> 12 Nov)
   const startDateStr = document.getElementById('start_date').value;
   if (startDateStr) {
-    const sDate = new Date(startDateStr);
-    sDate.setDate(sDate.getDate() + days);
-    const endStr = sDate.toISOString().split('T')[0];
-    document.getElementById('end_date').value = endStr;
+    let endDate;
+    if (planName.includes("جلسة واحدة") || days === 1) {
+      endDate = new Date(startDateStr);
+    } else {
+      const parts = startDateStr.split("-").map(Number);
+      endDate = new Date(parts[0], (parts[1] - 1) + months, parts[2] - 1);
+    }
+    const resY = endDate.getFullYear();
+    const resM = String(endDate.getMonth() + 1).padStart(2, "0");
+    const resD = String(endDate.getDate()).padStart(2, "0");
+    document.getElementById('end_date').value = `${resY}-${resM}-${resD}`;
   }
 
   updateRemainingCalculation();
@@ -160,11 +179,53 @@ function updateRemainingCalculation() {
   const paid = parseFloat(document.getElementById('paid_input').value) || 0;
   const rem = Math.max(0, net - paid);
   document.getElementById('remaining_disp').value = rem.toFixed(2);
+
+  const allowanceInput = document.getElementById('allowance_days');
+  const allowanceMsg = document.getElementById('allowance_req_msg');
+  if (rem > 0) {
+    if (allowanceMsg) allowanceMsg.style.display = 'inline';
+    let val = parseInt(allowanceInput.value || 0);
+    if (val === 0) {
+      allowanceInput.value = "7";
+    } else if (val > 10) {
+      allowanceInput.value = "10";
+    }
+  } else {
+    if (allowanceMsg) allowanceMsg.style.display = 'none';
+    if (!allowanceInput.dataset.userModified) {
+      allowanceInput.value = "0";
+    }
+  }
 }
 
 document.getElementById('paid_input').addEventListener('input', function() {
   this.dataset.touched = "true";
+  updateRemainingCalculation();
 });
+
+const allowanceInput = document.getElementById('allowance_days');
+if (allowanceInput) {
+  allowanceInput.addEventListener('input', function() {
+    this.dataset.userModified = "true";
+  });
+}
+
+// Form Submission Validation
+const subForm = document.getElementById('sub-form');
+if (subForm) {
+  subForm.addEventListener('submit', function(e) {
+    const rem = parseFloat(document.getElementById('remaining_disp').value || 0);
+    if (rem > 0) {
+      const allowance = parseInt(document.getElementById('allowance_days').value || 0);
+      if (allowance < 1 || allowance > 10) {
+        alert("تنبيه: عند وجود متبقي (دفع جزئي)، يجب تحديد مهلة سداد (أيام السماح) بحيث تكون من 1 إلى 10 أيام كحد أقصى.");
+        document.getElementById('allowance_days').focus();
+        e.preventDefault();
+        return false;
+      }
+    }
+  });
+}
 
 // Auto-trigger on page load if plan preselected
 window.addEventListener('DOMContentLoaded', () => {

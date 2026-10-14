@@ -60,6 +60,24 @@ class ComprehensivePayrollAndSystemTests(TestCase):
             price=Decimal("600.00"),
             duration_days=30,
         )
+        self.session_plan = Plan.objects.create(
+            name="جلسة واحدة",
+            price=Decimal("50.00"),
+            duration_days=1,
+            frequency="جلسة واحدة",
+        )
+        self.day_on_day_off_plan = Plan.objects.create(
+            name="شهري حديد - يوم ويوم",
+            price=Decimal("230.00"),
+            duration_days=14,
+            frequency="يوم ويوم",
+        )
+        self.everyday_plan = Plan.objects.create(
+            name="شهري شامل - كل يوم",
+            price=Decimal("400.00"),
+            duration_days=28,
+            frequency="كل يوم",
+        )
 
         # Clients
         self.client_a = Member.objects.create(
@@ -574,4 +592,122 @@ class ComprehensivePayrollAndSystemTests(TestCase):
         self.assertEqual(resp_month.status_code, 200)
         self.assertEqual(resp_month.context["period"], "month")
         self.assertIn("شهر", resp_month.context["period_title"])
+
+    def test_partial_payment_allowance_days_and_plan_end_dates(self):
+        """
+        Verify:
+        1. When member pays partial, allowance_days must be between 1 and 10 days.
+        2. Allowance days > 10 or <= 0 is rejected with error.
+        3. 14-day plan ('يوم ويوم') starting on 13 Oct ends on 12 Nov (full month).
+        4. 28-day plan ('كل يوم') starting on 13 Oct ends on 12 Nov (full month).
+        5. 1-day plan ('جلسة واحدة') starting on 13 Oct ends on 13 Oct.
+        """
+        self.client.login(username="test_assistant", password="password123")
+
+        # 1. Partial payment with allowance_days = 15 must be REJECTED (> 10)
+        resp_invalid_high = self.client.post(
+            reverse("members:smart_operations"),
+            {
+                "operation_type": "new_subscription",
+                "name": "عضو اختبار سماح زائد",
+                "mobile": "01012345678",
+                "plan_id": self.day_on_day_off_plan.id,
+                "start_date": "2026-10-13",
+                "paid_amount": "100.00",
+                "allowance_days": "15",
+            },
+            follow=True,
+        )
+        self.assertEqual(resp_invalid_high.status_code, 200)
+        self.assertFalse(Member.objects.filter(mobile="01012345678").exists())
+
+        # 2. Partial payment with allowance_days = 0 must be REJECTED
+        resp_invalid_zero = self.client.post(
+            reverse("members:smart_operations"),
+            {
+                "operation_type": "new_subscription",
+                "name": "عضو اختبار سماح صفر",
+                "mobile": "01012345679",
+                "plan_id": self.day_on_day_off_plan.id,
+                "start_date": "2026-10-13",
+                "paid_amount": "100.00",
+                "allowance_days": "0",
+            },
+            follow=True,
+        )
+        self.assertEqual(resp_invalid_zero.status_code, 200)
+        self.assertFalse(Member.objects.filter(mobile="01012345679").exists())
+
+        # 3. Partial payment with valid allowance_days = 7 on 14-day plan ('يوم ويوم'):
+        # 14 workout visits * 2 (Friday off) = exactly 1 full calendar month (13 Oct -> 12 Nov)
+        resp_valid_14d = self.client.post(
+            reverse("members:smart_operations"),
+            {
+                "operation_type": "new_subscription",
+                "name": "عضو يوم ويوم",
+                "mobile": "01012345680",
+                "plan_id": self.day_on_day_off_plan.id,
+                "start_date": "2026-10-13",
+                "paid_amount": "150.00",
+                "allowance_days": "7",
+                "payment_method": "نقدي",
+            },
+            follow=True,
+        )
+        self.assertEqual(resp_valid_14d.status_code, 200)
+        member_14d = Member.objects.get(mobile="01012345680")
+        sub_14d = Subscription.objects.get(member=member_14d)
+
+        self.assertEqual(sub_14d.allowance_days, 7)
+        self.assertEqual(sub_14d.start_date, date(2026, 10, 13))
+        self.assertEqual(sub_14d.end_date, date(2026, 11, 12))  # Exactly 12 Nov!
+        self.assertEqual(member_14d.last_subscription_end, date(2026, 11, 12))
+        self.assertEqual(member_14d.follow_up_date, date(2026, 10, 20))  # 13 Oct + 7 days
+        self.assertEqual(member_14d.current_remaining, Decimal("80.00"))
+
+        # 4. 28-day plan ('كل يوم') starting on 13 Oct ends on 12 Nov (full month)
+        resp_valid_28d = self.client.post(
+            reverse("members:smart_operations"),
+            {
+                "operation_type": "new_subscription",
+                "name": "عضو كل يوم",
+                "mobile": "01012345681",
+                "plan_id": self.everyday_plan.id,
+                "start_date": "2026-10-13",
+                "paid_amount": "400.00",
+                "allowance_days": "0",
+                "payment_method": "نقدي",
+            },
+            follow=True,
+        )
+        self.assertEqual(resp_valid_28d.status_code, 200)
+        member_28d = Member.objects.get(mobile="01012345681")
+        sub_28d = Subscription.objects.get(member=member_28d)
+        self.assertEqual(sub_28d.start_date, date(2026, 10, 13))
+        self.assertEqual(sub_28d.end_date, date(2026, 11, 12))  # Exactly 12 Nov!
+        self.assertEqual(member_28d.last_subscription_end, date(2026, 11, 12))
+        self.assertIsNone(member_28d.follow_up_date)
+
+        # 5. 1-day plan ('جلسة واحدة') starting on 13 Oct ends on 13 Oct
+        resp_session = self.client.post(
+            reverse("members:smart_operations"),
+            {
+                "operation_type": "new_subscription",
+                "name": "عضو جلسة واحدة",
+                "mobile": "01012345682",
+                "plan_id": self.session_plan.id,
+                "start_date": "2026-10-13",
+                "paid_amount": "50.00",
+                "allowance_days": "0",
+                "payment_method": "نقدي",
+            },
+            follow=True,
+        )
+        self.assertEqual(resp_session.status_code, 200)
+        member_session = Member.objects.get(mobile="01012345682")
+        sub_session = Subscription.objects.get(member=member_session)
+        self.assertEqual(sub_session.start_date, date(2026, 10, 13))
+        self.assertEqual(sub_session.end_date, date(2026, 10, 13))
+        self.assertEqual(member_session.last_subscription_end, date(2026, 10, 13))
+
 

@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
+from dateutil.relativedelta import relativedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -7,6 +8,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.decorators import manager_required
@@ -62,6 +64,22 @@ def generate_next_payment_id() -> tuple[str, str]:
         next_num += 1
 
     return f"PAY-{next_num:05d}", f"INV-{next_num:05d}"
+
+
+def compute_plan_end_date(plan, start_date: date) -> date:
+    """Calculates subscription end date based on gym rules:
+    - 1 session ('جلسة واحدة' or duration_days == 1): ends on start_date
+    - 14 days ('يوم ويوم' - day on, day off) & 28 days ('كل يوم'):
+      Friday is an official gym holiday, so both 14-day and 28-day plans represent
+      a 1-month subscription.
+      Calculation: start_date + relativedelta(months=plan.months) - relativedelta(days=1)
+      e.g. starting on 13 Oct -> ends on 12 Nov.
+    """
+    if plan.name == "جلسة واحدة" or getattr(plan, "duration_days", 30) == 1 or getattr(plan, "frequency", "") == "جلسة واحدة":
+        return start_date
+
+    months = getattr(plan, "months", 1) or 1
+    return start_date + relativedelta(months=months) - relativedelta(days=1)
 
 
 @login_required
@@ -369,7 +387,15 @@ def subscription_edit_view(request, subscription_id):
         if paid_str:
             subscription.paid_amount = Decimal(paid_str)
         if rem_str:
-            subscription.remaining_amount = Decimal(rem_str)
+            rem_val = Decimal(rem_str)
+            if rem_val > Decimal("0.00"):
+                if allowance_days < 1 or allowance_days > 10:
+                    messages.error(request, "عند وجود متبقي (دفع جزئي)، يجب أن تكون مهلة السداد (أيام السماح) بين 1 و 10 أيام كحد أقصى.")
+                    return redirect("members:subscription_edit", subscription_id=subscription.id)
+            else:
+                allowance_days = 0
+            subscription.remaining_amount = rem_val
+
         subscription.allowance_days = allowance_days
         subscription.payment_method = payment_method
         subscription.save()
@@ -382,6 +408,10 @@ def subscription_edit_view(request, subscription_id):
             member.last_subscription_end = subscription.end_date
             member.current_paid = subscription.paid_amount
             member.current_remaining = subscription.remaining_amount
+            if allowance_days > 0:
+                member.follow_up_date = subscription.start_date + timedelta(days=allowance_days)
+            elif subscription.remaining_amount == Decimal("0.00"):
+                member.follow_up_date = None
             member.refresh_status()
             member.save()
 
@@ -425,16 +455,26 @@ def subscription_create_view(request):
         except Exception:
             start_date = today
 
-        duration = plan.duration_days
-        end_date = start_date + timedelta(days=duration)
-
         plan_price = plan.price
         discount = Decimal(request.POST.get("discount", "0.00") or "0.00")
         net_amount = max(Decimal("0.00"), plan_price - discount)
         paid_amount = Decimal(request.POST.get("paid_amount", str(net_amount)) or str(net_amount))
         remaining_amount = max(Decimal("0.00"), net_amount - paid_amount)
+        allowance_days = int(request.POST.get("allowance_days", "0") or "0")
         payment_method = request.POST.get("payment_method", "نقدي")
         notes = request.POST.get("notes", "").strip()
+
+        if remaining_amount > Decimal("0.00"):
+            if allowance_days < 1 or allowance_days > 10:
+                messages.error(
+                    request,
+                    "عند الدفع الجزئي ووجود متبقي، يجب تحديد مهلة سداد (أيام السماح) بحيث لا تزيد عن 10 أيام (من 1 إلى 10 أيام)."
+                )
+                return redirect(f"{reverse('members:subscription_create')}?member_id={member.id}")
+        else:
+            allowance_days = 0
+
+        end_date = compute_plan_end_date(plan, start_date)
 
         with transaction.atomic():
             # 1. Create Subscription Contract
@@ -450,6 +490,7 @@ def subscription_create_view(request):
                 net_amount=net_amount,
                 paid_amount=paid_amount,
                 remaining_amount=remaining_amount,
+                allowance_days=allowance_days,
                 operation_type=op_type,
                 payment_method=payment_method,
                 created_by=request.user,
@@ -478,6 +519,10 @@ def subscription_create_view(request):
             member.current_paid = paid_amount
             member.current_remaining = remaining_amount
             member.total_paid += paid_amount
+            if allowance_days > 0:
+                member.follow_up_date = start_date + timedelta(days=allowance_days)
+            elif remaining_amount == Decimal("0.00"):
+                member.follow_up_date = None
             if payment:
                 member.last_payment_date = payment.created_at
             member.refresh_status(save=False)
@@ -571,15 +616,19 @@ def smart_operations_view(request):
                 payment_method = request.POST.get("payment_method", "نقدي")
                 notes = request.POST.get("notes", "").strip()
 
-                # Calculate end_date based on plan or allowance days
-                if plan.name == "جلسة واحدة" or plan.frequency == "جلسة واحدة":
-                    end_date = start_date
-                elif allowance_days > 0 and remaining_amount > 0:
-                    end_date = start_date + timedelta(days=allowance_days)
-                elif plan.frequency == "يوم ويوم":
-                    end_date = start_date + timedelta(days=plan.duration_days * 2)
+                # Validation: Partial payment requires allowance_days between 1 and 10 days
+                if remaining_amount > Decimal("0.00"):
+                    if allowance_days < 1 or allowance_days > 10:
+                        messages.error(
+                            request,
+                            "عند الدفع الجزئي ووجود متبقي، يجب تحديد مهلة سداد (أيام السماح) بحيث لا تزيد عن 10 أيام (من 1 إلى 10 أيام)."
+                        )
+                        redirect_query = mobile or name or ""
+                        return redirect(f"{reverse('members:smart_operations')}?query={redirect_query}")
                 else:
-                    end_date = start_date + timedelta(days=plan.duration_days)
+                    allowance_days = 0
+
+                end_date = compute_plan_end_date(plan, start_date)
 
                 # Find or create member
                 member = None
@@ -619,6 +668,8 @@ def smart_operations_view(request):
                     member.total_paid += paid_amount
                     if allowance_days > 0:
                         member.follow_up_date = start_date + timedelta(days=allowance_days)
+                    elif remaining_amount == Decimal("0.00") and member.current_remaining == Decimal("0.00"):
+                        member.follow_up_date = None
                     member.save()
                     actual_op_type = "renewal"
 
@@ -679,6 +730,8 @@ def smart_operations_view(request):
                     new_remaining = max(Decimal("0.00"), prev_remaining - paid_now)
                     member.current_remaining = new_remaining
                     member.total_paid += paid_now
+                    if new_remaining == Decimal("0.00"):
+                        member.follow_up_date = None
                     member.save()
 
                     pay_id, inv_no = generate_next_payment_id()
