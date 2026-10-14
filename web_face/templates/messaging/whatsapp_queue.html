@@ -1,127 +1,518 @@
 {% extends "base.html" %}
 
-{% block title %}طابور رسائل الواتساب - {{ gym_profile.gym_name }}{% endblock %}
+{% block title %}واتساب - إيصالات وتذكيرات ورسائل جماعية - {{ gym_profile.gym_name }}{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
-  <div>
-    <h1 class="page-title" style="margin: 0;">💬 طابور رسائل الواتساب</h1>
-    <p style="color: var(--text-muted); margin-top: 0.25rem;">متابعة إرسال الإيصالات والتنبيهات وكشوفات الرواتب عبر الواتساب</p>
-  </div>
-  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-    <a href="{% url 'messaging:whatsapp_compose' %}" class="btn btn-secondary">
-      ✍️ كتابة رسالة مخصصة
-    </a>
-    <a href="{% url 'messaging:whatsapp_dispatch' %}" class="btn btn-primary" onclick="return confirm('هل تريد بدء إرسال الرسائل المعلقة الآن؟ تأكد من تشغيل تطبيق الواتساب.');">
-      🚀 إرسال الرسائل المعلقة الآن
-    </a>
-  </div>
-</div>
+<div class="whatsapp-dashboard" style="max-width: 100%; padding: 0 0.5rem;">
 
-<!-- Status KPI Cards -->
-<div class="grid grid-3" style="margin-bottom: 1.5rem;">
-  <div class="card" style="border-right: 4px solid #f59e0b;">
-    <div style="font-size: 0.85rem; color: var(--text-muted);">رسائل معلقة جاهزة للإرسال</div>
-    <div style="font-size: 1.8rem; font-weight: bold; color: #f59e0b; margin: 0.5rem 0;">
-      {{ total_pending }}
+  <!-- Page Header -->
+  <div style="margin-bottom: 1.25rem;">
+    <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0; color: #fff; display: flex; align-items: center; gap: 10px;">
+      <span style="color: #22c55e;">💬</span> واتساب
+    </h1>
+    <p style="color: var(--text-muted); margin: 0.35rem 0 0; font-size: 0.95rem;">
+      إيصالات الدفع وتذكيرات الاشتراك والرسائل الجماعية المخصصة وتقرير المدير بنفس منطق الإرسال القديم
+    </p>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <form method="GET" action="{% url 'messaging:whatsapp_queue' %}" style="margin-bottom: 1rem;">
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; background: rgba(15, 23, 42, 0.65); padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+      
+      <!-- Search Input -->
+      <div style="flex: 1; min-width: 260px;">
+        <input 
+          type="text" 
+          name="q" 
+          value="{{ search_q }}" 
+          placeholder="ابحث بالاسم أو الموبايل أو النوع أو الحالة..." 
+          class="form-control"
+          style="background: #090e17; border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.55rem 1rem; border-radius: 8px; width: 100%;"
+        >
+      </div>
+
+      <!-- Type Filter -->
+      <div style="min-width: 170px;">
+        <select name="msg_type" onchange="this.form.submit()" class="form-control" style="background: #090e17; border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.55rem 0.75rem; border-radius: 8px; width: 100%;">
+          <option value="all" {% if type_filter == 'all' %}selected{% endif %}>جميع الأنواع</option>
+          {% for code, label in type_choices %}
+            <option value="{{ code }}" {% if type_filter == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Status Filter Dropdown / Tabs -->
+      <div style="min-width: 150px;">
+        <select name="status" onchange="this.form.submit()" class="form-control" style="background: #090e17; border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.55rem 0.75rem; border-radius: 8px; width: 100%;">
+          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>الكل ({{ total_count }})</option>
+          <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>⏳ المعلق ({{ total_pending }})</option>
+          <option value="sent" {% if status_filter == 'sent' %}selected{% endif %}>✅ تم الإرسال ({{ total_sent }})</option>
+          <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>❌ الفاشل ({{ total_failed }})</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-secondary" style="padding: 0.55rem 1.25rem;">
+        🔍 بحث
+      </button>
+
+      {% if search_q or status_filter != 'all' or type_filter != 'all' %}
+        <a href="{% url 'messaging:whatsapp_queue' %}" class="btn btn-secondary" style="color: #f87171;">
+          ✕ إلغاء الفلتر
+        </a>
+      {% endif %}
     </div>
-    <div style="font-size: 0.8rem; color: var(--text-muted);">بانتظار المعالجة عبر واتساب</div>
-  </div>
+  </form>
 
-  <div class="card" style="border-right: 4px solid var(--accent-green);">
-    <div style="font-size: 0.85rem; color: var(--text-muted);">رسائل تم إرسالها بنجاح</div>
-    <div style="font-size: 1.8rem; font-weight: bold; color: var(--accent-green); margin: 0.5rem 0;">
-      {{ total_sent }}
+  <!-- Action Bars (Exact Desktop Logic & UI Layout) -->
+  <div style="display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.25rem;">
+    
+    <!-- 1. تجهيز الرسائل Group -->
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(30, 41, 59, 0.45); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+      <span style="font-weight: 700; color: var(--text-muted); min-width: 95px; font-size: 0.88rem;">تجهيز الرسائل:</span>
+      
+      <a href="{% url 'messaging:whatsapp_manager_report' %}" class="btn" style="background: #84cc16; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.1rem; border-radius: 6px;" onclick="return confirm('هل تريد إعداد وإرسال تقرير المدير المالي واليومي الآن؟');">
+        📊 تقرير المدير
+      </a>
+
+      <!-- BULK SEND BUTTON (Replaces old limited button) -->
+      <button type="button" class="btn btn-primary" onclick="openBulkSendModal()" style="font-weight: 800; padding: 0.4rem 1.2rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: 1px solid #38bdf8;">
+        📢 إرسال جماعي مخصص (Bulk Send)
+      </button>
+
+      <a href="{% url 'messaging:whatsapp_prepare_reminders' %}" class="btn btn-secondary" style="font-weight: 700; padding: 0.4rem 1rem; border-radius: 6px;">
+        ⏰ تجهيز التذكيرات
+      </a>
+
+      <a href="{% url 'messaging:whatsapp_compose' %}" class="btn btn-secondary" style="font-weight: 700; padding: 0.4rem 1rem; border-radius: 6px; margin-right: auto;">
+        ✍️ رسالة فردية
+      </a>
     </div>
-    <div style="font-size: 0.8rem; color: var(--text-muted);">تم تسليمها للمستلمين</div>
-  </div>
 
-  <div class="card" style="border-right: 4px solid var(--accent-red);">
-    <div style="font-size: 0.85rem; color: var(--text-muted);">رسائل فشل إرسالها</div>
-    <div style="font-size: 1.8rem; font-weight: bold; color: var(--accent-red); margin: 0.5rem 0;">
-      {{ total_failed }}
-    </div>
-    <div style="font-size: 0.8rem; color: var(--text-muted);">يمكن إعادة المحاولة بضغطة زر</div>
-  </div>
-</div>
+    <!-- 2. إرسال Group -->
+    <form id="batchActionForm" method="POST" action="{% url 'messaging:whatsapp_batch_action' %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" id="batchActionInput" value="">
+      
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(30, 41, 59, 0.45); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 0.65rem;">
+        <span style="font-weight: 700; color: var(--text-muted); min-width: 95px; font-size: 0.88rem;">إرسال:</span>
+        
+        <button type="button" onclick="submitBatchAction('send_pending')" class="btn" style="background: #22c55e; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.2rem; border-radius: 6px;">
+          🚀 إرسال غير المرسل / المعلق
+        </button>
 
-<!-- Filter Tabs -->
-<div class="card" style="margin-bottom: 1.5rem;">
-  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-    <a href="{% url 'messaging:whatsapp_queue' %}" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
-      الكل
-    </a>
-    <a href="{% url 'messaging:whatsapp_queue' %}?status=pending" class="btn {% if status_filter == 'pending' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
-      ⏳ المعلقة ({{ total_pending }})
-    </a>
-    <a href="{% url 'messaging:whatsapp_queue' %}?status=sent" class="btn {% if status_filter == 'sent' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
-      ✅ الناجحة ({{ total_sent }})
-    </a>
-    <a href="{% url 'messaging:whatsapp_queue' %}?status=failed" class="btn {% if status_filter == 'failed' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
-      ❌ الفاشلة ({{ total_failed }})
-    </a>
-  </div>
-</div>
+        <button type="button" onclick="submitBatchAction('resend_selected')" class="btn btn-secondary" style="font-weight: 700; padding: 0.4rem 1rem; border-radius: 6px;">
+          🔄 إعادة إرسال المحدد
+        </button>
 
-<!-- Messages Table -->
-<div class="table-responsive">
-  <table class="dark-table" style="font-size: 0.9rem;">
-    <thead>
-      <tr>
-        <th>الحالة</th>
-        <th>المستلم</th>
-        <th>رقم الهاتف</th>
-        <th>النوع</th>
-        <th>نص الرسالة</th>
-        <th>تاريخ الإنشاء</th>
-        <th style="text-align: center; width: 100px;">إجراءات</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for msg in messages_list %}
-      <tr>
-        <td>
-          {% if msg.status == 'sent' %}
-            <span class="badge badge-success">تم الإرسال</span>
-          {% elif msg.status == 'pending' %}
-            <span class="badge badge-warning">معلق</span>
-          {% else %}
-            <span class="badge badge-danger">فشل</span>
-          {% endif %}
-        </td>
-        <td><strong>{{ msg.recipient_name|default:"غير محدد" }}</strong></td>
-        <td dir="ltr" style="text-align: right; font-family: monospace;">{{ msg.mobile }}</td>
-        <td><span class="badge" style="background: rgba(255,255,255,0.1);">{{ msg.get_msg_type_display }}</span></td>
-        <td style="max-width: 320px; white-space: pre-wrap; font-size: 0.8rem; color: #ccc;">
-          {{ msg.message|truncatechars:140 }}
-          {% if msg.error_detail %}
-            <div style="color: var(--accent-red); font-size: 0.75rem; margin-top: 4px;">
-              ⚠️ {{ msg.error_detail }}
-            </div>
-          {% endif %}
-        </td>
-        <td>{{ msg.created_at|date:"Y-m-d H:i" }}</td>
-        <td>
-          <div style="display: flex; gap: 4px;">
-            {% if msg.status != 'sent' %}
-            <a href="{% url 'messaging:whatsapp_retry' msg.id %}" class="btn btn-secondary btn-sm" style="padding: 2px 6px;" title="إعادة الإرسال">
-              🔄 إعادة
+        <button type="button" onclick="submitBatchAction('resend_failed_to_pending')" class="btn btn-secondary" style="font-weight: 700; padding: 0.4rem 1rem; border-radius: 6px;">
+          ⚠️ إعادة الفاشل للمعلق
+        </button>
+
+        <button type="button" onclick="submitBatchAction('force_resend_selected')" class="btn" style="background: #f59e0b; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.1rem; border-radius: 6px;">
+          ⚡ إرسال قسري (حتى لو أُرسلت)
+        </button>
+      </div>
+
+      <!-- 3. حذف Group -->
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(30, 41, 59, 0.45); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+        <span style="font-weight: 700; color: var(--text-muted); min-width: 95px; font-size: 0.88rem;">حذف:</span>
+        
+        <button type="button" onclick="if(confirm('هل تريد بالتأكيد حذف الرسائل المحددة؟')) submitBatchAction('delete_selected')" class="btn" style="background: #ef4444; color: #fff; font-weight: 700; border: none; padding: 0.4rem 1.1rem; border-radius: 6px;">
+          🗑️ حذف المحدد
+        </button>
+
+        <!-- Delete Dropdown Menu -->
+        <div style="position: relative; display: inline-block;">
+          <button type="button" class="btn btn-secondary dropdown-toggle" onclick="toggleDeleteMenu(event)" style="font-weight: 700; padding: 0.4rem 1.1rem; border-radius: 6px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;">
+            حذف متقدم ▼
+          </button>
+          
+          <div id="deleteMenuDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 999; min-width: 180px; overflow: hidden;">
+            <a href="javascript:void(0)" onclick="if(confirm('حذف جميع الرسائل التي تم إرسالها بنجاح؟')) submitBatchAction('delete_sent')" style="display: block; padding: 8px 16px; color: #cbd5e1; text-decoration: none; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='none'">
+              ✓ حذف المرسلة (تم)
             </a>
-            {% endif %}
-            <a href="{% url 'messaging:whatsapp_delete' msg.id %}" class="btn btn-secondary btn-sm" style="padding: 2px 6px; color: var(--accent-red);" onclick="return confirm('حذف الرسالة من الطابور؟');" title="حذف">
-              🗑️
+            <a href="javascript:void(0)" onclick="if(confirm('حذف جميع الرسائل الفاشلة؟')) submitBatchAction('delete_failed')" style="display: block; padding: 8px 16px; color: #cbd5e1; text-decoration: none; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='none'">
+              ⚠️ حذف الفاشلة
+            </a>
+            <a href="javascript:void(0)" onclick="if(confirm('تحذير: هل تريد تفريغ وحذف كامل طابور الواتساب؟')) submitBatchAction('delete_all')" style="display: block; padding: 8px 16px; color: #ef4444; font-weight: 700; text-decoration: none; font-size: 0.85rem;" onmouseover="this.style.background='rgba(239, 68, 68, 0.15)'" onmouseout="this.style.background='none'">
+              🔥 حذف الكل
             </a>
           </div>
-        </td>
-      </tr>
-      {% empty %}
-      <tr>
-        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-          لا توجد رسائل مسجلة في هذا التصنيف
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        </div>
+      </div>
+
+      <!-- Messages Counter Bar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+        <div>
+          <span style="color: #fff; font-weight: 700;">{{ displayed_count }}</span> رسالة معروضة | المعلق: <span style="color: #f59e0b; font-weight: 700;">{{ total_pending }}</span>
+        </div>
+        <div style="font-size: 0.82rem;">
+          يمكنك تحديد عدة رسائل والضغط على أي زر في شريط الإرسال أو الحذف.
+        </div>
+      </div>
+
+      <!-- Messages Table -->
+      <div class="table-responsive" style="border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; background: #0b1320;">
+        <table class="dark-table" style="width: 100%; font-size: 0.88rem; border-collapse: collapse;">
+          <thead>
+            <tr style="background: rgba(15, 23, 42, 0.95); border-bottom: 2px solid rgba(255,255,255,0.1);">
+              <th style="width: 38px; text-align: center; padding: 10px;">
+                <input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll(this)" style="cursor: pointer; width: 16px; height: 16px;">
+              </th>
+              <th style="width: 105px;">الحالة</th>
+              <th style="width: 140px;">النوع</th>
+              <th>الاسم</th>
+              <th style="width: 130px;">الموبايل</th>
+              <th style="width: 95px;">فئة العضو</th>
+              <th style="width: 90px; text-align: center;">المرفق</th>
+              <th>الرسالة</th>
+              <th style="width: 135px;">تاريخ الإنشاء</th>
+              <th style="width: 135px;">وقت الإرسال</th>
+              <th style="width: 85px; text-align: center;">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for msg in messages_list %}
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
+              <td style="text-align: center; padding: 10px;">
+                <input type="checkbox" name="selected_ids" value="{{ msg.id }}" class="msg-row-checkbox" style="cursor: pointer; width: 16px; height: 16px;">
+              </td>
+              <td>
+                {% if msg.status == 'sent' %}
+                  <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); font-weight: 700;">✓ تم الإرسال</span>
+                {% elif msg.status == 'pending' %}
+                  <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 700;">⏳ معلق</span>
+                {% else %}
+                  <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 700;">❌ فشل</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge" style="background: rgba(255,255,255,0.07); color: #e2e8f0; font-size: 0.8rem;">
+                  {{ msg.get_msg_type_display }}
+                </span>
+              </td>
+              <td><strong>{{ msg.recipient_name|default:"غير محدد" }}</strong></td>
+              <td dir="ltr" style="text-align: right; font-family: monospace; font-weight: 600; color: #38bdf8;">
+                {{ msg.mobile }}
+              </td>
+              <td>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">{{ msg.get_recipient_type_display }}</span>
+              </td>
+              <td style="text-align: center;">
+                {% if msg.attachment %}
+                  <a href="{{ msg.attachment.url }}" target="_blank" title="عرض الصورة أو الملف المرفق" style="color: #38bdf8; text-decoration: none; font-size: 1.1rem;">
+                    📎
+                  </a>
+                {% elif msg.link %}
+                  <a href="{{ msg.link }}" target="_blank" title="{{ msg.link }}" style="color: #a78bfa; text-decoration: none; font-size: 1.1rem;">
+                    🔗
+                  </a>
+                {% else %}
+                  <span style="color: rgba(255,255,255,0.2);">-</span>
+                {% endif %}
+              </td>
+              <td style="max-width: 320px; white-space: pre-wrap; font-size: 0.82rem; color: #cbd5e1; line-height: 1.4;">
+                {{ msg.message|truncatechars:150 }}
+                {% if msg.error_detail %}
+                  <div style="color: #f87171; font-size: 0.75rem; margin-top: 3px;">
+                    ⚠️ {{ msg.error_detail }}
+                  </div>
+                {% endif %}
+              </td>
+              <td style="font-size: 0.8rem; color: var(--text-muted);">{{ msg.created_at|date:"Y-m-d H:i" }}</td>
+              <td style="font-size: 0.8rem; color: var(--text-muted);">
+                {% if msg.sent_at %}{{ msg.sent_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}
+              </td>
+              <td style="text-align: center;">
+                <div style="display: flex; gap: 4px; justify-content: center;">
+                  {% if msg.status != 'sent' %}
+                  <a href="{% url 'messaging:whatsapp_retry' msg.id %}" class="btn btn-secondary btn-sm" style="padding: 2px 7px;" title="إعادة تعيين لمعلق">
+                    🔄
+                  </a>
+                  {% endif %}
+                  <a href="{% url 'messaging:whatsapp_delete' msg.id %}" class="btn btn-secondary btn-sm" style="padding: 2px 7px; color: #ef4444;" onclick="return confirm('حذف هذه الرسالة من الطابور؟');" title="حذف">
+                    🗑️
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="11" style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
+                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📭</div>
+                <div style="font-size: 1.1rem; color: #fff; font-weight: 700;">لا توجد رسائل مطابقة لخيارات الفلترة الحالية</div>
+                <p style="font-size: 0.85rem; margin-top: 0.3rem;">يمكنك تجهيز تذكيرات جديدة، كتابة رسالة مخصصة، أو إرسال حملة جماعية.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </form>
+  </div>
 </div>
+
+<!-- ==================================================================== -->
+<!-- MODAL: إرسال جماعي مخصص (Bulk Send with Categories, Date Range, File & Link) -->
+<!-- ==================================================================== -->
+<div id="bulkSendModal" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: #090e17; border: 2px solid #38bdf8; border-radius: 20px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; padding: 28px 24px; box-shadow: 0 25px 70px rgba(0,0,0,0.9); animation: popIn 0.25s ease;">
+    
+    <!-- Modal Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 18px;">
+      <div>
+        <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>📢</span> إرسال جماعي مخصص (Bulk WhatsApp Campaign)
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.84rem; margin: 4px 0 0;">
+          حدد الفئة المستهدفة، خصص نص الرسالة، وأرفق رابطاً أو صورة للعرض بسهولة
+        </p>
+      </div>
+      <button type="button" onclick="closeBulkSendModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">✕</button>
+    </div>
+
+    <!-- Bulk Send Form -->
+    <form method="POST" action="{% url 'messaging:whatsapp_bulk_send' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <!-- 1. Category Selector -->
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; font-size: 0.9rem;">
+          🎯 الفئة المستهدفة (Target Category):
+        </label>
+        <select name="category" id="bulkCategorySelect" onchange="onCategoryChanged()" class="form-control" style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.65rem 0.85rem; border-radius: 8px; width: 100%; font-size: 0.95rem;">
+          <option value="non_sub">غير المشتركين / المنتهية اشتراكاتهم (Non-Subscribers / Expired)</option>
+          <option value="active">المشتركون النشطون حالياً (Active Members)</option>
+          <option value="expiring_soon">المنتهي اشتراكهم قريباً - خلال 7 أيام (Expiring Soon)</option>
+          <option value="with_debt">مشتركون عليهم مديونيات أو مبالغ متبقية (With Outstanding Debt)</option>
+          <option value="all_members">جميع المشتركين المسجلين في النظام (All Members)</option>
+        </select>
+      </div>
+
+      <!-- 2. Non-Sub / Expired Date Range Filter (Visible when category == 'non_sub') -->
+      <div id="nonSubDateFilterBox" style="background: rgba(14, 165, 233, 0.08); border: 1px solid rgba(14, 165, 233, 0.25); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+        <label style="display: block; font-weight: 700; color: #38bdf8; margin-bottom: 8px; font-size: 0.88rem;">
+          📅 منتهي اشتراكهم منذ متى؟ (Date Filter):
+        </label>
+        
+        <!-- Quick Presets -->
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+          <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.82rem; color: #cbd5e1; cursor: pointer; background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 6px;">
+            <input type="radio" name="preset_range" value="all" checked onchange="onPresetChanged('all')"> الكل
+          </label>
+          <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.82rem; color: #cbd5e1; cursor: pointer; background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 6px;">
+            <input type="radio" name="preset_range" value="week" onchange="onPresetChanged('week')"> خلال آخر 7 أيام
+          </label>
+          <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.82rem; color: #cbd5e1; cursor: pointer; background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 6px;">
+            <input type="radio" name="preset_range" value="month" onchange="onPresetChanged('month')"> خلال آخر 30 يوماً
+          </label>
+          <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.82rem; color: #cbd5e1; cursor: pointer; background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 6px;">
+            <input type="radio" name="preset_range" value="3months" onchange="onPresetChanged('3months')"> منذ أكثر من 3 أشهر
+          </label>
+          <label style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.82rem; color: #cbd5e1; cursor: pointer; background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 6px;">
+            <input type="radio" name="preset_range" value="custom" onchange="onPresetChanged('custom')"> نطاق تاريخ محدد...
+          </label>
+        </div>
+
+        <!-- Custom Date Range Inputs (from .. to ..) -->
+        <div id="customDateRangeInputs" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+          <div>
+            <label style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 3px;">من تاريخ (انتهاء الاشتراك بعد أو في):</label>
+            <input type="date" name="date_from" id="dateFromInput" onchange="fetchLiveRecipientCount()" class="form-control" style="background: #090e17; border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.45rem 0.65rem; border-radius: 6px; width: 100%; font-size: 0.85rem;">
+          </div>
+          <div>
+            <label style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 3px;">إلى تاريخ (انتهاء الاشتراك قبل أو في):</label>
+            <input type="date" name="date_to" id="dateToInput" onchange="fetchLiveRecipientCount()" class="form-control" style="background: #090e17; border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.45rem 0.65rem; border-radius: 6px; width: 100%; font-size: 0.85rem;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Count Preview Pill -->
+      <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; padding: 8px 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 0.88rem; color: #4ade80; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+          <span>👥</span> عدد المستلمين المتطابقين في الفئة:
+        </span>
+        <span id="liveRecipientCountBadge" style="font-size: 1.1rem; font-weight: 800; color: #22c55e;">
+          جار الحساب...
+        </span>
+      </div>
+
+      <!-- 3. Message Template Textarea -->
+      <div style="margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+          <label style="font-weight: 700; color: #e2e8f0; font-size: 0.9rem;">
+            ✉️ نص الرسالة (Message Content):
+          </label>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">انقر لإضافة المتغير:</span>
+        </div>
+
+        <!-- Tag helper pills -->
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">
+          <button type="button" onclick="insertTag('{name}')" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #38bdf8; font-size: 0.76rem; padding: 2px 7px; border-radius: 4px; cursor: pointer;">+ اسم المشترك {name}</button>
+          <button type="button" onclick="insertTag('{end_date}')" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #38bdf8; font-size: 0.76rem; padding: 2px 7px; border-radius: 4px; cursor: pointer;">+ تاريخ الانتهاء {end_date}</button>
+          <button type="button" onclick="insertTag('{gym_name}')" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #38bdf8; font-size: 0.76rem; padding: 2px 7px; border-radius: 4px; cursor: pointer;">+ اسم الصالة {gym_name}</button>
+          <button type="button" onclick="insertTag('{plan}')" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #38bdf8; font-size: 0.76rem; padding: 2px 7px; border-radius: 4px; cursor: pointer;">+ اسم الباقة {plan}</button>
+        </div>
+
+        <textarea 
+          name="message_template" 
+          id="bulkMessageTextarea" 
+          rows="4" 
+          required
+          class="form-control" 
+          style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.65rem 0.85rem; border-radius: 8px; width: 100%; font-size: 0.9rem; line-height: 1.45;"
+        >أهلاً كابتن {name} 👋
+وحشتنا في {gym_name} 💪
+عندنا عروض وتجديدات قوية في الصالة، وبنستناك تنورنا في أي وقت ترجع لفورمتك وتمرينك!</textarea>
+      </div>
+
+      <!-- 4. Link & Attachment (Requested by user) -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+        
+        <!-- Optional Link Field -->
+        <div>
+          <label style="display: block; font-weight: 700; color: #cbd5e1; margin-bottom: 4px; font-size: 0.85rem;">
+            🔗 رابط إضافي (اختياري - Link / URL):
+          </label>
+          <input 
+            type="url" 
+            name="link" 
+            placeholder="https://maps.app.goo.gl/... أو صفحة العرض" 
+            class="form-control"
+            style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.55rem 0.75rem; border-radius: 6px; width: 100%; font-size: 0.85rem;"
+          >
+          <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px;">رابط لوكيشن، صفحة الفيسبوك، أو عرض خاص</span>
+        </div>
+
+        <!-- Optional Photo / File Field -->
+        <div>
+          <label style="display: block; font-weight: 700; color: #cbd5e1; margin-bottom: 4px; font-size: 0.85rem;">
+            📎 إرفاق صورة أو بروشور (Photo / File):
+          </label>
+          <input 
+            type="file" 
+            name="attachment" 
+            accept="image/*,.pdf"
+            class="form-control"
+            style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.45rem 0.75rem; border-radius: 6px; width: 100%; font-size: 0.82rem;"
+          >
+          <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px;">صورة العرض أو البوستر (JPG, PNG, WebP)</span>
+        </div>
+      </div>
+
+      <!-- Modal Action Buttons -->
+      <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;">
+        <button type="button" onclick="closeBulkSendModal()" class="btn btn-secondary" style="padding: 0.55rem 1.25rem;">
+          إلغاء
+        </button>
+
+        <button type="submit" name="send_now" value="" class="btn btn-secondary" style="padding: 0.55rem 1.25rem; font-weight: 700;">
+          📥 إضافة إلى الطابور فقط
+        </button>
+
+        <button type="submit" name="send_now" value="1" class="btn" style="background: #22c55e; color: #000; font-weight: 800; border: none; padding: 0.55rem 1.5rem; border-radius: 8px;">
+          🚀 إضافة والبدء بالإرسال الفوري
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- JavaScript for Interactivity -->
+<script>
+  function toggleSelectAll(masterCheckbox) {
+    const checkboxes = document.querySelectorAll('.msg-row-checkbox');
+    checkboxes.forEach(cb => {
+      cb.checked = masterCheckbox.checked;
+    });
+  }
+
+  function submitBatchAction(actionName) {
+    const actionInput = document.getElementById('batchActionInput');
+    const form = document.getElementById('batchActionForm');
+    actionInput.value = actionName;
+    form.submit();
+  }
+
+  function toggleDeleteMenu(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('deleteMenuDropdown');
+    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+  }
+
+  document.addEventListener('click', () => {
+    const menu = document.getElementById('deleteMenuDropdown');
+    if (menu) menu.style.display = 'none';
+  });
+
+  // Modal Handlers
+  function openBulkSendModal() {
+    document.getElementById('bulkSendModal').style.display = 'flex';
+    fetchLiveRecipientCount();
+  }
+
+  function closeBulkSendModal() {
+    document.getElementById('bulkSendModal').style.display = 'none';
+  }
+
+  function onCategoryChanged() {
+    const cat = document.getElementById('bulkCategorySelect').value;
+    const dateBox = document.getElementById('nonSubDateFilterBox');
+    if (cat === 'non_sub') {
+      dateBox.style.display = 'block';
+    } else {
+      dateBox.style.display = 'none';
+    }
+    fetchLiveRecipientCount();
+  }
+
+  function onPresetChanged(preset) {
+    const customBox = document.getElementById('customDateRangeInputs');
+    if (preset === 'custom') {
+      customBox.style.display = 'grid';
+    } else {
+      customBox.style.display = 'none';
+      document.getElementById('dateFromInput').value = '';
+      document.getElementById('dateToInput').value = '';
+    }
+    fetchLiveRecipientCount();
+  }
+
+  function insertTag(tag) {
+    const textarea = document.getElementById('bulkMessageTextarea');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    textarea.value = text.substring(0, start) + tag + text.substring(end);
+    textarea.focus();
+    textarea.selectionStart = textarea.selectionEnd = start + tag.length;
+  }
+
+  async function fetchLiveRecipientCount() {
+    const cat = document.getElementById('bulkCategorySelect').value;
+    const presetRadio = document.querySelector('input[name="preset_range"]:checked');
+    const preset = presetRadio ? presetRadio.value : 'all';
+    const dateFrom = document.getElementById('dateFromInput').value;
+    const dateTo = document.getElementById('dateToInput').value;
+    const badge = document.getElementById('liveRecipientCountBadge');
+
+    badge.textContent = '...';
+    try {
+      const url = `{% url 'messaging:whatsapp_count_recipients' %}?category=${encodeURIComponent(cat)}&preset_range=${encodeURIComponent(preset)}&date_from=${encodeURIComponent(dateFrom)}&date_to=${encodeURIComponent(dateTo)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      badge.textContent = (data.count || 0) + ' عضو';
+    } catch (e) {
+      badge.textContent = 'خطأ في الحساب';
+    }
+  }
+</script>
+
+<style>
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+</style>
 {% endblock %}

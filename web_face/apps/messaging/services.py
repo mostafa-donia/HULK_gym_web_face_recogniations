@@ -1,31 +1,49 @@
+import os
 import logging
+from datetime import timedelta, date
+from decimal import Decimal
 from django.utils import timezone
+from django.db.models import Sum, Q
+
+from apps.core.models import GymProfile
+from apps.members.models import Member, Subscription
+from apps.payments.models import Payment
+from apps.expenses.models import Expense
 from apps.messaging.models import WhatsAppMessage, MessageStatus, MessageType
 
 logger = logging.getLogger(__name__)
 
 
-def enqueue_message(mobile: str, message: str, msg_type: str = MessageType.CUSTOM, recipient_name: str = "", recipient_type: str = "member", dedup_key: str = None) -> WhatsAppMessage:
+def enqueue_message(
+    mobile: str,
+    message: str,
+    msg_type: str = MessageType.CUSTOM,
+    recipient_name: str = "",
+    recipient_type: str = "member",
+    dedup_key: str = None,
+    link: str = "",
+    attachment = None,
+) -> WhatsAppMessage:
     """
-    Enqueues a message for WhatsApp delivery with deduplication.
+    Enqueues a message for WhatsApp delivery with deduplication, optional link and file attachment.
     """
     if not mobile or not message:
         return None
 
-    # Clean phone number
-    cleaned_mobile = "".join(filter(str.isdigit, str(mobile)))
+    # Clean phone number (strip whitespace, dashes, plus, arabic digits)
+    table = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+    cleaned_mobile = "".join(filter(str.isdigit, str(mobile).translate(table)))
     if not cleaned_mobile:
         return None
 
-    # Generate dedup_key if not provided
     if not dedup_key:
-        dedup_key = f"{cleaned_mobile}_{msg_type}_{timezone.localdate().isoformat()}"
+        dedup_key = f"{cleaned_mobile}_{msg_type}_{timezone.localdate().isoformat()}_{int(timezone.now().timestamp())}"
 
     existing = WhatsAppMessage.objects.filter(dedup_key=dedup_key).first()
     if existing:
         return existing
 
-    return WhatsAppMessage.objects.create(
+    msg_obj = WhatsAppMessage(
         mobile=cleaned_mobile,
         message=message.strip(),
         msg_type=msg_type,
@@ -33,22 +51,40 @@ def enqueue_message(mobile: str, message: str, msg_type: str = MessageType.CUSTO
         recipient_type=recipient_type,
         status=MessageStatus.PENDING,
         dedup_key=dedup_key,
+        link=link.strip() if link else "",
     )
+    if attachment:
+        msg_obj.attachment = attachment
+    msg_obj.save()
+    return msg_obj
 
 
 def dispatch_message_record(msg_obj: WhatsAppMessage) -> bool:
     """
     Attempts delivery of a single WhatsApp message using whatsapp_sender.
-    Captures errors gracefully and updates database record.
+    Includes attached file/image and optional link formatting.
     """
     try:
         from apps.messaging import whatsapp_sender
-        # Verify WhatsApp window readiness
-        # If WhatsApp is not open/ready or headless, handle gracefully
+        
+        final_message = msg_obj.message
+        if msg_obj.link and msg_obj.link not in final_message:
+            final_message = f"{final_message}\n\n🔗 {msg_obj.link}"
+
+        image_path = None
+        if msg_obj.attachment:
+            try:
+                if os.path.exists(msg_obj.attachment.path):
+                    image_path = msg_obj.attachment.path
+            except Exception:
+                pass
+
         success = whatsapp_sender.send_message(
             phone=msg_obj.mobile,
-            message=msg_obj.message,
+            message=final_message,
+            image=image_path,
         )
+
         if success:
             msg_obj.status = MessageStatus.SENT
             msg_obj.sent_at = timezone.now()
@@ -68,7 +104,7 @@ def dispatch_message_record(msg_obj: WhatsAppMessage) -> bool:
         return False
 
 
-def dispatch_all_pending(limit: int = 20) -> dict:
+def dispatch_all_pending(limit: int = 25) -> dict:
     """
     Dispatches a batch of pending messages.
     """
@@ -87,3 +123,255 @@ def dispatch_all_pending(limit: int = 20) -> dict:
         "sent": sent_count,
         "failed": failed_count,
     }
+
+
+def prepare_due_reminders() -> dict:
+    """
+    Scans members and automatically queues reminders:
+    - 3 days before expiration
+    - 1 day before expiration
+    - Already expired memberships
+    """
+    today = timezone.localdate()
+    profile = GymProfile.get_solo()
+    gym_name = profile.gym_name or "HULK GYM"
+
+    members = Member.objects.filter(phone__isnull=False).exclude(phone="").select_related()
+    queued_count = 0
+
+    for m in members:
+        m.refresh_status()
+        end_date = m.last_subscription_end
+        if not end_date:
+            continue
+
+        days_diff = (end_date - today).days
+
+        # 1. Reminder 3 days before
+        if days_diff == 3:
+            dedup = f"{m.phone}_rem3_{end_date.isoformat()}"
+            msg_text = (
+                f"🏋️‍♂️ تذكير من {gym_name}\n"
+                f"أهلاً كابتن {m.name} 👋\n"
+                f"اشتراكك في الجيم هينتهي بعد 3 أيام (بتاريخ: {end_date.strftime('%Y-%m-%d')}).\n"
+                f"جاهزين لتجديدك في أي وقت للاستمرار في فورمتك! 💪"
+            )
+            created = enqueue_message(
+                mobile=m.phone,
+                message=msg_text,
+                msg_type=MessageType.REMINDER_3,
+                recipient_name=m.name,
+                dedup_key=dedup,
+            )
+            if created and created.status == MessageStatus.PENDING:
+                queued_count += 1
+
+        # 2. Reminder 1 day before
+        elif days_diff == 1:
+            dedup = f"{m.phone}_rem1_{end_date.isoformat()}"
+            msg_text = (
+                f"🏋️‍♂️ تذكير هام من {gym_name}\n"
+                f"أهلاً كابتن {m.name} 👋\n"
+                f"اشتراكك في الجيم هينتهي غداً (بتاريخ: {end_date.strftime('%Y-%m-%d')}).\n"
+                f"تقدر تجدد مع كابتن الاستقبال اليوم عشان بوابتك تفضل شغالة بدون توقف! 🚀"
+            )
+            created = enqueue_message(
+                mobile=m.phone,
+                message=msg_text,
+                msg_type=MessageType.REMINDER_1,
+                recipient_name=m.name,
+                dedup_key=dedup,
+            )
+            if created and created.status == MessageStatus.PENDING:
+                queued_count += 1
+
+        # 3. Already expired
+        elif days_diff <= 0:
+            dedup = f"{m.phone}_exp_{end_date.isoformat()}"
+            template = profile.expired_message_template or (
+                "تنبيه من {gym_name}\nأهلاً {name}\nاشتراكك انتهى بتاريخ: {end_date}\nنورتنا في أي وقت للتجديد والرجوع للتمرين 💪"
+            )
+            msg_text = template.format(
+                gym_name=gym_name,
+                name=m.name,
+                end_date=end_date.strftime("%Y-%m-%d"),
+                days_left=abs(days_diff),
+            )
+            created = enqueue_message(
+                mobile=m.phone,
+                message=msg_text,
+                msg_type=MessageType.EXPIRED,
+                recipient_name=m.name,
+                dedup_key=dedup,
+            )
+            if created and created.status == MessageStatus.PENDING:
+                queued_count += 1
+
+    return {"queued": queued_count}
+
+
+def prepare_manager_daily_report() -> bool:
+    """
+    Compiles today's complete managerial report and enqueues to the manager mobile number.
+    """
+    profile = GymProfile.get_solo()
+    manager_phone = profile.manager_mobile
+    if not manager_phone:
+        return False
+
+    today = timezone.localdate()
+    gym_name = profile.gym_name or "HULK GYM"
+
+    # Daily financials
+    payments_today = Payment.objects.filter(paid_at__date=today)
+    total_revenue = payments_today.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+    total_payments_count = payments_today.count()
+
+    # Expenses
+    expenses_today = Expense.objects.filter(date=today)
+    total_expenses = expenses_today.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+
+    # Net Cash
+    net_cash = total_revenue - total_expenses
+
+    # New / Renewed Subscriptions
+    subs_today = Subscription.objects.filter(start_date=today)
+    new_subs_count = subs_today.count()
+
+    # Checkins today
+    from apps.members.models import CheckInEvent
+    checkins_today_count = CheckInEvent.objects.filter(checked_in_at__date=today).count()
+
+    report_text = (
+        f"📊 *تقرير الإدارة اليومي - {gym_name}*\n"
+        f"📅 التاريخ: {today.strftime('%Y-%m-%d')}\n"
+        f"━━━━━━━━━━━━━━━━━━━\n"
+        f"💰 إجمالي الإيرادات اليوم: {total_revenue} ج.م ({total_payments_count} عملية دفع)\n"
+        f"📉 إجمالي المصروفات اليوم: {total_expenses} ج.م\n"
+        f"💵 صافي الخزينة: {net_cash} ج.م\n"
+        f"━━━━━━━━━━━━━━━━━━━\n"
+        f"📝 اشتراكات جديدة / مجددة اليوم: {new_subs_count}\n"
+        f"👤 حالات الدخول ببصمة الوجه اليوم: {checkins_today_count}\n"
+        f"━━━━━━━━━━━━━━━━━━━\n"
+        f"تم إعداد التقرير تلقائياً بواسطة نظام {gym_name} الذكي."
+    )
+
+    dedup = f"mgr_report_{today.isoformat()}_{int(timezone.now().timestamp())}"
+    msg = enqueue_message(
+        mobile=manager_phone,
+        message=report_text,
+        msg_type=MessageType.MANAGER_REPORT,
+        recipient_name="إدارة الصالة",
+        recipient_type="manager",
+        dedup_key=dedup,
+    )
+    return bool(msg)
+
+
+def filter_members_for_bulk(
+    category: str = "non_sub",
+    date_from: date = None,
+    date_to: date = None,
+    preset_range: str = "all",
+):
+    """
+    Filters members based on category, date range, or preset for bulk WhatsApp campaigns.
+    """
+    today = timezone.localdate()
+    qs = Member.objects.filter(phone__isnull=False).exclude(phone="")
+
+    if category == "non_sub":
+        # Expired or no active subscription
+        qs = qs.filter(Q(last_subscription_end__isnull=True) | Q(last_subscription_end__lt=today))
+
+        if date_from and date_to:
+            qs = qs.filter(last_subscription_end__gte=date_from, last_subscription_end__lte=date_to)
+        elif date_from:
+            qs = qs.filter(last_subscription_end__gte=date_from)
+        elif date_to:
+            qs = qs.filter(last_subscription_end__lte=date_to)
+        elif preset_range == "week":
+            # Expired in the last 7 days
+            qs = qs.filter(last_subscription_end__gte=today - timedelta(days=7), last_subscription_end__lt=today)
+        elif preset_range == "month":
+            # Expired in the last 30 days
+            qs = qs.filter(last_subscription_end__gte=today - timedelta(days=30), last_subscription_end__lt=today)
+        elif preset_range == "3months":
+            # Expired more than 90 days ago
+            qs = qs.filter(last_subscription_end__lte=today - timedelta(days=90))
+
+    elif category == "active":
+        qs = qs.filter(last_subscription_end__gte=today)
+
+    elif category == "expiring_soon":
+        # Expiring within next 7 days
+        qs = qs.filter(last_subscription_end__gte=today, last_subscription_end__lte=today + timedelta(days=7))
+
+    elif category == "with_debt":
+        # Calculate members who owe debt
+        # We can filter members whose remaining is positive
+        qs = qs.filter(id__in=[m.id for m in qs if m.has_debt])
+
+    elif category == "all_members":
+        # All members with phone
+        pass
+
+    return qs
+
+
+def prepare_bulk_campaign(
+    category: str = "non_sub",
+    message_template: str = "",
+    link: str = "",
+    attachment = None,
+    date_from: date = None,
+    date_to: date = None,
+    preset_range: str = "all",
+) -> dict:
+    """
+    Prepares and enqueues bulk WhatsApp messages for the selected target category.
+    """
+    if not message_template.strip():
+        return {"queued": 0, "error": "نص الرسالة مطلوب."}
+
+    members = filter_members_for_bulk(
+        category=category,
+        date_from=date_from,
+        date_to=date_to,
+        preset_range=preset_range,
+    )
+
+    profile = GymProfile.get_solo()
+    gym_name = profile.gym_name or "HULK GYM"
+    today = timezone.localdate()
+    queued_count = 0
+    batch_tag = f"bulk_{category}_{today.isoformat()}_{int(timezone.now().timestamp())}"
+
+    for m in members:
+        m.refresh_status()
+        end_date_str = m.last_subscription_end.strftime("%Y-%m-%d") if m.last_subscription_end else "غير محدد"
+        days_diff = (m.last_subscription_end - today).days if m.last_subscription_end else 0
+
+        # Replace tags
+        text = message_template.replace("{name}", m.name or "كابتن")
+        text = text.replace("{gym_name}", gym_name)
+        text = text.replace("{end_date}", end_date_str)
+        text = text.replace("{days_left}", str(abs(days_diff)))
+        text = text.replace("{remaining}", str(m.current_remaining))
+        text = text.replace("{plan}", m.last_subscription_type or "الاشتراك")
+
+        dedup = f"{m.phone}_{batch_tag}"
+        msg = enqueue_message(
+            mobile=m.phone,
+            message=text,
+            msg_type=MessageType.BULK,
+            recipient_name=m.name,
+            recipient_type="member",
+            dedup_key=dedup,
+            link=link,
+            attachment=attachment,
+        )
+        if msg:
+            queued_count += 1
+
+    return {"queued": queued_count, "total_target": len(members)}

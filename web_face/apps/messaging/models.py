@@ -16,11 +16,14 @@ class MessageType(models.TextChoices):
     SALARY_STATEMENT = "salary_statement", "كشف راتب موظف"
     MANAGER_REPORT = "manager_report", "تقرير المدير اليومي"
     CUSTOM = "custom", "رسالة مخصصة"
+    BULK = "bulk", "إرسال جماعي مخصص"
 
 
 class WhatsAppMessage(models.Model):
     mobile = models.CharField(max_length=20, db_index=True, verbose_name="رقم الهاتف المستلم")
     message = models.TextField(verbose_name="نص الرسالة")
+    attachment = models.FileField(upload_to="whatsapp_attachments/", blank=True, null=True, verbose_name="ملف أو صورة مرفقة")
+    link = models.URLField(max_length=500, blank=True, default="", verbose_name="رابط مرفق")
     msg_type = models.CharField(
         max_length=30,
         choices=MessageType.choices,
