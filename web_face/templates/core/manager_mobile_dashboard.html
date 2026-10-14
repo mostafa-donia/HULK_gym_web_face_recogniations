@@ -1,0 +1,602 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>لوحة المدير — {{ profile.gym_name|default:"HULK GYM" }}</title>
+  {% if profile.logo %}
+    <link rel="icon" type="image/png" href="{{ profile.logo.url }}">
+  {% else %}
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+  {% endif %}
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <script src="{% static 'js/htmx.min.js' %}"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+    
+    :root {
+      --primary: {{ profile.primary_color|default:"#84CC16" }};
+      --bg-dark: #070e17;
+      --card-bg: #0d1926;
+      --card-border: #16283b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      padding-bottom: 80px; /* Space for fixed bottom bar */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Mobile App Header */
+    .mobile-header {
+      background: #09131f;
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: #040910;
+      border: 1px solid #1e3347;
+      padding: 2px;
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .brand-badge {
+      font-size: 0.72rem;
+      color: var(--primary);
+      font-weight: 700;
+      display: block;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-icon-header {
+      background: #112233;
+      border: 1px solid #1c354f;
+      color: #cbd5e1;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 1rem;
+    }
+
+    /* Container */
+    .mobile-content {
+      padding: 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Quick Search Bar */
+    .mobile-search-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+
+    .mobile-search-input {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 0.95rem;
+      width: 100%;
+      outline: none;
+      padding: 8px 0;
+    }
+
+    .mobile-search-input::placeholder {
+      color: #64748b;
+      font-size: 0.88rem;
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--card-accent, var(--primary));
+    }
+
+    .kpi-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .kpi-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .kpi-icon {
+      font-size: 1.1rem;
+    }
+
+    .kpi-val {
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: #fff;
+      font-family: monospace, sans-serif;
+    }
+
+    .kpi-sub {
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    /* Section Title */
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    /* Quick Actions 1-Tap Thumb Grid */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .action-btn {
+      background: linear-gradient(145deg, #102030, #0a1522);
+      border: 1px solid #1c354f;
+      border-radius: 12px;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.1s ease, border-color 0.15s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .action-btn:active {
+      transform: scale(0.96);
+      border-color: var(--primary);
+    }
+
+    .action-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+    }
+
+    .action-label {
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    .action-desc {
+      color: #64748b;
+      font-size: 0.72rem;
+      text-align: center;
+    }
+
+    /* Live Activity Feeds */
+    .feed-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .feed-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid #132435;
+      font-size: 0.86rem;
+    }
+
+    .feed-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .feed-item:first-child {
+      padding-top: 4px;
+    }
+
+    /* Fixed Bottom Navigation Bar */
+    .mobile-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: #060d16;
+      border-top: 1px solid #162a3d;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .nav-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: #8da0b3;
+      text-decoration: none;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 8px;
+    }
+
+    .nav-tab.active {
+      color: var(--primary);
+    }
+
+    .nav-tab-icon {
+      font-size: 1.25rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top App Bar -->
+  <header class="mobile-header">
+    <div class="brand-wrap">
+      {% if profile.logo %}
+        <img src="{{ profile.logo.url }}" alt="Logo" class="brand-logo">
+      {% else %}
+        <div class="brand-logo" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem;">💪</div>
+      {% endif %}
+      <div>
+        <h1 class="brand-title">{{ profile.gym_name|default:"HULK GYM" }}</h1>
+        <span class="brand-badge">⚡ وضع المدير المحمول</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Refresh -->
+      <button onclick="window.location.reload()" class="btn-icon-header" title="تحديث">
+        🔄
+      </button>
+
+      <!-- Desktop Mode Toggle -->
+      <a href="{% url 'core:manager_dashboard' %}?view=desktop" class="btn-icon-header" title="عرض نسخة الكمبيوتر الكاملة">
+        🖥️
+      </a>
+
+      <!-- Logout -->
+      <a href="{% url 'accounts:logout' %}" class="btn-icon-header" style="color: #f87171;" title="تسجيل الخروج">
+        🚪
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Mobile Content -->
+  <main class="mobile-content">
+
+    <!-- 1. Live Member Quick Search -->
+    <div>
+      <div class="mobile-search-box">
+        <span style="font-size: 1.1rem; color: #64748b;">🔍</span>
+        <input 
+          type="search" 
+          name="q"
+          placeholder="ابحث بالاسم، الموبايل، أو الكود..." 
+          class="mobile-search-input"
+          hx-get="{% url 'core:quick_search' %}" 
+          hx-trigger="keyup changed delay:300ms, search" 
+          hx-target="#mobileSearchResults"
+          autocomplete="off"
+        >
+      </div>
+      <div id="mobileSearchResults"></div>
+    </div>
+
+    <!-- 2. Core KPI Metric Cards -->
+    <div>
+      <div class="section-title">
+        <span>📊</span>
+        <span>مؤشرات وإحصائيات اليوم</span>
+      </div>
+
+      <div class="kpi-grid">
+        
+        <!-- Today Revenue -->
+        <div class="kpi-card" style="--card-accent: #22c55e;">
+          <div class="kpi-header">
+            <span class="kpi-label">إيراد اليوم</span>
+            <span class="kpi-icon">💰</span>
+          </div>
+          <div class="kpi-val" style="color: #4ade80;">{{ today_revenue }}</div>
+          <div class="kpi-sub">{{ profile.currency|default:"ج.م" }} ({{ today_ops_count }} عملية دفع)</div>
+        </div>
+
+        <!-- Active Members -->
+        <div class="kpi-card" style="--card-accent: var(--primary);">
+          <div class="kpi-header">
+            <span class="kpi-label">المشتركون النشطون</span>
+            <span class="kpi-icon">👥</span>
+          </div>
+          <div class="kpi-val" style="color: var(--primary);">{{ active_members }}</div>
+          <div class="kpi-sub">منتهي: {{ expired_members }} عضو</div>
+        </div>
+
+        <!-- Expiring Soon -->
+        <div class="kpi-card" style="--card-accent: #f59e0b;">
+          <div class="kpi-header">
+            <span class="kpi-label">ينتهي قريباً (3 أيام)</span>
+            <span class="kpi-icon">⏳</span>
+          </div>
+          <div class="kpi-val" style="color: #fbbf24;">{{ expiring_soon }}</div>
+          <div class="kpi-sub">تنبيهات مطلوب تجديدها</div>
+        </div>
+
+        <!-- Remaining Debt -->
+        <div class="kpi-card" style="--card-accent: #ef4444;">
+          <div class="kpi-header">
+            <span class="kpi-label">إجمالي الديون</span>
+            <span class="kpi-icon">💳</span>
+          </div>
+          <div class="kpi-val" style="color: #f87171;">{{ total_debt }}</div>
+          <div class="kpi-sub">{{ profile.currency|default:"ج.م" }} على {{ debtors_count }} عضو</div>
+        </div>
+
+        <!-- Today Check-ins -->
+        <div class="kpi-card" style="--card-accent: #06b6d4;">
+          <div class="kpi-header">
+            <span class="kpi-label">حضور اليوم</span>
+            <span class="kpi-icon">🚪</span>
+          </div>
+          <div class="kpi-val" style="color: #38bdf8;">{{ today_checkins_count }}</div>
+          <div class="kpi-sub">تسجيل حضور مسجل اليوم</div>
+        </div>
+
+        <!-- Month Revenue -->
+        <div class="kpi-card" style="--card-accent: #a855f7;">
+          <div class="kpi-header">
+            <span class="kpi-label">إيراد الشهر</span>
+            <span class="kpi-icon">📈</span>
+          </div>
+          <div class="kpi-val" style="color: #c084fc;">{{ month_revenue }}</div>
+          <div class="kpi-sub">{{ profile.currency|default:"ج.م" }} للشهر الجاري</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 3. Quick Actions Grid (1-Tap Thumb Reach) -->
+    <div>
+      <div class="section-title">
+        <span>⚡</span>
+        <span>العمليات السريعة</span>
+      </div>
+
+      <div class="actions-grid">
+        
+        <!-- Action 1: New Subscription -->
+        <a href="{% url 'members:smart_operations' %}?tab=new_subscription" class="action-btn">
+          <div class="action-icon" style="background: rgba(132, 204, 22, 0.12); color: var(--primary);">
+            ➕
+          </div>
+          <span class="action-label">اشتراك جديد</span>
+          <span class="action-desc">تسجيل وتفعيل عضوية جديدة</span>
+        </a>
+
+        <!-- Action 2: Renew Subscription -->
+        <a href="{% url 'members:smart_operations' %}?tab=renewal" class="action-btn">
+          <div class="action-icon" style="background: rgba(59, 130, 246, 0.12); color: #60a5fa;">
+            🔄
+          </div>
+          <span class="action-label">تجديد اشتراك</span>
+          <span class="action-desc">تمديد باقة لعضو حالي</span>
+        </a>
+
+        <!-- Action 3: Settle Debt -->
+        <a href="{% url 'members:smart_operations' %}?tab=remaining" class="action-btn">
+          <div class="action-icon" style="background: rgba(239, 68, 68, 0.12); color: #f87171;">
+            💵
+          </div>
+          <span class="action-label">سداد متبقي</span>
+          <span class="action-desc">تحصيل دين وإصدار فاتورة</span>
+        </a>
+
+        <!-- Action 4: Members Directory -->
+        <a href="{% url 'members:member_list' %}" class="action-btn">
+          <div class="action-icon" style="background: rgba(168, 85, 247, 0.12); color: #c084fc;">
+            👥
+          </div>
+          <span class="action-label">قائمة الأعضاء</span>
+          <span class="action-desc">تصفح والبحث في المشتركين</span>
+        </a>
+
+        <!-- Action 5: WhatsApp Queue -->
+        <a href="{% url 'messaging:whatsapp_queue' %}" class="action-btn">
+          <div class="action-icon" style="background: rgba(37, 211, 102, 0.12); color: #25d366;">
+            💬
+          </div>
+          <span class="action-label">رسائل الواتساب</span>
+          <span class="action-desc">{% if pending_whatsapp_count %}{{ pending_whatsapp_count }} رسالة معلقة{% else %}طابور الإرسال والحملات{% endif %}</span>
+        </a>
+
+        <!-- Action 6: Daily Report -->
+        <a href="{% url 'messaging:whatsapp_manager_report' %}" class="action-btn">
+          <div class="action-icon" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24;">
+            📋
+          </div>
+          <span class="action-label">تقرير اليوم</span>
+          <span class="action-desc">ملخص الإيرادات على الواتساب</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- 4. Today Live Activity (Recent Check-ins & Payments) -->
+    <div class="feed-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a2f44; padding-bottom: 8px; margin-bottom: 8px;">
+        <span style="font-weight: 800; font-size: 0.88rem; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
+          <span>🚪</span>
+          <span>آخر تسجيلات الحضور اليوم</span>
+        </span>
+        <span style="font-size: 0.75rem; color: #64748b;">(أحدث {{ recent_checkins|length }})</span>
+      </div>
+
+      {% for ev in recent_checkins %}
+        <div class="feed-item">
+          <div>
+            <strong style="color: #fff; font-size: 0.88rem;">{{ ev.member.name }}</strong>
+            <span style="color: #64748b; font-size: 0.75rem; display: block;">
+              #{{ ev.member.member_id }} • {{ ev.checked_in_at|date:"h:i A" }}
+            </span>
+          </div>
+
+          <div>
+            {% if ev.status_snapshot == 'active' %}
+              <span class="badge badge-active" style="font-size: 0.72rem; padding: 3px 8px;">نشط</span>
+            {% else %}
+              <span class="badge badge-expired" style="font-size: 0.72rem; padding: 3px 8px;">منتهي</span>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div style="text-align: center; color: #64748b; padding: 14px 0; font-size: 0.82rem;">
+          لا توجد تسجيلات حضور حتى الآن اليوم.
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- 5. Switch to Full Desktop Dashboard -->
+    <div style="text-align: center; margin-top: 6px;">
+      <a href="{% url 'core:manager_dashboard' %}?view=desktop" style="color: #60a5fa; font-size: 0.82rem; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; background: rgba(59, 130, 246, 0.08); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2);">
+        <span>🖥️</span>
+        <span>التبديل إلى لوحة التحكم الكاملة للكمبيوتر (Full Desktop View)</span>
+      </a>
+    </div>
+
+  </main>
+
+  <!-- Fixed Bottom App Navigation -->
+  <nav class="mobile-bottom-nav">
+    <a href="{% url 'core:manager_mobile_dashboard' %}" class="nav-tab active">
+      <span class="nav-tab-icon">🏠</span>
+      <span>الرئيسية</span>
+    </a>
+
+    <a href="{% url 'members:smart_operations' %}" class="nav-tab">
+      <span class="nav-tab-icon">⚡</span>
+      <span>العمليات</span>
+    </a>
+
+    <a href="{% url 'members:member_list' %}" class="nav-tab">
+      <span class="nav-tab-icon">👥</span>
+      <span>الأعضاء</span>
+    </a>
+
+    <a href="{% url 'messaging:whatsapp_queue' %}" class="nav-tab">
+      <span class="nav-tab-icon">💬</span>
+      <span>الواتساب</span>
+    </a>
+
+    <a href="{% url 'core:manager_dashboard' %}?view=desktop" class="nav-tab">
+      <span class="nav-tab-icon">🖥️</span>
+      <span>الكمبيوتر</span>
+    </a>
+  </nav>
+
+</body>
+</html>

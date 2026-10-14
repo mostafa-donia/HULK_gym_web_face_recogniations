@@ -5,6 +5,7 @@ app_name = "core"
 
 urlpatterns = [
     path("", views.dashboard_view, name="dashboard"),
+    path("mobile/", views.manager_mobile_dashboard_view, name="manager_mobile_dashboard"),
     path("manager/", views.manager_dashboard_view, name="manager_dashboard"),
     path("quick-search/", views.quick_search_view, name="quick_search"),
     path("checkin/<int:member_id>/", views.quick_checkin_view, name="quick_checkin"),

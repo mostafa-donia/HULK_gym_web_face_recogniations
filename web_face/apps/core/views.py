@@ -15,8 +15,35 @@ from apps.messaging.models import WhatsAppMessage
 from apps.payments.models import Payment, PaymentMethod
 
 
+def is_mobile_device(request) -> bool:
+    """
+    Detects if the request is coming from a mobile device (phone/tablet).
+    Supports explicit toggle via '?view=mobile' or '?view=desktop'.
+    """
+    explicit = request.GET.get("view")
+    if explicit == "mobile":
+        request.session["view_mode"] = "mobile"
+        return True
+    elif explicit == "desktop":
+        request.session["view_mode"] = "desktop"
+        return False
+
+    session_mode = request.session.get("view_mode")
+    if session_mode == "mobile":
+        return True
+    elif session_mode == "desktop":
+        return False
+
+    ua = request.META.get("HTTP_USER_AGENT", "").lower()
+    mobile_keywords = ["android", "iphone", "ipod", "ipad", "mobile", "phone", "webos", "blackberry", "opera mini"]
+    return any(k in ua for k in mobile_keywords)
+
+
 @login_required
 def dashboard_view(request):
+    if request.user.is_manager and is_mobile_device(request):
+        return manager_mobile_dashboard_view(request)
+
     today = timezone.localdate()
     three_days_later = today + timedelta(days=3)
 
@@ -149,15 +176,82 @@ def check_manager_page_access(request, target_url=None):
 
 @login_required
 @manager_required
+def manager_mobile_dashboard_view(request):
+    """
+    Ultra-streamlined, high-performance Mobile Dashboard tailored specifically for managers
+    accessing HULK GYM from their smartphone.
+    Contains core KPI cards, 1-tap quick actions, live search, and live check-in / payment feed.
+    """
+    request.session["manager_page_unlocked"] = True
+    profile = GymProfile.get_solo()
+    today = timezone.localdate()
+    three_days_later = today + timedelta(days=3)
+    month_start = today.replace(day=1)
+
+    today_revenue = (
+        Payment.objects.filter(created_at__date=today).aggregate(Sum("amount"))["amount__sum"]
+        or Decimal("0.00")
+    )
+    month_revenue = (
+        Payment.objects.filter(created_at__date__gte=month_start).aggregate(Sum("amount"))["amount__sum"]
+        or Decimal("0.00")
+    )
+    today_ops_count = Payment.objects.filter(created_at__date=today).count()
+
+    active_members = Member.objects.filter(last_subscription_end__gte=today).count()
+    expired_members = Member.objects.filter(
+        Q(last_subscription_end__lt=today) | Q(last_subscription_end__isnull=True)
+    ).count()
+    expiring_soon = Member.objects.filter(
+        last_subscription_end__gte=today, last_subscription_end__lte=three_days_later
+    ).count()
+
+    total_debt = (
+        Member.objects.filter(current_remaining__gt=0).aggregate(Sum("current_remaining"))["current_remaining__sum"]
+        or Decimal("0.00")
+    )
+    debtors_count = Member.objects.filter(current_remaining__gt=0).count()
+
+    today_checkins_count = CheckInEvent.objects.filter(checked_in_at__date=today).count()
+    pending_whatsapp_count = WhatsAppMessage.objects.filter(status="pending").count()
+
+    recent_checkins = CheckInEvent.objects.select_related("member").order_by("-checked_in_at")[:6]
+    recent_payments = Payment.objects.select_related("member").order_by("-created_at")[:6]
+
+    context = {
+        "profile": profile,
+        "today": today,
+        "today_revenue": today_revenue,
+        "month_revenue": month_revenue,
+        "today_ops_count": today_ops_count,
+        "active_members": active_members,
+        "expired_members": expired_members,
+        "expiring_soon": expiring_soon,
+        "total_debt": total_debt,
+        "debtors_count": debtors_count,
+        "today_checkins_count": today_checkins_count,
+        "pending_whatsapp_count": pending_whatsapp_count,
+        "recent_checkins": recent_checkins,
+        "recent_payments": recent_payments,
+    }
+    return render(request, "core/manager_mobile_dashboard.html", context)
+
+
+@login_required
+@manager_required
 def manager_dashboard_view(request):
     """
     Dedicated Executive Dashboard for the Gym Manager matching legacy layout + AI business insights.
     Presents 9 core metric cards, period tabs (day/week/month), export, operations log,
     and smart AI analytics for 10-day marketing evaluation and period comparisons.
     """
+    if is_mobile_device(request):
+        return manager_mobile_dashboard_view(request)
+
     unlocked, resp = check_manager_page_access(request)
     if not unlocked or resp:
         return resp
+
 
     today = timezone.localdate()
     month_start = today.replace(day=1)
