@@ -529,6 +529,9 @@
       </div>
 
       <div style="display: flex; gap: 10px; align-items: center;">
+        <a id="btnSkipToInvoice" href="#" style="display: none; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 6px 14px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; font-weight: 700;">
+          تخطي وعرض الفاتورة ↵
+        </a>
         <button type="button" onclick="closeFaceModal()" class="btn btn-secondary btn-sm">
           إلغاء
         </button>
@@ -609,11 +612,18 @@ function openFaceModal() {
   startEnrollCamera();
 }
 
-function closeFaceModal() {
+function closeFaceModal(skipRedirect) {
   const modal = document.getElementById('faceEnrollModal');
   modal.style.display = 'none';
   window.isEnrollModalOpen = false;
   stopEnrollCamera();
+  if (!skipRedirect) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const payId = urlParams.get('payment_id');
+    if (payId && urlParams.get('enroll') === '1') {
+      window.location.href = `/payments/${payId}/?auto=1`;
+    }
+  }
 }
 
 function switchWizardMode(mode) {
@@ -818,8 +828,14 @@ async function saveAllEnrolledPoses() {
       statusEl.style.color = '#34d399';
 
       setTimeout(() => {
-        closeFaceModal();
-        window.location.reload();
+        closeFaceModal(true);
+        const urlParams = new URLSearchParams(window.location.search);
+        const payId = urlParams.get('payment_id');
+        if (payId) {
+          window.location.href = `/payments/${payId}/?auto=1`;
+        } else {
+          window.location.reload();
+        }
       }, 1200);
     } else {
       statusEl.innerHTML = '❌ ' + (data.message || 'فشل في حفظ بصمة الوجه.');
@@ -886,6 +902,23 @@ function getCookie(name) {
   }
   return cookieValue;
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const payId = urlParams.get('payment_id');
+  if (payId) {
+    const skipBtn = document.getElementById('btnSkipToInvoice');
+    if (skipBtn) {
+      skipBtn.href = `/payments/${payId}/?auto=1`;
+      skipBtn.style.display = 'inline-flex';
+    }
+  }
+  if (urlParams.get('enroll') === '1' || urlParams.get('enroll') === 'true') {
+    setTimeout(() => {
+      openFaceModal();
+    }, 350);
+  }
+});
 </script>
 
 <style>

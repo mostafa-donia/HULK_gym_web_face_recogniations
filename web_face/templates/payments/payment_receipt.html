@@ -76,7 +76,22 @@
 <body>
 
   <div class="print-hide" style="max-width: 520px; margin: 0 auto 16px auto;">
-    {% if auto_redirect %}
+    {% if not member.has_face_enrolled %}
+    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 10px; padding: 12px 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #fca5a5; font-size: 0.92rem; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.4rem;">📷</span>
+        <div>
+          <strong style="color: #fff; font-size: 0.95rem;">تنبيه: بصمة الوجه غير مسجلة لهذا العضو!</strong>
+          <div style="font-size: 0.8rem; color: #fca5a5; margin-top: 2px;">يجب التقاط بصمة الوجه لتفعيل تسجيل الحضور التلقائي عبر الكاميرا.</div>
+        </div>
+      </div>
+      <a href="{% url 'members:member_detail' member.id %}?enroll=1" onclick="cancelAutoRedirect()" class="btn btn-sm" style="background: #ef4444; color: #fff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 800; font-size: 0.88rem; white-space: nowrap;">
+        تسجيل بصمة الوجه الآن ↵
+      </a>
+    </div>
+    {% endif %}
+
+    {% if auto_redirect and member.has_face_enrolled %}
     <div id="autoRedirectBanner" style="background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #cbd5e1; font-size: 0.92rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
       <div style="display: flex; align-items: center; gap: 10px;">
         <span style="font-size: 1.3rem;">⏱️</span>
@@ -187,7 +202,7 @@
   </div>
 
 <script>
-{% if auto_redirect %}
+{% if auto_redirect and member.has_face_enrolled %}
 let countdown = 3;
 let timer = setInterval(() => {
   countdown--;

@@ -534,6 +534,9 @@ def subscription_create_view(request):
                     queue_payment_receipt_whatsapp(payment, subscription=sub)
 
         messages.success(request, f"تم تفعيل اشتراك {member.name} بنجاح حتى {end_date}!")
+        if not member.has_face_enrolled:
+            pay_param = f"&payment_id={payment.id}" if payment else ""
+            return redirect(f"/members/{member.id}/?enroll=1{pay_param}")
         if payment:
             return redirect(f"/payments/{payment.id}/?auto=1")
         return redirect("members:member_detail", member_id=member.id)
@@ -714,6 +717,9 @@ def smart_operations_view(request):
                         queue_payment_receipt_whatsapp(payment, subscription=sub)
 
                 messages.success(request, f"تم حفظ {'الاشتراك الجديد' if actual_op_type == 'new_subscription' else 'التجديد'} بنجاح للعضو {member.name} حتى {end_date}!")
+                if not member.has_face_enrolled:
+                    pay_param = f"&payment_id={payment.id}" if payment else ""
+                    return redirect(f"/members/{member.id}/?enroll=1{pay_param}")
                 if payment:
                     return redirect(f"/payments/{payment.id}/?auto=1")
                 return redirect("members:smart_operations")
