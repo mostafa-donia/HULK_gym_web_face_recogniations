@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}إدارة العمليات — سجل / جدد / دفع المتبقي{% endblock %}
+
+{% block content %}
+<div style="max-width: 1050px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px;">
+
+  <!-- Page Title & Dynamic Detection Message -->
+  <div>
+    <h1 style="color: #F3F8FB; font-size: 1.5rem; font-weight: 900; margin: 0 0 6px 0;">إدارة العمليات</h1>
+    <p id="info-status-label" style="color: #8D99A3; font-size: 1.05rem; margin: 0; transition: color 0.2s;">
+      اكتب اسم العضو أو الموبايل وسيتم تحديد العملية تلقائيًا.
+    </p>
+  </div>
+
+  <!-- Search Row (Exact Reference UI: Search Input + Bright Lime 'بحث' Button) -->
+  <div style="position: relative;">
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <div style="flex: 1; position: relative;">
+        <input 
+          type="text" 
+          id="op-search-input" 
+          class="search-input" 
+          placeholder="ابحث بالاسم أو الموبايل" 
+          value="{{ pre_query }}"
+          autocomplete="off" 
+          autofocus
+          style="width: 100%; border: 2px solid #244015; border-radius: 12px; background: #07131B; color: #FFFFFF; font-size: 1.15rem; height: 56px; padding: 0 18px;"
+        >
+        <!-- Autocomplete Suggestions Dropdown -->
+        <div id="search-autocomplete-box" style="display: none; position: absolute; top: 62px; right: 0; left: 0; background: #0B171E; border: 2px solid #1A2B36; border-radius: 12px; z-index: 1000; max-height: 280px; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        </div>
+      </div>
+
+      <button type="button" id="op-search-btn" class="btn-primary" style="min-width: 130px; height: 56px; font-size: 1.25rem; font-weight: 900; justify-content: center; border-radius: 12px;">
+        بحث
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Smart Operations Form Container -->
+  <form id="smart-op-form" method="post" action="{% url 'members:smart_operations' %}" style="display: flex; flex-direction: column; gap: 16px;">
+    {% csrf_token %}
+
+    <!-- Hidden state inputs -->
+    <input type="hidden" id="field-operation-type" name="operation_type" value="new_subscription">
+    <input type="hidden" id="field-member-id" name="member_id" value="">
+
+    <!-- Form Card Matching Reference Screenshot -->
+    <div style="background: #0B171E; border: 1px solid #14202A; border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 6px 25px rgba(0,0,0,0.4);">
+      
+      <!-- Row 1: الاسم والموبايل -->
+      <div class="grid-2" style="gap: 16px;">
+        <div>
+          <label style="display: block; color: #A9B7C1; font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">الاسم</label>
+          <input 
+            type="text" 
+            id="field-name" 
+            name="name" 
+            placeholder="اسم المشترك" 
+            required 
+            class="form-control"
+            style="background: #07131B; border: 1px solid #182834; height: 50px; font-size: 1.05rem;"
+          >
+        </div>
+
+        <div>
+          <label style="display: block; color: #A9B7C1; font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">الموبايل</label>
+          <input 
+            type="text" 
+            id="field-mobile" 
+            name="mobile" 
+            placeholder="الموبايل" 
+            required 
+            class="form-control"
+            style="background: #07131B; border: 1px solid #182834; height: 50px; font-size: 1.05rem;"
+          >
+        </div>
+      </div>
+
+      <!-- Row 2: النوع ونوع الاشتراك -->
+      <div class="grid-2" style="gap: 16px;">
+        <div>
+          <label style="display: block; color: #A9B7C1; font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">النوع</label>
+          <select id="field-gender" name="gender" class="form-control" style="background: #07131B; border: 1px solid #182834; height: 50px; font-size: 1.05rem;">
+            <option value="male">ذكر</option>
+            <option value="female">أنثى</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; color: #A9B7C1; font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">نوع الاشتراك</label>
+          <select id="field-plan" name="plan_id" class="form-control" style="background: #07131B; border: 1px solid #182834; height: 50px; font-size: 1.05rem;">
+            {% for plan in plans %}
+              <option 
+                value="{{ plan.id }}" 
+                data-price="{{ plan.price }}" 
+                data-days="{{ plan.duration_days }}" 
+                data-frequency="{{ plan.frequency }}"
+                data-name="{{ plan.name }}"
+              >
+                {{ plan.name }} ({{ plan.price }} {{ gym_profile.currency|default:"ج.م" }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Row 3: بداية الاشتراك والمدفوع وأيام السماح -->
+      <div class="grid-3" style="gap: 16px;">
+        <!-- بداية الاشتراك (Editable to past/old date or future date) -->
+        <div>
+          <label id="label-start-date" style="display: block; color: #A9B7C1; font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
+            بداية الاشتراك
+          </label>
+          <input 
+            type="date" 
+            id="field-start-date" 
+            name="start_date" 
+            value="{{ today_str }}" 
+            required 
+            class="form-control"
+            style="background: #07131B; border: 1px solid #182834; height: 50px; font-size: 1.05rem;"
+          >
+          <small style="color: #657786; font-size: 0.78rem;">يمكنك اختيار أي تاريخ قديم أو حالي</small>
+        </div>
+
+        <!-- المدفوع -->
+        <div>
+          <label style="display: block; color: #A9B7C1; font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
+            المدفوع .ج
+          </label>
+          <input 
+            type="number" 
+            step="0.5" 
+            min="0" 
+            id="field-paid-amount" 
+            name="paid_amount" 
+            value="50.00" 
+            required 
+            class="form-control"
+            style="background: #07131B; border: 1px solid #182834; height: 50px; font-size: 1.15rem; font-weight: 800; color: #A8F14B;"
+          >
+        </div>
+
+        <!-- أيام السماح (Grace days when payment is not full) -->
+        <div>
+          <label style="display: block; color: #A9B7C1; font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
+            أيام السماح
+          </label>
+          <input 
+            type="number" 
+            id="field-allowance-days" 
+            name="allowance_days" 
+            value="0" 
+            min="0" 
+            max="365" 
+            class="form-control"
+            style="background: #07131B; border: 1px solid #182834; height: 50px; font-size: 1.15rem; font-weight: 800; text-align: center;"
+          >
+          <small style="color: #657786; font-size: 0.78rem;">مدة المهلة المسموح بها للدخول حتى سداد الباقي</small>
+        </div>
+      </div>
+
+      <!-- Mode Switch Helper for Debt Members -->
+      <div id="debt-mode-switch-box" style="display: none; background: rgba(255, 159, 0, 0.1); border: 1px solid #FF9F00; padding: 12px 16px; border-radius: 10px; justify-content: space-between; align-items: center;">
+        <span style="color: #FFB338; font-weight: 700;" id="debt-mode-text">
+          العضو عليه متبقي سابق. يمكنك سداد الدين أو تجديد اشتراكه.
+        </span>
+        <button type="button" id="btn-toggle-renewal-debt" class="btn btn-secondary btn-sm" style="background: #14202A; color: #FFFFFF;">
+          🔄 التبديل إلى تجديد اشتراك كامل
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Live Calculation Summary Line (Exact Pixel Match from Screenshot) -->
+    <div id="calc-summary-line" style="color: #7ED321; font-size: 1.25rem; font-weight: 900; padding: 6px 4px; line-height: 1.5; min-height: 38px;">
+      اشتراك جديد | سعر الخطة: 50 ج | الأيام: 1 يوم | المتبقي: 0 ج | النهاية: {{ today_str }}
+    </div>
+
+    <!-- Bottom Action Buttons (Lime Green Save Button + Dark Back Button) -->
+    <div style="display: flex; gap: 14px; align-items: center; margin-top: 4px;">
+      <button type="submit" id="btn-save-operation" class="btn-primary" style="height: 54px; font-size: 1.2rem; font-weight: 900; padding: 0 32px; border-radius: 12px; cursor: pointer;">
+        حفظ الاشتراك
+      </button>
+
+      <a href="{% url 'core:dashboard' %}" class="btn-secondary" style="height: 54px; font-size: 1.1rem; font-weight: 700; padding: 0 28px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
+        رجوع
+      </a>
+    </div>
+
+  </form>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const searchInput = document.getElementById("op-search-input");
+  const searchBtn = document.getElementById("op-search-btn");
+  const autocompleteBox = document.getElementById("search-autocomplete-box");
+  const infoLabel = document.getElementById("info-status-label");
+  const calcSummary = document.getElementById("calc-summary-line");
+  const saveBtn = document.getElementById("btn-save-operation");
+  const labelStartDate = document.getElementById("label-start-date");
+
+  // Form fields
+  const fieldOpType = document.getElementById("field-operation-type");
+  const fieldMemberId = document.getElementById("field-member-id");
+  const fieldName = document.getElementById("field-name");
+  const fieldMobile = document.getElementById("field-mobile");
+  const fieldGender = document.getElementById("field-gender");
+  const fieldPlan = document.getElementById("field-plan");
+  const fieldStartDate = document.getElementById("field-start-date");
+  const fieldPaidAmount = document.getElementById("field-paid-amount");
+  const fieldAllowanceDays = document.getElementById("field-allowance-days");
+
+  const debtBox = document.getElementById("debt-mode-switch-box");
+  const debtModeText = document.getElementById("debt-mode-text");
+  const btnToggleRenewal = document.getElementById("btn-toggle-renewal-debt");
+
+  let currentSelectedMember = null;
+  let isDebtPayOnly = false;
+
+  // 1. Search Query and Autocomplete
+  let debounceTimer = null;
+  searchInput.addEventListener("input", function() {
+    clearTimeout(debounceTimer);
+    const query = searchInput.value.trim();
+    if (!query || query.length < 2) {
+      autocompleteBox.style.display = "none";
+      return;
+    }
+    debounceTimer = setTimeout(() => {
+      fetch("{% url 'members:smart_operations' %}?action=search&term=" + encodeURIComponent(query), {
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+      })
+      .then(res => res.json())
+      .then(data => {
+        renderAutocomplete(data.results);
+      });
+    }, 200);
+  });
+
+  function renderAutocomplete(members) {
+    if (!members || members.length === 0) {
+      autocompleteBox.innerHTML = `
+        <div style="padding: 14px; text-align: center; color: #8D99A3;">
+          لا يوجد عضو مطابق. بالضغط على بحث سيتم تسجيل عضو جديد بهذا الاسم/الرقم.
+        </div>`;
+      autocompleteBox.style.display = "block";
+      return;
+    }
+    let html = "";
+    members.forEach(m => {
+      const debtText = m.remaining > 0 ? `<span style="color: #FF9F00; font-weight: 800;">(عليه متبقي: ${m.remaining} ج)</span>` : `<span style="color: #7ED321;">(خالص)</span>`;
+      const faceBadge = m.has_face_enrolled ? `<span style="color: #10b981; font-size: 0.8rem; margin-right: 6px;">📷 مسجل</span>` : `<span style="color: #ef4444; font-size: 0.8rem; margin-right: 6px;">📷❌ غير مسجل</span>`;
+      html += `
+        <div class="autocomplete-item" data-id="${m.id}" data-json='${JSON.stringify(m)}' 
+             style="padding: 12px 16px; border-bottom: 1px solid #14202A; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong style="color: #FFFFFF; font-size: 1.05rem;">${m.name}</strong> 
+            <span style="color: #8D99A3; font-size: 0.9rem; margin-right: 8px;">${m.mobile}</span>
+            ${faceBadge}
+          </div>
+          <div>${debtText}</div>
+        </div>`;
+    });
+    autocompleteBox.innerHTML = html;
+    autocompleteBox.style.display = "block";
+
+    autocompleteBox.querySelectorAll(".autocomplete-item").forEach(item => {
+      item.addEventListener("click", function() {
+        const m = JSON.parse(this.getAttribute("data-json"));
+        selectMember(m);
+        autocompleteBox.style.display = "none";
+      });
+    });
+  }
+
+  // Hide autocomplete when clicking outside
+  document.addEventListener("click", function(e) {
+    if (!searchInput.contains(e.target) && !autocompleteBox.contains(e.target)) {
+      autocompleteBox.style.display = "none";
+    }
+  });
+
+  // Trigger search on button or enter
+  searchBtn.addEventListener("click", executeSearch);
+  searchInput.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      executeSearch();
+    }
+  });
+
+  function executeSearch() {
+    autocompleteBox.style.display = "none";
+    const query = searchInput.value.trim();
+    if (!query) {
+      infoLabel.innerText = "اكتب اسم العضو أو الموبايل وسيتم تحديد العملية تلقائيًا.";
+      infoLabel.style.color = "#8D99A3";
+      setupNewMemberMode("");
+      return;
+    }
+
+    fetch("{% url 'members:smart_operations' %}?action=search&term=" + encodeURIComponent(query), {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.results && data.results.length === 1) {
+        selectMember(data.results[0]);
+      } else if (data.results && data.results.length > 1) {
+        renderAutocomplete(data.results);
+      } else {
+        // Not found -> New Member!
+        setupNewMemberMode(query);
+      }
+    });
+  }
+
+  // Case A: Select Existing Member
+  function selectMember(member) {
+    currentSelectedMember = member;
+    searchInput.value = `${member.name} - ${member.mobile}`;
+    fieldMemberId.value = member.id;
+    fieldName.value = member.name;
+    fieldMobile.value = member.mobile;
+    fieldGender.value = member.gender || "male";
+
+    const faceText = member.has_face_enrolled ?
+      ` <span style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid #10b981; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 8px;">📷 بصمة الوجه: مسجل ✓</span>` :
+      ` <span style="background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 8px;">📷 بصمة الوجه غير مسجلة (سيتم فتح تسجيل الوجه فور الحفظ)</span>`;
+
+    if (member.remaining > 0) {
+      // Member has debt -> Activate Debt / Remaining Payment Mode
+      isDebtPayOnly = true;
+      fieldOpType.value = "remaining";
+      infoLabel.innerHTML = `تم التعرف على ${member.name} وعليه متبقي ${member.remaining} ج.م، سيتم فتح سداد المتبقي.` + faceText;
+      infoLabel.style.color = "#FF9F00";
+      labelStartDate.innerText = "تاريخ السداد";
+      saveBtn.innerText = "سداد المتبقي";
+      fieldPaidAmount.value = member.remaining;
+
+      debtBox.style.display = "flex";
+      debtModeText.innerText = `العضو عليه متبقي سابق قدره ${member.remaining} ج.م`;
+      btnToggleRenewal.innerText = "🔄 التبديل إلى تجديد اشتراك كامل";
+    } else {
+      // Member has NO debt -> Activate Renewal Mode
+      isDebtPayOnly = false;
+      fieldOpType.value = "renewal";
+      infoLabel.innerHTML = `تم التعرف على ${member.name} بدون متبقي، سيتم فتح صفحة التجديد.` + faceText;
+      infoLabel.style.color = "#7ED321";
+      labelStartDate.innerText = "بداية التجديد";
+      saveBtn.innerText = "حفظ التجديد";
+
+      debtBox.style.display = "none";
+
+      // If member has previous end date in future, chain from next day, else today
+      if (member.last_end) {
+        const lastEnd = new Date(member.last_end);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        if (lastEnd >= today) {
+          lastEnd.setDate(lastEnd.getDate() + 1);
+          fieldStartDate.value = lastEnd.toISOString().split("T")[0];
+        } else {
+          fieldStartDate.value = new Date().toISOString().split("T")[0];
+        }
+      }
+      syncPlanPrice();
+    }
+    updateLiveCalculation();
+  }
+
+  // Toggle between Debt Settlement and Renewal when member has debt
+  btnToggleRenewal.addEventListener("click", function() {
+    if (!currentSelectedMember) return;
+    if (isDebtPayOnly) {
+      // Switch to Renewal
+      isDebtPayOnly = false;
+      fieldOpType.value = "renewal";
+      labelStartDate.innerText = "بداية التجديد";
+      saveBtn.innerText = "حفظ التجديد";
+      btnToggleRenewal.innerText = "💵 التبديل لسداد الدين فقط";
+      syncPlanPrice();
+    } else {
+      // Switch to Debt Settlement
+      isDebtPayOnly = true;
+      fieldOpType.value = "remaining";
+      labelStartDate.innerText = "تاريخ السداد";
+      saveBtn.innerText = "سداد المتبقي";
+      fieldPaidAmount.value = currentSelectedMember.remaining;
+      btnToggleRenewal.innerText = "🔄 التبديل لتجديد الاشتراك";
+    }
+    updateLiveCalculation();
+  });
+
+  // Case B: New Member Mode
+  function setupNewMemberMode(query) {
+    currentSelectedMember = null;
+    isDebtPayOnly = false;
+    fieldOpType.value = "new_subscription";
+    fieldMemberId.value = "";
+    debtBox.style.display = "none";
+    labelStartDate.innerText = "بداية الاشتراك";
+    saveBtn.innerText = "حفظ الاشتراك";
+
+    const digitsOnly = query.replace(/\D/g, "");
+    if (digitsOnly.length >= 7) {
+      fieldMobile.value = digitsOnly;
+      fieldName.value = "";
+    } else {
+      fieldName.value = query;
+      fieldMobile.value = "";
+    }
+
+    if (query) {
+      infoLabel.innerText = "هذا العضو غير موجود، سيتم فتح تسجيل عضو جديد.";
+      infoLabel.style.color = "#4DB3FF";
+    } else {
+      infoLabel.innerText = "اكتب اسم العضو أو الموبايل وسيتم تحديد العملية تلقائيًا.";
+      infoLabel.style.color = "#8D99A3";
+    }
+
+    fieldStartDate.value = new Date().toISOString().split("T")[0];
+    fieldAllowanceDays.value = "0";
+    syncPlanPrice();
+    updateLiveCalculation();
+  }
+
+  function syncPlanPrice() {
+    const selectedOpt = fieldPlan.options[fieldPlan.selectedIndex];
+    if (selectedOpt) {
+      const price = parseFloat(selectedOpt.getAttribute("data-price") || 0);
+      fieldPaidAmount.value = price.toFixed(2);
+    }
+  }
+
+  // 2. Live Calculation Formula
+  function updateLiveCalculation() {
+    if (isDebtPayOnly && currentSelectedMember) {
+      const prevDebt = currentSelectedMember.remaining;
+      const paid = parseFloat(fieldPaidAmount.value || 0);
+      const remainingDebt = Math.max(0, prevDebt - paid);
+      calcSummary.innerText = `سداد متبقي | الديون السابقة: ${prevDebt.toFixed(0)} ج | المدفوع الآن: ${paid.toFixed(0)} ج | المتبقي بعد السداد: ${remainingDebt.toFixed(0)} ج`;
+      return;
+    }
+
+    const selectedOpt = fieldPlan.options[fieldPlan.selectedIndex];
+    const planName = selectedOpt ? selectedOpt.getAttribute("data-name") : "";
+    const planPrice = selectedOpt ? parseFloat(selectedOpt.getAttribute("data-price") || 0) : 0;
+    const planDuration = selectedOpt ? parseInt(selectedOpt.getAttribute("data-days") || 28) : 28;
+    const paid = parseFloat(fieldPaidAmount.value || 0);
+    const remaining = Math.max(0, planPrice - paid);
+    const allowanceDays = parseInt(fieldAllowanceDays.value || 0);
+
+    const startDateStr = fieldStartDate.value;
+    const startDate = startDateStr ? new Date(startDateStr) : new Date();
+
+    let days = planDuration;
+    let endDate = new Date(startDate);
+
+    if (planName === "جلسة واحدة" || planDuration === 1) {
+      days = 1;
+      endDate = new Date(startDate);
+    } else if (allowanceDays > 0 && remaining > 0) {
+      days = allowanceDays;
+      endDate.setDate(endDate.getDate() + allowanceDays);
+    } else {
+      endDate.setDate(endDate.getDate() + planDuration);
+    }
+
+    const d = String(endDate.getDate()).padStart(2, '0');
+    const m = String(endDate.getMonth() + 1).padStart(2, '0');
+    const y = endDate.getFullYear();
+    const formattedEnd = `${d}/${m}/${y}`;
+
+    const opLabel = (fieldOpType.value === "renewal") ? "تجديد اشتراك" : "اشتراك جديد";
+    const allowanceNote = (allowanceDays > 0 && remaining > 0) ? ` (سماح ${allowanceDays} يوم)` : "";
+
+    calcSummary.innerText = `${opLabel} | سعر الخطة: ${planPrice.toFixed(0)} ج | الأيام: ${days} يوم | المتبقي: ${remaining.toFixed(0)} ج | النهاية: ${formattedEnd}${allowanceNote}`;
+  }
+
+  // Event Listeners for Live Recalculation
+  fieldPlan.addEventListener("change", function() {
+    syncPlanPrice();
+    updateLiveCalculation();
+  });
+  fieldPaidAmount.addEventListener("input", updateLiveCalculation);
+  fieldAllowanceDays.addEventListener("input", updateLiveCalculation);
+  fieldStartDate.addEventListener("change", updateLiveCalculation);
+
+  // Initialize
+  {% if pre_member %}
+    selectMember({
+      id: {{ pre_member.id }},
+      name: "{{ pre_member.name|escapejs }}",
+      mobile: "{{ pre_member.mobile|escapejs }}",
+      gender: "{{ pre_member.gender }}",
+      remaining: {{ pre_member.current_remaining }},
+      last_end: "{{ pre_member.last_subscription_end|date:'Y-m-d'|default:'' }}"
+    });
+  {% else %}
+    setupNewMemberMode("{{ pre_query|escapejs }}");
+  {% endif %}
+});
+</script>
+
+<style>
+.autocomplete-item:hover {
+  background-color: #14242D !important;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,821 @@
+{% extends "base.html" %}
+
+{% block title %}إعدادات النظام — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 24px;">
+
+  <!-- Page Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #162837; padding-bottom: 14px;">
+    <div>
+      <h2 style="color: #FFFFFF; font-size: 1.45rem; font-weight: 800; margin: 0 0 4px 0;">
+        ⚙️ إعدادات النظام وتكامل الخدمات
+      </h2>
+      <span style="color: #8D99A3; font-size: 0.88rem;">
+        بيانات الصالة، حماية كلمة السر، مزامنة Google Contacts، وإدارة الباقات.
+      </span>
+    </div>
+
+    <a href="{% url 'core:manager_dashboard' %}" class="btn btn-secondary" style="background: #0E1D28; border: 1px solid #1C3347; color: #CAD6E2; font-weight: 700; font-size: 0.88rem; padding: 8px 16px; border-radius: 8px; text-decoration: none;">
+      ← لوحة المدير
+    </a>
+  </div>
+
+  <!-- Top Row: Branding & Face Recognition -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 22px;" class="settings-grid">
+
+    <!-- Card 1: White-Label Branding & Colors -->
+    <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
+      <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px;">
+        <h3 class="card-title" style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+          🎨 هوية وشعار الصالة (White-Label Branding)
+        </h3>
+        <span style="color: #8D99A3; font-size: 0.82rem;">تخصيص اسم الصالة، الشعار اللفظي، اللوجو، واللون الرئيسي للواجهة لكل جيم.</span>
+      </div>
+
+      <form method="post" action="{% url 'core:settings' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_branding">
+
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">اسم الصالة (Gym Name)</label>
+            <input type="text" name="gym_name" class="form-control" value="{{ profile.gym_name }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">العملة</label>
+            <input type="text" name="currency" class="form-control" value="{{ profile.currency }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">الشعار اللفظي / السلوجان (Tagline)</label>
+          <input type="text" name="gym_tagline" class="form-control" value="{{ profile.gym_tagline|default:'' }}" placeholder="مثال: The Ultimate Fitness Club" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+        </div>
+
+        <!-- Logo Upload & Preview -->
+        <div class="form-group" style="margin-bottom: 16px; background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">لوجو الصالة (Logo Image)</label>
+          
+          {% if profile.logo %}
+            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 10px;">
+              <div style="width: 50px; height: 50px; border-radius: 8px; overflow: hidden; background: #0f172a; border: 1px solid #334155; display: flex; align-items: center; justify-content: center;">
+                <img src="{{ profile.logo.url }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+              </div>
+              <label style="color: #f87171; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" name="remove_logo" value="1" style="accent-color: #ef4444;">
+                حذف الشعار الحالي والعودة للشعار الافتراضي
+              </label>
+            </div>
+          {% endif %}
+
+          <input type="file" name="logo" accept="image/*" style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; font-size: 0.85rem; padding: 6px; border-radius: 6px; width: 100%;">
+          <small style="color: #64748b; font-size: 0.78rem; display: block; margin-top: 4px;">يفضل صورة بخلفية شفافة PNG أو SVG بحجم حتى 2MB.</small>
+        </div>
+
+        <!-- Primary Brand Color Picker & Presets -->
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">اللون الرئيسي للواجهة (Primary Brand Color)</label>
+          
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <input type="color" id="primaryColorInput" name="primary_color" value="{{ profile.primary_color|default:'#84CC16' }}" style="width: 48px; height: 40px; padding: 0; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
+            <span style="font-family: monospace; font-weight: 800; color: #FFFFFF; font-size: 0.95rem;">
+              {{ profile.primary_color|default:'#84CC16' }}
+            </span>
+          </div>
+
+          <!-- Color Presets -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" onclick="pickThemeColor('#84CC16')" title="هالك لايم" style="width: 28px; height: 28px; border-radius: 6px; background: #84CC16; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
+            <button type="button" onclick="pickThemeColor('#06B6D4')" title="سيان رقمي" style="width: 28px; height: 28px; border-radius: 6px; background: #06B6D4; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
+            <button type="button" onclick="pickThemeColor('#F97316')" title="برتقالي ناري" style="width: 28px; height: 28px; border-radius: 6px; background: #F97316; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
+            <button type="button" onclick="pickThemeColor('#EF4444')" title="أحمر رياضي" style="width: 28px; height: 28px; border-radius: 6px; background: #EF4444; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
+            <button type="button" onclick="pickThemeColor('#F59E0B')" title="ذهبي" style="width: 28px; height: 28px; border-radius: 6px; background: #F59E0B; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
+            <button type="button" onclick="pickThemeColor('#8B5CF6')" title="بنفسجي ملكي" style="width: 28px; height: 28px; border-radius: 6px; background: #8B5CF6; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
+            <button type="button" onclick="pickThemeColor('#10B981')" title="زمردي" style="width: 28px; height: 28px; border-radius: 6px; background: #10B981; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="background: var(--lime-btn-bg, #84CC16); border: none; color: #050B10; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
+          💾 حفظ هوية وشعار الصالة
+        </button>
+      </form>
+    </div>
+
+    <!-- Card 2: Face Recognition & Smart Turnstile Gate -->
+    <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
+      <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <div>
+          <h3 class="card-title" style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+            📷 التعرف بالوجه وبوابة الدخول (Face Recognition Gate)
+          </h3>
+          <span style="color: #8D99A3; font-size: 0.82rem;">التحكم بنماذج الذكاء الاصطناعي YuNet/SFace ومتحكم فتح البوابة.</span>
+        </div>
+        <a href="{% url 'face_recognition:kiosk' %}" target="_blank" class="btn btn-sm" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; font-weight: 700; text-decoration: none; padding: 4px 12px; border-radius: 6px;">
+          📷 فتح الكشك ↗
+        </a>
+      </div>
+
+      <form method="post" action="{% url 'core:settings' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_profile">
+        <input type="hidden" name="form_face" value="1">
+
+        <!-- Global Camera Toggle -->
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          <div>
+            <label for="face_camera_enabled" style="margin: 0; color: #FFFFFF; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: block;">
+              🎥 تشغيل كاميرا التعرف على الوجه التلقائية في الموقع
+            </label>
+            <span style="color: #94a3b8; font-size: 0.8rem;">
+              تعمل الكاميرا تلقائياً فور فتح الموقع وتقوم بمسح الوجوه وإظهار شاشة التنبيه الكبيرة (مسموح / منتهي) دون الحاجة لصفحة مستقلة.
+            </span>
+          </div>
+          <input type="checkbox" id="face_camera_enabled" name="face_camera_enabled" {% if profile.face_camera_enabled %}checked{% endif %} style="width: 22px; height: 22px; accent-color: #10b981; cursor: pointer;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">حساسية مطابقة الوجه (Cosine Threshold)</label>
+            <input type="number" step="0.01" name="face_match_threshold" class="form-control" value="{{ profile.face_match_threshold|default:'0.363' }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <small style="color: #64748b; font-size: 0.75rem;">الافتراضي: 0.363 (موصى به: 0.35 إلى 0.45)</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">دقة كشف الوجه (Min Confidence)</label>
+            <input type="number" step="0.05" name="face_min_confidence" class="form-control" value="{{ profile.face_min_confidence|default:'0.55' }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <small style="color: #64748b; font-size: 0.75rem;">الافتراضي: 0.55 لنماذج YuNet</small>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">فترة منع تكرار التسجيل (بالثواني)</label>
+          <input type="number" name="face_debounce_seconds" class="form-control" value="{{ profile.face_debounce_seconds|default:'60' }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          <small style="color: #64748b; font-size: 0.75rem;">المدة اللازمة قبل تسجيل نفس العضو مرة ثانية عند الوقوف أمام الكاميرا.</small>
+        </div>
+
+        <!-- Relay Hardware Control -->
+        <div style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 12px; margin-bottom: 18px;">
+          <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+            <input type="checkbox" id="gate_relay_enabled" name="gate_relay_enabled" {% if profile.gate_relay_enabled %}checked{% endif %} style="width: 20px; height: 20px; accent-color: #10b981; cursor: pointer;">
+            <label for="gate_relay_enabled" class="form-label" style="margin: 0; color: #CAD6E2; font-weight: 700; cursor: pointer;">تفعيل إشارة فتح البوابة الإلكترونية (Turnstile Relay Trigger)</label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #8D99A3; font-size: 0.84rem; font-weight: 700; margin-bottom: 4px; display: block;">منفذ الاتصال التسلسلي (Serial / COM Port)</label>
+            <input type="text" name="gate_relay_port" class="form-control" value="{{ profile.gate_relay_port|default:'COM3' }}" placeholder="COM3 أو /dev/ttyUSB0" style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace;">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="background: #0d281e; border: 1px solid #10b981; color: #10b981; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
+          💾 حفظ إعدادات الوجه والبوابة
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- Second Row: WhatsApp & Passwords -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 10px;" class="settings-grid">
+
+    <!-- Card 3: Gym Phone & WhatsApp Form -->
+    <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
+      <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px;">
+        <h3 class="card-title" style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0;">
+          📱 تقارير المدير وإعدادات الواتساب
+        </h3>
+      </div>
+
+      <form method="post" action="{% url 'core:settings' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_profile">
+        <input type="hidden" name="form_whatsapp" value="1">
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">رقم هاتف المدير (لاستلام التقارير اليومية)</label>
+          <input type="text" name="manager_mobile" class="form-control" value="{{ profile.manager_mobile }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%; direction: ltr; text-align: right;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">موعد التقرير اليومي (HH:MM)</label>
+          <input type="text" name="daily_report_time" class="form-control" value="{{ profile.daily_report_time }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">نمط إرسال الواتساب</label>
+          <select name="whatsapp_send_mode" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <option value="paste" {% if profile.whatsapp_send_mode == 'paste' %}selected{% endif %}>لصق سريع (Clipboard / Paste) - مستحسن وسريع</option>
+            <option value="typing" {% if profile.whatsapp_send_mode == 'typing' %}selected{% endif %}>كتابة تدريجية إنسانية (Typing simulation)</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+          <input type="checkbox" id="whatsapp_enabled" name="whatsapp_enabled" {% if profile.whatsapp_enabled %}checked{% endif %} style="width: 20px; height: 20px; accent-color: #7ED321; cursor: pointer;">
+          <label for="whatsapp_enabled" class="form-label" style="margin: 0; color: #CAD6E2; font-weight: 700; cursor: pointer;">تفعيل إرسال رسائل الواتساب التلقائية</label>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">قالب رسالة انتهاء الاشتراك</label>
+          <textarea name="expired_message_template" class="form-control" rows="3" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; border-radius: 8px; padding: 10px; width: 100%;">{{ profile.expired_message_template }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="background: #0E291C; border: 1px solid #1C5A35; color: #7ED321; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
+          💾 حفظ إعدادات الواتساب
+        </button>
+      </form>
+    </div>
+
+    <!-- Section 2: Secure Password Management (Must require Current Password!) -->
+    <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
+      <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px;">
+        <h3 class="card-title" style="color: #FF5C67; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
+          🔐 أمان النظام وتغيير كلمة السر
+        </h3>
+        <span style="color: #8D99A3; font-size: 0.82rem;">لحماية النظام، لا يمكن تغيير أي كلمة سر إلا بعد إدخال كلمة السر الحالية أولاً.</span>
+      </div>
+
+      <!-- Part A: Trainers & Dashboard Protection Password -->
+      <form method="post" action="{% url 'core:settings' %}" style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 18px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="change_trainers_password">
+
+        <h4 style="color: #4DB3FF; font-size: 0.95rem; font-weight: 800; margin: 0 0 12px 0;">
+          🛡️ كلمة سر صفحة المدربين وحساباتهم
+        </h4>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            كلمة السر الحالية *
+          </label>
+          <input type="password" id="old_pwd_input" name="old_password" class="form-control" placeholder="اكتب كلمة السر الحالية للتحقق..." required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+              كلمة السر الجديدة *
+            </label>
+            <input type="password" id="new_pwd_input" name="new_password" class="form-control" placeholder="4 خانات على الأقل" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+              تأكيد كلمة السر الجديدة *
+            </label>
+            <input type="password" id="confirm_pwd_input" name="confirm_password" class="form-control" placeholder="أعد كتابتها للتأكيد" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" onclick="togglePasswordVisibility('old_pwd_input', 'new_pwd_input', 'confirm_pwd_input')" style="background: transparent; border: 1px solid #1E374D; color: #8D99A3; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+            👁️ إظهار / إخفاء
+          </button>
+
+          <button type="submit" class="btn btn-primary" style="background: #1C3347; border: 1px solid #4DB3FF; color: #4DB3FF; font-weight: 800; font-size: 0.85rem; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+            🔒 حفظ كلمة سر المدربين
+          </button>
+        </div>
+      </form>
+
+      <!-- Part B: Logged-in User Account Password -->
+      <form method="post" action="{% url 'core:settings' %}" style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="change_account_password">
+
+        <h4 style="color: #A8F14B; font-size: 0.95rem; font-weight: 800; margin: 0 0 12px 0;">
+          👤 تغيير كلمة مرور حسابك ({{ request.user.username }})
+        </h4>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            كلمة المرور الحالية لحسابك *
+          </label>
+          <input type="password" id="user_old_pwd" name="current_user_password" class="form-control" placeholder="كلمة مرور دخولك الحالية..." required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+              كلمة المرور الجديدة *
+            </label>
+            <input type="password" id="user_new_pwd" name="new_user_password" class="form-control" placeholder="6 خانات على الأقل" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+              تأكيد كلمة المرور الجديدة *
+            </label>
+            <input type="password" id="user_confirm_pwd" name="confirm_user_password" class="form-control" placeholder="أعد كتابتها للتأكيد" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <button type="button" onclick="togglePasswordVisibility('user_old_pwd', 'user_new_pwd', 'user_confirm_pwd')" style="background: transparent; border: 1px solid #1E374D; color: #8D99A3; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+            👁️ إظهار / إخفاء
+          </button>
+
+          <button type="submit" class="btn btn-primary" style="background: #173322; border: 1px solid #7ED321; color: #7ED321; font-weight: 800; font-size: 0.85rem; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+            👤 حفظ كلمة مرور الحساب
+          </button>
+        </div>
+      </form>
+
+    </div>
+
+  </div>
+
+  <!-- Section 3: Google Contacts Synchronization (Restored & Preserved from v1!) -->
+  <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #162837; padding-bottom: 12px;">
+      <div>
+        <h3 style="color: #FFFFFF; font-size: 1.25rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+          📱 مزامنة جهات اتصال جوجل (Google Contacts Sync)
+        </h3>
+        <span style="color: #8D99A3; font-size: 0.85rem;">
+          مزامنة أرقام وأسماء اللاعبين مباشرة مع حساب Google الصالة لإرسال رسائل واتساب بسهولة وتحديث دفتر الهاتف.
+        </span>
+      </div>
+
+      <!-- Live Status Pill -->
+      <div>
+        {% if google_status.connected %}
+          <span style="background: rgba(126,211,33,0.15); border: 1px solid #7ED321; color: #7ED321; font-weight: 800; font-size: 0.88rem; padding: 6px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
+            🟢 متصل بالخدمة (Google People API Active)
+          </span>
+        {% else %}
+          <span style="background: rgba(255,92,103,0.15); border: 1px solid #FF5C67; color: #FF5C67; font-weight: 800; font-size: 0.88rem; padding: 6px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
+            ⚠️ {{ google_status.message|default:"غير متصل بـ Google" }}
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 3 Sync Metric Cards -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px;" class="google-stats-grid">
+      
+      <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 14px;">
+        <span style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">جهات اتصال الحساب الفعلي</span>
+        <strong style="color: #4DB3FF; font-size: 1.35rem; font-weight: 800; margin-top: 4px; display: block;">
+          {{ google_status.remote_contacts_count|default:"0" }}
+        </strong>
+        <span style="color: #657786; font-size: 0.75rem;">في دفتر عناوين Google</span>
+      </div>
+
+      <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 14px;">
+        <span style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">إجمالي أعضاء الصالة</span>
+        <strong style="color: #FFFFFF; font-size: 1.35rem; font-weight: 800; margin-top: 4px; display: block;">
+          {{ google_status.total_members }}
+        </strong>
+        <span style="color: #657786; font-size: 0.75rem;">المسجلين بالنظام</span>
+      </div>
+
+      <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 14px;">
+        <span style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">متزامنين بالفعل</span>
+        <strong style="color: #7ED321; font-size: 1.35rem; font-weight: 800; margin-top: 4px; display: block;">
+          {{ google_status.synced_members }}
+        </strong>
+        <span style="color: #657786; font-size: 0.75rem;">تم رفعهم إلى Google</span>
+      </div>
+
+      <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 14px;">
+        <span style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">بانتظار المزامنة</span>
+        <strong style="color: #FFB300; font-size: 1.35rem; font-weight: 800; margin-top: 4px; display: block;">
+          {{ google_status.pending_members }}
+        </strong>
+        <span style="color: #657786; font-size: 0.75rem;">أعضاء جدد لم يتم رفعهم</span>
+      </div>
+
+    </div>
+
+    <!-- Sync Actions -->
+    <div style="background: #08131C; border: 1px solid #193144; border-radius: 10px; padding: 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+      <div>
+        <h4 style="color: #CAD6E2; font-size: 0.95rem; font-weight: 700; margin: 0 0 4px 0;">
+          إجراءات المزامنة الفورية
+        </h4>
+        <span style="color: #8D99A3; font-size: 0.82rem;">
+          المزامنة العادية ترفع فقط الأعضاء الجدد، بينما المزامنة الإجبارية تعيد رفع جميع الأرقام للتأكيد.
+        </span>
+      </div>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <!-- Sync Unsynced -->
+        <form method="post" action="{% url 'core:settings' %}" style="margin: 0;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="sync_google_contacts">
+          <button type="submit" class="btn btn-primary" style="background: #0E291C; border: 1px solid #1C5A35; color: #7ED321; font-weight: 800; padding: 10px 18px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            🔄 مزامنة الأعضاء الجدد ({{ google_status.pending_members }})
+          </button>
+        </form>
+
+        <!-- Force Sync All -->
+        <form method="post" action="{% url 'core:settings' %}" onsubmit="return confirm('هل تريد بالتأكيد تشغيل المزامنة الإجبارية لكافة الأعضاء ({{ google_status.total_members }})؟ قد يستغرق ذلك بضع ثوانٍ.');" style="margin: 0;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="force_sync_google_contacts">
+          <button type="submit" class="btn btn-secondary" style="background: #142433; border: 1px solid #234563; color: #4DB3FF; font-weight: 700; padding: 10px 18px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            ⚡ مزامنة إجبارية لكل الأرقام
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Credentials & Token Upload / Status -->
+    <details style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 12px 16px;">
+      <summary style="color: #CAD6E2; font-weight: 700; font-size: 0.88rem; cursor: pointer;">
+        📁 إدارة ملفات الربط والاعتماد (credentials.json & token.json)
+      </summary>
+      
+      <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #132433;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; font-size: 0.82rem; color: #8D99A3;">
+          <div>
+            <strong>ملف credentials.json:</strong>
+            <span style="color: {% if google_status.credentials_exist %}#7ED321{% else %}#FF5C67{% endif %}; font-family: monospace; display: block; margin-top: 4px;">
+              {% if google_status.credentials_exist %}✅ متوفر ومربوط{% else %}❌ غير موجود{% endif %}
+            </span>
+          </div>
+          <div>
+            <strong>ملف token.json:</strong>
+            <span style="color: {% if google_status.token_exist %}#7ED321{% else %}#FF5C67{% endif %}; font-family: monospace; display: block; margin-top: 4px;">
+              {% if google_status.token_exist %}✅ توكن صالح وقابل للتجديد{% else %}❌ غير موجود{% endif %}
+            </span>
+          </div>
+        </div>
+
+        <form method="post" action="{% url 'core:settings' %}" enctype="multipart/form-data" style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="upload_google_files">
+
+          <div style="flex: 1; min-width: 200px;">
+            <label style="color: #CAD6E2; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;">رفع credentials.json جديد:</label>
+            <input type="file" name="credentials_file" accept=".json" style="background: #0C1822; border: 1px solid #1B2F40; color: #FFFFFF; font-size: 0.8rem; padding: 6px; border-radius: 6px; width: 100%;">
+          </div>
+
+          <div style="flex: 1; min-width: 200px;">
+            <label style="color: #CAD6E2; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;">رفع token.json جديد:</label>
+            <input type="file" name="token_file" accept=".json" style="background: #0C1822; border: 1px solid #1B2F40; color: #FFFFFF; font-size: 0.8rem; padding: 6px; border-radius: 6px; width: 100%;">
+          </div>
+
+          <button type="submit" class="btn btn-secondary" style="background: #0E1D28; border: 1px solid #1C3347; color: #CAD6E2; font-weight: 700; font-size: 0.85rem; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+            📤 حفظ الملفات
+          </button>
+        </form>
+      </div>
+    </details>
+
+  </div>
+
+  <!-- Section 4: Plans Management -->
+  <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
+    <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px;">
+      <h3 class="card-title" style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0;">
+        📋 باقات الاشتراكات
+      </h3>
+    </div>
+
+    <!-- Add New Plan Form -->
+    <form method="post" action="{% url 'core:settings' %}" style="background: #071018; border: 1px solid #162A3B; padding: 16px; border-radius: 10px; margin-bottom: 18px;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_plan">
+      <h4 style="font-size: 0.95rem; margin: 0 0 12px 0; color: #A8F14B; font-weight: 800;">➕ إضافة باقة جديدة</h4>
+      
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <input type="text" name="name" class="form-control" placeholder="اسم الباقة (مثال: شهري شامل)" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+        </div>
+
+        <div class="form-group">
+          <input type="number" step="0.01" name="price" class="form-control" placeholder="السعر (ج)" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+        </div>
+
+        <div class="form-group">
+          <input type="number" name="duration_days" class="form-control" placeholder="المدة بالأيام (28)" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+        </div>
+
+        <div class="form-group">
+          <input type="text" name="frequency" class="form-control" placeholder="النظام (كل يوم)" value="كل يوم" style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+        </div>
+      </div>
+
+      <div style="margin-top: 10px; text-align: left;">
+        <button type="submit" class="btn btn-primary" style="background: #A8F14B; color: #050B10; font-weight: 800; font-size: 0.88rem; padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer;">
+          + حفظ وإضافة الباقة
+        </button>
+      </div>
+    </form>
+
+    <!-- Existing Plans Table -->
+    <div class="table-responsive" style="overflow-x: auto;">
+      <table class="dark-table" style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: #071018; border-bottom: 2px solid #182C3C;">
+            <th style="padding: 12px; text-align: right; color: #8D99A3; font-size: 0.85rem; font-weight: 700;">الباقة</th>
+            <th style="padding: 12px; text-align: right; color: #8D99A3; font-size: 0.85rem; font-weight: 700;">السعر</th>
+            <th style="padding: 12px; text-align: right; color: #8D99A3; font-size: 0.85rem; font-weight: 700;">المدة</th>
+            <th style="padding: 12px; text-align: right; color: #8D99A3; font-size: 0.85rem; font-weight: 700;">النظام</th>
+            <th style="padding: 12px; text-align: center; color: #8D99A3; font-size: 0.85rem; font-weight: 700;">الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for plan in plans %}
+            <tr style="border-bottom: 1px solid #132431;">
+              <td style="padding: 12px; font-weight: 700; color: #FFFFFF;">{{ plan.name }}</td>
+              <td style="padding: 12px; color: #7ED321; font-weight: 800;">{{ plan.price }} {{ profile.currency }}</td>
+              <td style="padding: 12px; color: #CAD6E2;">{{ plan.duration_days }} يوم</td>
+              <td style="padding: 12px; color: #8D99A3;">{{ plan.frequency }}</td>
+              <td style="padding: 12px; text-align: center;">
+                <form method="post" action="{% url 'core:settings' %}" style="display: inline; margin: 0;">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="toggle_plan">
+                  <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                  <button type="submit" class="btn btn-sm {% if plan.is_active %}btn-success{% else %}btn-danger{% endif %}" style="padding: 4px 12px; font-size: 0.8rem; border-radius: 6px; font-weight: 700; cursor: pointer;">
+                    {% if plan.is_active %}مفعلة{% else %}معطلة{% endif %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Section 5: GitHub System Updates & One-Click Upgrades -->
+  <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #162837; padding-bottom: 12px;">
+      <div>
+        <h3 style="color: #FFFFFF; font-size: 1.25rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+          🚀 تحديثات النظام و GitHub (System Updates & Upgrades)
+        </h3>
+        <span style="color: #8D99A3; font-size: 0.85rem;">
+          مزامنة التحديثات وسحب أي إصدار جديد تضعه على مستودع GitHub تلقائياً مع النسخ الاحتياطي التلقائي وترقية قاعدة البيانات بضغطة زر واحدة.
+        </span>
+      </div>
+
+      <!-- Live Current Version Pill -->
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span id="updateStatusBadge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; font-weight: 800; font-size: 0.88rem; padding: 6px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
+          <span>📦</span>
+          <span>الإصدار المثبت: <strong>{{ version_info.version_tag|default:"v2.1.0" }}</strong> (<code style="font-family: monospace;">{{ version_info.commit }}</code>)</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- 3 Info Summary Cards -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px;" class="updater-stats-grid">
+      <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 14px;">
+        <span style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">الفرع النشط (Git Branch)</span>
+        <strong style="color: #4DB3FF; font-size: 1.15rem; font-weight: 800; margin-top: 4px; display: block; font-family: monospace;">
+          {{ version_info.branch|default:"main" }}
+        </strong>
+      </div>
+
+      <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 14px;">
+        <span style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">تاريخ آخر تعديل محلي</span>
+        <strong style="color: #A8F14B; font-size: 1.15rem; font-weight: 800; margin-top: 4px; display: block;">
+          {{ version_info.date|default:"محدث" }}
+        </strong>
+      </div>
+
+      <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 14px;">
+        <span style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">آخر فحص للتحديثات</span>
+        <strong id="lastCheckTimeText" style="color: #CAD6E2; font-size: 1.05rem; font-weight: 800; margin-top: 4px; display: block;">
+          {% if profile.last_update_check %}{{ profile.last_update_check|date:"d/m/Y - h:i A" }}{% else %}لم يتم الفحص بعد{% endif %}
+        </strong>
+      </div>
+    </div>
+
+    <!-- Repository URL and Branch Config Form -->
+    <form method="post" action="{% url 'core:settings' %}" style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_branding">
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 12px; align-items: flex-end;">
+        <div>
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; font-size: 0.85rem; margin-bottom: 6px; display: block;">
+            رابط مستودع GitHub للمشروع (Repository URL)
+          </label>
+          <input type="text" name="github_repo_url" value="{{ profile.github_repo_url|default:'https://github.com/mostafa-donia/mostafa-donia.github.io.git' }}" class="form-control" style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; font-family: monospace; font-size: 0.85rem;" dir="ltr">
+        </div>
+
+        <div>
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; font-size: 0.85rem; margin-bottom: 6px; display: block;">
+            الفرع المستهدف (Branch)
+          </label>
+          <input type="text" name="github_branch" value="{{ profile.github_branch|default:'main' }}" class="form-control" style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; font-family: monospace; font-size: 0.85rem;" dir="ltr">
+        </div>
+
+        <div>
+          <button type="submit" class="btn btn-secondary" style="background: #172A38; border: 1px solid #23435A; color: #CAD6E2; font-weight: 700; height: 38px; padding: 0 16px; border-radius: 6px; cursor: pointer;">
+            حفظ الرابط
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Action Area: Check Updates and Perform Update Buttons -->
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px;">
+      <button type="button" id="btnCheckUpdates" onclick="checkGitHubUpdates()" class="btn btn-primary" style="background: #1C3347; border: 1px solid #4DB3FF; color: #4DB3FF; font-weight: 800; font-size: 0.95rem; padding: 10px 20px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+        <span id="checkIcon">🔄</span>
+        <span id="checkBtnText">فحص وجود تحديثات على GitHub</span>
+      </button>
+
+      <button type="button" id="btnPerformUpdate" onclick="performSystemUpdate()" class="btn" style="background: #10b981; border: none; color: #050B10; font-weight: 900; font-size: 0.95rem; padding: 10px 24px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; opacity: 0.4; pointer-events: none;" disabled>
+        <span>⚡</span>
+        <span id="performBtnText">تحديث النظام الآن (Update Now)</span>
+      </button>
+    </div>
+
+    <!-- Live Result Alert Banner -->
+    <div id="updateFeedbackBanner" style="display: none; padding: 14px 18px; border-radius: 10px; margin-bottom: 16px; font-size: 0.92rem; font-weight: 700;"></div>
+
+    <!-- Commits List Preview (if updates found) -->
+    <div id="commitsPreviewBox" style="display: none; background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+      <h4 style="color: #4DB3FF; font-size: 0.92rem; font-weight: 800; margin: 0 0 10px 0;">
+        📝 التعديلات والإصدارات الجديدة المتوفرة على GitHub:
+      </h4>
+      <ul id="commitsListUl" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px;"></ul>
+    </div>
+
+    <!-- Terminal-Style Live Update Log Console -->
+    <div id="updateTerminalBox" style="display: none; background: #030712; border: 1px solid #1f2937; border-radius: 10px; padding: 14px 18px; font-family: monospace; font-size: 0.85rem; color: #34d399; max-height: 240px; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; color: #9ca3af; border-bottom: 1px solid #1f2937; padding-bottom: 6px; margin-bottom: 10px; font-size: 0.78rem;">
+        <span>TERMINAL UPDATE LOG</span>
+        <span id="terminalStatusIndicator">جاري التنفيذ...</span>
+      </div>
+      <div id="terminalLogContent" style="display: flex; flex-direction: column; gap: 4px;"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<style>
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+function togglePasswordVisibility(...inputIds) {
+  for (const id of inputIds) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.type = el.type === 'password' ? 'text' : 'password';
+    }
+  }
+}
+
+function pickThemeColor(hex) {
+  const input = document.getElementById('primaryColorInput');
+  if (input) {
+    input.value = hex;
+    const label = input.nextElementSibling;
+    if (label && label.tagName === 'SPAN') {
+      label.innerText = hex;
+    }
+  }
+}
+
+async function checkGitHubUpdates() {
+  const btn = document.getElementById('btnCheckUpdates');
+  const icon = document.getElementById('checkIcon');
+  const txt = document.getElementById('checkBtnText');
+  const banner = document.getElementById('updateFeedbackBanner');
+  const previewBox = document.getElementById('commitsPreviewBox');
+  const commitsUl = document.getElementById('commitsListUl');
+  const performBtn = document.getElementById('btnPerformUpdate');
+
+  btn.disabled = true;
+  icon.style.display = 'inline-block';
+  icon.style.animation = 'spin 1s linear infinite';
+  txt.textContent = 'جاري الفحص والاتصال بـ GitHub...';
+  banner.style.display = 'none';
+  previewBox.style.display = 'none';
+
+  try {
+    const res = await fetch("{% url 'core:check_updates' %}");
+    const data = await res.json();
+
+    const timeEl = document.getElementById('lastCheckTimeText');
+    if (timeEl) timeEl.textContent = 'الآن';
+
+    if (data.success && data.update_available) {
+      banner.style.display = 'block';
+      banner.style.background = 'rgba(16, 185, 129, 0.15)';
+      banner.style.border = '1px solid #10b981';
+      banner.style.color = '#34d399';
+      banner.innerHTML = `🚀 <strong>${data.message}</strong> (الإصدار الجديد على GitHub: <code>${data.remote_commit}</code> - ${data.remote_message || ''})`;
+
+      // Populate commits list
+      if (data.commits_list && data.commits_list.length > 0) {
+        commitsUl.innerHTML = '';
+        data.commits_list.forEach(c => {
+          const li = document.createElement('li');
+          li.style.color = '#cbd5e1';
+          li.style.fontSize = '0.85rem';
+          li.innerHTML = `• <code style="color: #4db3ff; background: rgba(77,179,255,0.1); padding: 2px 6px; border-radius: 4px;">${c}</code>`;
+          commitsUl.appendChild(li);
+        });
+        previewBox.style.display = 'block';
+      }
+
+      // Enable Update Now button
+      performBtn.disabled = false;
+      performBtn.style.opacity = '1';
+      performBtn.style.pointerEvents = 'auto';
+      performBtn.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.4)';
+    } else if (data.success && !data.update_available) {
+      banner.style.display = 'block';
+      banner.style.background = 'rgba(59, 130, 246, 0.12)';
+      banner.style.border = '1px solid #3b82f6';
+      banner.style.color = '#93c5fd';
+      banner.innerHTML = `✓ <strong>${data.message}</strong> (كود الـ Commit الحالي: <code>${data.current_commit}</code>)`;
+      performBtn.disabled = true;
+      performBtn.style.opacity = '0.4';
+      performBtn.style.pointerEvents = 'none';
+    } else {
+      banner.style.display = 'block';
+      banner.style.background = 'rgba(239, 68, 68, 0.12)';
+      banner.style.border = '1px solid #ef4444';
+      banner.style.color = '#f87171';
+      banner.innerHTML = `❌ ${data.message || 'حدث خطأ أثناء فحص التحديثات.'}`;
+    }
+  } catch (err) {
+    banner.style.display = 'block';
+    banner.style.background = 'rgba(239, 68, 68, 0.12)';
+    banner.style.border = '1px solid #ef4444';
+    banner.style.color = '#f87171';
+    banner.innerHTML = `❌ تعذر الاتصال بالخادم: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+    icon.style.animation = 'none';
+    txt.textContent = 'فحص وجود تحديثات على GitHub';
+  }
+}
+
+async function performSystemUpdate() {
+  if (!confirm("هل أنت متأكد من رغبتك في تحديث النظام الآن؟\nسيتم حفظ نسخة احتياطية من قاعدة البيانات وسحب التحديثات وتطبيق ترقيات الجداول تلقائياً.")) {
+    return;
+  }
+
+  const performBtn = document.getElementById('btnPerformUpdate');
+  const performTxt = document.getElementById('performBtnText');
+  const termBox = document.getElementById('updateTerminalBox');
+  const termContent = document.getElementById('terminalLogContent');
+  const termStatus = document.getElementById('terminalStatusIndicator');
+
+  performBtn.disabled = true;
+  performBtn.style.opacity = '0.5';
+  performTxt.textContent = 'جاري التحديث والتثبيت...';
+
+  termBox.style.display = 'block';
+  termContent.innerHTML = '<div style="color: #fbbf24;">[START] بدء عملية التحديث الشامل للنظام...</div>';
+  termStatus.textContent = 'جاري المعالجة...';
+
+  try {
+    const res = await fetch("{% url 'core:perform_update' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": getCookie("csrftoken") || ""
+      }
+    });
+    const data = await res.json();
+
+    if (data.logs && data.logs.length > 0) {
+      data.logs.forEach(l => {
+        const line = document.createElement('div');
+        line.textContent = l;
+        termContent.appendChild(line);
+      });
+    }
+
+    if (data.success) {
+      termStatus.textContent = 'اكتمل بنجاح ✓';
+      termStatus.style.color = '#34d399';
+      alert(data.message || 'تم تحديث النظام بنجاح!');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } else {
+      termStatus.textContent = 'فشل ❌';
+      termStatus.style.color = '#ef4444';
+      alert('حدث خطأ أثناء التحديث: ' + (data.message || 'فشل'));
+      performBtn.disabled = false;
+      performBtn.style.opacity = '1';
+      performTxt.textContent = 'إعادة محاولة التحديث';
+    }
+  } catch (err) {
+    termContent.innerHTML += `<div style="color: #ef4444;">❌ خطأ في الاتصال: ${err.message}</div>`;
+    termStatus.textContent = 'فشل الاتصال ❌';
+    performBtn.disabled = false;
+    performBtn.style.opacity = '1';
+    performTxt.textContent = 'تحديث النظام الآن';
+  }
+}
+</script>
+{% endblock %}

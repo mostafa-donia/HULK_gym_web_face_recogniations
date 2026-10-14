@@ -1,0 +1,755 @@
+from datetime import date, timedelta
+from decimal import Decimal
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+
+from apps.accounts.decorators import manager_required
+from apps.core.models import GymProfile
+from apps.members.models import Member, MemberStatus, Plan, Subscription
+from apps.messaging.models import MessageType, WhatsAppMessage
+from apps.payments.models import Payment, PaymentMethod, PaymentOperationType
+
+
+def generate_next_member_id() -> str:
+    """Generates the next sequential MEM-XXXXX identifier."""
+    latest = Member.objects.filter(member_id__startswith="MEM-").order_by("-id").first()
+    if not latest:
+        return "MEM-00001"
+    try:
+        num = int(latest.member_id.replace("MEM-", ""))
+        return f"MEM-{num + 1:05d}"
+    except Exception:
+        total = Member.objects.count() + 1
+        return f"MEM-{total:05d}"
+
+
+def generate_next_payment_id() -> tuple[str, str]:
+    """Generates sequential PAY-XXXXX and INV-XXXXX identifiers."""
+    latest = Payment.objects.order_by("-id").first()
+    num = 1
+    if latest and latest.payment_id.startswith("PAY-"):
+        try:
+            num = int(latest.payment_id.replace("PAY-", "")) + 1
+        except Exception:
+            num = Payment.objects.count() + 1
+    return f"PAY-{num:05d}", f"INV-{num:05d}"
+
+
+@login_required
+def member_list_view(request):
+    today = timezone.localdate()
+    query = request.GET.get("q", "").strip()
+    status_filter = request.GET.get("filter", "all")
+    plan_filter = request.GET.get("plan", "all")
+    gender_filter = request.GET.get("gender", "all")
+
+    # Global KPI counts for top overview badges
+    total_count = Member.objects.count()
+    active_count = Member.objects.filter(last_subscription_end__gte=today).count()
+    expired_count = total_count - active_count
+    debt_count = Member.objects.filter(current_remaining__gt=0).count()
+
+    members = Member.objects.all()
+
+    # Search filter
+    if query:
+        members = members.filter(
+            Q(name__icontains=query)
+            | Q(mobile__icontains=query)
+            | Q(member_id__icontains=query)
+            | Q(last_subscription_type__icontains=query)
+        )
+
+    # Status filter
+    if status_filter == "active":
+        members = members.filter(last_subscription_end__gte=today)
+    elif status_filter == "expired":
+        members = members.filter(Q(last_subscription_end__lt=today) | Q(last_subscription_end__isnull=True))
+    elif status_filter in ["debt", "remaining"]:
+        members = members.filter(current_remaining__gt=0)
+    elif status_filter == "expiring_soon":
+        members = members.filter(
+            last_subscription_end__gte=today,
+            last_subscription_end__lte=today + timedelta(days=3),
+        )
+    elif status_filter in ["face", "fingerprint"]:
+        members = members.filter(has_face_enrolled=True)
+
+    # Plan filter
+    if plan_filter != "all" and plan_filter:
+        members = members.filter(last_subscription_type=plan_filter)
+
+    # Gender filter
+    if gender_filter in ["male", "female"]:
+        members = members.filter(gender=gender_filter)
+
+    # Ordering
+    if status_filter == "expired":
+        members = members.order_by("last_subscription_end")
+    elif status_filter in ["debt", "remaining"]:
+        members = members.order_by("-current_remaining")
+    else:
+        members = members.order_by("-id")
+
+    filtered_count = members.count()
+
+    paginator = Paginator(members, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    # Enrich page objects with precomputed days status for crystal clear rendering
+    enriched_members = []
+    for m in page_obj:
+        is_active = bool(m.last_subscription_end and m.last_subscription_end >= today)
+        if is_active:
+            days_left = (m.last_subscription_end - today).days
+            days_expired = 0
+            if days_left == 0:
+                days_status_text = "اليوم الأخير"
+                status_color = "warning"
+            elif days_left == 1:
+                days_status_text = "يتبقى يوم واحد"
+                status_color = "warning"
+            else:
+                days_status_text = f"يتبقى {days_left} يوم"
+                status_color = "success" if days_left > 3 else "warning"
+            status_text = "مشترك حالياً"
+        else:
+            days_left = 0
+            if m.last_subscription_end:
+                days_expired = (today - m.last_subscription_end).days
+                if days_expired == 0:
+                    days_status_text = "انتهى اليوم"
+                elif days_expired == 1:
+                    days_status_text = "انتهى منذ يوم"
+                else:
+                    days_status_text = f"انتهى منذ {days_expired} يوم"
+            else:
+                days_expired = 0
+                days_status_text = "بدون اشتراك"
+            status_color = "expired"
+            status_text = "غير مشترك"
+
+        enriched_members.append({
+            "member": m,
+            "is_active": is_active,
+            "days_left": days_left,
+            "days_expired": days_expired,
+            "days_status_text": days_status_text,
+            "status_color": status_color,
+            "status_text": status_text,
+            "has_debt": m.current_remaining > Decimal("0.00"),
+        })
+
+    plans_list = Plan.objects.filter(is_active=True).order_by("name")
+
+    context = {
+        "page_obj": page_obj,
+        "enriched_members": enriched_members,
+        "query": query,
+        "status_filter": status_filter,
+        "plan_filter": plan_filter,
+        "gender_filter": gender_filter,
+        "total_count": total_count,
+        "active_count": active_count,
+        "expired_count": expired_count,
+        "debt_count": debt_count,
+        "filtered_count": filtered_count,
+        "plans_list": plans_list,
+        "today": today,
+    }
+    return render(request, "members/member_list.html", context)
+
+
+@login_required
+def member_detail_view(request, member_id):
+    member = get_object_or_404(Member, id=member_id)
+    today = timezone.localdate()
+    is_active = bool(member.last_subscription_end and member.last_subscription_end >= today)
+    days_left = max(0, (member.last_subscription_end - today).days) if is_active else 0
+    days_expired = (today - member.last_subscription_end).days if (member.last_subscription_end and not is_active) else 0
+
+    subscriptions = member.subscriptions.all().order_by("-start_date")
+    payments = member.payments.all().order_by("-created_at")
+    checkins = member.check_ins.all().order_by("-checked_in_at")[:15]
+
+    context = {
+        "member": member,
+        "is_active": is_active,
+        "days_left": days_left,
+        "days_expired": days_expired,
+        "subscriptions": subscriptions,
+        "payments": payments,
+        "checkins": checkins,
+        "today": today,
+    }
+    return render(request, "members/member_detail.html", context)
+
+
+@login_required
+def member_create_view(request):
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        mobile = request.POST.get("mobile", "").strip()
+        gender = request.POST.get("gender", "male")
+        notes = request.POST.get("notes", "").strip()
+
+        if not name:
+            messages.error(request, "اسم العضو مطلوب.")
+            return render(request, "members/member_form.html")
+
+        mid = generate_next_member_id()
+        member = Member.objects.create(
+            member_id=mid,
+            name=name,
+            mobile=mobile,
+            gender=gender,
+            notes=notes,
+            current_status=MemberStatus.EXPIRED,
+        )
+
+        # Attempt seamless Google Contacts sync in background thread so request never hangs
+        if mobile:
+            try:
+                import threading
+                from apps.core.google_contacts import sync_single_member_to_google
+                threading.Thread(target=sync_single_member_to_google, args=(member,), daemon=True).start()
+            except Exception:
+                pass
+
+        messages.success(request, f"تمت إضافة العضو {member.name} ({member.member_id}) بنجاح!")
+        
+        # Check if user wants to subscribe immediately
+        if "add_subscription" in request.POST:
+            return redirect(f"/members/subscription/create/?member_id={member.id}")
+
+        return redirect(f"/members/{member.id}/")
+
+    initial_name = request.GET.get("name", "")
+    return render(request, "members/member_form.html", {"initial_name": initial_name})
+
+
+@login_required
+def member_edit_view(request, member_id):
+    member = get_object_or_404(Member, id=member_id)
+    plans = Plan.objects.filter(is_active=True).order_by("price")
+
+    if request.method == "POST":
+        member.name = request.POST.get("name", member.name).strip()
+        member.mobile = request.POST.get("mobile", member.mobile).strip()
+        member.gender = request.POST.get("gender", member.gender)
+        member.notes = request.POST.get("notes", member.notes).strip()
+
+        # Support editing and correcting the member's plan if misswritten
+        edit_plan = request.POST.get("edit_plan") == "1" or "last_subscription_type" in request.POST
+        if edit_plan:
+            plan_name = request.POST.get("last_subscription_type", "").strip()
+            custom_plan = request.POST.get("custom_plan_name", "").strip()
+            if custom_plan:
+                plan_name = custom_plan
+
+            if plan_name:
+                member.last_subscription_type = plan_name
+
+            sub_start_str = request.POST.get("last_subscription_start", "").strip()
+            if sub_start_str:
+                try:
+                    member.last_subscription_start = date.fromisoformat(sub_start_str)
+                except Exception:
+                    pass
+
+            sub_end_str = request.POST.get("last_subscription_end", "").strip()
+            if sub_end_str:
+                try:
+                    member.last_subscription_end = date.fromisoformat(sub_end_str)
+                except Exception:
+                    pass
+
+            paid_str = request.POST.get("current_paid", "").strip()
+            if paid_str:
+                try:
+                    member.current_paid = Decimal(paid_str)
+                except Exception:
+                    pass
+
+            rem_str = request.POST.get("current_remaining", "").strip()
+            if rem_str:
+                try:
+                    member.current_remaining = Decimal(rem_str)
+                except Exception:
+                    pass
+
+            # Synchronize with the latest subscription record if one exists
+            latest_sub = member.subscriptions.order_by("-created_at").first()
+            if latest_sub:
+                if plan_name:
+                    latest_sub.plan_name = plan_name
+                if member.last_subscription_start:
+                    latest_sub.start_date = member.last_subscription_start
+                if member.last_subscription_end:
+                    latest_sub.end_date = member.last_subscription_end
+                if paid_str:
+                    latest_sub.paid_amount = member.current_paid
+                if rem_str:
+                    latest_sub.remaining_amount = member.current_remaining
+                latest_sub.save()
+
+        member.refresh_status()
+        member.save()
+        messages.success(request, f"تم تحديث بيانات العضو {member.name} وتصحيح الاشتراك بنجاح.")
+        return redirect("members:member_detail", member_id=member.id)
+
+    context = {
+        "member": member,
+        "is_edit": True,
+        "plans": plans,
+    }
+    return render(request, "members/member_form.html", context)
+
+
+@login_required
+def subscription_edit_view(request, subscription_id):
+    """Allows correcting any misswritten plan name, dates, or amounts for a subscription record."""
+    subscription = get_object_or_404(Subscription, id=subscription_id)
+    member = subscription.member
+    plans = Plan.objects.filter(is_active=True).order_by("price")
+    payment_methods = PaymentMethod.objects.filter(is_active=True)
+
+    if request.method == "POST":
+        plan_name = request.POST.get("plan_name", subscription.plan_name).strip()
+        custom_plan = request.POST.get("custom_plan", "").strip()
+        if custom_plan:
+            plan_name = custom_plan
+
+        start_date_str = request.POST.get("start_date", "").strip()
+        end_date_str = request.POST.get("end_date", "").strip()
+        price_str = request.POST.get("plan_price", "").strip()
+        paid_str = request.POST.get("paid_amount", "").strip()
+        rem_str = request.POST.get("remaining_amount", "").strip()
+        allowance_days = int(request.POST.get("allowance_days", "0") or "0")
+        payment_method = request.POST.get("payment_method", subscription.payment_method)
+
+        subscription.plan_name = plan_name
+        if start_date_str:
+            subscription.start_date = date.fromisoformat(start_date_str)
+        if end_date_str:
+            subscription.end_date = date.fromisoformat(end_date_str)
+        if price_str:
+            subscription.plan_price = Decimal(price_str)
+            subscription.net_amount = Decimal(price_str)
+        if paid_str:
+            subscription.paid_amount = Decimal(paid_str)
+        if rem_str:
+            subscription.remaining_amount = Decimal(rem_str)
+        subscription.allowance_days = allowance_days
+        subscription.payment_method = payment_method
+        subscription.save()
+
+        # If this is the latest subscription for this member, synchronize the Member profile snapshot
+        latest_sub = member.subscriptions.order_by("-created_at").first()
+        if latest_sub and latest_sub.id == subscription.id:
+            member.last_subscription_type = subscription.plan_name
+            member.last_subscription_start = subscription.start_date
+            member.last_subscription_end = subscription.end_date
+            member.current_paid = subscription.paid_amount
+            member.current_remaining = subscription.remaining_amount
+            member.refresh_status()
+            member.save()
+
+        messages.success(request, f"تم تصحيح وتحديث بيانات الاشتراك ({subscription.plan_name}) بنجاح.")
+        return redirect("members:member_detail", member_id=member.id)
+
+    context = {
+        "subscription": subscription,
+        "member": member,
+        "plans": plans,
+        "payment_methods": payment_methods,
+    }
+    return render(request, "members/subscription_edit.html", context)
+
+
+@login_required
+def subscription_create_view(request):
+    """Handles both new subscriptions and renewals with exact business logic chaining."""
+    today = timezone.localdate()
+    plans = Plan.objects.filter(is_active=True).order_by("price")
+    payment_methods = PaymentMethod.objects.filter(is_active=True)
+
+    member_id_param = request.GET.get("member_id")
+    selected_member = Member.objects.filter(id=member_id_param).first() if member_id_param else None
+
+    # Calculate default suggested start date
+    suggested_start = today
+    if selected_member and selected_member.last_subscription_end and selected_member.last_subscription_end >= today:
+        suggested_start = selected_member.last_subscription_end + timedelta(days=1)
+
+    if request.method == "POST":
+        member_id = request.POST.get("member_id")
+        member = get_object_or_404(Member, id=member_id)
+
+        plan_id = request.POST.get("plan_id")
+        plan = get_object_or_404(Plan, id=plan_id)
+
+        start_date_str = request.POST.get("start_date")
+        try:
+            start_date = date.fromisoformat(start_date_str)
+        except Exception:
+            start_date = today
+
+        duration = plan.duration_days
+        end_date = start_date + timedelta(days=duration)
+
+        plan_price = plan.price
+        discount = Decimal(request.POST.get("discount", "0.00") or "0.00")
+        net_amount = max(Decimal("0.00"), plan_price - discount)
+        paid_amount = Decimal(request.POST.get("paid_amount", str(net_amount)) or str(net_amount))
+        remaining_amount = max(Decimal("0.00"), net_amount - paid_amount)
+        payment_method = request.POST.get("payment_method", "نقدي")
+        notes = request.POST.get("notes", "").strip()
+
+        with transaction.atomic():
+            # 1. Create Subscription Contract
+            op_type = "renewal" if member.subscriptions.exists() else "new_subscription"
+            sub = Subscription.objects.create(
+                member=member,
+                plan=plan,
+                plan_name=plan.name,
+                start_date=start_date,
+                end_date=end_date,
+                plan_price=plan_price,
+                discount=discount,
+                net_amount=net_amount,
+                paid_amount=paid_amount,
+                remaining_amount=remaining_amount,
+                operation_type=op_type,
+                payment_method=payment_method,
+                created_by=request.user,
+            )
+
+            # 2. Create Payment Record if money was paid
+            payment = None
+            if paid_amount > 0:
+                pay_id, inv_no = generate_next_payment_id()
+                payment = Payment.objects.create(
+                    payment_id=pay_id,
+                    invoice_no=inv_no,
+                    operation_type=op_type,
+                    member=member,
+                    subscription=sub,
+                    amount=paid_amount,
+                    payment_method=payment_method,
+                    notes=notes,
+                    created_by=request.user,
+                )
+
+            # 3. Update Member State
+            member.last_subscription_start = start_date
+            member.last_subscription_end = end_date
+            member.last_subscription_type = plan.name
+            member.current_paid = paid_amount
+            member.current_remaining = remaining_amount
+            member.total_paid += paid_amount
+            if payment:
+                member.last_payment_date = payment.created_at
+            member.refresh_status(save=False)
+            member.save()
+
+            # 4. Queue WhatsApp Receipt
+            if member.mobile:
+                profile = GymProfile.get_solo()
+                if profile.whatsapp_enabled:
+                    invoice_label = payment.invoice_no if payment else "بدون دفعة"
+                    receipt_text = (
+                        f"إيصال اشتراك من {profile.gym_name}\n"
+                        f"أهلاً {member.name}\n"
+                        f"الباقة: {plan.name}\n"
+                        f"المدفوع: {paid_amount} {profile.currency}\n"
+                        f"المتبقي: {remaining_amount} {profile.currency}\n"
+                        f"صالح حتى: {end_date.strftime('%Y-%m-%d')}\n"
+                        f"رقم الفاتورة: {invoice_label}\n"
+                        f"شكراً لاختيارك {profile.gym_name} 💪"
+                    )
+                    dedup_key = f"receipt:{member.mobile}:{sub.id}"
+                    WhatsAppMessage.objects.get_or_create(
+                        dedup_key=dedup_key,
+                        defaults={
+                            "mobile": member.mobile,
+                            "message": receipt_text,
+                            "msg_type": MessageType.RECEIPT,
+                            "recipient_name": member.name,
+                            "recipient_type": "member",
+                            "status": "pending",
+                        },
+                    )
+
+        messages.success(request, f"تم تفعيل اشتراك {member.name} بنجاح حتى {end_date}!")
+        if payment:
+            return redirect("payments:payment_detail", payment_id=payment.id)
+        return redirect("members:member_detail", member_id=member.id)
+
+    members_all = Member.objects.all().order_by("name")[:100]
+
+    context = {
+        "plans": plans,
+        "payment_methods": payment_methods,
+        "selected_member": selected_member,
+        "suggested_start": suggested_start,
+        "members": members_all,
+    }
+    return render(request, "members/subscription_form.html", context)
+
+
+@login_required
+def smart_operations_view(request):
+    """
+    Dedicated Smart Operations workspace (إدارة العمليات - سجل / جدد / دفع المتبقي).
+    Matches the exact layout and behavior of the legacy reference application:
+    - Real-time search by name or mobile.
+    - If member does not exist -> Automatically switches to 'اشتراك جديد' (New Subscription).
+    - If member exists with debt -> Automatically switches to 'دفع المتبقي' (Settle Debt) with option to renew.
+    - If member exists without debt -> Automatically switches to 'تجديد اشتراك' (Renewal).
+    - Allows choosing custom/old start dates.
+    - Allows setting 'أيام السماح' (allowance_days) to determine grace period when payment is partial.
+    """
+    today = timezone.localdate()
+    plans = Plan.objects.filter(is_active=True).order_by("price")
+    payment_methods = PaymentMethod.objects.filter(is_active=True)
+    profile = GymProfile.get_solo()
+
+    # Fast Ajax autocomplete
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest" and request.GET.get("action") == "search":
+        from django.http import JsonResponse
+        term = request.GET.get("term", "").strip()
+        candidates = Member.objects.filter(
+            Q(name__icontains=term) | Q(mobile__icontains=term) | Q(member_id__icontains=term)
+        )[:15]
+        data = []
+        for m in candidates:
+            data.append({
+                "id": m.id,
+                "name": m.name,
+                "mobile": m.mobile,
+                "member_id": m.member_id,
+                "gender": m.gender,
+                "remaining": float(m.current_remaining),
+                "is_active": m.is_active,
+                "has_face_enrolled": m.has_face_enrolled,
+                "last_end": m.last_subscription_end.strftime("%Y-%m-%d") if m.last_subscription_end else "",
+                "last_plan": m.last_subscription_type or "",
+            })
+        return JsonResponse({"results": data})
+
+    if request.method == "POST":
+        op_type = request.POST.get("operation_type", "new_subscription")
+        member_id = request.POST.get("member_id", "").strip()
+
+        with transaction.atomic():
+            # ======================== CASE 1 & 2: NEW OR RENEWAL SUBSCRIPTION ========================
+            if op_type in ["new_subscription", "renewal"]:
+                name = request.POST.get("name", "").strip()
+                mobile = request.POST.get("mobile", "").strip()
+                gender = request.POST.get("gender", "male")
+                plan_id = request.POST.get("plan_id")
+                plan = get_object_or_404(Plan, id=plan_id)
+
+                start_date_str = request.POST.get("start_date")
+                try:
+                    start_date = date.fromisoformat(start_date_str)
+                except Exception:
+                    start_date = today
+
+                plan_price = plan.price
+                paid_amount = Decimal(request.POST.get("paid_amount", str(plan_price)) or str(plan_price))
+                remaining_amount = max(Decimal("0.00"), plan_price - paid_amount)
+                allowance_days = int(request.POST.get("allowance_days", 0) or 0)
+                payment_method = request.POST.get("payment_method", "نقدي")
+                notes = request.POST.get("notes", "").strip()
+
+                # Calculate end_date based on plan or allowance days
+                if plan.name == "جلسة واحدة" or plan.frequency == "جلسة واحدة":
+                    end_date = start_date
+                elif allowance_days > 0 and remaining_amount > 0:
+                    end_date = start_date + timedelta(days=allowance_days)
+                elif plan.frequency == "يوم ويوم":
+                    end_date = start_date + timedelta(days=plan.duration_days * 2)
+                else:
+                    end_date = start_date + timedelta(days=plan.duration_days)
+
+                # Find or create member
+                member = None
+                if member_id:
+                    member = Member.objects.filter(id=member_id).first()
+                if not member and mobile:
+                    member = Member.objects.filter(mobile=mobile).first()
+
+                if not member:
+                    # New Member
+                    member = Member.objects.create(
+                        member_id=generate_next_member_id(),
+                        name=name or "عضو جديد",
+                        mobile=mobile,
+                        gender=gender,
+                        last_subscription_start=start_date,
+                        last_subscription_end=end_date,
+                        last_subscription_type=plan.name,
+                        current_paid=paid_amount,
+                        current_remaining=remaining_amount,
+                        total_paid=paid_amount,
+                        follow_up_date=start_date + timedelta(days=allowance_days) if allowance_days > 0 else None,
+                        notes=notes,
+                    )
+                    actual_op_type = "new_subscription"
+                else:
+                    # Renewal
+                    if name:
+                        member.name = name
+                    if gender:
+                        member.gender = gender
+                    member.last_subscription_start = start_date
+                    member.last_subscription_end = end_date
+                    member.last_subscription_type = plan.name
+                    member.current_paid = paid_amount
+                    member.current_remaining += remaining_amount
+                    member.total_paid += paid_amount
+                    if allowance_days > 0:
+                        member.follow_up_date = start_date + timedelta(days=allowance_days)
+                    member.save()
+                    actual_op_type = "renewal"
+
+                member.refresh_status()
+
+                # Create Subscription
+                sub = Subscription.objects.create(
+                    member=member,
+                    plan=plan,
+                    plan_name=plan.name,
+                    start_date=start_date,
+                    end_date=end_date,
+                    plan_price=plan_price,
+                    discount=Decimal("0.00"),
+                    net_amount=plan_price,
+                    paid_amount=paid_amount,
+                    remaining_amount=remaining_amount,
+                    allowance_days=allowance_days,
+                    operation_type=actual_op_type,
+                    payment_method=payment_method,
+                    created_by=request.user,
+                )
+
+                # Create Payment if paid
+                payment = None
+                if paid_amount > Decimal("0.00"):
+                    pay_id, inv_no = generate_next_payment_id()
+                    payment = Payment.objects.create(
+                        payment_id=pay_id,
+                        invoice_no=inv_no,
+                        operation_type=PaymentOperationType.NEW_SUBSCRIPTION if actual_op_type == "new_subscription" else PaymentOperationType.RENEWAL,
+                        member=member,
+                        subscription=sub,
+                        amount=paid_amount,
+                        payment_method=payment_method,
+                        notes=notes,
+                        created_by=request.user,
+                    )
+
+                    # Send WhatsApp Receipt
+                    if profile.whatsapp_enabled and member.mobile:
+                        receipt_text = (
+                            f"إيصال اشتراك من {profile.gym_name}\n"
+                            f"أهلاً {member.name}\n"
+                            f"العملية: {'اشتراك جديد' if actual_op_type == 'new_subscription' else 'تجديد اشتراك'}\n"
+                            f"الباقة: {plan.name}\n"
+                            f"المدفوع: {paid_amount} {profile.currency}\n"
+                            f"المتبقي: {remaining_amount} {profile.currency}\n"
+                            f"تاريخ النهاية: {end_date.strftime('%Y-%m-%d')}\n"
+                            f"رقم الإيصال: {inv_no}\n"
+                            f"نورتنا في {profile.gym_name} 💪"
+                        )
+                        WhatsAppMessage.objects.create(
+                            mobile=member.mobile,
+                            message=receipt_text,
+                            msg_type=MessageType.RECEIPT,
+                            recipient_name=member.name,
+                            recipient_type="member",
+                            dedup_key=f"receipt:{member.mobile}:{sub.id}",
+                        )
+
+                messages.success(request, f"تم حفظ {'الاشتراك الجديد' if actual_op_type == 'new_subscription' else 'التجديد'} بنجاح للعضو {member.name} حتى {end_date}!")
+                if payment:
+                    return redirect("payments:payment_detail", payment_id=payment.id)
+                return redirect("members:smart_operations")
+
+            # ======================== CASE 3: SETTLE REMAINING DEBT ========================
+            elif op_type == "remaining":
+                member = get_object_or_404(Member, id=member_id)
+                paid_now = Decimal(request.POST.get("paid_amount", "0.00") or "0.00")
+                payment_method = request.POST.get("payment_method", "نقدي")
+                notes = request.POST.get("notes", "").strip()
+
+                if paid_now > Decimal("0.00"):
+                    prev_remaining = member.current_remaining
+                    new_remaining = max(Decimal("0.00"), prev_remaining - paid_now)
+                    member.current_remaining = new_remaining
+                    member.total_paid += paid_now
+                    member.save()
+
+                    pay_id, inv_no = generate_next_payment_id()
+                    created_pay = Payment.objects.create(
+                        payment_id=pay_id,
+                        invoice_no=inv_no,
+                        operation_type=PaymentOperationType.REMAINING,
+                        member=member,
+                        amount=paid_now,
+                        payment_method=payment_method,
+                        notes=notes or f"سداد متبقي. المتبقي بعد السداد: {new_remaining}",
+                        created_by=request.user,
+                    )
+
+                    if profile.whatsapp_enabled and member.mobile:
+                        receipt_text = (
+                            f"إيصال سداد متبقي من {profile.gym_name}\n"
+                            f"أهلاً {member.name}\n"
+                            f"المبلغ المسدد: {paid_now} {profile.currency}\n"
+                            f"المتبقي الحالي: {new_remaining} {profile.currency}\n"
+                            f"رقم الإيصال: {inv_no}\n"
+                            f"شكراً لك 💪"
+                        )
+                        WhatsAppMessage.objects.create(
+                            mobile=member.mobile,
+                            message=receipt_text,
+                            msg_type=MessageType.RECEIPT,
+                            recipient_name=member.name,
+                            recipient_type="member",
+                            dedup_key=f"debt_settle:{member.mobile}:{inv_no}",
+                        )
+
+                    messages.success(request, f"تم تسجيل سداد {paid_now} {profile.currency} للعضو {member.name}. المتبقي الآن: {new_remaining} {profile.currency}")
+                    return redirect("payments:payment_detail", payment_id=created_pay.id)
+                return redirect("members:smart_operations")
+
+    # Initial GET resolution if query or member_id passed
+    pre_query = request.GET.get("q", "").strip()
+    pre_member = None
+    if request.GET.get("member_id"):
+        pre_member = Member.objects.filter(id=request.GET.get("member_id")).first()
+    elif pre_query:
+        candidates = Member.objects.filter(
+            Q(name__iexact=pre_query) | Q(mobile=pre_query) | Q(member_id=pre_query)
+        )
+        if candidates.count() == 1:
+            pre_member = candidates.first()
+
+    context = {
+        "plans": plans,
+        "payment_methods": payment_methods,
+        "pre_query": pre_query,
+        "pre_member": pre_member,
+        "today_str": today.strftime("%Y-%m-%d"),
+    }
+    return render(request, "members/smart_operations.html", context)

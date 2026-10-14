@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}تسجيل الدخول — HULK GYM{% endblock %}
+
+{% block content %}
+<div style="max-width: 420px; margin: 40px auto;">
+  <div class="card" style="border: 2px solid var(--border-color); padding: 28px;">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <img src="{% static 'images/logo.png' %}" alt="HULK GYM" style="height: 64px; border-radius: var(--radius-sm); margin-bottom: 12px;" onerror="this.style.display='none'">
+      <h2 style="color: var(--gold); font-size: 1.5rem; font-weight: 800;">تسجيل دخول النظام</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">اختر حساب المدير أو الاستقبال للدخول</p>
+    </div>
+
+    <form method="post" action="{% url 'accounts:login' %}">
+      {% csrf_token %}
+      
+      <div class="form-group">
+        <label class="form-label" for="username">اسم المستخدم</label>
+        <input type="text" id="username" name="username" class="form-control" placeholder="manager أو assistant" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">كلمة المرور</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; font-size: 1.1rem;">
+        دخول للنظام 🚀
+      </button>
+    </form>
+
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted); text-align: center; line-height: 1.6;">
+      <p>حساب المدير: <strong>manager</strong> / الباسورد: <strong>1234</strong></p>
+      <p>حساب الاستقبال: <strong>assistant</strong> / الباسورد: <strong>1234</strong></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

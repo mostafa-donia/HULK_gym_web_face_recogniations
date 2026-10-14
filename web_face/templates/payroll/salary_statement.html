@@ -1,0 +1,218 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>كشف راتب — {{ item.employee_name_snapshot }} ({{ item.payroll_run.period }})</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      padding: 24px;
+    }
+    .slip-box {
+      max-width: 650px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    .slip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #0f172a;
+      margin-bottom: 24px;
+    }
+    .slip-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    .slip-table th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      padding: 10px;
+      text-align: right;
+      border-bottom: 2px solid #cbd5e1;
+    }
+    .slip-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .net-banner {
+      background: #f8fafc;
+      border: 2px solid #0f172a;
+      padding: 16px 20px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      font-size: 1.3rem;
+      font-weight: 900;
+    }
+    .print-hide {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    @media print {
+      body { padding: 0; background: #fff; }
+      .slip-box { border: none; box-shadow: none; padding: 10px; }
+      .print-hide { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-hide">
+    <button onclick="window.print()" class="btn btn-primary" style="padding: 10px 24px;">🖨️ طباعة كشف الراتب</button>
+    <button onclick="window.close()" class="btn btn-secondary" style="padding: 10px 18px; margin-right: 8px;">إغلاق</button>
+  </div>
+
+  <div class="slip-box">
+    <div class="slip-header">
+      <div>
+        <h1 style="font-size: 1.5rem; font-weight: 900; color: #0f172a; margin: 0;">{{ profile.gym_name|default:"HULK GYM" }}</h1>
+        <p style="color: #64748b; font-size: 0.9rem; margin-top: 4px;">كشف مستحقات راتب شهري معتمد</p>
+      </div>
+      <div style="text-align: left;">
+        <span style="font-size: 0.9rem; color: #64748b; display: block;">شهر الاستحقاق:</span>
+        <strong style="font-size: 1.2rem; color: #0f172a;">{{ item.payroll_run.period }}</strong>
+      </div>
+    </div>
+
+    <!-- Employee Information -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; background: #f8fafc; padding: 16px; border-radius: 8px;">
+      <div>
+        <span style="font-size: 0.85rem; color: #64748b; display: block;">اسم الموظف / المدرب:</span>
+        <strong style="font-size: 1.15rem; color: #0f172a;">{{ item.employee_name_snapshot }}</strong>
+      </div>
+      <div>
+        <span style="font-size: 0.85rem; color: #64748b; display: block;">المسمى الوظيفي:</span>
+        <strong style="font-size: 1.1rem; color: #0f172a;">{{ item.role_snapshot }}</strong>
+      </div>
+    </div>
+
+    <!-- Summary Components -->
+    <table class="slip-table">
+      <thead>
+        <tr>
+          <th>بند الاستحقاق / الاستقطاع</th>
+          <th style="text-align: left;">المبلغ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>الراتب الأساسي الثابت</td>
+          <td style="text-align: left; font-weight: 700;">{{ item.fixed_salary }} {{ profile.currency|default:"ج.م" }}</td>
+        </tr>
+        <tr>
+          <td>عمولات التدريب الخاص المؤهلة</td>
+          <td style="text-align: left; font-weight: 700; color: #2563eb;">+{{ item.commissions }} {{ profile.currency|default:"ج.م" }}</td>
+        </tr>
+        <tr>
+          <td>المكافآت والحوافز المعتمدة</td>
+          <td style="text-align: left; font-weight: 700; color: #16a34a;">+{{ item.bonuses }} {{ profile.currency|default:"ج.م" }}</td>
+        </tr>
+        <tr>
+          <td>الخصومات والجزاءات المعتمدة</td>
+          <td style="text-align: left; font-weight: 700; color: #dc2626;">-{{ item.deductions }} {{ profile.currency|default:"ج.م" }}</td>
+        </tr>
+        {% if item.advances and item.advances > 0 %}
+        <tr style="background-color: #fffbeb;">
+          <td>سلف مسحوبة خلال الشهر (مقتطعة من الراتب)</td>
+          <td style="text-align: left; font-weight: 700; color: #d97706;">-{{ item.advances }} {{ profile.currency|default:"ج.م" }}</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <!-- Detailed Private Client Breakdown (if any) -->
+    {% if item.details_json.commissions %}
+    <div style="margin-top: 20px;">
+      <h3 style="font-size: 0.95rem; font-weight: 800; color: #334155; margin-bottom: 8px;">🏋️‍♂️ تفصيل عمولات التدريب الخاص:</h3>
+      <table class="slip-table" style="font-size: 0.88rem;">
+        <thead>
+          <tr>
+            <th>اللاعب (العميل الخاص)</th>
+            <th>فارق التدريب</th>
+            <th>النسبة</th>
+            <th style="text-align: left;">العمولة المستحقة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in item.details_json.commissions %}
+            <tr>
+              <td>{{ c.client_name }}</td>
+              <td>{{ c.markup }} ج.م</td>
+              <td>{{ c.rate }}%</td>
+              <td style="text-align: left; font-weight: 700; color: #2563eb;">{{ c.amount }} ج.م</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <!-- Detailed Bonuses / Deductions (if any) -->
+    {% if item.details_json.bonuses %}
+    <div style="margin-top: 14px;">
+      <h3 style="font-size: 0.95rem; font-weight: 800; color: #16a34a; margin-bottom: 6px;">🟢 تفاصيل المكافآت والحوافز المعتمدة:</h3>
+      <ul style="padding-right: 20px; font-size: 0.88rem; color: #334155; line-height: 1.6;">
+        {% for b in item.details_json.bonuses %}
+          <li><strong>{{ b.category }}:</strong> {{ b.amount }} ج.م — ({{ b.reason }})</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if item.details_json.deductions %}
+    <div style="margin-top: 14px;">
+      <h3 style="font-size: 0.95rem; font-weight: 800; color: #dc2626; margin-bottom: 6px;">🔴 تفاصيل الخصومات والجزاءات المعتمدة:</h3>
+      <ul style="padding-right: 20px; font-size: 0.88rem; color: #334155; line-height: 1.6;">
+        {% for d in item.details_json.deductions %}
+          <li><strong>{{ d.category }}:</strong> {{ d.amount }} ج.م — ({{ d.reason }})</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if item.details_json.advances %}
+    <div style="margin-top: 14px;">
+      <h3 style="font-size: 0.95rem; font-weight: 800; color: #d97706; margin-bottom: 6px;">💸 تفاصيل السلف النقدية المسحوبة خلال الشهر (المستقطعة):</h3>
+      <ul style="padding-right: 20px; font-size: 0.88rem; color: #334155; line-height: 1.6;">
+        {% for a in item.details_json.advances %}
+          <li><strong>بتاريخ {{ a.date|default:"خلال الشهر" }}:</strong> {{ a.amount }} ج.م — ({{ a.reason|default:"سلفة نقدية معتمدة" }})</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <!-- Net Banner -->
+    <div class="net-banner">
+      <span>صافي الراتب المستحق للصرف:</span>
+      <span style="color: #0f172a; font-size: 1.6rem;">{{ item.net_payable }} {{ profile.currency|default:"ج.م" }}</span>
+    </div>
+
+    <!-- Signatures Footer -->
+    <div style="display: flex; justify-content: space-between; margin-top: 40px; padding-top: 20px; border-top: 1px dashed #cbd5e1; font-size: 0.85rem; color: #64748b;">
+      <div>
+        <p>توقيع الإدارة:</p>
+        <p style="margin-top: 24px; font-weight: 700; color: #0f172a;">إدارة {{ profile.gym_name|default:"HULK GYM" }}</p>
+      </div>
+      <div style="text-align: left;">
+        <p>توقيع المستلم:</p>
+        <p style="margin-top: 24px; font-weight: 700; color: #0f172a;">................................</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

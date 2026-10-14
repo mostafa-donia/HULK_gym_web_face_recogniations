@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة الموظفين والمدربين — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="color: var(--text-main); font-size: 1.6rem; font-weight: 900; margin: 0 0 4px 0; letter-spacing: -0.3px;">
+        دليل الموظفين والمدربين
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
+        إدارة بيانات الكباتن، موظفي الاستقبال، الإدارة والرواتب الأساسية
+      </p>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary btn-sm">
+        + إضافة موظف جديد
+      </a>
+      <a href="{% url 'payroll:trainer_assignments' %}" class="btn btn-secondary btn-sm">
+        عقود عمولات المدربين
+      </a>
+      <a href="{% url 'payroll:payroll_runs' %}" class="btn btn-secondary btn-sm">
+        مسيرات الرواتب الشهرية
+      </a>
+    </div>
+  </div>
+
+  <!-- Full-Width Employees Table -->
+  <div class="table-responsive">
+    
+    <div class="table-header-bar">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">فريق العمل والكادر الفني</span>
+        <span class="badge badge-neutral">
+          {{ employees|length }} موظف
+        </span>
+      </div>
+    </div>
+
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>الاسم</th>
+          <th>المسمى الوظيفي</th>
+          <th>رقم الهاتف</th>
+          <th style="text-align: left;">الراتب الأساسي</th>
+          <th>حالة العمل</th>
+          <th>تاريخ التعيين</th>
+          <th style="text-align: center; width: 100px;">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for emp in employees %}
+          <tr>
+            <td>
+              <strong style="color: var(--text-main); font-size: 0.96rem;">{{ emp.name }}</strong>
+            </td>
+            <td>
+              {% if emp.role == 'TRAINER' %}
+                <span class="badge badge-active">كابتن / مدرب</span>
+              {% elif emp.role == 'ASSISTANT' %}
+                <span class="badge badge-info">موظف استقبال</span>
+              {% else %}
+                <span class="badge badge-neutral">إدارة صالة</span>
+              {% endif %}
+            </td>
+            <td style="color: var(--text-secondary); font-family: monospace; direction: ltr; font-variant-numeric: tabular-nums;">
+              {{ emp.phone|default:"-" }}
+            </td>
+            <td style="text-align: left; color: var(--hulk-primary); font-weight: 800; font-variant-numeric: tabular-nums;">
+              {{ emp.fixed_salary }} {{ gym_profile.currency|default:"ج" }}
+            </td>
+            <td>
+              {% if emp.status == 'ACTIVE' %}
+                <span class="badge badge-active">نشط بالعمل</span>
+              {% else %}
+                <span class="badge badge-expired">متوقف</span>
+              {% endif %}
+            </td>
+            <td style="color: var(--text-muted); font-size: 0.85rem; font-variant-numeric: tabular-nums;">
+              {{ emp.hire_date|date:"Y-m-d"|default:"-" }}
+            </td>
+            <td style="text-align: center;">
+              <a href="{% url 'payroll:employee_edit' emp.id %}" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.8rem;">
+                تعديل
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">لا يوجد موظفون مسجلون.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+
+</div>
+{% endblock %}

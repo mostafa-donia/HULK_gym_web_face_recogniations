@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}تسجيل / تجديد اشتراك — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 20px auto;">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        🔄 {% if selected_member %}تجديد اشتراك: {{ selected_member.name }}{% else %}تسجيل اشتراك جديد{% endif %}
+      </h2>
+    </div>
+
+    <form method="post" id="sub-form">
+      {% csrf_token %}
+
+      <!-- Member Selection -->
+      <div class="form-group">
+        <label class="form-label">العضو *</label>
+        {% if selected_member %}
+          <input type="hidden" name="member_id" value="{{ selected_member.id }}">
+          <div style="padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--gold); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong style="color: var(--gold); font-size: 1.1rem;">{{ selected_member.name }}</strong>
+              <span style="color: var(--text-muted); font-size: 0.85rem; margin-right: 8px;">({{ selected_member.member_id }})</span>
+            </div>
+            <div>
+              {% if selected_member.is_active %}
+                <span class="badge badge-active">🟢 نشط (ينتهي {{ selected_member.last_subscription_end|date:"Y-m-d" }})</span>
+              {% else %}
+                <span class="badge badge-expired">🔴 منتهي</span>
+              {% endif %}
+            </div>
+          </div>
+        {% else %}
+          <select name="member_id" class="form-control" required>
+            <option value="">-- اختر العضو --</option>
+            {% for m in members %}
+              <option value="{{ m.id }}">{{ m.name }} ({{ m.member_id }}) - {{ m.mobile }}</option>
+            {% endfor %}
+          </select>
+        {% endif %}
+      </div>
+
+      <!-- Plan Selection -->
+      <div class="form-group">
+        <label class="form-label">باقة الاشتراك *</label>
+        <select name="plan_id" id="plan_select" class="form-control" required onchange="updatePlanCalculations()">
+          <option value="">-- اختر الباقة --</option>
+          {% for p in plans %}
+            <option value="{{ p.id }}" data-price="{{ p.price }}" data-days="{{ p.duration_days }}">
+              {{ p.name }} — {{ p.price }} {{ gym_profile.currency|default:"ج.م" }} ({{ p.duration_days }} يوم)
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Dates Grid -->
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">تاريخ البداية</label>
+          <input type="date" id="start_date" name="start_date" class="form-control" value="{{ suggested_start|date:'Y-m-d' }}" required onchange="updatePlanCalculations()">
+          <small style="color: var(--text-muted); font-size: 0.75rem;">يبدأ تلقائياً بعد الاشتراك السابق إذا كان نشطاً</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">تاريخ الانتهاء (محسوب آلياً)</label>
+          <input type="date" id="end_date" class="form-control" readonly style="background: rgba(255,255,255,0.03); color: var(--gold); font-weight: 700;">
+        </div>
+      </div>
+
+      <!-- Financial Calculation Grid -->
+      <div style="background: var(--bg-input); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin: 16px 0;">
+        <h4 style="color: var(--gold); font-size: 0.95rem; margin-bottom: 12px;">💰 الحسابات المالية والدفع</h4>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">سعر الباقة الأساسي</label>
+            <input type="number" step="0.01" id="plan_price_disp" class="form-control" value="0.00" readonly>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">الخصم (إن وجد)</label>
+            <input type="number" step="0.01" id="discount_input" name="discount" class="form-control" value="0.00" min="0" oninput="updatePlanCalculations()">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" style="color: var(--success);">المبلغ المدفوع الآن *</label>
+            <input type="number" step="0.01" id="paid_input" name="paid_amount" class="form-control" value="0.00" min="0" required oninput="updateRemainingCalculation()">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: var(--danger);">المتبقي دين على اللاعب</label>
+            <input type="number" step="0.01" id="remaining_disp" class="form-control" value="0.00" readonly style="color: var(--danger); font-weight: 900;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">طريقة الدفع</label>
+          <select name="payment_method" class="form-control">
+            {% for pm in payment_methods %}
+              <option value="{{ pm.name }}">{{ pm.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ملاحظات على الإيصال</label>
+        <input type="text" name="notes" class="form-control" placeholder="ملاحظات اختيارية للإيصال...">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.1rem; padding: 14px;">
+        تأكيد الاشتراك وإصدار الإيصال 🚀
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updatePlanCalculations() {
+  const planSelect = document.getElementById('plan_select');
+  const selectedOpt = planSelect.options[planSelect.selectedIndex];
+  if (!selectedOpt || !selectedOpt.dataset.price) return;
+
+  const price = parseFloat(selectedOpt.dataset.price) || 0;
+  const days = parseInt(selectedOpt.dataset.days) || 28;
+  const discount = parseFloat(document.getElementById('discount_input').value) || 0;
+
+  document.getElementById('plan_price_disp').value = price.toFixed(2);
+  
+  const net = Math.max(0, price - discount);
+  const paidInput = document.getElementById('paid_input');
+  
+  // Only set default paid if not manually typed yet or zero
+  if (!paidInput.dataset.touched) {
+    paidInput.value = net.toFixed(2);
+  }
+
+  // End Date calculation
+  const startDateStr = document.getElementById('start_date').value;
+  if (startDateStr) {
+    const sDate = new Date(startDateStr);
+    sDate.setDate(sDate.getDate() + days);
+    const endStr = sDate.toISOString().split('T')[0];
+    document.getElementById('end_date').value = endStr;
+  }
+
+  updateRemainingCalculation();
+}
+
+function updateRemainingCalculation() {
+  const price = parseFloat(document.getElementById('plan_price_disp').value) || 0;
+  const discount = parseFloat(document.getElementById('discount_input').value) || 0;
+  const net = Math.max(0, price - discount);
+  const paid = parseFloat(document.getElementById('paid_input').value) || 0;
+  const rem = Math.max(0, net - paid);
+  document.getElementById('remaining_disp').value = rem.toFixed(2);
+}
+
+document.getElementById('paid_input').addEventListener('input', function() {
+  this.dataset.touched = "true";
+});
+
+// Auto-trigger on page load if plan preselected
+window.addEventListener('DOMContentLoaded', () => {
+  const planSelect = document.getElementById('plan_select');
+  if (planSelect.options.length > 1) {
+    planSelect.selectedIndex = 1;
+    updatePlanCalculations();
+  }
+});
+</script>
+{% endblock %}

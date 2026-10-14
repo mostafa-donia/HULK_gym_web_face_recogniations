@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}تسجيل باقة تدريب خاص وعمولة كابتن — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="color: var(--gold); font-size: 1.4rem; font-weight: 800;">🏋️‍♂️ تسجيل باقة تدريب خاص وعمولة مدرب</h1>
+      <p style="color: var(--text-muted); font-size: 0.85rem;">تطبيق المعادلة الإلزامية: قيمة التدريب الخاص = سعر الباقة - سعر الاشتراك العام المماثل</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <a href="{% url 'payroll:trainer_assignments' %}" class="btn btn-secondary">🤝 عقود ونسب العمولات</a>
+      <a href="{% url 'payroll:payroll_runs' %}" class="btn btn-secondary">💰 مسيرات الرواتب</a>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Form Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">➕ تسجيل دفعة تدريب خاص جديدة</h3>
+      </div>
+
+      <form method="post" id="pt-form">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label">المدرب (الكابتن المستحق) *</label>
+          <select name="trainer_id" class="form-control" required>
+            <option value="">-- اختر المدرب --</option>
+            {% for t in trainers %}
+              <option value="{{ t.id }}">{{ t.name }} ({{ t.phone }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">اللاعب (العميل الخاص) *</label>
+          <select name="client_id" class="form-control" required>
+            <option value="">-- اختر اللاعب --</option>
+            {% for m in members %}
+              <option value="{{ m.id }}">{{ m.name }} ({{ m.member_id }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">سعر الباقة الإجمالي مع التدريب *</label>
+            <input type="number" step="0.01" id="package_price" name="package_price" class="form-control" placeholder="مثال: 600" required oninput="calculatePT()">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">سعر الاشتراك العام المماثل *</label>
+            <input type="number" step="0.01" id="standard_price" name="standard_plan_price" class="form-control" placeholder="مثال: 400" required oninput="calculatePT()">
+          </div>
+        </div>
+
+        <!-- Live Formula Preview Box -->
+        <div style="background: var(--bg-input); padding: 14px; border-radius: var(--radius-sm); border: 1px dashed var(--gold); margin: 12px 0;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem;">
+            <span style="color: var(--text-muted);">فارق التدريب الخاص (الوعاء):</span>
+            <strong id="markup_disp" style="color: var(--gold);">0.00 ج.م</strong>
+          </div>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">
+            تنبيه: لا يتم احتساب عمولة المدرب إطلاقاً من كامل الاشتراك (600 ج.م)، بل من فارق التدريب الخاص فقط!
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">طريقة الدفع</label>
+          <select name="payment_method" class="form-control">
+            {% for pm in payment_methods %}
+              <option value="{{ pm.name }}">{{ pm.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">ملاحظات إضافية</label>
+          <input type="text" name="notes" class="form-control" placeholder="ملاحظات الباقة أو المواعيد...">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.05rem;">
+          تسجيل الباقة واحتساب العمولة 🚀
+        </button>
+      </form>
+    </div>
+
+    <!-- Recent Records Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">📜 سجل عمليات التدريب الخاص الأخيرة</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="dark-table">
+          <thead>
+            <tr>
+              <th>المدرب</th>
+              <th>اللاعب</th>
+              <th>سعر الباقة</th>
+              <th>فارق التدريب</th>
+              <th>العمولة المستحقة</th>
+              <th>المسير</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in records %}
+              <tr>
+                <td style="font-weight: 700;">{{ r.trainer.name }}</td>
+                <td>{{ r.client.name }}</td>
+                <td>{{ r.package_price }} {{ gym_profile.currency }}</td>
+                <td style="color: var(--gold); font-weight: 700;">{{ r.private_markup }} {{ gym_profile.currency }}</td>
+                <td style="color: var(--success); font-weight: 800; font-size: 1.05rem;">
+                  {{ r.calculated_commission }} {{ gym_profile.currency }}
+                </td>
+                <td>
+                  {% if r.is_counted_in_payroll %}
+                    <span class="badge badge-active">تم الصرف</span>
+                  {% else %}
+                    <span class="badge" style="background: var(--warning-bg); color: var(--warning);">في الانتظار</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                  لا توجد عمليات تدريب خاص مسجلة بعد.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function calculatePT() {
+  const pkg = parseFloat(document.getElementById('package_price').value) || 0;
+  const std = parseFloat(document.getElementById('standard_price').value) || 0;
+  const markup = Math.max(0, pkg - std);
+  document.getElementById('markup_disp').innerText = markup.toFixed(2) + ' ج.م';
+}
+</script>
+{% endblock %}

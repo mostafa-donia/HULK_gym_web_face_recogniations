@@ -1,0 +1,11 @@
+<div style="background: var(--success-bg); border: 1px solid var(--success); color: var(--success); padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+  <span>✓ تم تسجيل الحضور الآن!</span>
+  {% if not is_active %}
+    <span style="color: var(--danger); font-weight: 800;">(تنبيه: الاشتراك منتهي!)</span>
+  {% elif days_left <= 3 %}
+    <span style="color: var(--warning);">(باقي {{ days_left }} يوم)</span>
+  {% endif %}
+  {% if debt > 0 %}
+    <span style="color: var(--warning);">(متبقي {{ debt }} ج.م)</span>
+  {% endif %}
+</div>

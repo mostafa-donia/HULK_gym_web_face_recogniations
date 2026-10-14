@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نافذة الكاميرا المستقلة — {{ profile.gym_name|default:"HULK GYM" }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #030712;
+      --card-bg: #0b1329;
+      --primary: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', sans-serif;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .header-bar {
+      height: 54px;
+      background: rgba(11, 19, 41, 0.95);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      z-index: 10;
+    }
+    .gym-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 1.05rem;
+      color: var(--primary);
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 8px var(--primary);
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    .actions-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .action-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: var(--primary);
+    }
+    .main-viewport {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+    .camera-stream {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    /* Recognition Alert Card */
+    .alert-card-container {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 580px;
+      display: none;
+      z-index: 20;
+      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUp {
+      from { transform: translate(-50%, 30px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
+    .alert-card {
+      background: rgba(11, 19, 41, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 18px;
+      padding: 18px 22px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .alert-avatar {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #000;
+      border: 3px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      flex-shrink: 0;
+    }
+    .alert-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .alert-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .alert-name {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .alert-meta {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .badge-status {
+      font-size: 0.85rem;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .badge-active {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      color: #34d399;
+    }
+    .badge-expired {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #f87171;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <div class="header-bar">
+    <div class="gym-brand">
+      <span>📹</span>
+      <span>{{ profile.gym_name|default:"HULK GYM" }} — الكاميرا المستقلة المباشرة</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <div class="status-pill" id="camStatusPill">
+        <span class="pulse-dot"></span>
+        <span id="camStatusText">الكاميرا تعمل باستمرار</span>
+      </div>
+
+      <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 700;">
+        حضور اليوم: <strong style="color: var(--primary);" id="todayCount">{{ today_checkins_count }}</strong>
+      </div>
+    </div>
+
+    <div class="actions-group">
+      <button class="action-btn" onclick="toggleAudio()" id="audioBtn" title="كتم/تشغيل الصوت">
+        <span>🔔</span>
+        <span id="audioTxt">الصوت مفعل</span>
+      </button>
+      <button class="action-btn" onclick="toggleFullscreen()" title="شاشة كاملة">
+        <span>⛶</span>
+        <span>ملء الشاشة</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Video Viewport -->
+  <div class="main-viewport">
+    <img src="{% url 'face_recognition:video_feed' %}" class="camera-stream" alt="بث الكاميرا المباشر" id="streamImg">
+
+    <!-- Live Pop-in Alert Notification Card -->
+    <div class="alert-card-container" id="alertContainer">
+      <div class="alert-card" id="alertCard">
+        <div class="alert-avatar" id="alertAvatar">
+          👤
+        </div>
+        <div class="alert-info">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <div class="alert-name" id="alertName">اسم المشترك</div>
+            <div id="alertBadge" class="badge-status badge-active">مسموح بالدخول</div>
+          </div>
+          <div class="alert-meta">
+            <span id="alertPlan">باقة الصالة</span>
+            <span>•</span>
+            <span id="alertDetails">ينتهي: --/--/----</span>
+          </div>
+          <div id="alertDebt" style="display: none; color: #fbbf24; font-size: 0.82rem; font-weight: 800; margin-top: 4px;">
+            ⚠️ متبقي مديونية: <span id="debtAmount">0</span> ج.م
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let isAudioEnabled = true;
+    let audioCtx = null;
+    let lastEventTimestamp = 0;
+    const memberCooldownMap = {};
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSuccessChime() {
+      if (!isAudioEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc2.type = 'triangle';
+        osc1.frequency.setValueAtTime(523.25, now);
+        osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.28);
+        osc2.frequency.setValueAtTime(261.63, now);
+        osc2.frequency.exponentialRampToValueAtTime(392.00, now + 0.25);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.7);
+        osc2.stop(now + 0.7);
+      } catch (e) {}
+    }
+
+    function playAlertChime() {
+      if (!isAudioEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        for (let i = 0; i < 2; i++) {
+          const start = now + (i * 0.16);
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(349.23, start);
+          osc.frequency.exponentialRampToValueAtTime(220.00, start + 0.12);
+          gain.gain.setValueAtTime(0.28, start);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.13);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(start);
+          osc.stop(start + 0.14);
+        }
+      } catch (e) {}
+    }
+
+    function toggleAudio() {
+      isAudioEnabled = !isAudioEnabled;
+      document.getElementById('audioBtn').querySelector('span:first-child').textContent = isAudioEnabled ? '🔔' : '🔕';
+      document.getElementById('audioTxt').textContent = isAudioEnabled ? 'الصوت مفعل' : 'الصوت مكتوم';
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    function showAlertCard(m) {
+      const container = document.getElementById('alertContainer');
+      const card = document.getElementById('alertCard');
+      const avatar = document.getElementById('alertAvatar');
+      const name = document.getElementById('alertName');
+      const badge = document.getElementById('alertBadge');
+      const plan = document.getElementById('alertPlan');
+      const details = document.getElementById('alertDetails');
+      const debtBox = document.getElementById('alertDebt');
+      const debtAmount = document.getElementById('debtAmount');
+
+      name.textContent = m.name;
+      plan.textContent = m.plan || 'باقة الصالة';
+
+      if (m.photo_url) {
+        avatar.innerHTML = `<img src="${m.photo_url}">`;
+      } else {
+        avatar.innerHTML = `👤`;
+      }
+
+      if (m.is_active) {
+        card.style.border = '2px solid #10b981';
+        badge.className = 'badge-status badge-active';
+        badge.textContent = '✅ مسموح بالدخول';
+        details.innerHTML = `ينتهي: <strong>${m.end_date}</strong> (باقي ${m.days_left} يوم)`;
+        playSuccessChime();
+      } else {
+        card.style.border = '2px solid #ef4444';
+        badge.className = 'badge-status badge-expired';
+        badge.textContent = '⛔ الاشتراك منتهي';
+        details.innerHTML = `<span style="color: #f87171; font-weight: 700;">انتهى في: ${m.end_date}</span>`;
+        playAlertChime();
+      }
+
+      if (m.has_debt && parseFloat(m.remaining) > 0) {
+        debtBox.style.display = 'block';
+        debtAmount.textContent = m.remaining;
+      } else {
+        debtBox.style.display = 'none';
+      }
+
+      container.style.display = 'block';
+      clearTimeout(window._hideAlertTimer);
+      window._hideAlertTimer = setTimeout(() => {
+        container.style.display = 'none';
+      }, 4000);
+    }
+
+    // Live Event Polling Loop
+    setInterval(async () => {
+      try {
+        const res = await fetch(`/face/api/live-events/?since=${lastEventTimestamp}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.camera_running !== undefined) {
+          const pill = document.getElementById('camStatusPill');
+          const txt = document.getElementById('camStatusText');
+          if (data.camera_running) {
+            txt.textContent = 'الكاميرا تعمل باستمرار';
+            pill.style.background = 'rgba(16, 185, 129, 0.15)';
+            pill.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+            pill.style.color = '#10b981';
+          } else {
+            txt.textContent = 'الكاميرا متوقفة';
+            pill.style.background = 'rgba(239, 68, 68, 0.15)';
+            pill.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+            pill.style.color = '#ef4444';
+          }
+        }
+
+        if (data.has_event && data.event) {
+          const ev = data.event;
+          lastEventTimestamp = ev.timestamp;
+          const m = ev.member;
+          const now = Date.now();
+          const lastShown = memberCooldownMap[m.id] || 0;
+
+          // 1-minute debounce per member
+          if (now - lastShown < 60000) return;
+          memberCooldownMap[m.id] = now;
+
+          showAlertCard(m);
+
+          // Update today's count
+          const countEl = document.getElementById('todayCount');
+          if (countEl) {
+            countEl.textContent = parseInt(countEl.textContent || '0') + 1;
+          }
+        }
+      } catch (e) {}
+    }, 380);
+  </script>
+</body>
+</html>

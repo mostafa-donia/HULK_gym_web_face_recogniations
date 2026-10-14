@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}سجل المدفوعات والفواتير — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="color: var(--text-main); font-size: 1.6rem; font-weight: 900; margin: 0 0 4px 0; letter-spacing: -0.3px;">
+        سجل المدفوعات والفواتير
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
+        استعراض وطباعة كافة فواتير وإيصالات تحصيل الاشتراكات وسداد الديون
+      </p>
+    </div>
+  </div>
+
+  <!-- Search Card -->
+  <div class="card" style="margin-bottom: 0; padding: 16px 20px;">
+    <form method="get" style="display: flex; gap: 10px; align-items: center;">
+      <input type="search" name="q" value="{{ query }}" class="form-control" placeholder="ابحث برقم الفاتورة، اسم اللاعب، أو رقم الموبايل..." style="flex: 1;">
+      <button type="submit" class="btn btn-secondary">بحث</button>
+      {% if query %}
+        <a href="{% url 'payments:payment_list' %}" class="btn btn-secondary" style="color: var(--accent-red);">إلغاء</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Full-Width Payments Table -->
+  <div class="table-responsive">
+    
+    <div class="table-header-bar">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">قائمة الفواتير</span>
+        <span class="badge badge-neutral" style="font-variant-numeric: tabular-nums;">
+          {{ total_count }} فاتورة
+        </span>
+      </div>
+      <span style="color: var(--text-muted); font-size: 0.82rem;">
+        يمكنك طباعة الإيصال الرسمي لأي عملية بضغطة زر
+      </span>
+    </div>
+
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>رقم الفاتورة</th>
+          <th>اسم العضو</th>
+          <th>نوع المعاملة</th>
+          <th style="text-align: left;">المبلغ المحصل</th>
+          <th>طريقة الدفع</th>
+          <th>التاريخ والوقت</th>
+          <th>المحصل</th>
+          <th style="text-align: center; width: 120px;">الإيصال</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in page_obj %}
+          <tr>
+            <td>
+              <span class="badge badge-neutral" style="font-family: monospace; font-weight: 800; font-size: 0.84rem;">
+                {{ p.invoice_no }}
+              </span>
+            </td>
+            <td>
+              <a href="{% url 'members:member_detail' p.member.id %}" style="color: var(--text-main); font-weight: 800; text-decoration: none;">
+                {{ p.member.name }}
+              </a>
+            </td>
+            <td>
+              {% if p.operation_type == 'new_subscription' %}
+                <span class="badge badge-active">اشتراك جديد</span>
+              {% elif p.operation_type == 'renewal' %}
+                <span class="badge badge-info">تجديد</span>
+              {% else %}
+                <span class="badge badge-debt">سداد متبقي</span>
+              {% endif %}
+            </td>
+            <td style="text-align: left; color: var(--hulk-primary); font-weight: 900; font-size: 1.05rem; font-variant-numeric: tabular-nums;">
+              {{ p.amount }} <small style="font-size: 0.76rem; color: var(--text-muted);">{{ gym_profile.currency }}</small>
+            </td>
+            <td style="font-size: 0.88rem; color: var(--text-secondary);">{{ p.payment_method }}</td>
+            <td style="color: var(--text-muted); font-size: 0.84rem; font-variant-numeric: tabular-nums;">{{ p.created_at|date:"Y-m-d h:i A" }}</td>
+            <td style="color: var(--text-secondary); font-size: 0.86rem;">{{ p.created_by.first_name|default:p.created_by.username|default:"النظام" }}</td>
+            <td style="text-align: center;">
+              <a href="{% url 'payments:payment_detail' p.id %}" target="_blank" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.8rem;">
+                طباعة
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px;">لا توجد مدفوعات مسجلة.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 10px;">
+        <span style="color: var(--text-muted); font-size: 0.86rem;">
+          صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}
+        </span>
+        <div style="display: flex; gap: 6px;">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}" class="btn btn-secondary btn-sm">‹ السابق</a>
+          {% endif %}
+          <span class="badge badge-neutral" style="padding: 6px 14px; font-size: 0.86rem;">{{ page_obj.number }}</span>
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&q={{ query }}" class="btn btn-secondary btn-sm">التالي ›</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+
+</div>
+{% endblock %}

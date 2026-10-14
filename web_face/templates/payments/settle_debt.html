@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}سداد متبقي دين — {{ member.name }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 520px; margin: 30px auto;">
+  <div class="card" style="border: 2px solid var(--warning);">
+    <div class="card-header">
+      <h2 class="card-title">💵 سداد متبقي (تحصيل دين)</h2>
+    </div>
+
+    <div style="background: var(--bg-input); padding: 16px; border-radius: var(--radius-sm); margin-bottom: 20px; border: 1px solid var(--border-color);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="color: var(--text-muted);">اسم اللاعب:</span>
+        <strong style="font-size: 1.15rem; color: var(--gold);">{{ member.name }}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="color: var(--text-muted);">كود العضو:</span>
+        <span>{{ member.member_id }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px dashed var(--border-color);">
+        <span style="color: var(--text-muted); font-weight: 700;">إجمالي الدين المتبقي:</span>
+        <strong style="color: var(--danger); font-size: 1.3rem;">{{ member.current_remaining }} {{ profile.currency|default:"ج.م" }}</strong>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">المبلغ المسدد الآن (ج.م) *</label>
+        <input type="number" step="0.01" name="amount" class="form-control" value="{{ member.current_remaining }}" max="{{ member.current_remaining }}" min="1" required autofocus style="font-size: 1.2rem; font-weight: 800; color: var(--success);">
+        <small style="color: var(--text-muted); font-size: 0.8rem;">يمكنك إدخال سداد جزئي أو كامل المبلغ</small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">طريقة الدفع</label>
+        <select name="payment_method" class="form-control">
+          {% for pm in payment_methods %}
+            <option value="{{ pm.name }}">{{ pm.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ملاحظات التحصيل</label>
+        <input type="text" name="notes" class="form-control" placeholder="مثال: سداد قسط أول...">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; font-size: 1.1rem; padding: 12px;">
+        تأكيد التحصيل وإصدار إيصال 🚀
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

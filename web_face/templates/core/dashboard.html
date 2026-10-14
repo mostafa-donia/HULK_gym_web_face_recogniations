@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}الرئيسية — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 18px; max-width: 1000px; margin: 0 auto;">
+
+  <!-- Search Row (Exact Layout from Reference Image) -->
+  <div class="search-row">
+    <button type="button" class="search-btn" onclick="document.getElementById('main-search-input').focus()">
+      بحث
+    </button>
+    <input 
+      type="text" 
+      id="main-search-input"
+      name="q" 
+      class="search-input" 
+      placeholder="ابحث بالاسم أو الموبايل أو نوع الاشتراك..." 
+      autocomplete="off"
+      autofocus
+      hx-get="{% url 'core:quick_search' %}" 
+      hx-trigger="keyup changed delay:200ms, search" 
+      hx-target="#search-results"
+      hx-indicator="#search-spinner"
+    >
+  </div>
+
+  <!-- Live Search Spinner -->
+  <div id="search-spinner" class="htmx-indicator" style="text-align: center; color: var(--lime-btn-bg); font-weight: 700; margin-top: -10px;">
+    ⏳ جاري البحث الفوري...
+  </div>
+
+  <!-- Live Search Results (appears dynamically when typing) -->
+  <div id="search-results"></div>
+
+  <!-- 4 Big Action Cards (Exact Colors & Labels from Reference Screenshot) -->
+  <div class="dashboard-actions-grid">
+    <!-- Top Big Button: سجل / جدد / دفع المتبقي -->
+    <a href="{% url 'members:smart_operations' %}" class="btn-dashboard-action btn-lime">
+      سجل / جدد / دفع المتبقي
+    </a>
+
+    <!-- Middle Big Button: إضافة مصروف -->
+    <a href="{% url 'expenses:expense_create' %}" class="btn-dashboard-action btn-lime">
+      إضافة مصروف
+    </a>
+
+    <!-- Bottom Split Buttons: عليهم متبقي & انتهت اشتراكات -->
+    <div class="btn-split-row">
+      <!-- Right Button: عليهم متبقي (Orange Gradient) -->
+      <a href="{% url 'members:member_list' %}?filter=remaining" class="btn-dashboard-action btn-orange">
+        عليهم متبقي
+      </a>
+
+      <!-- Left Button: انتهت اشتراكات (Red Gradient) -->
+      <a href="{% url 'members:member_list' %}?filter=expired" class="btn-dashboard-action btn-red">
+        انتهت اشتراكات
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Smart Modal for "سجل / جدد / دفع المتبقي" -->
+<div id="smart-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+  <div style="background: #0B171E; border: 2px solid #1A2B36; border-radius: 18px; width: 100%; max-width: 550px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1A2B36; padding-bottom: 12px; margin-bottom: 20px;">
+      <h2 style="color: #F3F8FB; font-size: 1.4rem; font-weight: 900; margin: 0;">سجل / جدد / دفع المتبقي</h2>
+      <button type="button" onclick="closeSmartModal()" style="background: transparent; border: none; color: #8D99A3; font-size: 1.5rem; cursor: pointer;">✕</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <a href="{% url 'members:subscription_create' %}" class="btn-dashboard-action btn-lime" style="min-height: 60px; font-size: 1.2rem;">
+        ➕ اشتراك عضو جديد
+      </a>
+      <a href="{% url 'members:member_list' %}" class="btn-dashboard-action btn-lime" style="min-height: 60px; font-size: 1.2rem; background-color: #5BA816;">
+        🔄 تجديد اشتراك لاعب حالي
+      </a>
+      <a href="{% url 'members:member_list' %}?filter=remaining" class="btn-dashboard-action btn-orange" style="min-height: 60px; font-size: 1.2rem;">
+        💵 سداد متبقي (الديون)
+      </a>
+    </div>
+
+    <div style="text-align: center; margin-top: 18px;">
+      <button type="button" onclick="closeSmartModal()" class="btn btn-secondary" style="width: 100%; justify-content: center;">
+        إغلاق
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openSmartModal() {
+  const modal = document.getElementById('smart-modal');
+  modal.style.display = 'flex';
+}
+function closeSmartModal() {
+  const modal = document.getElementById('smart-modal');
+  modal.style.display = 'none';
+}
+window.addEventListener('click', function(e) {
+  const modal = document.getElementById('smart-modal');
+  if (e.target === modal) {
+    closeSmartModal();
+  }
+});
+</script>
+{% endblock %}

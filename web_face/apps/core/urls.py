@@ -1,0 +1,14 @@
+from django.urls import path
+from apps.core import views
+
+app_name = "core"
+
+urlpatterns = [
+    path("", views.dashboard_view, name="dashboard"),
+    path("manager/", views.manager_dashboard_view, name="manager_dashboard"),
+    path("quick-search/", views.quick_search_view, name="quick_search"),
+    path("checkin/<int:member_id>/", views.quick_checkin_view, name="quick_checkin"),
+    path("settings/", views.settings_view, name="settings"),
+    path("settings/updates/check/", views.api_check_system_updates_view, name="check_updates"),
+    path("settings/updates/perform/", views.api_perform_system_update_view, name="perform_update"),
+]

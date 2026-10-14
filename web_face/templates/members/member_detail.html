@@ -1,0 +1,899 @@
+{% extends "base.html" %}
+
+{% block title %}ملف العضو: {{ member.name }} — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 24px;">
+
+  <!-- Member Profile Executive Header Card -->
+  <div class="card" style="margin-bottom: 0; padding: 24px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 18px;">
+      
+      <!-- Left side: Avatar & Info -->
+      <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
+        <!-- Avatar Circle / Photo -->
+        <div style="width: 68px; height: 68px; border-radius: var(--radius-md); background: #121926; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; overflow: hidden; flex-shrink: 0;">
+          {% if member.face_photo %}
+            <img src="{{ member.face_photo.url }}" style="width: 100%; height: 100%; object-fit: cover;">
+          {% elif member.gender == 'female' %}
+            👩
+          {% else %}
+            🏋️
+          {% endif %}
+        </div>
+
+        <div>
+          <!-- Name & ID -->
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <h1 style="color: var(--text-main); font-size: 1.6rem; font-weight: 900; margin: 0; letter-spacing: -0.2px;">
+              {{ member.name }}
+            </h1>
+            <span class="badge badge-neutral" style="font-family: monospace; font-size: 0.9rem; font-weight: 800;">
+              #{{ member.member_id }}
+            </span>
+          </div>
+
+          <!-- Status & Debt Pills & Face Badge -->
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+            {% if is_active %}
+              <span class="badge badge-active" style="padding: 4px 12px; font-size: 0.86rem;">
+                مشترك حالياً — يتبقى {{ days_left }} يوم
+              </span>
+            {% else %}
+              <span class="badge badge-expired" style="padding: 4px 12px; font-size: 0.86rem;">
+                العضوية منتهية{% if days_expired %} (منذ {{ days_expired }} يوم){% endif %}
+              </span>
+            {% endif %}
+
+            {% if member.has_debt %}
+              <span class="badge badge-debt" style="padding: 4px 12px; font-size: 0.86rem;">
+                متبقي عليه: {{ member.current_remaining }} {{ gym_profile.currency|default:"ج" }}
+              </span>
+            {% else %}
+              <span class="badge badge-active" style="padding: 4px 12px; font-size: 0.86rem;">
+                خالص (لا توجد مديونيات)
+              </span>
+            {% endif %}
+
+            {% if member.has_face_enrolled %}
+              <span class="badge badge-active" style="font-size: 0.86rem;">
+                📷 بصمة الوجه: مسجل
+              </span>
+            {% else %}
+              <span class="badge badge-neutral" style="font-size: 0.86rem; color: var(--text-dim);">
+                📷 بصمة الوجه: غير مسجل
+              </span>
+            {% endif %}
+          </div>
+
+          <!-- Secondary details -->
+          <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 10px; color: var(--text-muted); font-size: 0.88rem;">
+            <div>
+              الموبايل: 
+              <strong style="color: var(--text-secondary); font-family: monospace; direction: ltr; display: inline-block;">
+                {{ member.mobile|default:"-" }}
+              </strong>
+            </div>
+            <div>
+              النوع: 
+              <strong style="color: var(--text-secondary);">
+                {% if member.gender == 'female' %}أنثى{% else %}ذكر{% endif %}
+              </strong>
+            </div>
+            <div>
+              تاريخ التسجيل: 
+              <strong style="color: var(--text-secondary); font-variant-numeric: tabular-nums;">
+                {{ member.created_at|date:"d/m/Y" }}
+              </strong>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right side: Fast Actions -->
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        
+        <!-- Fast Pay / Renew via Smart Operations -->
+        <a href="{% url 'members:smart_operations' %}?term={{ member.mobile|default:member.name }}" class="btn btn-primary btn-sm" style="padding: 8px 18px;">
+          ⚡ تجديد / دفع فوري
+        </a>
+
+        <!-- Face Enrollment Modal Button -->
+        <button type="button" onclick="openFaceModal()" class="btn btn-sm" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;">
+          📷 {% if member.has_face_enrolled %}إدارة بصمة الوجه{% else %}تسجيل بصمة الوجه{% endif %}
+        </button>
+
+        <!-- Direct WhatsApp Chat -->
+        {% if member.mobile %}
+          <a href="https://wa.me/2{{ member.mobile }}" target="_blank" class="btn btn-sm" style="background: rgba(37, 211, 102, 0.15); border: 1px solid rgba(37, 211, 102, 0.35); color: #25D366; text-decoration: none;">
+            💬 واتساب
+          </a>
+        {% endif %}
+
+        <!-- Edit Profile -->
+        <a href="{% url 'members:member_edit' member.id %}" class="btn btn-secondary btn-sm">
+          تعديل البيانات
+        </a>
+
+      </div>
+
+    </div>
+
+    {% if member.notes %}
+    <div style="margin-top: 16px; padding: 12px 16px; background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.9rem;">
+      <strong style="color: var(--hulk-primary);">ملاحظات:</strong> {{ member.notes }}
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- 4 Overview KPI Cards -->
+  <div class="grid grid-4 member-stats-grid">
+    
+    <div class="card" style="margin-bottom: 0; padding: 18px 20px;">
+      <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700; display: block;">آخر باقة مسجلة</span>
+      <span style="color: var(--text-main); font-size: 1.25rem; font-weight: 800; margin-top: 6px; display: block;">
+        {{ member.last_subscription_type|default:"بدون باقة" }}
+      </span>
+      <span style="color: var(--text-dim); font-size: 0.78rem; margin-top: 4px; display: block;">
+        البداية: {{ member.last_subscription_start|date:"d/m/Y"|default:"-" }}
+      </span>
+    </div>
+
+    <div class="card" style="margin-bottom: 0; padding: 18px 20px;">
+      <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700; display: block;">تاريخ نهاية الاشتراك</span>
+      <span style="color: {% if is_active %}var(--hulk-primary){% else %}var(--accent-red){% endif %}; font-size: 1.25rem; font-weight: 800; margin-top: 6px; display: block; font-variant-numeric: tabular-nums;">
+        {{ member.last_subscription_end|date:"d/m/Y"|default:"غير محدد" }}
+      </span>
+      <span style="color: var(--text-dim); font-size: 0.78rem; margin-top: 4px; display: block;">
+        {% if is_active %}متبقي {{ days_left }} يوم{% else %}منتهي الصلاحية{% endif %}
+      </span>
+    </div>
+
+    <div class="card" style="margin-bottom: 0; padding: 18px 20px;">
+      <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700; display: block;">المدفوع حالياً vs المتبقي</span>
+      <span style="color: var(--hulk-primary); font-size: 1.25rem; font-weight: 800; margin-top: 6px; display: block; font-variant-numeric: tabular-nums;">
+        {{ member.current_paid }} <small style="font-size: 0.85rem; color: var(--text-muted);">/ {{ member.current_remaining }} متبقي</small>
+      </span>
+      <span style="color: var(--text-dim); font-size: 0.78rem; margin-top: 4px; display: block;">
+        عملة الصالة: {{ gym_profile.currency|default:"ج" }}
+      </span>
+    </div>
+
+    <div class="card" style="margin-bottom: 0; padding: 18px 20px;">
+      <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700; display: block;">إجمالي المدفوعات التاريخية (LTV)</span>
+      <span style="color: var(--accent-blue); font-size: 1.25rem; font-weight: 800; margin-top: 6px; display: block; font-variant-numeric: tabular-nums;">
+        {{ member.total_paid }} <small style="font-size: 0.85rem;">{{ gym_profile.currency|default:"ج" }}</small>
+      </span>
+      <span style="color: var(--text-dim); font-size: 0.78rem; margin-top: 4px; display: block;">
+        كافة العمليات السابقة
+      </span>
+    </div>
+
+  </div>
+
+  <!-- Table 1: Full-Width Subscription History Table -->
+  <div class="table-responsive">
+    
+    <div class="table-header-bar">
+      <div>
+        <h3 style="color: var(--text-main); font-size: 1.05rem; font-weight: 800; margin: 0 0 2px 0;">
+          سجل الاشتراكات السابقة
+        </h3>
+        <span style="color: var(--text-muted); font-size: 0.82rem;">تفاصيل الباقات المسجلة للعضو، المدد، والأسعار</span>
+      </div>
+      <a href="{% url 'members:smart_operations' %}?term={{ member.mobile|default:member.name }}" class="btn btn-secondary btn-sm">
+        + إضافة اشتراك جديد
+      </a>
+    </div>
+
+    {% if subscriptions %}
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>الباقة</th>
+          <th>فترة الاشتراك</th>
+          <th>أيام السماح</th>
+          <th style="text-align: left;">السعر</th>
+          <th style="text-align: left;">الخصم</th>
+          <th style="text-align: left;">الصافي</th>
+          <th style="text-align: left;">المدفوع</th>
+          <th style="text-align: left;">المتبقي</th>
+          <th>طريقة الدفع</th>
+          <th>تاريخ التسجيل</th>
+          <th style="text-align: center; width: 100px;">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub in subscriptions %}
+        <tr>
+          
+          <td>
+            <span class="badge badge-neutral" style="font-weight: 700;">
+              {{ sub.plan_name }}
+            </span>
+          </td>
+
+          <td style="color: var(--text-secondary); font-size: 0.88rem; font-variant-numeric: tabular-nums;">
+            {{ sub.start_date|date:"d/m/Y" }} ⟵ {{ sub.end_date|date:"d/m/Y" }}
+          </td>
+
+          <td style="font-size: 0.86rem; color: var(--text-muted);">
+            {% if sub.allowance_days %}{{ sub.allowance_days }} يوم{% else %}0{% endif %}
+          </td>
+
+          <td style="text-align: left; font-weight: 700; color: var(--text-secondary); font-variant-numeric: tabular-nums;">
+            {{ sub.plan_price }} {{ gym_profile.currency|default:"ج" }}
+          </td>
+
+          <td style="text-align: left; font-size: 0.86rem; color: var(--text-muted); font-variant-numeric: tabular-nums;">
+            {% if sub.discount > 0 %}<span style="color: var(--accent-red);">-{{ sub.discount }}</span>{% else %}0{% endif %}
+          </td>
+
+          <td style="text-align: left; font-weight: 800; color: var(--text-main); font-variant-numeric: tabular-nums;">
+            {{ sub.net_amount }} {{ gym_profile.currency|default:"ج" }}
+          </td>
+
+          <td style="text-align: left; font-weight: 800; color: var(--hulk-primary); font-size: 0.96rem; font-variant-numeric: tabular-nums;">
+            {{ sub.paid_amount }} {{ gym_profile.currency|default:"ج" }}
+          </td>
+
+          <td style="text-align: left;">
+            {% if sub.remaining_amount > 0 %}
+              <span class="badge badge-debt" style="font-variant-numeric: tabular-nums;">
+                {{ sub.remaining_amount }} {{ gym_profile.currency|default:"ج" }}
+              </span>
+            {% else %}
+              <span style="color: var(--text-dim); font-size: 0.86rem;">0</span>
+            {% endif %}
+          </td>
+
+          <td style="font-size: 0.86rem; color: var(--text-secondary);">
+            {{ sub.payment_method|default:"نقدي" }}
+          </td>
+
+          <td style="font-size: 0.82rem; color: var(--text-muted); font-variant-numeric: tabular-nums;">
+            {{ sub.created_at|date:"d/m/Y h:i A" }}
+          </td>
+
+          <td style="text-align: center;">
+            <a href="{% url 'members:subscription_edit' sub.id %}" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.8rem;" title="تعديل وتصحيح هذا الاشتراك">
+              تصحيح
+            </a>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; color: var(--text-muted); padding: 36px 20px;">
+      لا توجد اشتراكات مسجلة لهذا العضو بعد.
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Table 2: Full-Width Payments & Receipts Table -->
+  <div class="table-responsive">
+    
+    <div class="table-header-bar">
+      <div>
+        <h3 style="color: var(--text-main); font-size: 1.05rem; font-weight: 800; margin: 0 0 2px 0;">
+          سجل المدفوعات والإيصالات
+        </h3>
+        <span style="color: var(--text-muted); font-size: 0.82rem;">كافة العمليات المالية المحصلة مع إمكانية طباعة الإيصال الرسمي</span>
+      </div>
+    </div>
+
+    {% if payments %}
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>رقم الفاتورة</th>
+          <th>نوع العملية</th>
+          <th style="text-align: left;">المبلغ المحصل</th>
+          <th>طريقة الدفع</th>
+          <th>التاريخ والوقت</th>
+          <th>الموظف المسؤول</th>
+          <th style="text-align: center; width: 120px;">الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in payments %}
+        <tr>
+          
+          <td>
+            <span class="badge badge-neutral" style="font-family: monospace; font-weight: 800; font-size: 0.84rem;">
+              {{ pay.invoice_no|default:pay.payment_id }}
+            </span>
+          </td>
+
+          <td>
+            {% if pay.operation_type == 'new' %}
+              <span class="badge badge-active">اشتراك جديد</span>
+            {% elif pay.operation_type == 'renewal' %}
+              <span class="badge badge-info">تجديد</span>
+            {% elif pay.operation_type == 'remaining' %}
+              <span class="badge badge-debt">سداد متبقي</span>
+            {% else %}
+              <span class="badge badge-neutral">{{ pay.get_operation_type_display }}</span>
+            {% endif %}
+          </td>
+
+          <td style="text-align: left; font-weight: 800; color: var(--hulk-primary); font-size: 1.05rem; font-variant-numeric: tabular-nums;">
+            {{ pay.amount }} <small style="font-size: 0.76rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+          </td>
+
+          <td style="font-size: 0.88rem; color: var(--text-secondary);">
+            {{ pay.payment_method }}
+          </td>
+
+          <td style="font-size: 0.84rem; color: var(--text-muted); font-variant-numeric: tabular-nums;">
+            {{ pay.created_at|date:"d/m/Y h:i A" }}
+          </td>
+
+          <td style="font-size: 0.86rem; color: var(--text-secondary);">
+            {{ pay.created_by.first_name|default:pay.created_by.username|default:"النظام" }}
+          </td>
+
+          <td style="text-align: center;">
+            <a href="{% url 'payments:payment_detail' pay.id %}" target="_blank" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.8rem;">
+              طباعة إيصال
+            </a>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; color: var(--text-muted); padding: 36px 20px;">
+      لا توجد مدفوعات مسجلة لهذا العضو حتى الآن.
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Table 3: Full-Width Attendance Logs Table -->
+  <div class="table-responsive">
+    
+    <div class="table-header-bar">
+      <div>
+        <h3 style="color: var(--text-main); font-size: 1.05rem; font-weight: 800; margin: 0 0 2px 0;">
+          سجلات الحضور والدخول (Attendance Logs)
+        </h3>
+        <span style="color: var(--text-muted); font-size: 0.82rem;">متابعة أوقات دخول اللاعب للصالة وحالة اشتراكه وقت الحضور</span>
+      </div>
+    </div>
+
+    {% if checkins %}
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>تاريخ ووقت الدخول</th>
+          <th>حالة الاشتراك وقت الدخول</th>
+          <th>الأيام المتبقية وقتها</th>
+          <th style="text-align: left;">المديونية وقتها</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ch in checkins %}
+        <tr>
+          <td style="color: var(--text-main); font-weight: 700; font-size: 0.9rem; font-variant-numeric: tabular-nums;">
+            {{ ch.checked_in_at|date:"d/m/Y h:i A" }}
+          </td>
+          <td>
+            {% if ch.status_snapshot == 'active' %}
+              <span class="badge badge-active">نشط مسموح</span>
+            {% else %}
+              <span class="badge badge-expired">منتهي</span>
+            {% endif %}
+          </td>
+          <td style="color: var(--text-secondary); font-size: 0.88rem; font-variant-numeric: tabular-nums;">
+            {{ ch.days_left_snapshot }} يوم
+          </td>
+          <td style="text-align: left; font-size: 0.88rem; font-variant-numeric: tabular-nums; color: {% if ch.debt_snapshot > 0 %}var(--accent-orange){% else %}var(--text-muted){% endif %};">
+            {{ ch.debt_snapshot }} {{ gym_profile.currency|default:"ج" }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; color: var(--text-muted); padding: 36px 20px;">
+      لا توجد تسجيلات حضور سابقة لهذا العضو بعد.
+    </div>
+    {% endif %}
+
+  </div>
+
+</div>
+
+<!-- Face Enrollment 5-Poses Wizard & Variants Modal -->
+<div id="faceEnrollModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(5, 8, 14, 0.88); backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 14px; overflow-y: auto;">
+  <div style="background: #0b1320; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; width: 100%; max-width: 680px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7); overflow: hidden; display: flex; flex-direction: column; margin: auto;">
+    
+    <!-- Modal Header -->
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.4rem;">📷</span>
+        <div>
+          <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #FFFFFF;">
+            معالج بصمة الوجه الذكي (5 وضعيات): {{ member.name }}
+          </h3>
+          <span style="font-size: 0.78rem; color: #94a3b8;">
+            تسجيل 5 زوايا بيومترية مختلفة لضمان دقة وسرعة التعرف من أول لحظة أمام البوابة.
+          </span>
+        </div>
+      </div>
+      <button type="button" onclick="closeFaceModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer; padding: 4px 8px;">✕</button>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div style="display: flex; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.25);">
+      <button type="button" id="tab5Poses" onclick="switchWizardMode('5poses')" style="flex: 1; padding: 12px; background: rgba(16, 185, 129, 0.12); border: none; border-bottom: 2px solid #10b981; color: #34d399; font-weight: 800; font-size: 0.88rem; cursor: pointer;">
+        🔄 تسجيل الـ 5 وضعيات الأساسية (شامل)
+      </button>
+      <button type="button" id="tabVariant" onclick="switchWizardMode('variant')" style="flex: 1; padding: 12px; background: transparent; border: none; border-bottom: 2px solid transparent; color: #94a3b8; font-weight: 700; font-size: 0.88rem; cursor: pointer;">
+        👓 + إضافة وضعية إضافية (Variant)
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div style="padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+      
+      <!-- Progress Bar (In 5 Poses Mode) -->
+      <div id="poseProgressContainer">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.82rem;">
+          <span id="poseProgressPct" style="color: #10b981; font-weight: 800;">0/5 وضعيات ملتقطة (0%)</span>
+          <span id="poseCurrentStepTitle" style="color: #cbd5e1; font-weight: 700;">خطوة 1 من 5: انظر مباشرة للكاميرا</span>
+        </div>
+        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden;">
+          <div id="poseProgressBar" style="width: 0%; height: 100%; background: #10b981; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+
+      <!-- 5 Poses Cards Strip -->
+      <div id="posesCardsStrip" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
+        <!-- Card 0: Center -->
+        <div id="poseCard0" onclick="selectPoseStep(0)" style="cursor: pointer; background: #071018; border: 2px solid #10b981; border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
+          <div style="font-size: 1.1rem; margin-bottom: 2px;">🎯</div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: #e2e8f0;">مستقيم</div>
+          <div id="poseStatus0" style="font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">جاهز</div>
+        </div>
+        <!-- Card 1: Left -->
+        <div id="poseCard1" onclick="selectPoseStep(1)" style="cursor: pointer; background: #071018; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
+          <div style="font-size: 1.1rem; margin-bottom: 2px;">⬅️</div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: #e2e8f0;">يسار</div>
+          <div id="poseStatus1" style="font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">انتظار</div>
+        </div>
+        <!-- Card 2: Right -->
+        <div id="poseCard2" onclick="selectPoseStep(2)" style="cursor: pointer; background: #071018; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
+          <div style="font-size: 1.1rem; margin-bottom: 2px;">➡️</div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: #e2e8f0;">يمين</div>
+          <div id="poseStatus2" style="font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">انتظار</div>
+        </div>
+        <!-- Card 3: Glasses / Up -->
+        <div id="poseCard3" onclick="selectPoseStep(3)" style="cursor: pointer; background: #071018; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
+          <div style="font-size: 1.1rem; margin-bottom: 2px;">👓</div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: #e2e8f0;">نظارة/أعلى</div>
+          <div id="poseStatus3" style="font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">انتظار</div>
+        </div>
+        <!-- Card 4: Smile / Down -->
+        <div id="poseCard4" onclick="selectPoseStep(4)" style="cursor: pointer; background: #071018; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
+          <div style="font-size: 1.1rem; margin-bottom: 2px;">😊</div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: #e2e8f0;">ابتسامة/أسفل</div>
+          <div id="poseStatus4" style="font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">انتظار</div>
+        </div>
+      </div>
+
+      <div style="position: relative; width: 100%; max-width: 440px; aspect-ratio: 4/3; margin: 0 auto; background: #000; border-radius: 14px; overflow: hidden; border: 2px solid var(--border-color); box-shadow: inset 0 0 25px rgba(0,0,0,0.85);">
+        <img id="enrollWebcam" src="{% url 'face_recognition:video_feed' %}" alt="بث الكاميرا المباشر" style="width: 100%; height: 100%; object-fit: cover;">
+        <canvas id="enrollCanvas" style="display: none;"></canvas>
+
+        <!-- Face Guide Reticle Overlay -->
+        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+          <div style="width: 220px; height: 270px; border: 2px dashed rgba(16, 185, 129, 0.6); border-radius: 50%; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.28);"></div>
+        </div>
+
+        <!-- Live Scanning Indicator -->
+        <div style="position: absolute; bottom: 8px; left: 12px; font-size: 0.74rem; color: #10b981; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 4px; font-family: monospace;">
+          CAMERA FEED ●
+        </div>
+
+        <!-- Pose Target Hint Pill -->
+        <div id="poseTargetHint" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(3, 7, 18, 0.85); border: 1px solid #10b981; color: #34d399; padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; white-space: nowrap;">
+          🎯 انظر مباشرة للأمام
+        </div>
+      </div>
+
+      <!-- Dynamic Step Guidance Alert -->
+      <div id="enrollStatus" style="width: 100%; padding: 10px 14px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-sm); color: #a7f3d0; font-size: 0.85rem; text-align: center;">
+        ضع وجه اللاعب داخل الإطار واضغط على زر "التقاط الوضعية الحالية".
+      </div>
+
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div style="padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: rgba(255,255,255,0.02);">
+      
+      <div>
+        {% if member.has_face_enrolled %}
+        <button type="button" onclick="deleteFaceBiometrics()" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; font-weight: 700;">
+          🗑️ مسح البصمات السابقة
+        </button>
+        {% endif %}
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button type="button" onclick="closeFaceModal()" class="btn btn-secondary btn-sm">
+          إلغاء
+        </button>
+        
+        <!-- Snap Current Pose Button -->
+        <button type="button" id="btnSnapPose" onclick="snapCurrentPose()" class="btn btn-secondary btn-sm" style="background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; color: #93c5fd; font-weight: 800;">
+          📸 التقاط الوضعية الحالية
+        </button>
+
+        <!-- Final Submit Button -->
+        <button type="button" id="btnSaveAllPoses" onclick="saveAllEnrolledPoses()" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; font-weight: 800;" disabled>
+          💾 حفظ وتأكيد البصمة (0/5)
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+let enrollStream = null;
+let isUsingGlobalStream = false;
+let wizardMode = '5poses'; // '5poses' or 'variant'
+let currentPoseIdx = 0;
+let capturedPoses = [null, null, null, null, null];
+
+const POSES_CONFIG = [
+  {
+    idx: 0,
+    label: 'center',
+    icon: '🎯',
+    name: 'مستقيم',
+    title: 'الخطوة 1 من 5: انظر للأمام مباشرة',
+    hint: '🎯 انظر مباشرة إلى منتصف الكاميرا بمظهرك الطبيعي',
+  },
+  {
+    idx: 1,
+    label: 'left',
+    icon: '⬅️',
+    name: 'يسار',
+    title: 'الخطوة 2 من 5: التفات طفيف لليسار',
+    hint: '⬅️ قم بإمالة وجهك بزاوية خفيفة لليسار (20°-30°)',
+  },
+  {
+    idx: 2,
+    label: 'right',
+    icon: '➡️',
+    name: 'يمين',
+    title: 'الخطوة 3 من 5: التفات طفيف لليمين',
+    hint: '➡️ قم بإمالة وجهك بزاوية خفيفة لليمين (20°-30°)',
+  },
+  {
+    idx: 3,
+    label: 'glasses_variant',
+    icon: '👓',
+    name: 'نظارة/أعلى',
+    title: 'الخطوة 4 من 5: وضعية النظارة أو رفع الرأس',
+    hint: '👓 ارتدِ/اخلع النظارة أو ارفع رأسك للأعلى قليلاً',
+  },
+  {
+    idx: 4,
+    label: 'smile',
+    icon: '😊',
+    name: 'ابتسامة/أسفل',
+    title: 'الخطوة 5 من 5: ابتسامة طبيعية أو خفض الذقن',
+    hint: '😊 ابتسم بشكل طبيعي أو اخفض ذقنك قليلاً لتعلم الزاوية',
+  }
+];
+
+function openFaceModal() {
+  const modal = document.getElementById('faceEnrollModal');
+  modal.style.display = 'flex';
+  window.isEnrollModalOpen = true;
+  capturedPoses = [null, null, null, null, null];
+  selectPoseStep(0);
+  updateWizardUI();
+  startEnrollCamera();
+}
+
+function closeFaceModal() {
+  const modal = document.getElementById('faceEnrollModal');
+  modal.style.display = 'none';
+  window.isEnrollModalOpen = false;
+  stopEnrollCamera();
+}
+
+function switchWizardMode(mode) {
+  wizardMode = mode;
+  const tab5 = document.getElementById('tab5Poses');
+  const tabVar = document.getElementById('tabVariant');
+  const strip = document.getElementById('posesCardsStrip');
+  const prog = document.getElementById('poseProgressContainer');
+  const saveBtn = document.getElementById('btnSaveAllPoses');
+
+  if (mode === '5poses') {
+    tab5.style.background = 'rgba(16, 185, 129, 0.12)';
+    tab5.style.borderBottom = '2px solid #10b981';
+    tab5.style.color = '#34d399';
+    tabVar.style.background = 'transparent';
+    tabVar.style.borderBottom = '2px solid transparent';
+    tabVar.style.color = '#94a3b8';
+    strip.style.display = 'grid';
+    prog.style.display = 'block';
+    selectPoseStep(currentPoseIdx);
+  } else {
+    tabVar.style.background = 'rgba(59, 130, 246, 0.12)';
+    tabVar.style.borderBottom = '2px solid #3b82f6';
+    tabVar.style.color = '#93c5fd';
+    tab5.style.background = 'transparent';
+    tab5.style.borderBottom = '2px solid transparent';
+    tab5.style.color = '#94a3b8';
+    strip.style.display = 'none';
+    prog.style.display = 'none';
+
+    document.getElementById('poseTargetHint').textContent = '👓 إضافة وضعية أو زاوية مخصصة (Variant)';
+    document.getElementById('enrollStatus').innerHTML = 'التقط أي وضعية إضافية (مع نظارة، كاب، زاوية مختلفة) وسيتم إضافتها لقاعدة بصمات اللاعب دون مسح السابق.';
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '💾 حفظ الوضعية الإضافية (Variant)';
+  }
+}
+
+function selectPoseStep(idx) {
+  if (wizardMode !== '5poses') return;
+  currentPoseIdx = idx;
+  const cfg = POSES_CONFIG[idx];
+
+  // Update cards active states
+  for (let i = 0; i < 5; i++) {
+    const card = document.getElementById(`poseCard${i}`);
+    if (card) {
+      if (i === idx) {
+        card.style.border = '2px solid #10b981';
+        card.style.background = 'rgba(16, 185, 129, 0.15)';
+      } else {
+        card.style.border = capturedPoses[i] ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255,255,255,0.1)';
+        card.style.background = capturedPoses[i] ? 'rgba(16, 185, 129, 0.05)' : '#071018';
+      }
+    }
+  }
+
+  document.getElementById('poseCurrentStepTitle').textContent = cfg.title;
+  document.getElementById('poseTargetHint').textContent = cfg.hint;
+  document.getElementById('enrollStatus').innerHTML = `<strong>${cfg.title}:</strong> ${cfg.hint}`;
+
+  const isCaptured = capturedPoses[idx] !== null;
+  const snapBtn = document.getElementById('btnSnapPose');
+  snapBtn.innerHTML = isCaptured ? `🔄 إعادة التقاط الوضعية (${cfg.name})` : `📸 التقاط الوضعية ${idx + 1} (${cfg.name})`;
+}
+
+async function snapCurrentPose() {
+  const statusEl = document.getElementById('enrollStatus');
+  let dataUrl = null;
+
+  // 1. Fetch direct high-res frame from independent backend camera
+  try {
+    const res = await fetch("{% url 'face_recognition:api_capture_frame' %}");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.image_base64) {
+        dataUrl = data.image_base64;
+      }
+    }
+  } catch (err) {
+    console.warn("Direct frame capture fallback:", err);
+  }
+
+  // 2. Fallback to client canvas
+  if (!dataUrl) {
+    const img = document.getElementById('enrollWebcam');
+    const canvas = document.getElementById('enrollCanvas');
+    if (img && canvas && (img.naturalWidth || img.videoWidth)) {
+      canvas.width = img.naturalWidth || img.videoWidth || 640;
+      canvas.height = img.naturalHeight || img.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+    }
+  }
+
+  if (!dataUrl) {
+    statusEl.innerHTML = '⚠️ الكاميرا قيد التشغيل أو غير جاهزة بعد. يرجى الانتظار ثانية والمحاولة مجدداً.';
+    statusEl.style.color = '#f87171';
+    return;
+  }
+
+  if (wizardMode === '5poses') {
+    const cfg = POSES_CONFIG[currentPoseIdx];
+    capturedPoses[currentPoseIdx] = {
+      label: cfg.label,
+      image_base64: dataUrl
+    };
+
+    const statusBadge = document.getElementById(`poseStatus${currentPoseIdx}`);
+    if (statusBadge) {
+      statusBadge.textContent = 'تم الالتقاط ✓';
+      statusBadge.style.color = '#34d399';
+    }
+
+    updateWizardUI();
+
+    // Advance to next uncaptured pose
+    let nextIdx = -1;
+    for (let i = 0; i < 5; i++) {
+      if (capturedPoses[i] === null) {
+        nextIdx = i;
+        break;
+      }
+    }
+
+    if (nextIdx !== -1) {
+      selectPoseStep(nextIdx);
+    } else {
+      selectPoseStep(currentPoseIdx);
+      statusEl.innerHTML = '🎉 ممتاز! تم التقاط جميع الـ 5 وضعيات بنجاح! اضغط الآن على زر <strong>حفظ وتأكيد البصمة</strong>.';
+      statusEl.style.color = '#34d399';
+    }
+  } else {
+    // Variant mode: save immediately or prepare payload
+    window.singleVariantData = dataUrl;
+    statusEl.innerHTML = '✅ تم التقاط الوضعية الإضافية. اضغط <strong>حفظ الوضعية الإضافية</strong> لتأكيد الإضافة.';
+    statusEl.style.color = '#34d399';
+  }
+}
+
+function updateWizardUI() {
+  const count = capturedPoses.filter(p => p !== null).length;
+  const pct = Math.round((count / 5) * 100);
+
+  document.getElementById('poseProgressBar').style.width = pct + '%';
+  document.getElementById('poseProgressPct').textContent = `${count}/5 وضعيات ملتقطة (${pct}%)`;
+
+  const saveBtn = document.getElementById('btnSaveAllPoses');
+  saveBtn.disabled = count === 0;
+  saveBtn.innerHTML = `💾 حفظ وتأكيد البصمة (${count}/5)`;
+}
+
+async function saveAllEnrolledPoses() {
+  const btn = document.getElementById('btnSaveAllPoses');
+  const statusEl = document.getElementById('enrollStatus');
+
+  btn.disabled = true;
+  btn.innerText = 'جاري التحليل واستخراج البصمات...';
+  statusEl.innerHTML = '⏳ جاري استخراج البصمات البيومترية وتوليد متجهات الذكاء الاصطناعي...';
+  statusEl.style.color = '#fbbf24';
+
+  let payload = {};
+  if (wizardMode === '5poses') {
+    const validPoses = capturedPoses.filter(p => p !== null);
+    if (validPoses.length === 0) {
+      alert("يرجى التقاط وضعية واحدة على الأقل قبل الحفظ.");
+      btn.disabled = false;
+      return;
+    }
+    payload = { poses: validPoses, append_variant: false };
+  } else {
+    if (!window.singleVariantData) {
+      alert("يرجى التقاط الوضعية الإضافية أولاً بالضغط على 'التقاط الوضعية الحالية'.");
+      btn.disabled = false;
+      return;
+    }
+    payload = {
+      image_base64: window.singleVariantData,
+      label: 'variant',
+      append_variant: true
+    };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    const res = await fetch("{% url 'face_recognition:api_enroll_face' member.id %}", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken") || ""
+      },
+      body: JSON.stringify(payload)
+    });
+    clearTimeout(timeoutId);
+
+    const data = await res.json();
+    if (data.success) {
+      statusEl.innerHTML = '✅ ' + data.message;
+      statusEl.style.color = '#34d399';
+
+      setTimeout(() => {
+        closeFaceModal();
+        window.location.reload();
+      }, 1200);
+    } else {
+      statusEl.innerHTML = '❌ ' + (data.message || 'فشل في حفظ بصمة الوجه.');
+      statusEl.style.color = '#f87171';
+      btn.disabled = false;
+      btn.innerText = '💾 حفظ وتأكيد البصمة';
+    }
+  } catch (err) {
+    statusEl.innerHTML = '❌ خطأ: ' + (err.name === 'AbortError' ? 'انتهت مهلة استجابة الخادم' : err.message);
+    statusEl.style.color = '#f87171';
+    btn.disabled = false;
+    btn.innerText = '💾 حفظ وتأكيد البصمة';
+  }
+}
+
+async function startEnrollCamera() {
+  const img = document.getElementById('enrollWebcam');
+  if (img) {
+    img.src = "{% url 'face_recognition:video_feed' %}?t=" + Date.now();
+  }
+}
+
+function stopEnrollCamera() {
+  // Independent camera worker runs persistently in background
+}
+
+async function deleteFaceBiometrics() {
+  if (!confirm("هل أنت متأكد من رغبتك في حذف بصمات الوجه المسجلة لهذا العضو نهائياً؟")) return;
+  try {
+    const res = await fetch("{% url 'face_recognition:api_delete_face' member.id %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken") || ""
+      }
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert("تم حذف بصمات الوجه بنجاح.");
+      window.location.reload();
+    } else {
+      alert(data.message || "فشل الحذف");
+    }
+  } catch (err) {
+    alert("خطأ: " + err.message);
+  }
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+</script>
+
+<style>
+@media (max-width: 991px) {
+  .member-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+@media (max-width: 576px) {
+  .member-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+</style>
+{% endblock %}

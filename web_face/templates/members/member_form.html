@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_edit %}تعديل بيانات العضو والاشتراك{% else %}إضافة عضو جديد{% endif %} — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 720px; margin: 20px auto;">
+  <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 14px; padding: 24px;">
+    
+    <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 14px; margin-bottom: 20px;">
+      <h2 class="card-title" style="color: #FFFFFF; font-size: 1.4rem; font-weight: 800; margin: 0;">
+        {% if is_edit %}✏️ تعديل بيانات العضو واشتراكه: {{ member.name }}{% else %}➕ تسجيل عضو جديد{% endif %}
+      </h2>
+      <span style="color: #8D99A3; font-size: 0.88rem;">
+        {% if is_edit %}يمكنك تعديل البيانات الشخصية أو تصحيح باقة الاشتراك وتواريخها والمبالغ المالية في حال الخطأ.{% else %}إدخال بيانات اللاعب لإنشاء عضوية جديدة بالنادي.{% endif %}
+      </span>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- Section 1: Personal Details -->
+      <h3 style="color: #A8F14B; font-size: 1.05rem; font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 6px;">
+        👤 البيانات الشخصية
+      </h3>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+        <div class="form-group">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">الاسم بالكامل *</label>
+          <input type="text" name="name" class="form-control" value="{% if is_edit %}{{ member.name }}{% else %}{{ initial_name }}{% endif %}" placeholder="الاسم الثلاثي أو الثنائي..." required autofocus style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">رقم الهاتف (واتساب)</label>
+          <input type="tel" name="mobile" class="form-control" value="{% if is_edit %}{{ member.mobile }}{% endif %}" placeholder="010XXXXXXXX" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%; direction: ltr; text-align: right;">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+        <div class="form-group">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">النوع</label>
+          <select name="gender" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <option value="male" {% if is_edit and member.gender == 'male' %}selected{% endif %}>ذكر</option>
+            <option value="female" {% if is_edit and member.gender == 'female' %}selected{% endif %}>أنثى</option>
+          </select>
+        </div>
+
+        {% if is_edit %}
+        <div class="form-group">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">كود العضو (ID)</label>
+          <input type="text" value="{{ member.member_id }}" readonly disabled style="background: #050B10; border: 1px solid #132431; color: #4DB3FF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%; font-family: monospace; font-weight: 800;">
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">ملاحظات إضافية</label>
+        <textarea name="notes" class="form-control" rows="2" placeholder="ملاحظات صحية، كابتن متابع، تدريب خاص..." style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; border-radius: 8px; padding: 10px; width: 100%;">{% if is_edit %}{{ member.notes }}{% endif %}</textarea>
+      </div>
+
+      <!-- Face Recognition Biometrics Section -->
+      {% if is_edit %}
+      <div style="background: #08131C; border: 1px solid #1C384D; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 8px; overflow: hidden; background: #0f172a; border: 1px solid #334155; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+            {% if member.face_photo %}
+              <img src="{{ member.face_photo.url }}" style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+              📷
+            {% endif %}
+          </div>
+          <div>
+            <div style="font-weight: 800; color: #FFFFFF; font-size: 0.95rem;">
+              بصمة الوجه الرقمية (Face ID)
+            </div>
+            {% if member.has_face_enrolled %}
+              <span style="color: #34d399; font-size: 0.82rem;">✅ مسجل بالوجه ({{ member.face_enrolled_at|date:"Y-m-d" }})</span>
+            {% else %}
+              <span style="color: #f87171; font-size: 0.82rem;">⚠️ غير مسجل ببصمة الوجه</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <a href="{% url 'members:member_detail' member.id %}" class="btn btn-sm btn-secondary" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #10b981; font-weight: 700; text-decoration: none; padding: 6px 14px;">
+          📷 {% if member.has_face_enrolled %}تعديل / إعادة التقاط الوجه{% else %}تسجيل بصمة الوجه الآن{% endif %}
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- Section 2: Edit / Correct Current Plan & Subscription (If Editing Member) -->
+      {% if is_edit %}
+      <div style="background: #08131C; border: 1px solid #1C384D; border-radius: 10px; padding: 18px; margin-bottom: 22px;">
+        <input type="hidden" name="edit_plan" value="1">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #162E40; padding-bottom: 10px;">
+          <h3 style="color: #7ED321; font-size: 1.05rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
+            📋 تصحيح باقة واشتراك العضو (في حال الخطأ)
+          </h3>
+          <span style="font-size: 0.82rem; color: #8D99A3;">تعديل الباقة أو التواريخ أو الديون</span>
+        </div>
+
+        <!-- Plan selection / typo correction -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">اختيار باقة الصالة</label>
+            <select name="last_subscription_type" class="form-control" onchange="document.getElementById('customPlanInput').value = this.value;" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+              <option value="">-- اختر باقة أو اكتب اسم يدوي --</option>
+              {% for p in plans %}
+                <option value="{{ p.name }}" {% if member.last_subscription_type == p.name %}selected{% endif %}>{{ p.name }} ({{ p.price }} ج)</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">اسم الباقة الفعلي (تصحيح كتابي يدوي)</label>
+            <input type="text" id="customPlanInput" name="custom_plan_name" value="{{ member.last_subscription_type }}" placeholder="اكتب اسم الباقة لتصحيح أي خطأ..." class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+        </div>
+
+        <!-- Subscription Dates -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">تاريخ بداية الاشتراك</label>
+            <input type="date" name="last_subscription_start" value="{{ member.last_subscription_start|date:'Y-m-d' }}" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">تاريخ نهاية الاشتراك</label>
+            <input type="date" name="last_subscription_end" value="{{ member.last_subscription_end|date:'Y-m-d' }}" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+        </div>
+
+        <!-- Financial Corrections (Paid & Remaining) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">المبلغ المدفوع (ج)</label>
+            <input type="number" step="0.01" name="current_paid" value="{{ member.current_paid }}" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #7ED321; font-weight: 800; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">المتبقي / الديون (ج)</label>
+            <input type="number" step="0.01" name="current_remaining" value="{{ member.current_remaining }}" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFB300; font-weight: 800; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+        </div>
+
+      </div>
+      {% endif %}
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 12px; margin-top: 10px;">
+        <button type="submit" name="save_only" class="btn" style="flex: 1; height: 44px; background: #7ED321; color: #061105; font-weight: 900; font-size: 1rem; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 0 10px rgba(126,211,33,0.3);">
+          {% if is_edit %}💾 حفظ التعديلات وتصحيح الاشتراك{% else %}حفظ العضو الجديد{% endif %}
+        </button>
+
+        {% if not is_edit %}
+        <button type="submit" name="add_subscription" class="btn" style="flex: 1.2; height: 44px; background: #183C56; color: #4DB3FF; font-weight: 800; font-size: 0.95rem; border: 1px solid #235478; border-radius: 8px; cursor: pointer;">
+          حفظ وتفعيل اشتراك الآن 🚀
+        </button>
+        {% endif %}
+
+        {% if is_edit %}
+        <a href="{% url 'members:member_detail' member.id %}" class="btn" style="height: 44px; line-height: 42px; padding: 0 18px; background: #0E1D28; border: 1px solid #1B3144; color: #CAD6E2; text-decoration: none; border-radius: 8px; font-weight: 700;">
+          إلغاء
+        </a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

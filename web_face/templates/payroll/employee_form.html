@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_edit %}تعديل موظف{% else %}إضافة موظف جديد{% endif %} — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 580px; margin: 30px auto;">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">
+        {% if is_edit %}✏️ تعديل بيانات: {{ employee.name }}{% else %}➕ إضافة موظف / مدرب جديد{% endif %}
+      </h2>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">الاسم بالكامل *</label>
+        <input type="text" name="name" class="form-control" value="{% if is_edit %}{{ employee.name }}{% endif %}" placeholder="الاسم ثلاثي..." required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">رقم الهاتف (واتساب) *</label>
+        <input type="tel" name="phone" class="form-control" value="{% if is_edit %}{{ employee.phone }}{% endif %}" placeholder="010XXXXXXXX" required>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">المسمى الوظيفي</label>
+          <select name="role" class="form-control">
+            <option value="TRAINER" {% if is_edit and employee.role == 'TRAINER' %}selected{% endif %}>مدرب (كابتن)</option>
+            <option value="ASSISTANT" {% if is_edit and employee.role == 'ASSISTANT' %}selected{% endif %}>موظف استقبال</option>
+            <option value="MANAGER" {% if is_edit and employee.role == 'MANAGER' %}selected{% endif %}>مدير صالة</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">الراتب الأساسي الشهري (ج.م)</label>
+          <input type="number" step="0.01" name="fixed_salary" class="form-control" value="{% if is_edit %}{{ employee.fixed_salary }}{% else %}0.00{% endif %}" min="0">
+        </div>
+      </div>
+
+      {% if is_edit %}
+      <div class="form-group">
+        <label class="form-label">حالة العمل</label>
+        <select name="status" class="form-control">
+          <option value="ACTIVE" {% if employee.status == 'ACTIVE' %}selected{% endif %}>نشط بالعمل</option>
+          <option value="INACTIVE" {% if employee.status == 'INACTIVE' %}selected{% endif %}>متوقف / إجازة</option>
+        </select>
+      </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label class="form-label">ملاحظات سرية</label>
+        <textarea name="notes" class="form-control" rows="3" placeholder="ملاحظات العقد والتعيين...">{% if is_edit %}{{ employee.notes }}{% endif %}</textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; font-size: 1.1rem; padding: 12px;">
+        {% if is_edit %}حفظ التعديلات 💾{% else %}تسجيل الموظف 🚀{% endif %}
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

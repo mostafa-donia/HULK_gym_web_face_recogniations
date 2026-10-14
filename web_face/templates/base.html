@@ -1,0 +1,235 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% block title %}{{ gym_profile.gym_name|default:"نظام إدارة الصالات الرياضية" }}{% endblock %}</title>
+  {% if gym_profile.logo %}
+    <link rel="icon" type="image/png" href="{{ gym_profile.logo.url }}">
+  {% else %}
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+  {% endif %}
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  
+  <!-- Dynamic White-Label Branding & Theme Injection -->
+  <style>
+    :root {
+      {% if gym_profile.primary_color %}
+        --hulk-primary: {{ gym_profile.primary_color }};
+        --hulk-hover: {{ gym_profile.primary_color }};
+        --lime-btn-bg: {{ gym_profile.primary_color }};
+        --accent-green: {{ gym_profile.primary_color }};
+        --hulk-text: {{ gym_profile.primary_color }};
+        --nav-active-text: {{ gym_profile.primary_color }};
+        --nav-active-border: {{ gym_profile.primary_color }};
+        --status-active-text: {{ gym_profile.primary_color }};
+        --border-focus: {{ gym_profile.primary_color }};
+      {% endif %}
+    }
+  </style>
+
+  <!-- Local offline HTMX for live instant search & dynamic components -->
+  <script src="{% static 'js/htmx.min.js' %}"></script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Horizontal Navigation Bar -->
+  {% if user.is_authenticated %}
+  <header class="top-navbar">
+    <div class="top-navbar-container">
+      
+      <!-- Brand & Gym Name on Right (RTL) -->
+      <a href="{% url 'core:dashboard' %}" class="top-brand">
+        {% if gym_profile.logo %}
+          <img src="{{ gym_profile.logo.url }}" alt="Logo" style="width: 36px; height: 36px; object-fit: contain; border-radius: 6px;">
+        {% else %}
+          <img src="{% static 'images/logo.png' %}" alt="Logo" onerror="this.style.display='none'">
+        {% endif %}
+        <span>{{ gym_profile.gym_name|default:"الصالة الرياضية" }}</span>
+      </a>
+
+      <!-- Horizontal Navigation Links -->
+      <nav class="top-nav-links">
+        <a href="{% url 'core:dashboard' %}" class="top-nav-item {% if request.resolver_match.view_name == 'core:dashboard' %}active{% endif %}">
+          <span class="nav-icon">🏠</span>
+          <span>الرئيسية</span>
+        </a>
+
+        {% if user.is_manager %}
+        <a href="{% url 'core:manager_dashboard' %}" class="top-nav-item {% if request.resolver_match.view_name == 'core:manager_dashboard' %}active{% endif %}">
+          <span class="nav-icon">👔</span>
+          <span>لوحة المدير</span>
+        </a>
+        {% endif %}
+
+        <a href="{% url 'payroll:trainers_index' %}" class="top-nav-item {% if 'trainers' in request.path %}active{% endif %}">
+          <span class="nav-icon">🏋️‍♂️</span>
+          <span>المدربين</span>
+        </a>
+
+        <a href="{% url 'members:member_list' %}" class="top-nav-item {% if 'members' in request.path and not 'subscription' in request.path %}active{% endif %}">
+          <span class="nav-icon">👥</span>
+          <span>الأعضاء</span>
+        </a>
+
+        <a href="{% url 'payments:payment_list' %}" class="top-nav-item {% if 'payments' in request.path %}active{% endif %}">
+          <span class="nav-icon">💵</span>
+          <span>المدفوعات</span>
+        </a>
+
+        <a href="{% url 'messaging:whatsapp_queue' %}" class="top-nav-item {% if 'messaging' in request.path %}active{% endif %}">
+          <span class="nav-icon">🟢</span>
+          <span>واتساب</span>
+        </a>
+
+        {% if user.is_manager %}
+        <a href="{% url 'core:settings' %}" class="top-nav-item {% if 'settings' in request.path %}active{% endif %}">
+          <span class="nav-icon">⚙</span>
+          <span>الإعدادات</span>
+        </a>
+        {% endif %}
+      </nav>
+
+      <!-- User Profile, Face Camera Indicator & Logout on Left (RTL) -->
+      <div class="top-navbar-user">
+        {% if gym_profile.face_camera_enabled %}
+        <div id="globalCameraStatusPill" class="user-pill" onclick="toggleCameraDockPreview()" style="cursor: pointer; display: flex; align-items: center; gap: 7px; border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08); padding: 4px 12px; border-radius: 20px;" title="كاميرا التعرف على الوجه الذكية (انقر للمعاينة المباشرة)">
+          <span id="globalCamDot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+          <span id="globalCamText" style="font-size: 0.8rem; color: #10b981; font-weight: 800;">كاميرا الوجه نشطة</span>
+        </div>
+        {% endif %}
+
+        <div class="user-pill">
+          <span class="user-pill-name">{{ user.first_name|default:user.username }}</span>
+          <span class="user-pill-role">{% if user.is_manager %}المدير{% else %}استقبال{% endif %}</span>
+        </div>
+        <a href="{% url 'accounts:logout' %}" class="top-btn-logout" title="تسجيل خروج">
+          خروج
+        </a>
+      </div>
+
+    </div>
+  </header>
+  {% endif %}
+
+  <!-- Main Full-Width Content Container -->
+  <main class="main-wrapper">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if user.is_authenticated and gym_profile.face_camera_enabled %}
+  <!-- Docked Mini Camera Preview (Toggleable via Navbar Status Pill) -->
+  <div id="globalCamDock" style="display: none; position: fixed; bottom: 20px; left: 20px; z-index: 9998; width: 250px; background: #071018; border: 2px solid #10b981; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.85);">
+    <div style="background: rgba(16, 185, 129, 0.15); padding: 7px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(16, 185, 129, 0.25);">
+      <span style="font-size: 0.78rem; color: #10b981; font-weight: 800; display: flex; align-items: center; gap: 5px;">
+        <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
+        الكاميرا المستقلة المباشرة
+      </span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" onclick="openIndependentCameraWindow()" title="فتح في نافذة مستقلة منفصلة" style="background: none; border: none; color: #10b981; cursor: pointer; font-size: 0.95rem; line-height: 1;">🗗</button>
+        <button type="button" onclick="toggleCameraDockPreview()" title="إغلاق المعاينة" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.95rem; line-height: 1;">✕</button>
+      </div>
+    </div>
+    <div style="width: 100%; aspect-ratio: 4/3; background: #000; position: relative;">
+      <img id="dockPreviewImg" src="{% url 'face_recognition:video_feed' %}" alt="بث الكاميرا المباشر" style="width: 100%; height: 100%; object-fit: cover;">
+      <div style="position: absolute; bottom: 6px; left: 8px; font-size: 0.7rem; color: #10b981; background: rgba(0,0,0,0.65); padding: 2px 6px; border-radius: 4px; font-family: monospace;">
+        INDEPENDENT LIVE ●
+      </div>
+    </div>
+  </div>
+
+  <!-- Full-Screen Face Recognition Takeover Overlay -->
+  <div id="fullscreen-result-overlay" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(3, 7, 18, 0.94); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); align-items: center; justify-content: center; padding: 20px; transition: opacity 0.25s ease;">
+    <div id="fullscreen-result-card" style="width: 100%; max-width: 660px; border-radius: 28px; padding: 36px 30px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 35px 90px rgba(0, 0, 0, 0.85); position: relative; overflow: hidden; animation: popInScale 0.35s cubic-bezier(0.16, 1, 0.3, 1);">
+      
+      <!-- Top Status Badge -->
+      <div id="fs-status-badge" style="padding: 12px 32px; border-radius: 50px; font-size: 1.4rem; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 22px; display: inline-flex; align-items: center; gap: 12px;">
+        <span id="fs-status-icon" style="font-size: 1.7rem;">🟢</span>
+        <span id="fs-status-title">مسموح بالدخول — مرحباً بك!</span>
+      </div>
+
+      <!-- Member Large Avatar Circle with Glowing Frame -->
+      <div id="fs-avatar-container" style="width: 130px; height: 130px; border-radius: 50%; overflow: hidden; background: #000; border: 4px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; margin-bottom: 18px; box-shadow: 0 12px 30px rgba(0,0,0,0.6);">
+        <img id="fs-avatar-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+        <span id="fs-avatar-placeholder">👤</span>
+      </div>
+
+      <!-- Member Name in Big Bold Typography -->
+      <h2 id="fs-member-name" style="color: #FFFFFF; font-size: 2.2rem; font-weight: 900; margin: 0 0 8px 0; letter-spacing: -0.5px; line-height: 1.2;">
+        اسم المشترك
+      </h2>
+
+      <!-- Member ID & Plan Badges -->
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;">
+        <span id="fs-member-id" style="font-family: monospace; font-size: 1rem; font-weight: 800; background: rgba(255,255,255,0.08); padding: 5px 16px; border-radius: 20px; color: #94a3b8; border: 1px solid rgba(255,255,255,0.1);">
+          #MEM-00001
+        </span>
+        <span id="fs-plan-name" style="font-size: 0.95rem; font-weight: 800; background: rgba(255,255,255,0.08); padding: 5px 16px; border-radius: 20px; color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1);">
+          شهر شامل
+        </span>
+      </div>
+
+      <!-- Dynamic Subscription Info Dual-Card -->
+      <div id="fs-info-box" style="width: 100%; border-radius: 18px; padding: 18px 22px; margin-bottom: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 10px;">
+          <span id="fs-date-label" style="font-size: 0.88rem; font-weight: 700; display: block; margin-bottom: 5px;">تاريخ نهاية الاشتراك</span>
+          <strong id="fs-date-value" style="font-size: 1.5rem; font-weight: 900; font-variant-numeric: tabular-nums; display: block;">--/--/----</strong>
+        </div>
+
+        <div style="text-align: center; padding-right: 10px;">
+          <span id="fs-days-label" style="font-size: 0.88rem; font-weight: 700; display: block; margin-bottom: 5px;">حالة الصلاحية</span>
+          <strong id="fs-days-value" style="font-size: 1.5rem; font-weight: 900; font-variant-numeric: tabular-nums; display: block;">-- يوم</strong>
+        </div>
+      </div>
+
+      <!-- Debt Warning Banner (if member has outstanding balance) -->
+      <div id="fs-debt-notice" style="display: none; width: 100%; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 10px 16px; margin-bottom: 14px; color: #fbbf24; font-weight: 800; font-size: 0.95rem;">
+        ⚠️ تنبيه: متبقي مديونية مستحقة على اللاعب: <span id="fs-debt-amount" style="font-size: 1.05rem; text-decoration: underline;">0 ج.م</span>
+      </div>
+
+      <!-- Turnstile Gate Action Footer -->
+      <div id="fs-gate-notice" style="font-size: 0.92rem; color: #10b981; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+        <span>🚪</span> تم فحص الصلاحية وإرسال إشارة فتح البوابة الإلكترونية
+      </div>
+
+      <!-- Expired Renewal Prompt Footer -->
+      <div id="fs-alert-instruction" style="display: none; font-size: 0.92rem; color: #fda4af; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+        <span>🛑</span> يرجى مراجعة موظف الاستقبال لتجديد الاشتراك وتحديث العضوية
+      </div>
+
+      <!-- Close Button -->
+      <button type="button" onclick="closeFullscreenOverlay()" style="position: absolute; top: 18px; left: 18px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem;">
+        ✕
+      </button>
+
+      <!-- Animated Countdown Drain Progress Bar -->
+      <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 5px; background: rgba(255,255,255,0.1);">
+        <div id="fs-progress-fill" style="height: 100%; width: 100%; background: #10b981;"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <style>
+    @keyframes popInScale {
+      0% { transform: scale(0.82); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+
+  <script src="{% static 'js/global_face_camera.js' %}"></script>
+  {% endif %}
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}طابور رسائل الواتساب - {{ gym_profile.gym_name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+  <div>
+    <h1 class="page-title" style="margin: 0;">💬 طابور رسائل الواتساب</h1>
+    <p style="color: var(--text-muted); margin-top: 0.25rem;">متابعة إرسال الإيصالات والتنبيهات وكشوفات الرواتب عبر الواتساب</p>
+  </div>
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="{% url 'messaging:whatsapp_compose' %}" class="btn btn-secondary">
+      ✍️ كتابة رسالة مخصصة
+    </a>
+    <a href="{% url 'messaging:whatsapp_dispatch' %}" class="btn btn-primary" onclick="return confirm('هل تريد بدء إرسال الرسائل المعلقة الآن؟ تأكد من تشغيل تطبيق الواتساب.');">
+      🚀 إرسال الرسائل المعلقة الآن
+    </a>
+  </div>
+</div>
+
+<!-- Status KPI Cards -->
+<div class="grid grid-3" style="margin-bottom: 1.5rem;">
+  <div class="card" style="border-right: 4px solid #f59e0b;">
+    <div style="font-size: 0.85rem; color: var(--text-muted);">رسائل معلقة جاهزة للإرسال</div>
+    <div style="font-size: 1.8rem; font-weight: bold; color: #f59e0b; margin: 0.5rem 0;">
+      {{ total_pending }}
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted);">بانتظار المعالجة عبر واتساب</div>
+  </div>
+
+  <div class="card" style="border-right: 4px solid var(--accent-green);">
+    <div style="font-size: 0.85rem; color: var(--text-muted);">رسائل تم إرسالها بنجاح</div>
+    <div style="font-size: 1.8rem; font-weight: bold; color: var(--accent-green); margin: 0.5rem 0;">
+      {{ total_sent }}
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted);">تم تسليمها للمستلمين</div>
+  </div>
+
+  <div class="card" style="border-right: 4px solid var(--accent-red);">
+    <div style="font-size: 0.85rem; color: var(--text-muted);">رسائل فشل إرسالها</div>
+    <div style="font-size: 1.8rem; font-weight: bold; color: var(--accent-red); margin: 0.5rem 0;">
+      {{ total_failed }}
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted);">يمكن إعادة المحاولة بضغطة زر</div>
+  </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <a href="{% url 'messaging:whatsapp_queue' %}" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+      الكل
+    </a>
+    <a href="{% url 'messaging:whatsapp_queue' %}?status=pending" class="btn {% if status_filter == 'pending' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+      ⏳ المعلقة ({{ total_pending }})
+    </a>
+    <a href="{% url 'messaging:whatsapp_queue' %}?status=sent" class="btn {% if status_filter == 'sent' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+      ✅ الناجحة ({{ total_sent }})
+    </a>
+    <a href="{% url 'messaging:whatsapp_queue' %}?status=failed" class="btn {% if status_filter == 'failed' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+      ❌ الفاشلة ({{ total_failed }})
+    </a>
+  </div>
+</div>
+
+<!-- Messages Table -->
+<div class="table-responsive">
+  <table class="dark-table" style="font-size: 0.9rem;">
+    <thead>
+      <tr>
+        <th>الحالة</th>
+        <th>المستلم</th>
+        <th>رقم الهاتف</th>
+        <th>النوع</th>
+        <th>نص الرسالة</th>
+        <th>تاريخ الإنشاء</th>
+        <th style="text-align: center; width: 100px;">إجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for msg in messages_list %}
+      <tr>
+        <td>
+          {% if msg.status == 'sent' %}
+            <span class="badge badge-success">تم الإرسال</span>
+          {% elif msg.status == 'pending' %}
+            <span class="badge badge-warning">معلق</span>
+          {% else %}
+            <span class="badge badge-danger">فشل</span>
+          {% endif %}
+        </td>
+        <td><strong>{{ msg.recipient_name|default:"غير محدد" }}</strong></td>
+        <td dir="ltr" style="text-align: right; font-family: monospace;">{{ msg.mobile }}</td>
+        <td><span class="badge" style="background: rgba(255,255,255,0.1);">{{ msg.get_msg_type_display }}</span></td>
+        <td style="max-width: 320px; white-space: pre-wrap; font-size: 0.8rem; color: #ccc;">
+          {{ msg.message|truncatechars:140 }}
+          {% if msg.error_detail %}
+            <div style="color: var(--accent-red); font-size: 0.75rem; margin-top: 4px;">
+              ⚠️ {{ msg.error_detail }}
+            </div>
+          {% endif %}
+        </td>
+        <td>{{ msg.created_at|date:"Y-m-d H:i" }}</td>
+        <td>
+          <div style="display: flex; gap: 4px;">
+            {% if msg.status != 'sent' %}
+            <a href="{% url 'messaging:whatsapp_retry' msg.id %}" class="btn btn-secondary btn-sm" style="padding: 2px 6px;" title="إعادة الإرسال">
+              🔄 إعادة
+            </a>
+            {% endif %}
+            <a href="{% url 'messaging:whatsapp_delete' msg.id %}" class="btn btn-secondary btn-sm" style="padding: 2px 6px; color: var(--accent-red);" onclick="return confirm('حذف الرسالة من الطابور؟');" title="حذف">
+              🗑️
+            </a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+          لا توجد رسائل مسجلة في هذا التصنيف
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

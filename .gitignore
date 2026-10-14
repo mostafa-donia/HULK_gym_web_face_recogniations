@@ -1,0 +1,43 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+web_face/venv/
+venv/
+env/
+ENV/
+
+# Databases and Backups
+*.sqlite3
+*.sqlite3.bak
+*.sqlite3-journal
+web_face/backups/
+backups/
+
+# Client Media and Face Photos (never commit user face pictures)
+web_face/media/
+media/
+
+# Secrets and OAuth credentials
+web_face/data/*.json
+data/*.json
+
+# Distribution builds and legacy folders
+dist/
+old/
+v1/
+web/
+web_full/
+prompt.txt
+
+# Logs & OS artifacts
+*.log
+Thumbs.db
+Desktop.ini
+.DS_Store
+.vscode/
+.idea/

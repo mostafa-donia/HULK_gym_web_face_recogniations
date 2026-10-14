@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}سجل المصروفات — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="color: var(--text-main); font-size: 1.6rem; font-weight: 900; margin: 0 0 4px 0; letter-spacing: -0.3px;">
+        سجل مصروفات الصالة
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
+        إدارة وتتبع المصروفات التشغيلية، الإيجار، الفواتير، الصيانة، والمستلزمات
+      </p>
+    </div>
+    <a href="{% url 'expenses:expense_create' %}" class="btn btn-primary btn-sm">
+      + تسجيل مصروف جديد
+    </a>
+  </div>
+
+  <!-- Total Summary Card -->
+  <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; padding: 18px 24px; flex-wrap: wrap; gap: 12px;">
+    <span style="font-size: 1.05rem; font-weight: 700; color: var(--text-secondary);">إجمالي المصروفات في الفترة المحددة:</span>
+    <span style="font-size: 1.6rem; font-weight: 900; color: var(--accent-red); font-variant-numeric: tabular-nums;">
+      {{ total_amount }} <small style="font-size: 0.85rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج.م" }}</small>
+    </span>
+  </div>
+
+  <!-- Filter Card -->
+  <div class="card" style="margin-bottom: 0; padding: 16px 20px;">
+    <form method="get" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+      <div style="flex: 1; min-width: 160px;">
+        <label class="form-label" style="font-size: 0.82rem;">التصنيف</label>
+        <select name="category" class="form-control" onchange="this.form.submit()">
+          <option value="">جميع التصنيفات</option>
+          {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label class="form-label" style="font-size: 0.82rem;">من تاريخ</label>
+        <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label class="form-label" style="font-size: 0.82rem;">إلى تاريخ</label>
+        <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button type="submit" class="btn btn-secondary" style="height: 44px;">تطبيق الفلتر</button>
+        {% if selected_category or start_date or end_date %}
+          <a href="{% url 'expenses:expense_list' %}" class="btn btn-secondary" style="height: 44px; line-height: 42px; color: var(--accent-red);">إعادة ضبط</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Full-Width Expenses Table -->
+  <div class="table-responsive">
+    
+    <div class="table-header-bar">
+      <span style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">قائمة سندات الصرف</span>
+      <span style="color: var(--text-muted); font-size: 0.82rem;">سندات الخروج النقدي من الخزينة المعتمدة</span>
+    </div>
+
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th>التصنيف</th>
+          <th style="text-align: left;">المبلغ</th>
+          <th>التاريخ</th>
+          <th>الوصف / التفاصيل</th>
+          <th>المسجل</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for exp in expenses %}
+          <tr>
+            <td>
+              <span class="badge badge-neutral" style="font-weight: 700;">
+                {{ exp.category.name }}
+              </span>
+            </td>
+            <td style="text-align: left; color: var(--accent-red); font-weight: 800; font-size: 1.05rem; font-variant-numeric: tabular-nums;">
+              {{ exp.amount }} <small style="font-size: 0.76rem; color: var(--text-muted);">{{ gym_profile.currency }}</small>
+            </td>
+            <td style="color: var(--text-secondary); font-size: 0.86rem; font-variant-numeric: tabular-nums;">
+              {{ exp.expense_date|date:"Y-m-d" }}
+            </td>
+            <td style="color: var(--text-muted); font-size: 0.88rem;">{{ exp.description|default:"-" }}</td>
+            <td style="color: var(--text-secondary); font-size: 0.84rem;">
+              {{ exp.created_by.first_name|default:exp.created_by.username|default:"النظام" }}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 40px;">لا توجد مصروفات مسجلة في هذه الفترة.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+
+</div>
+{% endblock %}

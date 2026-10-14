@@ -1,0 +1,728 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}بوابة التعرف بالوجه وتسجيل الحضور — {{ profile.gym_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .kiosk-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 20px;
+    align-items: start;
+  }
+  .camera-viewport-card {
+    position: relative;
+    background: #06090F;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    min-height: 540px;
+  }
+  .video-container {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #webcam-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* Mirror camera */
+  }
+  .hud-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+  }
+  .hud-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .hud-pill {
+    background: rgba(11, 14, 20, 0.75);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #F8FAFC;
+  }
+  .target-frame-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 260px;
+    height: 320px;
+    border: 2px dashed rgba(132, 204, 22, 0.4);
+    border-radius: 36px;
+    transition: all 0.25s ease;
+  }
+  .target-frame-box.scanning {
+    border-color: var(--hulk-primary);
+    box-shadow: 0 0 30px rgba(132, 204, 22, 0.25);
+  }
+  .target-frame-box.matched-active {
+    border-color: #84CC16;
+    border-style: solid;
+    border-width: 4px;
+    box-shadow: 0 0 50px rgba(132, 204, 22, 0.6);
+  }
+  .target-frame-box.matched-expired {
+    border-color: #F43F5E;
+    border-style: solid;
+    border-width: 4px;
+    box-shadow: 0 0 50px rgba(244, 63, 94, 0.6);
+  }
+  .target-frame-box.matched-debt {
+    border-color: #F59E0B;
+    border-style: solid;
+    border-width: 4px;
+    box-shadow: 0 0 50px rgba(245, 158, 11, 0.6);
+  }
+
+  /* Recognition Result Banner */
+  .recognition-banner {
+    background: rgba(18, 23, 35, 0.94);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border-color);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 85px;
+  }
+  .member-avatar-box {
+    width: 58px;
+    height: 58px;
+    border-radius: 12px;
+    background: #090E17;
+    border: 2px solid var(--border-color);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+  }
+  .member-avatar-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .recent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 8px;
+    transition: background-color 0.15s;
+  }
+  .recent-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+  @media (max-width: 991px) {
+    .kiosk-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @keyframes popInScale {
+    0% { transform: scale(0.82); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 18px;">
+
+  <!-- Kiosk Header -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h1 style="color: var(--text-main); font-size: 1.6rem; font-weight: 900; margin: 0 0 4px 0;">
+        📷 بوابة الحضور الذكية بالتعرف على الوجه
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">
+        تسجيل الحضور الفوري للأعضاء عبر كاميرا الصالة والتحقق من سريان الاشتراكات وفتح البوابة الإلكترونية
+      </p>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="toggleFullScreen()">
+        ⛶ ملء الشاشة (Kiosk)
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-cam" onclick="toggleCamera()">
+        📷 تبديل الكاميرا
+      </button>
+    </div>
+  </div>
+
+  <!-- Kiosk Layout -->
+  <div class="kiosk-grid">
+    
+    <!-- Right Area: Live Camera Viewport -->
+    <div class="camera-viewport-card">
+      <div class="video-container">
+        <!-- Live Independent Camera Feed -->
+        <img id="webcam-video" src="{% url 'face_recognition:video_feed' %}" alt="بث الكاميرا المباشر" style="width: 100%; height: 100%; object-fit: cover;">
+        <!-- Invisible Canvas for Frame Capture -->
+        <canvas id="capture-canvas" style="display: none;"></canvas>
+
+        <!-- HUD Graphic Overlays -->
+        <div class="hud-overlay">
+          <div class="hud-top-bar">
+            <div class="hud-pill" id="hud-status-badge">
+              <span style="color: var(--hulk-primary); font-size: 1.1rem;">●</span>
+              <span>الكاميرا تعمل — جاري المسح...</span>
+            </div>
+
+            <div class="hud-pill" id="hud-gate-badge">
+              <span>البوابة:</span>
+              <strong style="color: #94A3B8;">{% if profile.gate_relay_enabled %}مفعلة تلقائياً{% else %}يدوية{% endif %}</strong>
+            </div>
+          </div>
+
+          <!-- Face Alignment Target Frame -->
+          <div class="target-frame-box scanning" id="target-box"></div>
+
+          <div style="text-align: center; color: rgba(255,255,255,0.7); font-size: 0.85rem; font-weight: 600;">
+            يرجى توجيه الوجه داخل الإطار للتسجيل الفوري
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Recognition Result Banner -->
+      <div class="recognition-banner" id="recognition-banner">
+        
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <!-- Member Avatar -->
+          <div class="member-avatar-box" id="banner-avatar">
+            👤
+          </div>
+
+          <div>
+            <div id="banner-name" style="color: var(--text-main); font-size: 1.25rem; font-weight: 900;">
+              بانتظار اقتراب العضو...
+            </div>
+            <div id="banner-details" style="color: var(--text-muted); font-size: 0.86rem; margin-top: 3px;">
+              قف أمام الكاميرا لمسح بصمة الوجه والتحقق من الاشتراك
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Result Pill -->
+        <div id="banner-status-pill">
+          <span class="badge badge-neutral" style="font-size: 0.9rem; padding: 6px 14px;">
+            جاهز للاستقبال
+          </span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Left Area: Sidebar Feed & KPI -->
+    <div style="display: flex; flex-direction: column; gap: 18px;">
+      
+      <!-- Stats Cards -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="card" style="margin-bottom: 0; padding: 16px; text-align: center;">
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">حضور اليوم</span>
+          <span id="kpi-today-count" style="color: var(--hulk-primary); font-size: 1.6rem; font-weight: 900; margin-top: 4px; display: block; font-variant-numeric: tabular-nums;">
+            {{ today_checkins_count }}
+          </span>
+        </div>
+
+        <div class="card" style="margin-bottom: 0; padding: 16px; text-align: center;">
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">مسجلين بالوجه</span>
+          <span style="color: var(--accent-blue); font-size: 1.6rem; font-weight: 900; margin-top: 4px; display: block; font-variant-numeric: tabular-nums;">
+            {{ enrolled_count }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Recent Check-ins Card -->
+      <div class="card" style="margin-bottom: 0; padding: 20px; flex: 1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px;">
+          <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin: 0;">
+            🕒 أحدث المسجلين حالياً
+          </h3>
+          <span class="badge badge-neutral" style="font-size: 0.75rem;">تحديث مباشر</span>
+        </div>
+
+        <div id="recent-list-container" style="max-height: 400px; overflow-y: auto;">
+          {% for ev in recent_events %}
+          <div class="recent-item">
+            <div style="width: 38px; height: 38px; border-radius: 8px; background: #0A0F18; border: 1px solid var(--border-color); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+              {% if ev.member.face_photo %}
+                <img src="{{ ev.member.face_photo.url }}" style="width: 100%; height: 100%; object-fit: cover;">
+              {% else %}
+                👤
+              {% endif %}
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <strong style="color: var(--text-main); font-size: 0.9rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {{ ev.member.name }}
+              </strong>
+              <span style="color: var(--text-muted); font-size: 0.76rem; font-variant-numeric: tabular-nums;">
+                {{ ev.checked_in_at|date:"h:i A" }} — باقي {{ ev.days_left_snapshot }} يوم
+              </span>
+            </div>
+            <div>
+              {% if ev.status_snapshot == 'active' %}
+                <span class="badge badge-active" style="font-size: 0.75rem; padding: 2px 7px;">نشط</span>
+              {% else %}
+                <span class="badge badge-expired" style="font-size: 0.75rem; padding: 2px 7px;">منتهي</span>
+              {% endif %}
+            </div>
+          </div>
+          {% empty %}
+          <div style="text-align: center; color: var(--text-muted); padding: 30px 10px; font-size: 0.88rem;" id="no-checkins-msg">
+            لا توجد تسجيلات حضور بعد اليوم.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Full-Screen Face Recognition Takeover Overlay -->
+<div id="fullscreen-result-overlay" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(3, 7, 18, 0.94); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); align-items: center; justify-content: center; padding: 20px; transition: opacity 0.25s ease;">
+  
+  <div id="fullscreen-result-card" style="width: 100%; max-width: 680px; border-radius: 28px; padding: 38px 32px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: 0 35px 90px rgba(0, 0, 0, 0.85); position: relative; overflow: hidden; animation: popInScale 0.35s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <!-- Top Big Status Badge -->
+    <div id="fs-status-badge" style="padding: 12px 32px; border-radius: 50px; font-size: 1.45rem; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 24px; display: inline-flex; align-items: center; gap: 12px;">
+      <span id="fs-status-icon" style="font-size: 1.8rem;">🟢</span>
+      <span id="fs-status-title">مسموح بالدخول — مرحباً بك!</span>
+    </div>
+
+    <!-- Member Large Avatar Circle with Glowing Frame -->
+    <div id="fs-avatar-container" style="width: 140px; height: 140px; border-radius: 50%; overflow: hidden; background: #000; border: 4px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 3.8rem; margin-bottom: 20px; box-shadow: 0 12px 30px rgba(0,0,0,0.6);">
+      <img id="fs-avatar-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+      <span id="fs-avatar-placeholder">👤</span>
+    </div>
+
+    <!-- Member Name in Big Bold Typography -->
+    <h2 id="fs-member-name" style="color: #FFFFFF; font-size: 2.3rem; font-weight: 900; margin: 0 0 8px 0; letter-spacing: -0.5px; line-height: 1.2;">
+      اسم المشترك
+    </h2>
+
+    <!-- Member ID & Plan Badges -->
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; justify-content: center;">
+      <span id="fs-member-id" style="font-family: monospace; font-size: 1.05rem; font-weight: 800; background: rgba(255,255,255,0.08); padding: 5px 16px; border-radius: 20px; color: #94a3b8; border: 1px solid rgba(255,255,255,0.1);">
+        #MEM-00001
+      </span>
+      <span id="fs-plan-name" style="font-size: 1rem; font-weight: 800; background: rgba(255,255,255,0.08); padding: 5px 16px; border-radius: 20px; color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1);">
+        شهر شامل
+      </span>
+    </div>
+
+    <!-- Dynamic Subscription Info Dual-Card -->
+    <div id="fs-info-box" style="width: 100%; border-radius: 18px; padding: 20px 24px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      
+      <!-- Item 1: End Date / Expiration Date -->
+      <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 12px;">
+        <span id="fs-date-label" style="font-size: 0.9rem; font-weight: 700; display: block; margin-bottom: 6px;">تاريخ نهاية الاشتراك</span>
+        <strong id="fs-date-value" style="font-size: 1.55rem; font-weight: 900; font-variant-numeric: tabular-nums; display: block;">--/--/----</strong>
+      </div>
+
+      <!-- Item 2: Days Left / Expired Days -->
+      <div style="text-align: center; padding-right: 12px;">
+        <span id="fs-days-label" style="font-size: 0.9rem; font-weight: 700; display: block; margin-bottom: 6px;">حالة الصلاحية</span>
+        <strong id="fs-days-value" style="font-size: 1.55rem; font-weight: 900; font-variant-numeric: tabular-nums; display: block;">-- يوم</strong>
+      </div>
+
+    </div>
+
+    <!-- Debt Alert Pill (if any) -->
+    <div id="fs-debt-banner" style="display: none; width: 100%; padding: 12px 18px; border-radius: 12px; margin-bottom: 18px; font-weight: 800; font-size: 1rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24;">
+      ⚠️ تنبيه: متبقي عليك مبلغ <span id="fs-debt-amount" style="font-weight: 900; font-size: 1.15rem;">0</span> {{ profile.currency|default:"ج" }}
+    </div>
+
+    <!-- Footer Direction Message -->
+    <div id="fs-footer-msg" style="font-size: 1.15rem; font-weight: 800; line-height: 1.5; margin-bottom: 8px;">
+      نورتنا في الصالة — نتمنى لك تمريناً ممتعاً! 💪
+    </div>
+
+    <!-- Countdown Progress Drain Bar -->
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 6px; background: rgba(255,255,255,0.08);">
+      <div id="fs-progress-bar" style="height: 100%; width: 100%;"></div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let videoEl = document.getElementById('webcam-video');
+  let canvasEl = document.getElementById('capture-canvas');
+  let targetBox = document.getElementById('target-box');
+  let bannerAvatar = document.getElementById('banner-avatar');
+  let bannerName = document.getElementById('banner-name');
+  let bannerDetails = document.getElementById('banner-details');
+  let bannerStatusPill = document.getElementById('banner-status-pill');
+  let hudStatusBadge = document.getElementById('hud-status-badge');
+  let currentStream = null;
+  let isScanning = true;
+  let isProcessingFrame = false;
+  let useFacingMode = "user";
+  let lastRecognizedMemberId = null;
+  let lastRecognizedTime = 0;
+
+  // Web Audio Chimes
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  function playBeep(freq = 880, type = 'sine', duration = 0.15) {
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch(e) {}
+  }
+
+  function playSuccessChime() {
+    playBeep(659.25, 'triangle', 0.12);
+    setTimeout(() => playBeep(880, 'triangle', 0.22), 120);
+  }
+
+  function playAlertChime() {
+    playBeep(330, 'sawtooth', 0.25);
+    setTimeout(() => playBeep(260, 'sawtooth', 0.35), 250);
+  }
+
+  let kioskLastEventTime = 0;
+
+  // Camera Management (Independent Stream)
+  async function startCamera() {
+    hudStatusBadge.innerHTML = `<span style="color: var(--hulk-primary); font-size: 1.1rem;">●</span><span>الكاميرا المستقلة متصلة — جاري المسح...</span>`;
+  }
+
+  function toggleCamera() {
+    startCamera();
+  }
+
+  function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      if (document.exitFullscreen) document.exitFullscreen();
+    }
+  }
+
+  const kioskMemberLastOverlayMap = {};
+  let fsOverlay = document.getElementById('fullscreen-result-overlay');
+  let fsCard = document.getElementById('fullscreen-result-card');
+  let fsStatusBadge = document.getElementById('fs-status-badge');
+  let fsStatusIcon = document.getElementById('fs-status-icon');
+  let fsStatusTitle = document.getElementById('fs-status-title');
+  let fsAvatarImg = document.getElementById('fs-avatar-img');
+  let fsAvatarPlaceholder = document.getElementById('fs-avatar-placeholder');
+  let fsAvatarContainer = document.getElementById('fs-avatar-container');
+  let fsMemberName = document.getElementById('fs-member-name');
+  let fsMemberId = document.getElementById('fs-member-id');
+  let fsPlanName = document.getElementById('fs-plan-name');
+  let fsInfoBox = document.getElementById('fs-info-box');
+  let fsDateLabel = document.getElementById('fs-date-label');
+  let fsDateValue = document.getElementById('fs-date-value');
+  let fsDaysLabel = document.getElementById('fs-days-label');
+  let fsDaysValue = document.getElementById('fs-days-value');
+  let fsDebtBanner = document.getElementById('fs-debt-banner');
+  let fsDebtAmount = document.getElementById('fs-debt-amount');
+  let fsFooterMsg = document.getElementById('fs-footer-msg');
+  let fsProgressBar = document.getElementById('fs-progress-bar');
+  let fsTimeout = null;
+  let isOverlayActive = false;
+
+  // Automated Recognition Polling Loop from Independent Camera Service
+  async function scanLoop() {
+    if (isScanning && !isProcessingFrame && !isOverlayActive) {
+      isProcessingFrame = true;
+      try {
+        const resp = await fetch(`/face/api/live-events/?since=${kioskLastEventTime}`);
+        if (resp.ok) {
+          const res = await resp.json();
+          if (res.has_event && res.event) {
+            kioskLastEventTime = res.event.timestamp;
+            handleVerifyResult({
+              success: true,
+              matched: true,
+              logged_new: true,
+              member: res.event.member,
+              score: res.event.score,
+              gate_opened: res.event.gate_opened,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Kiosk event polling error:", err);
+      } finally {
+        isProcessingFrame = false;
+      }
+    }
+    setTimeout(scanLoop, 350);
+  }
+
+  function handleVerifyResult(data) {
+    if (!data.success) return;
+
+    if (data.matched && data.member) {
+      const m = data.member;
+
+      // Update UI Banner
+      bannerName.textContent = m.name;
+      if (m.photo_url) {
+        bannerAvatar.innerHTML = `<img src="${m.photo_url}">`;
+      } else {
+        bannerAvatar.innerHTML = `👤`;
+      }
+
+      if (m.is_active) {
+        targetBox.className = "target-frame-box matched-active";
+        bannerDetails.innerHTML = `باقة: <strong>${m.plan}</strong> | ينتهي: <strong>${m.end_date}</strong> (باقي ${m.days_left} يوم)`;
+        bannerStatusPill.innerHTML = `<span class="badge badge-active" style="font-size: 0.95rem; padding: 6px 14px;">✅ مسموح بالدخول</span>`;
+
+        if (data.logged_new) {
+          updateRecentFeed(m);
+        }
+      } else {
+        targetBox.className = "target-frame-box matched-expired";
+        bannerDetails.innerHTML = `<span style="color: var(--accent-red); font-weight: 700;">الاشتراك منتهي في ${m.end_date}!</span> يرجى التجديد بالاستقبال.`;
+        bannerStatusPill.innerHTML = `<span class="badge badge-expired" style="font-size: 0.95rem; padding: 6px 14px;">⛔ الاشتراك منتهي</span>`;
+
+        if (data.logged_new) {
+          updateRecentFeed(m);
+        }
+      }
+
+      if (m.has_debt) {
+        bannerDetails.innerHTML += ` | <span style="color: var(--accent-orange); font-weight: 700;">متبقي عليه: ${m.remaining} ج.م</span>`;
+      }
+
+      // Trigger Full-Screen Notification Takeover (1-minute debounce per member)
+      const now = Date.now();
+      const lastOverlay = kioskMemberLastOverlayMap[m.id] || 0;
+      const isCooldown = (now - lastOverlay < 60000) || data.debounced;
+
+      if (!isCooldown) {
+        kioskMemberLastOverlayMap[m.id] = now;
+        showFullscreenNotification(m, data.score, data.gate_opened);
+      }
+
+      clearTimeout(window._resetTimeout);
+      window._resetTimeout = setTimeout(resetBanner, 4000);
+
+    } else if (data.message && data.message.includes("غير مسجل")) {
+      targetBox.className = "target-frame-box scanning";
+    }
+  }
+
+  function showFullscreenNotification(m, score, gateOpened) {
+    if (isOverlayActive) return;
+    isOverlayActive = true;
+
+    // Populate common data
+    fsMemberName.textContent = m.name;
+    fsMemberId.textContent = '#' + m.member_id;
+    fsPlanName.textContent = m.plan || 'باقة الصالة';
+
+    if (m.photo_url) {
+      fsAvatarImg.src = m.photo_url;
+      fsAvatarImg.style.display = 'block';
+      fsAvatarPlaceholder.style.display = 'none';
+    } else {
+      fsAvatarImg.style.display = 'none';
+      fsAvatarPlaceholder.style.display = 'block';
+    }
+
+    // Debt check
+    if (m.has_debt && parseFloat(m.remaining) > 0) {
+      fsDebtBanner.style.display = 'block';
+      fsDebtAmount.textContent = m.remaining;
+    } else {
+      fsDebtBanner.style.display = 'none';
+    }
+
+    let durationMs = 3500;
+
+    if (m.is_active) {
+      // 🟢 ACTIVE MEMBER: ACCESS GRANTED
+      durationMs = 3500;
+      fsCard.style.background = 'radial-gradient(circle at center, #063c20 0%, #021a0d 100%)';
+      fsCard.style.border = '2px solid #22c55e';
+      fsCard.style.boxShadow = '0 0 70px rgba(34, 197, 94, 0.45)';
+      fsAvatarContainer.style.borderColor = '#22c55e';
+      fsAvatarContainer.style.boxShadow = '0 0 25px rgba(34, 197, 94, 0.5)';
+
+      fsStatusBadge.style.background = 'rgba(34, 197, 94, 0.18)';
+      fsStatusBadge.style.border = '2px solid #22c55e';
+      fsStatusBadge.style.color = '#4ade80';
+      fsStatusIcon.textContent = '🟢';
+      fsStatusTitle.textContent = 'مسموح بالدخول — مرحباً بك!';
+
+      fsInfoBox.style.background = 'rgba(0, 0, 0, 0.45)';
+      fsInfoBox.style.border = '1px solid rgba(34, 197, 94, 0.3)';
+
+      fsDateLabel.textContent = 'تاريخ نهاية الاشتراك';
+      fsDateLabel.style.color = '#86efac';
+      fsDateValue.textContent = m.end_date || 'نشط';
+      fsDateValue.style.color = '#ffffff';
+
+      fsDaysLabel.textContent = 'الصلاحية المتبقية';
+      fsDaysLabel.style.color = '#86efac';
+      fsDaysValue.textContent = `متبقي ${m.days_left} يوم`;
+      fsDaysValue.style.color = '#4ade80';
+
+      if (gateOpened) {
+        fsFooterMsg.innerHTML = '🚪 <span style="color: #4ade80;">تم إرسال إشارة فتح البوابة الإلكترونية — تفضل بالدخول!</span>';
+      } else {
+        fsFooterMsg.innerHTML = '💪 <span style="color: #ffffff;">نورتنا في الصالة — نتمنى لك تمريناً ممتعاً وموفقاً!</span>';
+      }
+
+      fsProgressBar.style.background = '#22c55e';
+      playSuccessChime();
+
+    } else {
+      // 🔴 EXPIRED MEMBER: ACCESS DENIED
+      durationMs = 4500;
+      fsCard.style.background = 'radial-gradient(circle at center, #3c0609 0%, #1a0204 100%)';
+      fsCard.style.border = '2px solid #ef4444';
+      fsCard.style.boxShadow = '0 0 75px rgba(239, 68, 68, 0.6)';
+      fsAvatarContainer.style.borderColor = '#ef4444';
+      fsAvatarContainer.style.boxShadow = '0 0 25px rgba(239, 68, 68, 0.5)';
+
+      fsStatusBadge.style.background = 'rgba(239, 68, 68, 0.22)';
+      fsStatusBadge.style.border = '2px solid #ef4444';
+      fsStatusBadge.style.color = '#f87171';
+      fsStatusIcon.textContent = '🔴';
+      fsStatusTitle.textContent = 'غير مسموح بالدخول — الاشتراك منتهي!';
+
+      fsInfoBox.style.background = 'rgba(0, 0, 0, 0.55)';
+      fsInfoBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+
+      fsDateLabel.textContent = 'تاريخ انتهاء الاشتراك';
+      fsDateLabel.style.color = '#fca5a5';
+      fsDateValue.textContent = m.end_date || 'منتهي';
+      fsDateValue.style.color = '#ffffff';
+
+      fsDaysLabel.textContent = 'حالة العضوية';
+      fsDaysLabel.style.color = '#fca5a5';
+      fsDaysValue.textContent = `منتهي منذ ${m.expired_days || 1} يوم`;
+      fsDaysValue.style.color = '#f87171';
+
+      fsFooterMsg.innerHTML = '🛑 <span style="color: #fca5a5;">عفواً، لا يمكنك الدخول. يرجى التوجه لمكتب الاستقبال لتجديد الاشتراك.</span>';
+
+      fsProgressBar.style.background = '#ef4444';
+      playAlertChime();
+    }
+
+    // Display overlay
+    fsOverlay.style.display = 'flex';
+    fsOverlay.style.opacity = '1';
+
+    // Drain progress bar smoothly
+    fsProgressBar.style.transition = 'none';
+    fsProgressBar.style.width = '100%';
+    setTimeout(() => {
+      fsProgressBar.style.transition = `width ${durationMs}ms linear`;
+      fsProgressBar.style.width = '0%';
+    }, 40);
+
+    // Auto-dismiss after duration
+    clearTimeout(fsTimeout);
+    fsTimeout = setTimeout(() => {
+      hideFullscreenNotification();
+    }, durationMs);
+  }
+
+  function hideFullscreenNotification() {
+    fsOverlay.style.opacity = '0';
+    setTimeout(() => {
+      fsOverlay.style.display = 'none';
+      isOverlayActive = false;
+    }, 250);
+  }
+
+  function resetBanner() {
+    targetBox.className = "target-frame-box scanning";
+    bannerName.textContent = "بانتظار اقتراب العضو...";
+    bannerDetails.textContent = "قف أمام الكاميرا لمسح بصمة الوجه والتحقق من الاشتراك";
+    bannerAvatar.innerHTML = "👤";
+    bannerStatusPill.innerHTML = `<span class="badge badge-neutral" style="font-size: 0.9rem; padding: 6px 14px;">جاهز للاستقبال</span>`;
+  }
+
+  function updateRecentFeed(m) {
+    const container = document.getElementById('recent-list-container');
+    const noMsg = document.getElementById('no-checkins-msg');
+    if (noMsg) noMsg.remove();
+
+    const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    const badgeClass = m.is_active ? 'badge-active' : 'badge-expired';
+    const badgeText = m.is_active ? 'نشط' : 'منتهي';
+
+    const itemHtml = `
+      <div class="recent-item" style="animation: fadeIn 0.3s ease;">
+        <div style="width: 38px; height: 38px; border-radius: 8px; background: #0A0F18; border: 1px solid var(--border-color); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;">
+          ${m.photo_url ? `<img src="${m.photo_url}" style="width:100%;height:100%;object-fit:cover;">` : '👤'}
+        </div>
+        <div style="flex: 1; min-width: 0;">
+          <strong style="color: var(--text-main); font-size: 0.9rem; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${m.name}
+          </strong>
+          <span style="color: var(--text-muted); font-size: 0.76rem;">
+            ${timeStr} — باقي ${m.days_left} يوم
+          </span>
+        </div>
+        <div>
+          <span class="badge ${badgeClass}" style="font-size: 0.75rem; padding: 2px 7px;">${badgeText}</span>
+        </div>
+      </div>
+    `;
+    container.insertAdjacentHTML('afterbegin', itemHtml);
+
+    // Increment today counter
+    const counter = document.getElementById('kpi-today-count');
+    if (counter) {
+      let val = parseInt(counter.textContent) || 0;
+      counter.textContent = val + 1;
+    }
+  }
+
+  // Start Kiosk upon load
+  window.addEventListener('DOMContentLoaded', () => {
+    startCamera();
+    scanLoop();
+  });
+</script>
+{% endblock %}

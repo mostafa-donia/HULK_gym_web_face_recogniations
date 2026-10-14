@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}المكافآت والخصومات — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="color: var(--gold); font-size: 1.4rem; font-weight: 800;">⚖️ المكافآت والخصومات الشهرية</h1>
+      <p style="color: var(--text-muted); font-size: 0.85rem;">دورة اعتماد الحوافز والجزاءات للموظفين والمدربين (شهر: {{ period }})</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <a href="{% url 'payroll:adjustment_create' %}" class="btn btn-primary">➕ اقتراح بند جديد</a>
+      <a href="{% url 'payroll:payroll_runs' %}" class="btn btn-secondary">💰 مسيرات الرواتب</a>
+    </div>
+  </div>
+
+  <!-- Filter Period -->
+  <div class="card" style="padding: 12px;">
+    <form method="get" style="display: flex; gap: 10px; align-items: center;">
+      <label class="form-label" style="margin: 0;">اختر الشهر (YYYY-MM):</label>
+      <input type="month" name="period" value="{{ period }}" class="form-control" style="max-width: 180px;" onchange="this.form.submit()">
+      <button type="submit" class="btn btn-secondary btn-sm">عرض</button>
+    </form>
+  </div>
+
+  <!-- Adjustments Table -->
+  <div class="card">
+    <div class="table-responsive">
+      <table class="dark-table">
+        <thead>
+          <tr>
+            <th>الموظف</th>
+            <th>نوع البند</th>
+            <th>التصنيف</th>
+            <th>المبلغ</th>
+            <th>السبب والمبرر</th>
+            <th>المقترح</th>
+            <th>الحالة</th>
+            <th>إجراء الاعتماد</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for adj in adjustments %}
+            <tr>
+              <td style="font-weight: 700;">{{ adj.employee.name }}</td>
+              <td>
+                {% if adj.adjustment_type == 'BONUS' %}
+                  <span class="badge" style="background: var(--success-bg); color: var(--success);">حافز / مكافأة (+)</span>
+                {% else %}
+                  <span class="badge" style="background: var(--danger-bg); color: var(--danger);">خصم / جزاء (-)</span>
+                {% endif %}
+              </td>
+              <td>{{ adj.category }}</td>
+              <td style="font-weight: 800; font-size: 1.05rem; {% if adj.adjustment_type == 'BONUS' %}color: var(--success);{% else %}color: var(--danger);{% endif %}">
+                {% if adj.adjustment_type == 'BONUS' %}+{% else %}-{% endif %}{{ adj.amount }} {{ gym_profile.currency }}
+              </td>
+              <td style="max-width: 250px; color: var(--text-muted);">{{ adj.reason }}</td>
+              <td style="font-size: 0.85rem; color: var(--text-muted);">{{ adj.created_by.first_name|default:adj.created_by.username }}</td>
+              <td>
+                {% if adj.status == 'APPROVED' %}
+                  <span class="badge badge-active">معتمد</span>
+                {% elif adj.status == 'PENDING' %}
+                  <span class="badge badge-debt">في انتظار المدير</span>
+                {% elif adj.status == 'REJECTED' %}
+                  <span class="badge badge-expired">مرفوض</span>
+                {% else %}
+                  <span class="badge" style="background: var(--border-color); color: var(--text-muted);">مسودة</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if adj.status == 'PENDING' and user.is_manager %}
+                  {% if adj.created_by == user and not user.is_superuser %}
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">بانتظار مدير آخر</span>
+                  {% else %}
+                    <div style="display: flex; gap: 4px;">
+                      <form method="post" action="{% url 'payroll:adjustment_action' adj.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="btn btn-success btn-sm" style="padding: 2px 8px; font-size: 0.75rem;">اعتماد ✓</button>
+                      </form>
+                      <form method="post" action="{% url 'payroll:adjustment_action' adj.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject">
+                        <button type="submit" class="btn btn-danger btn-sm" style="padding: 2px 8px; font-size: 0.75rem;">رفض ✗</button>
+                      </form>
+                    </div>
+                  {% endif %}
+                {% else %}
+                  <span style="font-size: 0.8rem; color: var(--text-muted);">{{ adj.approved_by.first_name|default:adj.approved_by.username|default:"-" }}</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                لا توجد مكافآت أو خصومات مسجلة لشهر {{ period }}.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

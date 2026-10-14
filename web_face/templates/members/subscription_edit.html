@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}تعديل وتصحيح الاشتراك — {{ member.name }} — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 760px; margin: 20px auto;">
+  <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 14px; padding: 24px;">
+    
+    <!-- Header -->
+    <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 14px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h2 class="card-title" style="color: #FFFFFF; font-size: 1.35rem; font-weight: 800; margin: 0 0 4px 0;">
+          ✏️ تصحيح وتعديل بيانات الاشتراك
+        </h2>
+        <span style="color: #8D99A3; font-size: 0.88rem;">
+          تعديل اسم الباقة إذا كان مكتوباً بالخطأ، ضبط التواريخ، وتعديل المبالغ المدفوعة والمتبقية.
+        </span>
+      </div>
+
+      <a href="{% url 'members:member_detail' member.id %}" class="btn btn-secondary" style="background: #0E1D28; border: 1px solid #1C3347; color: #CAD6E2; font-weight: 700; font-size: 0.88rem; padding: 8px 14px; border-radius: 8px; text-decoration: none;">
+        ← عودة لملف العضو
+      </a>
+    </div>
+
+    <!-- Member summary pill banner -->
+    <div style="background: #071018; border: 1px solid #162939; border-radius: 10px; padding: 14px 18px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <span style="color: #8D99A3; font-size: 0.8rem; display: block;">العضو:</span>
+        <strong style="color: #FFFFFF; font-size: 1.15rem;">{{ member.name }}</strong>
+        <span style="color: #4DB3FF; font-family: monospace; font-size: 0.88rem; margin-right: 8px;">({{ member.member_id }})</span>
+      </div>
+      <div>
+        <span style="color: #8D99A3; font-size: 0.8rem; display: block;">الهاتف:</span>
+        <strong style="color: #CAD6E2; font-size: 0.95rem; direction: ltr; display: inline-block;">{{ member.mobile|default:"-" }}</strong>
+      </div>
+      <div>
+        <span style="color: #8D99A3; font-size: 0.8rem; display: block;">تاريخ التسجيل الأصلي:</span>
+        <span style="color: #CAD6E2; font-size: 0.88rem;">{{ subscription.created_at|date:"d/m/Y h:i A" }}</span>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- Section: Plan Name Correction -->
+      <div style="background: #08131C; border: 1px solid #1C384D; border-radius: 10px; padding: 18px; margin-bottom: 20px;">
+        <h3 style="color: #A8F14B; font-size: 1.05rem; font-weight: 800; margin: 0 0 14px 0; display: flex; align-items: center; gap: 6px;">
+          🏷️ اسم ونوع الباقة
+        </h3>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">
+              اختر باقة معتمدة من القائمة
+            </label>
+            <select id="planSelect" name="plan_name" class="form-control" onchange="onPlanSelectChanged(this)" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+              <option value="">-- اختر باقة أو اكتب يدوياً بالجانب --</option>
+              {% for p in plans %}
+                <option value="{{ p.name }}" data-price="{{ p.price }}" data-days="{{ p.duration_days }}" {% if subscription.plan_name == p.name %}selected{% endif %}>
+                  {{ p.name }} ({{ p.price }} {{ gym_profile.currency|default:"ج" }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">
+              اسم الباقة الفعلي (تصحيح كتابي يدوي)
+            </label>
+            <input type="text" id="customPlanInput" name="custom_plan" value="{{ subscription.plan_name }}" placeholder="اكتب اسم الباقة لتصحيح أي خطأ إملائي..." class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Dates & Allowance -->
+      <div style="background: #08131C; border: 1px solid #1C384D; border-radius: 10px; padding: 18px; margin-bottom: 20px;">
+        <h3 style="color: #4DB3FF; font-size: 1.05rem; font-weight: 800; margin: 0 0 14px 0; display: flex; align-items: center; gap: 6px;">
+          📅 فترة الاشتراك وأيام السماح
+        </h3>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">تاريخ البداية</label>
+            <input type="date" id="startDateInput" name="start_date" value="{{ subscription.start_date|date:'Y-m-d' }}" required class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">تاريخ النهاية</label>
+            <input type="date" id="endDateInput" name="end_date" value="{{ subscription.end_date|date:'Y-m-d' }}" required class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">أيام السماح (Grace Days)</label>
+            <input type="number" name="allowance_days" value="{{ subscription.allowance_days|default:0 }}" min="0" max="60" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Pricing & Amounts -->
+      <div style="background: #08131C; border: 1px solid #1C384D; border-radius: 10px; padding: 18px; margin-bottom: 24px;">
+        <h3 style="color: #7ED321; font-size: 1.05rem; font-weight: 800; margin: 0 0 14px 0; display: flex; align-items: center; gap: 6px;">
+          💰 المبالغ المالية والمدفوعات
+        </h3>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">سعر الباقة (ج)</label>
+            <input type="number" step="0.01" id="planPriceInput" name="plan_price" value="{{ subscription.plan_price }}" oninput="recalcRemaining()" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">المبلغ المدفوع (ج)</label>
+            <input type="number" step="0.01" id="paidAmountInput" name="paid_amount" value="{{ subscription.paid_amount }}" oninput="recalcRemaining()" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #7ED321; font-weight: 800; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">المبلغ المتبقي (دين على العضو)</label>
+            <input type="number" step="0.01" id="remAmountInput" name="remaining_amount" value="{{ subscription.remaining_amount }}" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FF5C67; font-weight: 800; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">طريقة الدفع</label>
+          <select name="payment_method" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%; max-width: 320px;">
+            {% for pm in payment_methods %}
+              <option value="{{ pm.name }}" {% if subscription.payment_method == pm.name %}selected{% endif %}>{{ pm.name }}</option>
+            {% empty %}
+              <option value="نقدي" {% if subscription.payment_method == 'نقدي' %}selected{% endif %}>نقدي</option>
+              <option value="فودافون كاش" {% if subscription.payment_method == 'فودافون كاش' %}selected{% endif %}>فودافون كاش</option>
+              <option value="إنستاباي" {% if subscription.payment_method == 'إنستاباي' %}selected{% endif %}>إنستاباي</option>
+              <option value="فيزا / بنك" {% if subscription.payment_method == 'فيزا / بنك' %}selected{% endif %}>فيزا / بنك</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 10px; border-top: 1px solid #162837;">
+        <a href="{% url 'members:member_detail' member.id %}" class="btn btn-secondary" style="background: #0E1D28; border: 1px solid #1C3347; color: #CAD6E2; font-weight: 700; padding: 12px 24px; border-radius: 8px; text-decoration: none;">
+          إلغاء
+        </a>
+        <button type="submit" class="btn btn-primary" style="background: #A8F14B; color: #050B10; font-weight: 800; padding: 12px 28px; border-radius: 8px; border: none; font-size: 1rem; cursor: pointer;">
+          💾 حفظ التعديلات وتحديث العضو
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<script>
+function onPlanSelectChanged(select) {
+  const customInput = document.getElementById('customPlanInput');
+  if (select.value) {
+    customInput.value = select.value;
+    const selectedOption = select.options[select.selectedIndex];
+    const price = selectedOption.getAttribute('data-price');
+    const days = parseInt(selectedOption.getAttribute('data-days') || '30', 10);
+    
+    if (price && (!document.getElementById('planPriceInput').value || document.getElementById('planPriceInput').value === '0')) {
+      document.getElementById('planPriceInput').value = price;
+      recalcRemaining();
+    }
+
+    // Auto-calculate end date if start date is present
+    const startVal = document.getElementById('startDateInput').value;
+    if (startVal && days) {
+      const d = new Date(startVal);
+      d.setDate(d.getDate() + days);
+      document.getElementById('endDateInput').value = d.toISOString().split('T')[0];
+    }
+  }
+}
+
+function recalcRemaining() {
+  const price = parseFloat(document.getElementById('planPriceInput').value) || 0;
+  const paid = parseFloat(document.getElementById('paidAmountInput').value) || 0;
+  const rem = Math.max(0, price - paid);
+  document.getElementById('remAmountInput').value = rem.toFixed(2);
+}
+</script>
+{% endblock %}

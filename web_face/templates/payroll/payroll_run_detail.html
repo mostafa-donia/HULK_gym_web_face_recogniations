@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}مسير رواتب شهر {{ period }} — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <!-- Header & Status -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <h1 style="color: var(--gold); font-size: 1.5rem; font-weight: 900;">💰 مسير رواتب شهر {{ period }}</h1>
+        {% if is_approved %}
+          <span class="badge badge-active" style="font-size: 0.95rem; padding: 6px 14px;">🔒 معتمد ومغلق نهائياً</span>
+        {% else %}
+          <span class="badge badge-debt" style="font-size: 0.95rem; padding: 6px 14px;">⏳ مسودة قيد المراجعة</span>
+        {% endif %}
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+        الراتب المستحق = الأساسي + عمولات التدريب الخاص المؤهلة + المكافآت المعتمدة - الخصومات المعتمدة
+      </p>
+    </div>
+
+    <!-- Approval Action for Manager -->
+    {% if not is_approved and user.is_manager %}
+    <form method="post" action="{% url 'payroll:payroll_approve' period %}" onsubmit="return confirm('تأكيد اعتماد المسير نهائياً؟ بعد الاعتماد لن يمكن التعديل على المسير وسيتم تثبيت لقطة غير قابلة للتعديل.')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-success" style="font-size: 1.05rem; padding: 12px 20px;">
+        ✓ اعتماد المسير نهائياً وتثبيت الرواتب
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- Summary Metric Banner -->
+  <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;" class="payroll-stats-grid">
+    <div class="stat-card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 10px; padding: 14px;">
+      <span class="stat-label" style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">إجمالي الرواتب الأساسية</span>
+      <span class="stat-val" style="color: #FFFFFF; font-size: 1.25rem; font-weight: 800; margin-top: 4px; display: block;">{{ payroll_run.total_fixed_salary }} <small style="font-size: 0.85rem;">{{ gym_profile.currency }}</small></span>
+    </div>
+    <div class="stat-card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 10px; padding: 14px;">
+      <span class="stat-label" style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">إجمالي عمولات PT</span>
+      <span class="stat-val" style="color: #4DB3FF; font-size: 1.25rem; font-weight: 800; margin-top: 4px; display: block;">{{ payroll_run.total_commissions }} <small style="font-size: 0.85rem;">{{ gym_profile.currency }}</small></span>
+    </div>
+    <div class="stat-card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 10px; padding: 14px;">
+      <span class="stat-label" style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">المكافآت والجزاءات</span>
+      <span class="stat-val" style="font-size: 1.25rem; font-weight: 800; margin-top: 4px; display: block;">
+        <span style="color: #7ED321;">+{{ payroll_run.total_bonuses }}</span> / <span style="color: #FF5C67;">-{{ payroll_run.total_deductions }}</span>
+      </span>
+    </div>
+    <div class="stat-card" style="background: #141108; border: 1px solid #3D2C0C; border-radius: 10px; padding: 14px;">
+      <span class="stat-label" style="color: #FFB300; font-size: 0.82rem; font-weight: 600; display: block;">💸 السلف المسحوبة خلال الشهر</span>
+      <span class="stat-val" style="color: #FFB300; font-size: 1.25rem; font-weight: 800; margin-top: 4px; display: block;">-{{ payroll_run.total_advances }} <small style="font-size: 0.85rem;">{{ gym_profile.currency }}</small></span>
+    </div>
+    <div class="stat-card" style="background: #091A11; border: 1px solid #164D2D; border-radius: 10px; padding: 14px;">
+      <span class="stat-label" style="color: #7ED321; font-size: 0.82rem; font-weight: 600; display: block;">صافي المتبقي للصرف النهائي</span>
+      <span class="stat-val" style="color: #7ED321; font-size: 1.25rem; font-weight: 900; margin-top: 4px; display: block;">{{ payroll_run.net_payable }} <small style="font-size: 0.85rem;">{{ gym_profile.currency }}</small></span>
+    </div>
+  </div>
+
+  <!-- Itemized Payroll Table -->
+  <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
+    <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 16px;">
+      <h3 class="card-title" style="color: #FFFFFF; font-size: 1.2rem; font-weight: 800; margin: 0;">
+        📋 تفصيل مستحقات الموظفين والمدربين
+      </h3>
+    </div>
+
+    <div class="table-responsive" style="overflow-x: auto;">
+      <table class="dark-table">
+        <thead>
+          <tr>
+            <th>الموظف</th>
+            <th>الوظيفة</th>
+            <th style="text-align: left;">الأساسي</th>
+            <th style="text-align: left;">عمولات PT</th>
+            <th style="text-align: left;">المكافآت</th>
+            <th style="text-align: left;">الجزاءات</th>
+            <th style="text-align: left;">السلف (-)</th>
+            <th style="text-align: left;">المتبقي للصرف (=)</th>
+            <th style="text-align: center; width: 140px;">كشف الراتب</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if is_approved %}
+            <!-- Approved Immutable Snapshot Items -->
+            {% for item in items %}
+              <tr>
+                <td>
+                  <strong style="color: var(--text-main); font-size: 0.96rem;">{{ item.employee_name_snapshot }}</strong>
+                </td>
+                <td style="color: var(--text-secondary); font-size: 0.88rem;">{{ item.role_snapshot }}</td>
+                <td style="text-align: left; color: var(--text-main); font-weight: 700; font-variant-numeric: tabular-nums;">
+                  {{ item.fixed_salary }} {{ gym_profile.currency }}
+                </td>
+                <td style="text-align: left; color: var(--accent-blue); font-weight: 700; font-variant-numeric: tabular-nums;">
+                  +{{ item.commissions }} {{ gym_profile.currency }}
+                  {% if item.details_json.commissions %}
+                    <span style="font-size: 0.74rem; color: var(--text-muted); display: block;">
+                      ({{ item.details_json.commissions|length }} حصة PT)
+                    </span>
+                  {% endif %}
+                </td>
+                <td style="text-align: left; color: var(--hulk-primary); font-weight: 700; font-variant-numeric: tabular-nums;">
+                  +{{ item.bonuses }} {{ gym_profile.currency }}
+                </td>
+                <td style="text-align: left; color: var(--accent-red); font-weight: 700; font-variant-numeric: tabular-nums;">
+                  {% if item.deductions > 0 %}-{{ item.deductions }} {{ gym_profile.currency }}{% else %}0{% endif %}
+                </td>
+                <td style="text-align: left; color: var(--accent-orange); font-weight: 800; font-variant-numeric: tabular-nums;">
+                  {% if item.advances and item.advances > 0 %}
+                    -{{ item.advances }} {{ gym_profile.currency }}
+                  {% else %}
+                    <span style="color: var(--text-dim);">0</span>
+                  {% endif %}
+                </td>
+                <td style="text-align: left; color: var(--hulk-primary); font-weight: 900; font-size: 1.1rem; font-variant-numeric: tabular-nums;">
+                  {{ item.net_payable }} {{ gym_profile.currency }}
+                </td>
+                <td style="text-align: center;">
+                  <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+                    <a href="{% url 'payroll:payroll_statement' item.id %}" target="_blank" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.78rem;">
+                      طباعة
+                    </a>
+                    <a href="{% url 'payroll:payroll_send_whatsapp' item.id %}" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 0.78rem;" onclick="return confirm('إرسال كشف الراتب للكابتن عبر الواتساب؟')">
+                      واتساب
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <!-- Dynamic Calculation Preview Items -->
+            {% for calc in calculated_items %}
+              <tr>
+                <td>
+                  <strong style="color: var(--text-main); font-size: 0.96rem;">{{ calc.employee.name }}</strong>
+                </td>
+                <td style="color: var(--text-secondary); font-size: 0.88rem;">{{ calc.employee.get_role_display }}</td>
+                <td style="text-align: left; color: var(--text-main); font-weight: 700; font-variant-numeric: tabular-nums;">
+                  {{ calc.fixed_salary }} {{ gym_profile.currency }}
+                </td>
+                <td style="text-align: left; color: var(--accent-blue); font-weight: 700; font-variant-numeric: tabular-nums;">
+                  +{{ calc.commissions }} {{ gym_profile.currency }}
+                  {% if calc.details.commissions %}
+                    <span style="font-size: 0.74rem; color: var(--text-muted); display: block;">
+                      ({{ calc.details.commissions|length }} حصة PT)
+                    </span>
+                  {% endif %}
+                </td>
+                <td style="text-align: left; color: var(--hulk-primary); font-weight: 700; font-variant-numeric: tabular-nums;">
+                  +{{ calc.bonuses }} {{ gym_profile.currency }}
+                </td>
+                <td style="text-align: left; color: var(--accent-red); font-weight: 700; font-variant-numeric: tabular-nums;">
+                  {% if calc.deductions > 0 %}-{{ calc.deductions }} {{ gym_profile.currency }}{% else %}0{% endif %}
+                </td>
+                <td style="text-align: left; color: var(--accent-orange); font-weight: 800; font-variant-numeric: tabular-nums;">
+                  {% if calc.advances and calc.advances > 0 %}
+                    -{{ calc.advances }} {{ gym_profile.currency }}
+                  {% else %}
+                    <span style="color: var(--text-dim);">0</span>
+                  {% endif %}
+                </td>
+                <td style="text-align: left; color: var(--hulk-primary); font-weight: 900; font-size: 1.1rem; font-variant-numeric: tabular-nums;">
+                  {{ calc.net_payable }} {{ gym_profile.currency }}
+                </td>
+                <td style="text-align: center;">
+                  <span class="badge badge-neutral" style="font-size: 0.76rem;">بانتظار الاعتماد</span>
+                </td>
+              </tr>
+            {% endfor %}
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

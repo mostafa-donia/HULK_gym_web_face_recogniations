@@ -1,0 +1,85 @@
+{% if results %}
+  <div style="margin-top: 18px;">
+    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 10px; font-weight: 700;">
+      تم العثور على <strong style="color: var(--hulk-primary);">{{ results|length }}</strong> لاعب مطابق للبحث:
+    </p>
+
+    {% for r in results %}
+      <div class="member-result-card" id="member-card-{{ r.member.id }}">
+        <!-- Member Information & Badges -->
+        <div class="member-info">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <a href="{% url 'members:member_detail' r.member.id %}" class="member-name">
+              {{ r.member.name }}
+            </a>
+            <span class="badge badge-neutral" style="font-family: monospace; font-size: 0.82rem; font-weight: 800;">
+              #{{ r.member.member_id }}
+            </span>
+
+            <!-- Status Badge -->
+            {% if r.is_active %}
+              <span class="badge badge-active">
+                نشط (باقي {{ r.days_left }} يوم)
+              </span>
+            {% else %}
+              <span class="badge badge-expired">
+                منتهي الصلاحية {% if r.days_expired > 0 %}(منذ {{ r.days_expired }} يوم){% endif %}
+              </span>
+            {% endif %}
+
+            <!-- Debt Badge -->
+            {% if r.has_debt %}
+              <span class="badge badge-debt">
+                متبقي عليه: {{ r.remaining }} {{ gym_profile.currency|default:"ج.م" }}
+              </span>
+            {% else %}
+              <span class="badge badge-active">
+                خالص
+              </span>
+            {% endif %}
+          </div>
+
+          <div class="member-meta">
+            <span style="font-family: monospace; direction: ltr;">📱 {{ r.member.mobile|default:"-" }}</span>
+            <span>باقة: {{ r.member.last_subscription_type|default:"غير محدد" }}</span>
+            {% if r.member.last_subscription_end %}
+              <span>تاريخ الانتهاء: {{ r.member.last_subscription_end|date:"Y-m-d" }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Quick Action Buttons Beside Name -->
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;" id="checkin-btn-area-{{ r.member.id }}">
+          
+          <!-- Quick Check-in Button -->
+          <form method="post" action="{% url 'core:quick_checkin' r.member.id %}" style="display: inline;"
+                hx-post="{% url 'core:quick_checkin' r.member.id %}"
+                hx-target="#checkin-btn-area-{{ r.member.id }}"
+                hx-swap="innerHTML">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary btn-sm" title="تسجيل حضور الآن">
+              تسجيل حضور
+            </button>
+          </form>
+
+          <!-- Quick Renew Button -->
+          <a href="{% url 'members:smart_operations' %}?term={{ r.member.mobile|default:r.member.name }}" class="btn btn-primary btn-sm">
+            دفع / تجديد
+          </a>
+
+          <!-- View Profile Button -->
+          <a href="{% url 'members:member_detail' r.member.id %}" class="btn btn-secondary btn-sm">
+            الملف
+          </a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% elif query %}
+  <div class="card" style="margin-top: 18px; text-align: center; padding: 32px 20px; color: var(--text-muted);">
+    <p style="font-size: 1.05rem; margin-bottom: 12px; color: var(--text-main);">لم يتم العثور على أي لاعب مطابق لـ: <strong>"{{ query }}"</strong></p>
+    <a href="{% url 'members:member_create' %}?name={{ query }}" class="btn btn-primary btn-sm">
+      + إضافة عضو جديد بهذا الاسم
+    </a>
+  </div>
+{% endif %}

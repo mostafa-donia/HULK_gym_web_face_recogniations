@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}قفل صفحة المدربين — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: #0B171E; border: 2px solid #1A2B36; border-radius: 20px; width: 100%; max-width: 480px; padding: 36px 28px; box-shadow: 0 16px 40px rgba(0,0,0,0.6); text-align: center;">
+    
+    <!-- Lock Icon -->
+    <div style="width: 72px; height: 72px; background: rgba(255, 179, 0, 0.1); border: 2px solid #FFB300; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto 20px auto;">
+      🔒
+    </div>
+
+    <h2 style="color: #F3F8FB; font-size: 1.5rem; font-weight: 900; margin-bottom: 8px;">
+      صفحة إدارة المدربين محمية
+    </h2>
+
+    <p style="color: #8D99A3; font-size: 0.92rem; line-height: 1.6; margin-bottom: 24px;">
+      يرجى إدخال كلمة مرور إدارة المدربين أو كلمة مرور المدير للوصول إلى كشوفات وحسابات وعمولات الكباتن.
+    </p>
+
+    <form method="post" action="{% url 'payroll:trainers_index' %}" style="display: flex; flex-direction: column; gap: 16px;">
+      {% csrf_token %}
+
+      <div style="text-align: right;">
+        <label for="trainer-pwd" style="display: block; color: #A9B7C1; font-size: 0.88rem; font-weight: 700; margin-bottom: 8px;">
+          كلمة المرور:
+        </label>
+        <input 
+          type="password" 
+          id="trainer-pwd" 
+          name="password" 
+          required 
+          autofocus
+          placeholder="أدخل كلمة المرور هنا..."
+          style="width: 100%; background: #07131B; border: 2px solid #182834; color: #FFFFFF; font-size: 1.1rem; padding: 14px 16px; border-radius: 10px; outline: none; text-align: center; letter-spacing: 2px;"
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1.1rem; padding: 14px; font-weight: 900;">
+        🔓 فتح القفل والمتابعة
+      </button>
+
+      <a href="{% url 'core:dashboard' %}" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.95rem;">
+        الرجوع إلى الرئيسية
+      </a>
+    </form>
+
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #14202A; font-size: 0.8rem; color: #586571;">
+      🔒 يتم حفظ فتح القفل طوال جلستك الحالية فقط ويمكنك قفلها في أي وقت
+    </div>
+
+  </div>
+</div>
+{% endblock %}

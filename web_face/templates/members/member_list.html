@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block title %}دليل الأعضاء — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <!-- Page Header & Actions -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h1 style="color: var(--text-main); font-size: 1.65rem; font-weight: 900; margin: 0 0 4px 0; letter-spacing: -0.3px;">
+        دليل الأعضاء والاشتراكات
+      </h1>
+      <p style="color: var(--text-muted); margin: 0; font-size: 0.92rem;">
+        إدارة شاملة للاعبين، تجديد الاشتراكات، متابعة المتبقي والديون وسجلات الحضور
+      </p>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <a href="{% url 'members:smart_operations' %}" class="btn btn-secondary btn-sm">
+        ⚡ العمليات السريعة
+      </a>
+      <a href="{% url 'members:member_create' %}" class="btn btn-primary btn-sm">
+        + تسجيل عضو جديد
+      </a>
+    </div>
+  </div>
+
+  <!-- KPI Overview Cards (Quick Status Filters) -->
+  <div class="grid grid-4 members-kpi-grid">
+    
+    <!-- All Members -->
+    <a href="{% url 'members:member_list' %}" style="text-decoration: none;">
+      <div class="card" style="margin-bottom: 0; padding: 18px 20px; border-color: {% if status_filter == 'all' %}var(--hulk-primary){% else %}var(--border-color){% endif %}; transition: all 0.15s ease;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700; display: block;">إجمالي الأعضاء</span>
+            <span style="color: var(--text-main); font-size: 1.7rem; font-weight: 900; margin-top: 4px; display: block; font-variant-numeric: tabular-nums;">{{ total_count }}</span>
+          </div>
+          <span style="font-size: 1.5rem; opacity: 0.8;">👥</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Active Subscribers -->
+    <a href="{% url 'members:member_list' %}?filter=active" style="text-decoration: none;">
+      <div class="card" style="margin-bottom: 0; padding: 18px 20px; border-color: {% if status_filter == 'active' %}var(--hulk-primary){% else %}var(--border-color){% endif %}; transition: all 0.15s ease;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700; display: block;">المشتركون حالياً</span>
+            <span style="color: var(--hulk-primary); font-size: 1.7rem; font-weight: 900; margin-top: 4px; display: block; font-variant-numeric: tabular-nums;">{{ active_count }}</span>
+          </div>
+          <span class="badge badge-active" style="font-size: 0.85rem; padding: 5px 10px;">سارٍ</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Expired Members -->
+    <a href="{% url 'members:member_list' %}?filter=expired" style="text-decoration: none;">
+      <div class="card" style="margin-bottom: 0; padding: 18px 20px; border-color: {% if status_filter == 'expired' %}var(--accent-red){% else %}var(--border-color){% endif %}; transition: all 0.15s ease;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700; display: block;">عضويات منتهية</span>
+            <span style="color: var(--accent-red); font-size: 1.7rem; font-weight: 900; margin-top: 4px; display: block; font-variant-numeric: tabular-nums;">{{ expired_count }}</span>
+          </div>
+          <span class="badge badge-expired" style="font-size: 0.85rem; padding: 5px 10px;">منتهٍ</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Members with Debt -->
+    <a href="{% url 'members:member_list' %}?filter=debt" style="text-decoration: none;">
+      <div class="card" style="margin-bottom: 0; padding: 18px 20px; border-color: {% if status_filter == 'debt' %}var(--accent-orange){% else %}var(--border-color){% endif %}; transition: all 0.15s ease;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700; display: block;">عليهم متبقي (ديون)</span>
+            <span style="color: var(--accent-orange); font-size: 1.7rem; font-weight: 900; margin-top: 4px; display: block; font-variant-numeric: tabular-nums;">{{ debt_count }}</span>
+          </div>
+          <span class="badge badge-debt" style="font-size: 0.85rem; padding: 5px 10px;">متبقٍ</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Search & Filter Toolbar -->
+  <div class="card" style="margin-bottom: 0; padding: 16px 20px;">
+    <form method="GET" action="{% url 'members:member_list' %}" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+      
+      <!-- Search Input -->
+      <div style="flex: 3; min-width: 240px;">
+        <input 
+          type="search" 
+          name="q" 
+          value="{{ query }}" 
+          class="form-control" 
+          placeholder="ابحث بالاسم، رقم الموبايل، كود العضو (ID)، أو نوع الاشتراك..."
+        >
+      </div>
+
+      <!-- Plan Filter -->
+      <div style="flex: 1.5; min-width: 160px;">
+        <select name="plan" class="form-control" onchange="this.form.submit()">
+          <option value="all">كل باقات الاشتراك</option>
+          {% for p in plans_list %}
+            <option value="{{ p.name }}" {% if plan_filter == p.name %}selected{% endif %}>{{ p.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div style="flex: 1.5; min-width: 150px;">
+        <select name="filter" class="form-control" onchange="this.form.submit()">
+          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>كل الحالات</option>
+          <option value="active" {% if status_filter == 'active' %}selected{% endif %}>🟢 المشتركون حالياً</option>
+          <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>🔴 العضويات المنتهية</option>
+          <option value="debt" {% if status_filter == 'debt' %}selected{% endif %}>⚠️ عليهم متبقي (ديون)</option>
+          <option value="expiring_soon" {% if status_filter == 'expiring_soon' %}selected{% endif %}>⏳ تنتهي خلال 3 أيام</option>
+          <option value="face" {% if status_filter == 'face' or status_filter == 'fingerprint' %}selected{% endif %}>📷 مسجل ببصمة الوجه</option>
+        </select>
+      </div>
+
+      <!-- Gender Filter -->
+      <div style="flex: 1; min-width: 110px;">
+        <select name="gender" class="form-control" onchange="this.form.submit()">
+          <option value="all" {% if gender_filter == 'all' %}selected{% endif %}>النوع: الكل</option>
+          <option value="male" {% if gender_filter == 'male' %}selected{% endif %}>ذكور</option>
+          <option value="female" {% if gender_filter == 'female' %}selected{% endif %}>إناث</option>
+        </select>
+      </div>
+
+      <!-- Submit & Reset Buttons -->
+      <div style="display: flex; gap: 8px;">
+        <button type="submit" class="btn btn-secondary">
+          بحث
+        </button>
+        {% if query or status_filter != 'all' or plan_filter != 'all' or gender_filter != 'all' %}
+          <a href="{% url 'members:member_list' %}" class="btn btn-secondary" style="color: var(--accent-red);">
+            إعادة ضبط
+          </a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Full Width Data Table -->
+  <div class="table-responsive">
+    
+    <div class="table-header-bar">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">قائمة اللاعبين</span>
+        <span class="badge badge-neutral" style="font-variant-numeric: tabular-nums;">
+          {{ filtered_count }} عضو
+        </span>
+      </div>
+      <span style="color: var(--text-muted); font-size: 0.82rem;">
+        اضغط على كود العضو أو اسمه لعرض الملف الكامل، أو زر "دفع" لتسديد دفعة أو تجديد
+      </span>
+    </div>
+
+    {% if enriched_members %}
+    <table class="dark-table">
+      <thead>
+        <tr>
+          <th style="width: 70px;">ID</th>
+          <th>الاسم</th>
+          <th>الموبايل</th>
+          <th>نوع الاشتراك</th>
+          <th style="text-align: left;">المدفوع</th>
+          <th style="text-align: left;">المتبقي</th>
+          <th>البداية</th>
+          <th>النهاية</th>
+          <th>حالة الأيام</th>
+          <th>الحالة</th>
+          <th>بصمة الوجه</th>
+          <th style="text-align: center; width: 140px;">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in enriched_members %}
+        {% with m=item.member %}
+        <tr>
+          
+          <!-- 1. Member ID -->
+          <td>
+            <span class="badge badge-neutral" style="font-family: monospace; font-weight: 800; font-size: 0.82rem;">
+              #{{ m.member_id }}
+            </span>
+          </td>
+
+          <!-- 2. Member Name -->
+          <td>
+            <a href="{% url 'members:member_detail' m.id %}" style="color: var(--text-main); font-weight: 800; font-size: 0.96rem; text-decoration: none; display: block;">
+              {{ m.name }}
+            </a>
+            <span style="font-size: 0.74rem; color: var(--text-muted);">
+              {% if m.gender == 'female' %}أنثى{% else %}ذكر{% endif %}
+            </span>
+          </td>
+
+          <!-- 3. Mobile Number + Direct WhatsApp -->
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--text-secondary); font-family: monospace; font-size: 0.92rem; font-weight: 700; direction: ltr;">
+                {{ m.mobile|default:"-" }}
+              </span>
+              {% if m.mobile %}
+                <a href="https://wa.me/2{{ m.mobile }}" target="_blank" title="محادثة واتساب" style="color: #25D366; text-decoration: none; font-size: 1rem; line-height: 1;">
+                  💬
+                </a>
+              {% endif %}
+            </div>
+          </td>
+
+          <!-- 4. Plan Type -->
+          <td>
+            <span class="badge badge-neutral" style="font-weight: 600;">
+              {{ m.last_subscription_type|default:"جلسة واحدة" }}
+            </span>
+          </td>
+
+          <!-- 5. Paid Amount -->
+          <td style="text-align: left;">
+            <span style="color: var(--hulk-primary); font-weight: 800; font-size: 0.96rem; font-variant-numeric: tabular-nums;">
+              {{ m.current_paid }} <small style="font-size: 0.76rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+            </span>
+          </td>
+
+          <!-- 6. Remaining Debt -->
+          <td style="text-align: left;">
+            {% if item.has_debt %}
+              <span class="badge badge-debt" style="font-weight: 800; font-variant-numeric: tabular-nums;">
+                {{ m.current_remaining }} <small>{{ gym_profile.currency|default:"ج" }}</small>
+              </span>
+            {% else %}
+              <span style="color: var(--text-dim); font-size: 0.88rem; font-variant-numeric: tabular-nums;">
+                0
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- 7. Start Date -->
+          <td style="font-size: 0.86rem; color: var(--text-muted); font-variant-numeric: tabular-nums;">
+            {{ m.last_subscription_start|date:"d/m/Y"|default:"-" }}
+          </td>
+
+          <!-- 8. End Date -->
+          <td style="font-size: 0.86rem; color: var(--text-secondary); font-weight: 600; font-variant-numeric: tabular-nums;">
+            {{ m.last_subscription_end|date:"d/m/Y"|default:"-" }}
+          </td>
+
+          <!-- 9. Days Status -->
+          <td>
+            {% if item.status_color == 'success' %}
+              <span class="badge badge-active">
+                {{ item.days_status_text }}
+              </span>
+            {% elif item.status_color == 'warning' %}
+              <span class="badge badge-debt">
+                {{ item.days_status_text }}
+              </span>
+            {% else %}
+              <span class="badge badge-expired">
+                {{ item.days_status_text }}
+              </span>
+            {% endif %}
+          </td>
+
+          <!-- 10. Status -->
+          <td>
+            {% if item.is_active %}
+              <span class="badge badge-active" style="padding: 2px 8px; font-size: 0.76rem;">مشترك</span>
+            {% else %}
+              <span class="badge badge-neutral" style="padding: 2px 8px; font-size: 0.76rem;">غير مشترك</span>
+            {% endif %}
+          </td>
+
+          <!-- 11. Face Biometrics -->
+          <td>
+            {% if m.has_face_enrolled %}
+              <span class="badge badge-active" style="font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;">
+                📷 مسجل
+              </span>
+            {% else %}
+              <span style="color: var(--text-dim); font-size: 0.8rem;">غير مسجل</span>
+            {% endif %}
+          </td>
+
+          <!-- 12. Quick Actions -->
+          <td style="text-align: center;">
+            <div style="display: flex; gap: 6px; justify-content: center;">
+              
+              <!-- Quick Pay / Renew -->
+              <a href="{% url 'members:smart_operations' %}?term={{ m.mobile|default:m.name }}" class="btn btn-primary btn-sm" style="padding: 4px 10px; font-size: 0.8rem;" title="دفع / تجديد">
+                دفع
+              </a>
+
+              <!-- View Profile -->
+              <a href="{% url 'members:member_detail' m.id %}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.8rem;" title="الملف الشخصي">
+                ملف
+              </a>
+
+            </div>
+          </td>
+
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Pagination Bar -->
+    {% if page_obj.has_other_pages %}
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 10px;">
+      
+      <span style="color: var(--text-muted); font-size: 0.86rem;">
+        عرض الصفحة {{ page_obj.number }} من إجمالي {{ page_obj.paginator.num_pages }} صفحة
+      </span>
+
+      <div style="display: flex; gap: 6px;">
+        {% if page_obj.has_previous %}
+          <a href="?page=1&q={{ query }}&filter={{ status_filter }}&plan={{ plan_filter }}&gender={{ gender_filter }}" class="btn btn-secondary btn-sm">
+            « الأولى
+          </a>
+          <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}&filter={{ status_filter }}&plan={{ plan_filter }}&gender={{ gender_filter }}" class="btn btn-secondary btn-sm">
+            ‹ السابق
+          </a>
+        {% endif %}
+
+        <span class="badge badge-neutral" style="padding: 6px 14px; font-size: 0.86rem; border-radius: var(--radius-sm);">
+          {{ page_obj.number }}
+        </span>
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}&q={{ query }}&filter={{ status_filter }}&plan={{ plan_filter }}&gender={{ gender_filter }}" class="btn btn-secondary btn-sm">
+            التالي ›
+          </a>
+          <a href="?page={{ page_obj.paginator.num_pages }}&q={{ query }}&filter={{ status_filter }}&plan={{ plan_filter }}&gender={{ gender_filter }}" class="btn btn-secondary btn-sm">
+            الأخيرة »
+          </a>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div style="text-align: center; color: var(--text-muted); padding: 50px 20px;">
+      <h3 style="color: var(--text-main); font-size: 1.15rem; margin: 0 0 6px 0;">لم يتم العثور على أي أعضاء</h3>
+      <p style="font-size: 0.9rem; margin: 0 0 16px 0; color: var(--text-muted);">
+        جرّب البحث باسم آخر أو إزالة خيارات الفلترة المحددة.
+      </p>
+      <a href="{% url 'members:member_list' %}" class="btn btn-secondary btn-sm">
+        إظهار كل الأعضاء
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+
+</div>
+
+<style>
+@media (max-width: 991px) {
+  .members-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+@media (max-width: 576px) {
+  .members-kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+</style>
+{% endblock %}

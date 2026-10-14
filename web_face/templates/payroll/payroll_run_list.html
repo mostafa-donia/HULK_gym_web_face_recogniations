@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}مسيرات الرواتب الشهرية — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h1 style="color: var(--gold); font-size: 1.4rem; font-weight: 800;">💰 مسيرات الرواتب الشهرية</h1>
+      <p style="color: var(--text-muted); font-size: 0.85rem;">احتساب، مراجعة، واعتماد رواتب الكباتن وموظفي الاستقبال والإدارة</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <a href="{% url 'payroll:payroll_run_detail' current_period %}" class="btn btn-primary">
+        ⚡ احتساب مسير هذا الشهر ({{ current_period }})
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="dark-table">
+        <thead>
+          <tr>
+            <th>الشهر</th>
+            <th>إجمالي الأساسي</th>
+            <th>إجمالي العمولات</th>
+            <th>المكافآت</th>
+            <th>الخصومات</th>
+            <th>صافي المطلوب صرفه</th>
+            <th>الحالة</th>
+            <th>المعتمد</th>
+            <th>إجراء</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in runs %}
+            <tr>
+              <td style="font-weight: 800; color: var(--gold); font-size: 1.1rem;">{{ r.period }}</td>
+              <td>{{ r.total_fixed_salary }} {{ gym_profile.currency }}</td>
+              <td style="color: var(--info); font-weight: 700;">{{ r.total_commissions }} {{ gym_profile.currency }}</td>
+              <td style="color: var(--success);">+{{ r.total_bonuses }} {{ gym_profile.currency }}</td>
+              <td style="color: var(--danger);">-{{ r.total_deductions }} {{ gym_profile.currency }}</td>
+              <td style="color: var(--gold); font-weight: 900; font-size: 1.15rem;">{{ r.net_payable }} {{ gym_profile.currency }}</td>
+              <td>
+                {% if r.status == 'APPROVED' %}
+                  <span class="badge badge-active">معتمد نهائياً</span>
+                {% elif r.status == 'PAID' %}
+                  <span class="badge badge-active">تم الصرف</span>
+                {% else %}
+                  <span class="badge badge-debt">مسودة / قيد المراجعة</span>
+                {% endif %}
+              </td>
+              <td style="font-size: 0.85rem; color: var(--text-muted);">
+                {{ r.approved_by.first_name|default:r.approved_by.username|default:"-" }}
+              </td>
+              <td>
+                <a href="{% url 'payroll:payroll_run_detail' r.period %}" class="btn btn-secondary btn-sm">
+                  👁️ فحص المسير
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                لم يتم احتساب أي مسيرات رواتب سابقة بعد. اضغط الزر أعلاه لاحتساب مسير الشهر الحالي!
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

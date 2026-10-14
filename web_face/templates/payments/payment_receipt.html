@@ -1,0 +1,200 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إيصال سداد — {{ payment.invoice_no }}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    body {
+      background: #f8fafc;
+      color: #0f172a;
+      padding: 20px;
+    }
+    .receipt-box {
+      max-width: 520px;
+      margin: 0 auto;
+      background: #fff;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    .receipt-header {
+      text-align: center;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #0f172a;
+      margin-bottom: 20px;
+    }
+    .receipt-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    .receipt-table td {
+      padding: 10px 0;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 1rem;
+    }
+    .receipt-table td:last-child {
+      text-align: left;
+      font-weight: 700;
+    }
+    .total-banner {
+      background: #f1f5f9;
+      padding: 14px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.2rem;
+      font-weight: 900;
+      margin-top: 14px;
+      border: 1px solid #cbd5e1;
+    }
+    .print-hide {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    @media print {
+      body {
+        padding: 0;
+        background: #fff;
+      }
+      .receipt-box {
+        border: none;
+        box-shadow: none;
+        padding: 10px;
+      }
+      .print-hide {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-hide" style="max-width: 520px; margin: 0 auto 16px auto;">
+    <div id="autoRedirectBanner" style="background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #cbd5e1; font-size: 0.92rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.3rem;">⏱️</span>
+        <div>
+          سيتم العودة للرئيسية تلقائياً خلال <strong id="countdownSec" style="color: #38bdf8; font-size: 1.25rem; font-family: monospace;">3</strong> ثوانٍ
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" onclick="cancelAutoRedirect()" class="btn btn-sm" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82rem;">
+          إلغاء التوجيه
+        </button>
+        <a href="{% url 'core:dashboard' %}" class="btn btn-sm btn-primary" style="background: #22c55e; border: none; color: #fff; padding: 6px 14px; border-radius: 6px; text-decoration: none; font-size: 0.84rem; font-weight: 700;">
+          الرئيسية الآن ↵
+        </a>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 10px;">
+      <button onclick="printAndStay()" class="btn btn-primary" style="padding: 10px 24px; font-size: 1rem;">
+        🖨️ طباعة الإيصال الآن
+      </button>
+      <a href="{% url 'core:dashboard' %}" class="btn btn-secondary" style="padding: 10px 18px; margin-right: 8px; text-decoration: none;">
+        الرئيسية
+      </a>
+    </div>
+  </div>
+
+  <div class="receipt-box">
+    <div class="receipt-header">
+      <img src="{% static 'images/logo.png' %}" alt="Logo" style="height: 54px; margin-bottom: 8px;" onerror="this.style.display='none'">
+      <h1 style="font-size: 1.4rem; font-weight: 900; color: #0f172a; margin: 0;">{{ profile.gym_name|default:"HULK GYM" }}</h1>
+      <p style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">إيصال سداد رسمي معتمد</p>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #475569; margin-bottom: 14px;">
+      <span>رقم الفاتورة: <strong>{{ payment.invoice_no }}</strong></span>
+      <span>التاريخ: <strong>{{ payment.created_at|date:"Y-m-d h:i A" }}</strong></span>
+    </div>
+
+    <table class="receipt-table">
+      <tr>
+        <td style="color: #64748b;">اسم اللاعب:</td>
+        <td style="font-size: 1.1rem; color: #0f172a;">{{ member.name }}</td>
+      </tr>
+      <tr>
+        <td style="color: #64748b;">كود العضو:</td>
+        <td>{{ member.member_id }}</td>
+      </tr>
+      <tr>
+        <td style="color: #64748b;">نوع العملية:</td>
+        <td>{{ payment.get_operation_type_display }}</td>
+      </tr>
+      {% if subscription %}
+      <tr>
+        <td style="color: #64748b;">الباقة:</td>
+        <td>{{ subscription.plan_name }}</td>
+      </tr>
+      <tr>
+        <td style="color: #64748b;">فترة الاشتراك:</td>
+        <td>{{ subscription.start_date|date:"Y-m-d" }} إلى {{ subscription.end_date|date:"Y-m-d" }}</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td style="color: #64748b;">طريقة الدفع:</td>
+        <td>{{ payment.payment_method }}</td>
+      </tr>
+      {% if payment.notes %}
+      <tr>
+        <td style="color: #64748b;">ملاحظات:</td>
+        <td>{{ payment.notes }}</td>
+      </tr>
+      {% endif %}
+    </table>
+
+    <div class="total-banner">
+      <span>المبلغ المدفوع:</span>
+      <span style="color: #16a34a;">{{ payment.amount }} {{ profile.currency|default:"ج.م" }}</span>
+    </div>
+
+    {% if member.current_remaining > 0 %}
+    <div style="margin-top: 10px; padding: 10px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; display: flex; justify-content: space-between; font-size: 0.95rem; color: #e11d48; font-weight: 700;">
+      <span>المتبقي دين على العضو:</span>
+      <span>{{ member.current_remaining }} {{ profile.currency|default:"ج.م" }}</span>
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 24px; text-align: center; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+      <p>المحصل: {{ payment.created_by.first_name|default:payment.created_by.username|default:"كاشير الصالة" }}</p>
+      <p style="margin-top: 4px;">شكراً لاختيارك {{ profile.gym_name|default:"HULK GYM" }} 💪 نتمنى لك تمرين ممتع!</p>
+    </div>
+  </div>
+
+<script>
+let countdown = 3;
+let timer = setInterval(() => {
+  countdown--;
+  const el = document.getElementById('countdownSec');
+  if (el) el.innerText = countdown;
+  if (countdown <= 0) {
+    clearInterval(timer);
+    window.location.href = "{% url 'core:dashboard' %}";
+  }
+}, 1000);
+
+function cancelAutoRedirect() {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+  const banner = document.getElementById('autoRedirectBanner');
+  if (banner) {
+    banner.innerHTML = '<span style="color: #94a3b8;">تم إيقاف العودة التلقائية للرئيسية.</span> <a href="{% url "core:dashboard" %}" style="color: #38bdf8; text-decoration: none; font-weight: 700; margin-right: 10px;">العودة للرئيسية</a>';
+  }
+}
+
+function printAndStay() {
+  cancelAutoRedirect();
+  window.print();
+}
+</script>
+</body>
+</html>

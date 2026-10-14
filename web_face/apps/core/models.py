@@ -1,0 +1,115 @@
+from django.db import models
+from django.conf import settings
+
+
+class GymProfile(models.Model):
+    # Branding & Customization for ANY Gym
+    gym_name = models.CharField(max_length=100, default="اسم الصالة الرياضية", verbose_name="اسم الصالة الرياضية")
+    gym_tagline = models.CharField(max_length=150, default="مركز اللياقة البدنية والكمال الجسماني", verbose_name="الشعار اللفظي (Slogan)")
+    logo = models.ImageField(upload_to="branding/", null=True, blank=True, verbose_name="شعار الصالة (Logo)")
+    primary_color = models.CharField(max_length=20, default="#84CC16", verbose_name="لون الهوية الأساسي (Primary Accent)")
+    secondary_color = models.CharField(max_length=20, default="#121723", verbose_name="لون الخلفية (Surface)")
+    accent_theme = models.CharField(
+        max_length=30,
+        choices=[
+            ("lime", "أخضر رياضي (Hulk Lime #84CC16)"),
+            ("blue", "أزرق تيتانيوم (Titanium Blue #0EA5E9)"),
+            ("red", "أحمر طاقة (Power Red #EF4444)"),
+            ("orange", "برتقالي حماسي (Blaze Orange #F97316)"),
+            ("gold", "ذهبي ملكي (Royal Gold #EAB308)"),
+            ("purple", "أرجواني مميز (Cyber Purple #8B5CF6)"),
+            ("custom", "لون مخصص (Custom Hex)"),
+        ],
+        default="lime",
+        verbose_name="طابع الألوان المعتمد",
+    )
+
+    manager_mobile = models.CharField(max_length=20, blank=True, default="", verbose_name="رقم هاتف المدير")
+    currency = models.CharField(max_length=10, default="ج.م", verbose_name="العملة")
+    timezone = models.CharField(max_length=50, default="Africa/Cairo", verbose_name="المنطقة الزمنية")
+    daily_report_time = models.CharField(max_length=10, default="22:00", verbose_name="موعد إرسال التقرير اليومي")
+    
+    # Face Recognition & Electronic Gate Control
+    face_camera_enabled = models.BooleanField(
+        default=True,
+        verbose_name="تشغيل كاميرا التعرف على الوجه التلقائية في النظام",
+        help_text="عند التفعيل، تعمل الكاميرا تلقائياً في خلفية الموقع لإظهار إشعار الدخول أو انتهاء الاشتراك فوراً فور اقتراب المشترك.",
+    )
+    face_match_threshold = models.FloatField(default=0.363, verbose_name="حساسية التعرف بالوجه (Cosine Threshold)")
+    face_min_confidence = models.FloatField(default=0.55, verbose_name="حساسية كشف الوجه (Detection Threshold)")
+    face_debounce_seconds = models.PositiveIntegerField(default=60, verbose_name="مهلة منع تكرار التسجيل (ثوانٍ)")
+    gate_relay_enabled = models.BooleanField(default=False, verbose_name="تفعيل فتح البوابة تلقائياً عند التعرف بالوجه")
+    gate_relay_port = models.CharField(max_length=50, default="COM3", blank=True, verbose_name="منفذ تحكم البوابة (COM Port / IP)")
+
+    # WhatsApp Configuration
+    whatsapp_enabled = models.BooleanField(default=True, verbose_name="تفعيل إرسال الواتساب")
+    whatsapp_send_mode = models.CharField(
+        max_length=20,
+        choices=[("paste", "لصق سريع (Clipboard)"), ("typing", "كتابة تدريجية إنسانية")],
+        default="paste",
+        verbose_name="نمط إرسال الرسائل",
+    )
+    whatsapp_letter_delay = models.FloatField(default=0.001, verbose_name="سرعة كتابة الحروف")
+    expired_message_template = models.TextField(
+        default="تنبيه من {gym_name}\nأهلاً {name}\nاشتراكك انتهى بتاريخ: {end_date}\nنورتنا في أي وقت للتجديد والرجوع للتمرين 💪",
+        verbose_name="قالب رسالة انتهاء الاشتراك",
+    )
+    
+    # Trainers Page Security
+    trainers_page_password = models.CharField(
+        max_length=50,
+        default="1234",
+        verbose_name="كلمة مرور صفحة المدربين",
+        help_text="كلمة المرور المطلوبة لفتح صفحة إدارة المدربين وحساباتهم",
+    )
+
+    # GitHub System Updates & Versioning
+    github_repo_url = models.CharField(
+        max_length=255,
+        default="https://github.com/mostafa-donia/mostafa-donia.github.io.git",
+        blank=True,
+        verbose_name="رابط مستودع التحديثات (GitHub Repo URL)",
+    )
+    github_branch = models.CharField(
+        max_length=50,
+        default="main",
+        blank=True,
+        verbose_name="فرع التحديثات (Branch)",
+    )
+    last_update_check = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ آخر فحص للتحديثات")
+    current_version_tag = models.CharField(max_length=50, default="v2.1.0-face", blank=True, verbose_name="رقم الإصدار")
+    
+    # Updated timestamp
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ آخر تحديث")
+
+    class Meta:
+        verbose_name = "إعدادات الصالة العامة"
+        verbose_name_plural = "إعدادات الصالة العامة"
+
+    @classmethod
+    def get_solo(cls) -> "GymProfile":
+        profile, _ = cls.objects.get_or_create(id=1)
+        return profile
+
+    def __str__(self) -> str:
+        return self.gym_name
+
+
+class AuditLog(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="المستخدم",
+    )
+    action = models.CharField(max_length=100, verbose_name="العملية")
+    target_model = models.CharField(max_length=100, verbose_name="الجدول المستهدف")
+    target_id = models.CharField(max_length=100, blank=True, verbose_name="معرف السجل")
+    details = models.TextField(blank=True, verbose_name="التفاصيل")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ ووقت العملية")
+
+    class Meta:
+        verbose_name = "سجل العمليات (Audit Log)"
+        verbose_name_plural = "سجلات العمليات"
+        ordering = ["-created_at"]
