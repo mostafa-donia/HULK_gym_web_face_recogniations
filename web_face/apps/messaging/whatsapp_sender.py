@@ -491,6 +491,69 @@ def activate_window_safely(win) -> bool:
     return True
 
 
+def is_system_title(title: str) -> bool:
+    if not title:
+        return False
+    t = str(title).lower()
+    system_keywords = [
+        "hulk", "gym", "نظام", "إدارة", "8000", "127.0.0.1", "localhost",
+        "طابور", "رسائل", "مشترك", "أعضاء", "لوحة", "فاتورة", "إيصال",
+        "dashboard", "members", "payments", "messaging"
+    ]
+    return any(k in t for k in system_keywords) and not is_whatsapp_title(title)
+
+
+def return_to_system_tab() -> bool:
+    """
+    After finishing WhatsApp message dispatch, seamlessly switches focus back
+    to the HULK GYM system browser tab/window.
+    """
+    print("[return_to_system_tab] Returning focus to HULK GYM system tab/window...")
+    sleep(0.4)
+
+    try:
+        cur = getActiveWindow()
+    except Exception:
+        cur = None
+
+    # 1. First, check if the current active window is a browser (where WhatsApp was just active).
+    # Step backward across browser tabs to return to the HULK GYM tab.
+    if cur and is_browser_title(cur.title):
+        for _ in range(25):
+            hotkey("ctrl", "shift", "tab")
+            sleep(0.18)
+            try:
+                active = getActiveWindow()
+                title = str(active.title or "").strip()
+                if is_system_title(title):
+                    print(f"[return_to_system_tab] Successfully switched back to system tab: {title}")
+                    return True
+            except Exception:
+                pass
+
+    # 2. Check all open windows to find a dedicated window running the system
+    try:
+        all_windows = getAllWindows()
+    except Exception:
+        all_windows = []
+
+    for w in all_windows:
+        title = str(w.title or "").strip()
+        if is_system_title(title):
+            print(f"[return_to_system_tab] Found system window: {title}. Activating...")
+            activate_window_safely(w)
+            return True
+
+    # 3. Fallback: single Ctrl+Shift+Tab
+    try:
+        hotkey("ctrl", "shift", "tab")
+        sleep(0.2)
+    except Exception:
+        pass
+
+    return False
+
+
 def whatsupp_ready() -> bool:
     """
     Ensures WhatsApp Web or WhatsApp Desktop window/tab is active,
@@ -581,7 +644,7 @@ def whatsupp_ready() -> bool:
     return True
 
 
-def send_message(phone: str, message: str = "", image: str = None, topic: str = None, message_bank: dict = None, context: dict = None) -> bool:
+def send_message(phone: str, message: str = "", image: str = None, topic: str = None, message_bank: dict = None, context: dict = None, return_to_system: bool = False) -> bool:
     if isinstance(message, dict):
         message_bank = message
         topic = topic or random.choice(list(message_bank.keys())) if isinstance(message_bank, dict) and message_bank else None
@@ -643,6 +706,8 @@ def send_message(phone: str, message: str = "", image: str = None, topic: str = 
             press("enter")
             random_delay(1.8, 2.8)
             print(f"[send_message] Attached file and message delivered successfully to {phone}")
+            if return_to_system:
+                return_to_system_tab()
             return True
         else:
             print(f"[send_message] Failed to copy attachment to clipboard, falling back to text only")
@@ -655,6 +720,8 @@ def send_message(phone: str, message: str = "", image: str = None, topic: str = 
         random_delay(1.2, 2.2)
 
     print(f"[send_message] Message delivered successfully to {phone}")
+    if return_to_system:
+        return_to_system_tab()
     return True
 
 
@@ -713,7 +780,7 @@ def sending(phones: list, messages: list, groups: list = None, image: str = None
                 emit_progress()
             random_delay(0.7, 1.3)
 
-        pyautogui.hotkey("alt", "tab")
+        return_to_system_tab()
         return "ok"
 
     set_keyboard_layout_to_english()
@@ -779,7 +846,7 @@ def sending(phones: list, messages: list, groups: list = None, image: str = None
                 emit_progress()
             random_delay(0.7, 1.3)
 
-    pyautogui.hotkey("alt", "tab")
+    return_to_system_tab()
 
 if __name__ == "__main__":
     sent = []

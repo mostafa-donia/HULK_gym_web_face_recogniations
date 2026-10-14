@@ -59,7 +59,7 @@ def enqueue_message(
     return msg_obj
 
 
-def dispatch_message_record(msg_obj: WhatsAppMessage) -> bool:
+def dispatch_message_record(msg_obj: WhatsAppMessage, return_to_system: bool = False) -> bool:
     """
     Attempts delivery of a single WhatsApp message using whatsapp_sender.
     Includes attached file/image and optional link formatting.
@@ -83,6 +83,7 @@ def dispatch_message_record(msg_obj: WhatsAppMessage) -> bool:
             phone=msg_obj.mobile,
             message=final_message,
             image=image_path,
+            return_to_system=return_to_system,
         )
 
         if success:
@@ -153,6 +154,13 @@ def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: s
             sent_count += 1
         else:
             failed_count += 1
+
+    if pending:
+        try:
+            from apps.messaging import whatsapp_sender
+            whatsapp_sender.return_to_system_tab()
+        except Exception:
+            pass
 
     return {
         "processed": len(pending),

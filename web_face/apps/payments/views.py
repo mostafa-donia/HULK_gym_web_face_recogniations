@@ -71,12 +71,14 @@ def payment_detail_view(request, payment_id):
     """Printable invoice receipt view for standard browser printing (no POS needed)."""
     payment = get_object_or_404(Payment.objects.select_related("member", "subscription", "created_by"), id=payment_id)
     profile = GymProfile.get_solo()
+    auto_redirect = request.GET.get("auto") == "1"
 
     context = {
         "payment": payment,
         "profile": profile,
         "member": payment.member,
         "subscription": payment.subscription,
+        "auto_redirect": auto_redirect,
     }
     return render(request, "payments/payment_receipt.html", context)
 
@@ -123,7 +125,7 @@ def settle_debt_view(request, member_id):
             queue_payment_receipt_whatsapp(payment)
 
         messages.success(request, f"تم تسجيل سداد {amount} {profile.currency} من متبقي العضو {member.name} بنجاح!")
-        return redirect("payments:payment_detail", payment_id=payment.id)
+        return redirect(f"/payments/{payment.id}/?auto=1")
 
     context = {
         "member": member,
@@ -171,7 +173,7 @@ def send_receipt_whatsapp_now_view(request, payment_id):
         return redirect("payments:payment_detail", payment_id=payment.id)
 
     from apps.messaging.services import dispatch_message_record
-    dispatched = dispatch_message_record(msg_obj)
+    dispatched = dispatch_message_record(msg_obj, return_to_system=True)
 
     if dispatched:
         messages.success(request, f"✓ تم إرسال الفاتورة الرسمية بنجاح إلى هاتف {payment.member.name} عبر الواتساب!")

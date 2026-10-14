@@ -535,7 +535,7 @@ def subscription_create_view(request):
 
         messages.success(request, f"تم تفعيل اشتراك {member.name} بنجاح حتى {end_date}!")
         if payment:
-            return redirect("payments:payment_detail", payment_id=payment.id)
+            return redirect(f"/payments/{payment.id}/?auto=1")
         return redirect("members:member_detail", member_id=member.id)
 
     members_all = Member.objects.all().order_by("name")[:100]
@@ -715,7 +715,7 @@ def smart_operations_view(request):
 
                 messages.success(request, f"تم حفظ {'الاشتراك الجديد' if actual_op_type == 'new_subscription' else 'التجديد'} بنجاح للعضو {member.name} حتى {end_date}!")
                 if payment:
-                    return redirect("payments:payment_detail", payment_id=payment.id)
+                    return redirect(f"/payments/{payment.id}/?auto=1")
                 return redirect("members:smart_operations")
 
             # ======================== CASE 3: SETTLE REMAINING DEBT ========================
@@ -751,7 +751,7 @@ def smart_operations_view(request):
                         queue_payment_receipt_whatsapp(created_pay)
 
                     messages.success(request, f"تم تسجيل سداد {paid_now} {profile.currency} للعضو {member.name}. المتبقي الآن: {new_remaining} {profile.currency}")
-                    return redirect("payments:payment_detail", payment_id=created_pay.id)
+                    return redirect(f"/payments/{created_pay.id}/?auto=1")
                 return redirect("members:smart_operations")
 
     # Initial GET resolution if query or member_id passed
