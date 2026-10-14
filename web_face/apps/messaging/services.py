@@ -259,19 +259,19 @@ def prepare_manager_daily_report() -> bool:
     gym_name = profile.gym_name or "HULK GYM"
 
     # Daily financials
-    payments_today = Payment.objects.filter(paid_at__date=today)
+    payments_today = Payment.objects.filter(created_at__date=today)
     total_revenue = payments_today.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
     total_payments_count = payments_today.count()
 
     # Expenses
-    expenses_today = Expense.objects.filter(date=today)
+    expenses_today = Expense.objects.filter(expense_date=today)
     total_expenses = expenses_today.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
 
     # Net Cash
     net_cash = total_revenue - total_expenses
 
     # New / Renewed Subscriptions
-    subs_today = Subscription.objects.filter(start_date=today)
+    subs_today = Subscription.objects.filter(created_at__date=today)
     new_subs_count = subs_today.count()
 
     # Checkins today
