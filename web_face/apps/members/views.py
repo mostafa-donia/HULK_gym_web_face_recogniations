@@ -18,28 +18,50 @@ from apps.payments.services import queue_payment_receipt_whatsapp
 
 
 def generate_next_member_id() -> str:
-    """Generates the next sequential MEM-XXXXX identifier."""
-    latest = Member.objects.filter(member_id__startswith="MEM-").order_by("-id").first()
-    if not latest:
-        return "MEM-00001"
-    try:
-        num = int(latest.member_id.replace("MEM-", ""))
-        return f"MEM-{num + 1:05d}"
-    except Exception:
-        total = Member.objects.count() + 1
-        return f"MEM-{total:05d}"
+    """
+    Safely generates the next unique sequential MEM-XXXXX identifier.
+    Finds the true maximum existing numeric ID across all members and verifies availability.
+    """
+    import re
+    max_num = 0
+    for mid in Member.objects.values_list("member_id", flat=True):
+        if mid:
+            match = re.search(r"\d+", str(mid))
+            if match:
+                val = int(match.group())
+                if val > max_num:
+                    max_num = val
+
+    next_num = max(max_num + 1, Member.objects.count() + 1, 1)
+    while Member.objects.filter(member_id=f"MEM-{next_num:05d}").exists():
+        next_num += 1
+
+    return f"MEM-{next_num:05d}"
 
 
 def generate_next_payment_id() -> tuple[str, str]:
-    """Generates sequential PAY-XXXXX and INV-XXXXX identifiers."""
-    latest = Payment.objects.order_by("-id").first()
-    num = 1
-    if latest and latest.payment_id.startswith("PAY-"):
-        try:
-            num = int(latest.payment_id.replace("PAY-", "")) + 1
-        except Exception:
-            num = Payment.objects.count() + 1
-    return f"PAY-{num:05d}", f"INV-{num:05d}"
+    """
+    Safely generates the next unique sequential (PAY-XXXXX, INV-XXXXX) pair.
+    Finds the true maximum existing number across all payments and guarantees uniqueness.
+    """
+    import re
+    max_num = 0
+    for pid, inv in Payment.objects.values_list("payment_id", "invoice_no"):
+        for val in (pid, inv):
+            if val:
+                match = re.search(r"\d+", str(val))
+                if match:
+                    num_val = int(match.group())
+                    if num_val > max_num:
+                        max_num = num_val
+
+    next_num = max(max_num + 1, Payment.objects.count() + 1, 1)
+    while Payment.objects.filter(
+        Q(payment_id=f"PAY-{next_num:05d}") | Q(invoice_no=f"INV-{next_num:05d}")
+    ).exists():
+        next_num += 1
+
+    return f"PAY-{next_num:05d}", f"INV-{next_num:05d}"
 
 
 @login_required
@@ -638,7 +660,7 @@ def smart_operations_view(request):
 
                     # Send WhatsApp Receipt with HTML Invoice
                     if payment:
-                        queue_payment_receipt_whatsapp(payment, subscription=created_sub)
+                        queue_payment_receipt_whatsapp(payment, subscription=sub)
 
                 messages.success(request, f"تم حفظ {'الاشتراك الجديد' if actual_op_type == 'new_subscription' else 'التجديد'} بنجاح للعضو {member.name} حتى {end_date}!")
                 if payment:

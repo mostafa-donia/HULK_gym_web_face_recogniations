@@ -17,14 +17,28 @@ from apps.payments.services import queue_payment_receipt_whatsapp
 
 
 def generate_next_payment_id() -> tuple[str, str]:
-    latest = Payment.objects.order_by("-id").first()
-    num = 1
-    if latest and latest.payment_id.startswith("PAY-"):
-        try:
-            num = int(latest.payment_id.replace("PAY-", "")) + 1
-        except Exception:
-            num = Payment.objects.count() + 1
-    return f"PAY-{num:05d}", f"INV-{num:05d}"
+    """
+    Safely generates the next unique sequential (PAY-XXXXX, INV-XXXXX) pair.
+    Finds the true maximum existing number across all payments and guarantees uniqueness.
+    """
+    import re
+    max_num = 0
+    for pid, inv in Payment.objects.values_list("payment_id", "invoice_no"):
+        for val in (pid, inv):
+            if val:
+                match = re.search(r"\d+", str(val))
+                if match:
+                    num_val = int(match.group())
+                    if num_val > max_num:
+                        max_num = num_val
+
+    next_num = max(max_num + 1, Payment.objects.count() + 1, 1)
+    while Payment.objects.filter(
+        Q(payment_id=f"PAY-{next_num:05d}") | Q(invoice_no=f"INV-{next_num:05d}")
+    ).exists():
+        next_num += 1
+
+    return f"PAY-{next_num:05d}", f"INV-{next_num:05d}"
 
 
 @login_required
