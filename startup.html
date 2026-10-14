@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>جاري تشغيل HULK GYM...</title>
+  <style>
+    :root {
+      --bg: #030712;
+      --card-bg: #091122;
+      --primary: #10b981;
+      --primary-glow: rgba(16, 185, 129, 0.4);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Cairo", sans-serif;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+    /* Background Ambient Glow */
+    .ambient-glow {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(3, 7, 18, 0) 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: pulseGlow 4s ease-in-out infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.95); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+    }
+    .launcher-card {
+      position: relative;
+      background: var(--card-bg);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px var(--primary-glow);
+      border-radius: 24px;
+      padding: 45px 35px;
+      width: 100%;
+      max-width: 460px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+    }
+    .logo-container {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.12);
+      border: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.8rem;
+      margin-bottom: 22px;
+      box-shadow: 0 0 25px var(--primary-glow);
+      animation: bouncePulse 2s infinite ease-in-out;
+    }
+    @keyframes bouncePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    h1 {
+      font-size: 1.85rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    h1 span {
+      color: var(--primary);
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 18px;
+      position: relative;
+    }
+    .progress-bar-fill {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: 35%;
+      background: linear-gradient(90deg, #10b981, #34d399);
+      border-radius: 999px;
+      box-shadow: 0 0 12px var(--primary);
+      transition: width 0.3s ease;
+      animation: indeterminateLoad 1.8s infinite ease-in-out;
+    }
+    @keyframes indeterminateLoad {
+      0% { right: -30%; width: 30%; }
+      50% { right: 35%; width: 50%; }
+      100% { right: 100%; width: 30%; }
+    }
+    .progress-bar-fill.finished {
+      animation: none !important;
+      right: 0 !important;
+      width: 100% !important;
+      background: #10b981 !important;
+    }
+    .status-text {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .status-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: monospace;
+      margin-bottom: 24px;
+    }
+    .manual-btn {
+      display: none;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 10px 22px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .manual-btn:hover {
+      background: var(--primary);
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow"></div>
+
+  <div class="launcher-card">
+    <div class="logo-container">
+      🏋️‍♂️
+    </div>
+
+    <h1>HULK <span>GYM</span></h1>
+    <div class="subtitle">نظام إدارة الصالات الرياضية والتعرف بالوجه الذكي</div>
+
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+
+    <div class="status-text" id="statusText">
+      <span>⚡</span>
+      <span>جاري بدء تشغيل النظام والاتصال بالخادم...</span>
+    </div>
+
+    <div class="status-sub" id="statusSub">http://127.0.0.1:8000</div>
+
+    <a href="http://127.0.0.1:8000/" class="manual-btn" id="manualBtn">
+      اضغط هنا لفتح النظام يدوياً ↗
+    </a>
+  </div>
+
+  <script>
+    const TARGET_URL = "http://127.0.0.1:8000/";
+    const PING_URL = "http://127.0.0.1:8000/ping/";
+    let hasRedirected = false;
+    let attempts = 0;
+
+    const progressFill = document.getElementById("progressFill");
+    const statusText = document.getElementById("statusText");
+    const statusSub = document.getElementById("statusSub");
+    const manualBtn = document.getElementById("manualBtn");
+
+    function onSuccess() {
+      if (hasRedirected) return;
+      hasRedirected = true;
+      progressFill.classList.add("finished");
+      statusText.innerHTML = "<span>✅</span> <span>تم بدء تشغيل الخادم بنجاح! جاري تحويلك الآن...</span>";
+      statusText.style.color = "#34d399";
+      statusSub.textContent = "جاري تحميل لوحة التحكم...";
+
+      setTimeout(() => {
+        window.location.replace(TARGET_URL);
+      }, 350);
+    }
+
+    async function checkServer() {
+      if (hasRedirected) return;
+      attempts++;
+
+      // Try ping endpoint first (fastest)
+      try {
+        const ctrl = new AbortController();
+        const timeoutId = setTimeout(() => ctrl.abort(), 600);
+        const res = await fetch(PING_URL, {
+          mode: 'no-cors',
+          cache: 'no-store',
+          signal: ctrl.signal
+        });
+        clearTimeout(timeoutId);
+        onSuccess();
+        return;
+      } catch (e) {
+        // Not ready yet
+      }
+
+      // Fallback try root endpoint
+      try {
+        const ctrl2 = new AbortController();
+        const timeoutId2 = setTimeout(() => ctrl2.abort(), 600);
+        await fetch(TARGET_URL, {
+          mode: 'no-cors',
+          cache: 'no-store',
+          signal: ctrl2.signal
+        });
+        clearTimeout(timeoutId2);
+        onSuccess();
+        return;
+      } catch (e) {
+        // Not ready yet
+      }
+
+      if (attempts > 30) {
+        manualBtn.style.display = "inline-block";
+      }
+
+      setTimeout(checkServer, 200);
+    }
+
+    // Start checking immediately
+    checkServer();
+  </script>
+</body>
+</html>

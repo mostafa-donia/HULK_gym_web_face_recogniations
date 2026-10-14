@@ -162,7 +162,7 @@ def copy_web_app():
             shutil.copytree(src, dst, ignore=shutil.ignore_patterns("*.pyc", "__pycache__"))
 
     # Copy files
-    files_to_copy = ["manage.py", "gym_face.sqlite3", "requirements.txt"]
+    files_to_copy = ["manage.py", "gym_face.sqlite3", "requirements.txt", "startup.html"]
     for f in files_to_copy:
         src = os.path.join(WEB_DIR, f)
         dst = os.path.join(OUTPUT_DIR, f)
@@ -198,11 +198,17 @@ echo ===================================================================
 echo     HULK GYM MANAGEMENT SYSTEM - PORTABLE CLIENT EDITION
 echo ===================================================================
 echo.
+
+if exist "startup.html" (
+    start "" "%~dp0startup.html"
+) else (
+    start http://127.0.0.1:8000
+)
+
 echo [*] Checking database migrations...
 "runtime\\python.exe" manage.py migrate --noinput >nul 2>&1
 
 echo [*] Starting HULK GYM server at http://127.0.0.1:8000 ...
-start http://127.0.0.1:8000
 "runtime\\python.exe" manage.py runserver 0.0.0.0:8000
 pause
 """

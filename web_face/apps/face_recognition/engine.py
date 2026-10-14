@@ -61,10 +61,20 @@ class FaceEngine:
         self.latest_event = None
         self.last_event_time = 0
         self.member_last_overlay_time: Dict[int, float] = {}
+        self.camera_starting = False
         self._placeholder_jpeg = None
+        self._create_placeholder_jpeg()
 
-        self._init_models()
+        # Asynchronously initialize models so server boot and HTTP requests are never delayed
+        self.models_loading = True
+        threading.Thread(target=self._init_models_worker, daemon=True).start()
         self._initialized = True
+
+    def _init_models_worker(self):
+        try:
+            self._init_models()
+        finally:
+            self.models_loading = False
 
     def _init_models(self):
         with self.inference_lock:
@@ -349,13 +359,15 @@ class FaceEngine:
                 return
             self.stop_camera()
             self.camera_index = camera_index
-            self.camera_running = True
+            self.camera_starting = True
+            self.camera_running = False
             self.camera_thread = threading.Thread(target=self._capture_worker, daemon=True)
             self.camera_thread.start()
 
     def stop_camera(self):
         """Stops the persistent background camera."""
         self.camera_running = False
+        self.camera_starting = False
         with self.frame_lock:
             if self.cap:
                 try:
@@ -375,12 +387,15 @@ class FaceEngine:
                 self.camera_error = f"تعذر فتح الكاميرا رقم {self.camera_index}. تأكد من توصيل الكاميرا بالجهاز."
                 print(f"[FaceEngine] {self.camera_error}")
                 self.camera_running = False
+                self.camera_starting = False
                 return
 
             self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
             self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
             self.cap.set(cv2.CAP_PROP_FPS, 30)
             self.camera_error = None
+            self.camera_running = True
+            self.camera_starting = False
             print(f"[FaceEngine] Independent Camera #{self.camera_index} is active and running in background.")
 
             frame_count = 0
@@ -417,6 +432,7 @@ class FaceEngine:
                         pass
                     self.cap = None
             self.camera_running = False
+            self.camera_starting = False
 
     def _process_recognition_frame(self, frame: np.ndarray):
         if not self.is_ready:

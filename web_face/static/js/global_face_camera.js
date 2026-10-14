@@ -129,6 +129,11 @@
       dot.style.boxShadow = '0 0 10px #10b981';
       label.textContent = text || 'الكاميرا المستقلة نشطة';
       label.style.color = '#10b981';
+    } else if (status === 'loading') {
+      dot.style.background = '#38bdf8';
+      dot.style.boxShadow = '0 0 10px #38bdf8';
+      label.textContent = text || 'جاري تشغيل الكاميرا...';
+      label.style.color = '#38bdf8';
     } else if (status === 'paused') {
       dot.style.background = '#f59e0b';
       dot.style.boxShadow = '0 0 8px #f59e0b';
@@ -149,8 +154,8 @@
   function startIndependentCameraListener() {
     if (eventPollInterval) clearInterval(eventPollInterval);
 
-    // Initial check
-    updateStatusPill('active', 'الكاميرا المستقلة نشطة');
+    // Initial check: show loading state smoothly
+    updateStatusPill('loading', 'جاري تشغيل الكاميرا...');
 
     eventPollInterval = setInterval(async () => {
       // Don't poll if overlay is already active or tab is hidden
@@ -171,6 +176,8 @@
         if (data.camera_running !== undefined) {
           if (data.camera_running) {
             updateStatusPill('active', 'الكاميرا المستقلة نشطة');
+          } else if (data.camera_starting) {
+            updateStatusPill('loading', 'جاري تشغيل الكاميرا...');
           } else if (data.camera_error) {
             updateStatusPill('error', 'تنبيه: ' + data.camera_error.substring(0, 25));
           } else {

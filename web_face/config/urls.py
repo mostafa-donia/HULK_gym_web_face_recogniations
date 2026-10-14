@@ -7,7 +7,15 @@ from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
 
+from django.http import HttpResponse
+
+def ping_view(request):
+    response = HttpResponse("PONG", content_type="text/plain")
+    response["Access-Control-Allow-Origin"] = "*"
+    return response
+
 urlpatterns = [
+    path('ping/', ping_view, name='health_ping'),
     path('admin/', admin.site.urls),
     path('accounts/', include('apps.accounts.urls')),
     path('face/', include('apps.face_recognition.urls')),

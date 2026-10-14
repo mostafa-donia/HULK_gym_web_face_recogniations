@@ -271,12 +271,15 @@ def video_feed_view(request):
     engine = get_face_engine()
 
     def frame_generator():
-        while True:
-            frame_bytes = engine.get_latest_jpeg()
-            if frame_bytes:
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-            time.sleep(0.035)
+        try:
+            while True:
+                frame_bytes = engine.get_latest_jpeg()
+                if frame_bytes:
+                    yield (b'--frame\r\n'
+                           b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                time.sleep(0.035)
+        except (GeneratorExit, BrokenPipeError, ConnectionResetError, Exception):
+            pass
 
     return StreamingHttpResponse(frame_generator(), content_type='multipart/x-mixed-replace; boundary=frame')
 
@@ -293,6 +296,8 @@ def api_live_events_view(request):
     except (ValueError, TypeError):
         since_ts = 0.0
 
+    camera_starting = getattr(engine, "camera_starting", False)
+
     # If initial poll from a newly loaded page (since_ts <= 0), synchronize timestamp and do not replay old past events
     if since_ts <= 0.0:
         return JsonResponse({
@@ -300,6 +305,7 @@ def api_live_events_view(request):
             "has_event": False,
             "server_time": now_ts,
             "camera_running": engine.camera_running,
+            "camera_starting": camera_starting,
             "camera_error": engine.camera_error,
         })
 
@@ -310,6 +316,7 @@ def api_live_events_view(request):
             "has_event": True,
             "server_time": now_ts,
             "camera_running": engine.camera_running,
+            "camera_starting": camera_starting,
             "camera_error": engine.camera_error,
             "event": event,
         })
@@ -319,6 +326,7 @@ def api_live_events_view(request):
         "has_event": False,
         "server_time": now_ts,
         "camera_running": engine.camera_running,
+        "camera_starting": camera_starting,
         "camera_error": engine.camera_error,
     })
 
