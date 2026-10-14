@@ -81,6 +81,10 @@ class Member(models.Model):
         return f"{self.name} ({self.member_id})"
 
     @property
+    def phone(self) -> str:
+        return self.mobile
+
+    @property
     def days_left(self) -> int:
         if not self.last_subscription_end:
             return 0

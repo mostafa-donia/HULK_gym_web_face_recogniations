@@ -7,15 +7,24 @@ echo ========================================================
 echo          HULK GYM - Web Management System
 echo ========================================================
 echo.
+cd /d "%~dp0web_face"
+
+if exist "venv\Scripts\python.exe" (
+    set "PY_EXE=venv\Scripts\python.exe"
+) else if exist "..\venv\Scripts\python.exe" (
+    set "PY_EXE=..\venv\Scripts\python.exe"
+) else (
+    set "PY_EXE=python"
+)
+
 echo [*] Checking database migrations...
-cd /d "%~dp0web"
-python manage.py migrate --no-input
+"%PY_EXE%" manage.py migrate --no-input
 
 echo [*] Starting local LAN web server on port 8000...
-echo [*] Accessible locally at: http://localhost:8000/
-echo [*] Accessible from gym phones / tablets at: http://192.168.0.101:8000/
+echo [*] Accessible locally at: http://127.0.0.1:8000/
 echo.
+start http://127.0.0.1:8000
 echo Press Ctrl+C in this window to stop the server.
 echo ========================================================
-python manage.py runserver 0.0.0.0:8000
+"%PY_EXE%" manage.py runserver 0.0.0.0:8000
 pause

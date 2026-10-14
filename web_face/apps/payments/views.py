@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -12,6 +13,7 @@ from apps.core.models import GymProfile
 from apps.members.models import Member
 from apps.messaging.models import MessageType, WhatsAppMessage
 from apps.payments.models import Payment, PaymentMethod, PaymentOperationType
+from apps.payments.services import queue_payment_receipt_whatsapp
 
 
 def generate_next_payment_id() -> tuple[str, str]:
@@ -103,28 +105,8 @@ def settle_debt_view(request, member_id):
             member.last_payment_date = payment.created_at
             member.save(update_fields=["current_remaining", "total_paid", "last_payment_date"])
 
-            # Queue WhatsApp receipt
-            if member.mobile and profile.whatsapp_enabled:
-                receipt_text = (
-                    f"إيصال سداد متبقي من {profile.gym_name}\n"
-                    f"أهلاً {member.name}\n"
-                    f"المبلغ المسدد: {amount} {profile.currency}\n"
-                    f"المتبقي النهائي: {member.current_remaining} {profile.currency}\n"
-                    f"رقم الإيصال: {payment.invoice_no}\n"
-                    f"شكراً لك 💪"
-                )
-                dedup_key = f"debt_receipt:{member.mobile}:{payment.id}"
-                WhatsAppMessage.objects.get_or_create(
-                    dedup_key=dedup_key,
-                    defaults={
-                        "mobile": member.mobile,
-                        "message": receipt_text,
-                        "msg_type": MessageType.RECEIPT,
-                        "recipient_name": member.name,
-                        "recipient_type": "member",
-                        "status": "pending",
-                    },
-                )
+            # Queue WhatsApp receipt with HTML invoice
+            queue_payment_receipt_whatsapp(payment)
 
         messages.success(request, f"تم تسجيل سداد {amount} {profile.currency} من متبقي العضو {member.name} بنجاح!")
         return redirect("payments:payment_detail", payment_id=payment.id)
@@ -135,3 +117,52 @@ def settle_debt_view(request, member_id):
         "profile": profile,
     }
     return render(request, "payments/settle_debt.html", context)
+
+
+@login_required
+def download_invoice_html_view(request, payment_id):
+    """Generates and serves the standalone HTML invoice as a direct download file."""
+    payment = get_object_or_404(Payment, id=payment_id)
+    from apps.payments.services import generate_invoice_html_file
+    rel_path = generate_invoice_html_file(payment)
+
+    from django.conf import settings
+    from pathlib import Path
+    full_path = Path(settings.MEDIA_ROOT) / rel_path
+
+    if full_path.exists():
+        content = full_path.read_text(encoding="utf-8")
+    else:
+        from django.template.loader import render_to_string
+        content = render_to_string("payments/invoice_standalone.html", {
+            "payment": payment,
+            "member": payment.member,
+            "profile": GymProfile.get_solo(),
+        })
+
+    response = HttpResponse(content, content_type="text/html; charset=utf-8")
+    clean_no = payment.invoice_no.replace("/", "_")
+    response["Content-Disposition"] = f'attachment; filename="invoice_{clean_no}.html"'
+    return response
+
+
+@login_required
+def send_receipt_whatsapp_now_view(request, payment_id):
+    """Queues and immediately attempts to dispatch the HTML invoice via WhatsApp."""
+    payment = get_object_or_404(Payment, id=payment_id)
+    msg_obj = queue_payment_receipt_whatsapp(payment)
+
+    if not msg_obj:
+        messages.error(request, "تعذر إرسال الفاتورة: لا يوجد رقم هاتف مسجل للعضو أو أن خدمة الواتساب معطلة.")
+        return redirect("payments:payment_detail", payment_id=payment.id)
+
+    from apps.messaging.services import dispatch_message_record
+    dispatched = dispatch_message_record(msg_obj)
+
+    if dispatched:
+        messages.success(request, f"✓ تم إرسال الفاتورة الرسمية بنجاح إلى هاتف {payment.member.name} عبر الواتساب!")
+    else:
+        messages.warning(request, f"تمت إضافة الفاتورة لطابور رسائل الواتساب (يرجى التأكد من تشغيل نافذة WhatsApp Web).")
+
+    return redirect("payments:payment_detail", payment_id=payment.id)
+

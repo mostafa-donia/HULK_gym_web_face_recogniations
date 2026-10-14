@@ -14,6 +14,7 @@ from apps.core.models import GymProfile
 from apps.members.models import Member, MemberStatus, Plan, Subscription
 from apps.messaging.models import MessageType, WhatsAppMessage
 from apps.payments.models import Payment, PaymentMethod, PaymentOperationType
+from apps.payments.services import queue_payment_receipt_whatsapp
 
 
 def generate_next_member_id() -> str:
@@ -462,31 +463,8 @@ def subscription_create_view(request):
 
             # 4. Queue WhatsApp Receipt
             if member.mobile:
-                profile = GymProfile.get_solo()
-                if profile.whatsapp_enabled:
-                    invoice_label = payment.invoice_no if payment else "بدون دفعة"
-                    receipt_text = (
-                        f"إيصال اشتراك من {profile.gym_name}\n"
-                        f"أهلاً {member.name}\n"
-                        f"الباقة: {plan.name}\n"
-                        f"المدفوع: {paid_amount} {profile.currency}\n"
-                        f"المتبقي: {remaining_amount} {profile.currency}\n"
-                        f"صالح حتى: {end_date.strftime('%Y-%m-%d')}\n"
-                        f"رقم الفاتورة: {invoice_label}\n"
-                        f"شكراً لاختيارك {profile.gym_name} 💪"
-                    )
-                    dedup_key = f"receipt:{member.mobile}:{sub.id}"
-                    WhatsAppMessage.objects.get_or_create(
-                        dedup_key=dedup_key,
-                        defaults={
-                            "mobile": member.mobile,
-                            "message": receipt_text,
-                            "msg_type": MessageType.RECEIPT,
-                            "recipient_name": member.name,
-                            "recipient_type": "member",
-                            "status": "pending",
-                        },
-                    )
+                if payment:
+                    queue_payment_receipt_whatsapp(payment, subscription=sub)
 
         messages.success(request, f"تم تفعيل اشتراك {member.name} بنجاح حتى {end_date}!")
         if payment:
@@ -658,27 +636,9 @@ def smart_operations_view(request):
                         created_by=request.user,
                     )
 
-                    # Send WhatsApp Receipt
-                    if profile.whatsapp_enabled and member.mobile:
-                        receipt_text = (
-                            f"إيصال اشتراك من {profile.gym_name}\n"
-                            f"أهلاً {member.name}\n"
-                            f"العملية: {'اشتراك جديد' if actual_op_type == 'new_subscription' else 'تجديد اشتراك'}\n"
-                            f"الباقة: {plan.name}\n"
-                            f"المدفوع: {paid_amount} {profile.currency}\n"
-                            f"المتبقي: {remaining_amount} {profile.currency}\n"
-                            f"تاريخ النهاية: {end_date.strftime('%Y-%m-%d')}\n"
-                            f"رقم الإيصال: {inv_no}\n"
-                            f"نورتنا في {profile.gym_name} 💪"
-                        )
-                        WhatsAppMessage.objects.create(
-                            mobile=member.mobile,
-                            message=receipt_text,
-                            msg_type=MessageType.RECEIPT,
-                            recipient_name=member.name,
-                            recipient_type="member",
-                            dedup_key=f"receipt:{member.mobile}:{sub.id}",
-                        )
+                    # Send WhatsApp Receipt with HTML Invoice
+                    if payment:
+                        queue_payment_receipt_whatsapp(payment, subscription=created_sub)
 
                 messages.success(request, f"تم حفظ {'الاشتراك الجديد' if actual_op_type == 'new_subscription' else 'التجديد'} بنجاح للعضو {member.name} حتى {end_date}!")
                 if payment:
@@ -711,23 +671,9 @@ def smart_operations_view(request):
                         created_by=request.user,
                     )
 
-                    if profile.whatsapp_enabled and member.mobile:
-                        receipt_text = (
-                            f"إيصال سداد متبقي من {profile.gym_name}\n"
-                            f"أهلاً {member.name}\n"
-                            f"المبلغ المسدد: {paid_now} {profile.currency}\n"
-                            f"المتبقي الحالي: {new_remaining} {profile.currency}\n"
-                            f"رقم الإيصال: {inv_no}\n"
-                            f"شكراً لك 💪"
-                        )
-                        WhatsAppMessage.objects.create(
-                            mobile=member.mobile,
-                            message=receipt_text,
-                            msg_type=MessageType.RECEIPT,
-                            recipient_name=member.name,
-                            recipient_type="member",
-                            dedup_key=f"debt_settle:{member.mobile}:{inv_no}",
-                        )
+                    # Send WhatsApp Receipt with HTML Invoice
+                    if created_pay:
+                        queue_payment_receipt_whatsapp(created_pay)
 
                     messages.success(request, f"تم تسجيل سداد {paid_now} {profile.currency} للعضو {member.name}. المتبقي الآن: {new_remaining} {profile.currency}")
                     return redirect("payments:payment_detail", payment_id=created_pay.id)

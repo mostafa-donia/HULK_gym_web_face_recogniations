@@ -9,9 +9,7 @@ class FaceRecognitionConfig(AppConfig):
     def ready(self):
         import os
         import sys
-        if any(cmd in sys.argv for cmd in ["makemigrations", "migrate", "test", "check", "shell"]):
-            return
-        if "runserver" in sys.argv and os.environ.get("RUN_MAIN") != "true":
+        if "runserver" not in sys.argv or os.environ.get("RUN_MAIN") != "true":
             return
 
         def _auto_start():

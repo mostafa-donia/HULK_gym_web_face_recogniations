@@ -93,11 +93,23 @@
       </div>
     </div>
 
-    <div style="text-align: center; margin-top: 10px;">
-      <button onclick="printAndStay()" class="btn btn-primary" style="padding: 10px 24px; font-size: 1rem;">
-        🖨️ طباعة الإيصال الآن
+    <div style="text-align: center; margin-top: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+      <button onclick="printAndStay()" class="btn btn-primary" style="padding: 10px 20px; font-size: 0.95rem; font-weight: 800;">
+        🖨️ طباعة الإيصال
       </button>
-      <a href="{% url 'core:dashboard' %}" class="btn btn-secondary" style="padding: 10px 18px; margin-right: 8px; text-decoration: none;">
+
+      {% if member.mobile %}
+      <a href="{% url 'payments:send_receipt_whatsapp' payment.id %}" onclick="cancelAutoRedirect()" class="btn" style="background: #25D366; color: #fff; padding: 10px 18px; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 0.92rem; display: inline-flex; align-items: center; gap: 6px;">
+        <span>💬</span>
+        <span>إرسال الفاتورة بالواتساب</span>
+      </a>
+      {% endif %}
+
+      <a href="{% url 'payments:download_invoice_html' payment.id %}" onclick="cancelAutoRedirect()" class="btn btn-secondary" style="padding: 10px 16px; text-decoration: none; font-size: 0.9rem; font-weight: 700;">
+        📥 تحميل الفاتورة (HTML)
+      </a>
+
+      <a href="{% url 'core:dashboard' %}" class="btn btn-secondary" style="padding: 10px 18px; text-decoration: none; font-size: 0.9rem;">
         الرئيسية
       </a>
     </div>

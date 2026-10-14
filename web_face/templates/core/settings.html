@@ -542,7 +542,101 @@
 
   </div>
 
-  <!-- Section 5: GitHub System Updates & One-Click Upgrades -->
+  <!-- Section 5: Legacy Data Importer (V1 Data Files) -->
+  <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #162837; padding-bottom: 12px;">
+      <div>
+        <h3 style="color: #FFFFFF; font-size: 1.25rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+          📥 استيراد وترحيل بيانات النظام القديم (Legacy Data Importer)
+        </h3>
+        <span style="color: #8D99A3; font-size: 0.85rem;">
+          متابعة العمل بسلاسة من النظام السابق: يمكنك إلقاء ملفات الـ JSON في مجلد <code>data/</code> أو رفعها مباشرة هنا لترحيل الأعضاء، الاشتراكات، الإيصالات، والمصروفات دون تكرار.
+        </span>
+      </div>
+
+      <!-- Live Count Badges -->
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span style="background: rgba(132, 204, 22, 0.12); border: 1px solid #84CC16; color: #A8F14B; font-weight: 800; font-size: 0.85rem; padding: 5px 12px; border-radius: 20px;">
+          👥 المشتركون المسجلون: <strong>{{ total_members_count }}</strong>
+        </span>
+        <span style="background: rgba(59, 130, 246, 0.12); border: 1px solid #3b82f6; color: #93c5fd; font-weight: 800; font-size: 0.85rem; padding: 5px 12px; border-radius: 20px;">
+          💳 إيصالات الدفع: <strong>{{ total_payments_count }}</strong>
+        </span>
+      </div>
+    </div>
+
+    <!-- Detected Data Path Notification -->
+    <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.2rem;">📂</span>
+        <div>
+          <span style="color: #CAD6E2; font-size: 0.88rem; font-weight: 700; display: block;">مسار مجلد البيانات المكتشف تلقائياً:</span>
+          <code style="color: #38bdf8; font-family: monospace; font-size: 0.82rem; direction: ltr; display: inline-block;">
+            {% if detected_legacy_path %}{{ detected_legacy_path }}{% else %}مجلد data/ داخل مجلد النظام الرئيسي{% endif %}
+          </code>
+        </div>
+      </div>
+
+      <!-- Quick One-Click Sync Button -->
+      <form method="post" action="{% url 'core:settings' %}" style="margin: 0;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="import_legacy_data">
+        <button type="submit" class="btn btn-primary" style="background: #84CC16; color: #050B10; font-weight: 800; font-size: 0.88rem; padding: 9px 20px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+          <span>⚡</span>
+          <span>استيراد / مزامنة البيانات من مجلد data</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Upload JSON Files Directly Accordion / Section -->
+    <details style="background: #08141e; border: 1px dashed #1e3a52; border-radius: 10px; padding: 14px 18px;">
+      <summary style="color: #60a5fa; font-weight: 700; font-size: 0.9rem; cursor: pointer; user-select: none;">
+        📁 أو اضغط هنا لرفع ملفات البيانات (JSON) يدوياً من جهازك
+      </summary>
+      
+      <form method="post" action="{% url 'core:settings' %}" enctype="multipart/form-data" style="margin-top: 14px; display: flex; flex-direction: column; gap: 12px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="import_legacy_data">
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+          <div style="background: #071018; border: 1px solid #162837; border-radius: 8px; padding: 10px;">
+            <label style="color: #CAD6E2; font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">1. ملف الأعضاء (members.json)</label>
+            <input type="file" name="members_file" accept=".json" style="width: 100%; font-size: 0.8rem; color: #94a3b8;">
+          </div>
+
+          <div style="background: #071018; border: 1px solid #162837; border-radius: 8px; padding: 10px;">
+            <label style="color: #CAD6E2; font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">2. ملف المدفوعات (payments.json)</label>
+            <input type="file" name="payments_file" accept=".json" style="width: 100%; font-size: 0.8rem; color: #94a3b8;">
+          </div>
+
+          <div style="background: #071018; border: 1px solid #162837; border-radius: 8px; padding: 10px;">
+            <label style="color: #CAD6E2; font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">3. ملف المصروفات (expenses.json)</label>
+            <input type="file" name="expenses_file" accept=".json" style="width: 100%; font-size: 0.8rem; color: #94a3b8;">
+          </div>
+
+          <div style="background: #071018; border: 1px solid #162837; border-radius: 8px; padding: 10px;">
+            <label style="color: #CAD6E2; font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">4. ملف الإعدادات والباقات (settings.json)</label>
+            <input type="file" name="settings_file" accept=".json" style="width: 100%; font-size: 0.8rem; color: #94a3b8;">
+          </div>
+
+          <div style="background: #071018; border: 1px solid #162837; border-radius: 8px; padding: 10px;">
+            <label style="color: #CAD6E2; font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">5. بنك الرسائل (whatsapp_message_bank.json)</label>
+            <input type="file" name="message_bank_file" accept=".json" style="width: 100%; font-size: 0.8rem; color: #94a3b8;">
+          </div>
+        </div>
+
+        <div style="text-align: left; margin-top: 6px;">
+          <button type="submit" class="btn btn-secondary" style="background: #1e293b; color: #f1f5f9; border: 1px solid #334155; font-weight: 700; font-size: 0.85rem; padding: 8px 20px; border-radius: 6px; cursor: pointer;">
+            📤 رفع واستيراد الملفات المحددة فوراً
+          </button>
+        </div>
+      </form>
+    </details>
+
+  </div>
+
+  <!-- Section 6: GitHub System Updates & One-Click Upgrades -->
   <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
     
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #162837; padding-bottom: 12px;">

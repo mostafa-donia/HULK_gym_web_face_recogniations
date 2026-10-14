@@ -74,6 +74,9 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "gym_face.sqlite3",
+        "OPTIONS": {
+            "timeout": 60,
+        },
     }
 }
 

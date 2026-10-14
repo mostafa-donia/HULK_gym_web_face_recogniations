@@ -3,6 +3,7 @@ from subprocess import Popen
 from time import sleep
 import ctypes
 import io
+import os
 import random
 import time
 
@@ -302,19 +303,92 @@ def set_keyboard_layout_to_english():
     current_lang_after = language_map.get(hkl_after & 0xFFFF, f"0x{(hkl_after & 0xFFFF):04X}")
     print(f"[set_keyboard_layout_to_english_once] After switch, current keyboard language: {current_lang_after}")
     
+def copy_file(file_path: str) -> bool:
+    """
+    Copy image (via CF_DIB) or document/file (via CF_HDROP) to Windows clipboard.
+    Allows pasting images, HTML files, PDF documents, or brochures into WhatsApp Web with Ctrl+V.
+    """
+    if not file_path:
+        return False
+
+    abs_path = os.path.abspath(str(file_path))
+    if not os.path.exists(abs_path):
+        print(f"[copy_file] File not found: {abs_path}")
+        return False
+
+    # 1. Try Image CF_DIB format (for JPG, PNG, WebP, BMP, etc.)
+    try:
+        img = Image.open(abs_path)
+        output = io.BytesIO()
+        img.convert("RGB").save(output, "BMP")
+        data = output.getvalue()[14:]  # Remove BMP 14-byte file header
+        output.close()
+
+        win32clipboard.OpenClipboard()
+        win32clipboard.EmptyClipboard()
+        win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
+        win32clipboard.CloseClipboard()
+        print(f"[copy_file] Image copied to clipboard as CF_DIB: {abs_path}")
+        return True
+    except Exception:
+        # Not a standard raster image or is a document (HTML, PDF, DOCX, etc.)
+        pass
+
+    # 2. CF_HDROP Windows Shell File Drop Format (for HTML, PDF, and general documents)
+    try:
+        from ctypes import wintypes
+
+        class DROPFILES(ctypes.Structure):
+            _fields_ = [
+                ("pFiles", wintypes.DWORD),
+                ("pt", wintypes.POINT),
+                ("fNC", wintypes.BOOL),
+                ("fWide", wintypes.BOOL),
+            ]
+
+        kernel32 = ctypes.windll.kernel32
+        kernel32.GlobalAlloc.argtypes = [wintypes.UINT, ctypes.c_size_t]
+        kernel32.GlobalAlloc.restype = wintypes.HGLOBAL
+        kernel32.GlobalLock.argtypes = [wintypes.HGLOBAL]
+        kernel32.GlobalLock.restype = ctypes.c_void_p
+        kernel32.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
+        kernel32.GlobalUnlock.restype = wintypes.BOOL
+
+        offset = ctypes.sizeof(DROPFILES)
+        file_bytes = (abs_path + "\0\0").encode("utf-16le")
+        total_size = offset + len(file_bytes)
+
+        GHND = 0x0042  # GMEM_MOVEABLE | GMEM_ZEROINIT
+        h_global = kernel32.GlobalAlloc(GHND, total_size)
+        if not h_global:
+            print("[copy_file] GlobalAlloc failed.")
+            return False
+
+        ptr = kernel32.GlobalLock(h_global)
+        if not ptr:
+            print("[copy_file] GlobalLock failed.")
+            return False
+
+        df = DROPFILES(pFiles=offset, pt=wintypes.POINT(0, 0), fNC=False, fWide=True)
+        ctypes.memmove(ptr, ctypes.byref(df), offset)
+        ctypes.memmove(ptr + offset, file_bytes, len(file_bytes))
+        kernel32.GlobalUnlock(h_global)
+
+        win32clipboard.OpenClipboard()
+        win32clipboard.EmptyClipboard()
+        win32clipboard.SetClipboardData(15, h_global)  # 15 = CF_HDROP
+        win32clipboard.CloseClipboard()
+        print(f"[copy_file] Document file copied to clipboard as CF_HDROP: {abs_path}")
+        return True
+    except Exception as e:
+        print(f"[copy_file] Error copying file to clipboard: {e}")
+        return False
+
+
 def copy_image_to_clipboard(image_path):
-    image = Image.open(image_path)
+    """Backward compatibility alias for copy_file."""
+    return copy_file(image_path)
 
-    # Convert to BMP format (required for clipboard)
-    output = io.BytesIO()
-    image.convert("RGB").save(output, "BMP")
-    data = output.getvalue()[14:]  # remove BMP header
-    output.close()
-
-    win32clipboard.OpenClipboard()
-    win32clipboard.EmptyClipboard()
-    win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
-    win32clipboard.CloseClipboard()
     
     
 def prepare_phones(phones:str):
@@ -554,11 +628,32 @@ def send_message(phone: str, message: str = "", image: str = None, topic: str = 
     press("enter")
     random_delay(2.0, 3.2)
 
-    write_message(message, use_paste_mode=(MESSAGE_SEND_MODE == "paste"), char_delay=MESSAGE_CHAR_DELAY)
-    random_delay(1.5, 3.0)
+    # 1. If file / image attachment is provided, copy to clipboard and paste
+    if image and isinstance(image, str) and os.path.exists(image):
+        print(f"[send_message] Attaching file/image: {image}")
+        if copy_file(image):
+            random_delay(0.6, 1.2)
+            hotkey("ctrl", "v")
+            random_delay(3.5, 5.5)  # Wait for WhatsApp attachment preview dialog
+            if message:
+                copy(message)
+                random_delay(0.4, 0.8)
+                hotkey("ctrl", "v")
+                random_delay(0.4, 0.8)
+            press("enter")
+            random_delay(1.8, 2.8)
+            print(f"[send_message] Attached file and message delivered successfully to {phone}")
+            return True
+        else:
+            print(f"[send_message] Failed to copy attachment to clipboard, falling back to text only")
 
-    press("enter")
-    random_delay(1.2, 2.2)
+    # 2. Text-only message delivery
+    if message:
+        write_message(message, use_paste_mode=(MESSAGE_SEND_MODE == "paste"), char_delay=MESSAGE_CHAR_DELAY)
+        random_delay(1.5, 3.0)
+        press("enter")
+        random_delay(1.2, 2.2)
+
     print(f"[send_message] Message delivered successfully to {phone}")
     return True
 
@@ -601,9 +696,6 @@ def sending(phones: list, messages: list, groups: list = None, image: str = None
         rate_limiter = WhatsAppRateLimiter(limit_per_minute=20, limit_per_hour=120)
         whatsupp_ready()
 
-        for i, phone in enumerate(phones):
-            topic = selected_groups[i]
-            context = contexts[i] if contexts and i < len(contexts) else None
         for i, phone in enumerate(phones):
             topic = selected_groups[i]
             context = contexts[i] if contexts and i < len(contexts) else None

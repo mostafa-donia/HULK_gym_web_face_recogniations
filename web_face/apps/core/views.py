@@ -615,10 +615,69 @@ def settings_view(request):
             messages.info(request, f"تم تحديث حالة الباقة '{plan.name}'.")
             return redirect("core:settings")
 
+        elif action == "import_legacy_data":
+            target_data_dir = Path(settings.BASE_DIR) / "data"
+            target_data_dir.mkdir(parents=True, exist_ok=True)
+
+            mapping = {
+                "members_file": "members.json",
+                "payments_file": "payments.json",
+                "expenses_file": "expenses.json",
+                "settings_file": "settings.json",
+                "message_bank_file": "whatsapp_message_bank.json",
+            }
+            uploaded_count = 0
+            for field_name, file_name in mapping.items():
+                if field_name in request.FILES:
+                    f = request.FILES[field_name]
+                    (target_data_dir / file_name).write_bytes(f.read())
+                    uploaded_count += 1
+
+            # Candidate directories for JSON files
+            import_dir = target_data_dir
+            if not (target_data_dir / "members.json").exists():
+                candidates = [
+                    Path(settings.BASE_DIR).parent / "old" / "v1" / "data",
+                    Path(settings.BASE_DIR).parent / "v1" / "data",
+                    Path(settings.BASE_DIR).parent / "data",
+                ]
+                for c in candidates:
+                    if (c / "members.json").exists():
+                        import_dir = c
+                        break
+
+            from apps.core.management.commands.migrate_legacy_data import import_legacy_data_from_dir
+            log_messages = []
+            res = import_legacy_data_from_dir(import_dir, log_fn=lambda m: log_messages.append(m))
+
+            if res.get("success"):
+                st = res.get("stats", {})
+                messages.success(
+                    request,
+                    f"🎉 تم استيراد بيانات النظام القديم بنجاح! "
+                    f"({st.get('members', 0)} مشترك، {st.get('subscriptions', 0)} اشتراك، "
+                    f"{st.get('payments', 0)} إيصال دفع، {st.get('expenses', 0)} مصروفات)."
+                )
+            else:
+                messages.error(request, f"❌ فشل الاستيراد: {res.get('error', 'حدث خطأ أثناء قراءة الملفات')}")
+            return redirect("core:settings")
+
     google_status = check_google_contacts_status()
 
     from apps.core.updater import get_current_version_info
     version_info = get_current_version_info()
+
+    legacy_candidates = [
+        Path(settings.BASE_DIR) / "data",
+        Path(settings.BASE_DIR).parent / "old" / "v1" / "data",
+        Path(settings.BASE_DIR).parent / "v1" / "data",
+        Path(settings.BASE_DIR).parent / "data",
+    ]
+    detected_legacy_path = None
+    for cand in legacy_candidates:
+        if (cand / "members.json").exists():
+            detected_legacy_path = str(cand)
+            break
 
     context = {
         "profile": profile,
@@ -627,6 +686,10 @@ def settings_view(request):
         "categories": categories,
         "google_status": google_status,
         "version_info": version_info,
+        "detected_legacy_path": detected_legacy_path,
+        "total_members_count": Member.objects.count(),
+        "total_subscriptions_count": Subscription.objects.count(),
+        "total_payments_count": Payment.objects.count(),
     }
     return render(request, "core/settings.html", context)
 

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فاتورة رقم {{ payment.invoice_no }} — {{ profile.gym_name|default:"HULK GYM" }}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      background: #0b131e;
+      color: #0f172a;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .print-hide {
+      width: 100%;
+      max-width: 520px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-print {
+      background: #84CC16;
+      color: #050b10;
+      font-weight: 800;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 22px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: transform 0.15s ease;
+    }
+    .btn-print:hover {
+      transform: scale(1.02);
+    }
+    .btn-badge {
+      background: rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      font-size: 0.82rem;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .receipt-box {
+      width: 100%;
+      max-width: 520px;
+      background: #ffffff;
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 28px 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    .receipt-header {
+      text-align: center;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #0f172a;
+      margin-bottom: 18px;
+    }
+    .gym-title {
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: #0f172a;
+      margin-top: 4px;
+    }
+    .gym-subtitle {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 4px;
+      font-weight: 500;
+    }
+    .meta-bar {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: #475569;
+      margin-bottom: 16px;
+      background: #f8fafc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+    .receipt-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+    }
+    .receipt-table td {
+      padding: 11px 4px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.95rem;
+    }
+    .receipt-table td.label-cell {
+      color: #64748b;
+      width: 40%;
+      font-weight: 600;
+    }
+    .receipt-table td.value-cell {
+      text-align: left;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .total-banner {
+      background: #f1f5f9;
+      padding: 14px 16px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.25rem;
+      font-weight: 900;
+      margin-top: 14px;
+      border: 1px solid #cbd5e1;
+    }
+    .amount-value {
+      color: #16a34a;
+      font-family: monospace, sans-serif;
+      font-size: 1.4rem;
+    }
+    .remaining-banner {
+      margin-top: 10px;
+      padding: 11px 14px;
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+      color: #e11d48;
+      font-weight: 800;
+    }
+    .footer-note {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.82rem;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 14px;
+      line-height: 1.5;
+    }
+    @media print {
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+      }
+      .print-hide {
+        display: none !important;
+      }
+      .receipt-box {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 10px !important;
+        max-width: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-hide">
+    <button onclick="window.print()" class="btn-print">
+      🖨️ طباعة الفاتورة / حفظ كـ PDF
+    </button>
+    <span class="btn-badge">فاتورة إلكترونية معتمدة</span>
+  </div>
+
+  <div class="receipt-box">
+    
+    <div class="receipt-header">
+      <h1 class="gym-title">{{ profile.gym_name|default:"HULK GYM" }}</h1>
+      {% if profile.gym_tagline %}
+        <p style="font-size: 0.8rem; color: #84CC16; font-weight: 700; margin-top: 2px;">{{ profile.gym_tagline }}</p>
+      {% endif %}
+      <p class="gym-subtitle">إيصال سداد مالي رسمي معتمد</p>
+    </div>
+
+    <div class="meta-bar">
+      <span>رقم الفاتورة: <strong style="color: #0f172a;">{{ payment.invoice_no }}</strong></span>
+      <span>التاريخ: <strong>{{ payment.created_at|date:"Y-m-d h:i A" }}</strong></span>
+    </div>
+
+    <table class="receipt-table">
+      <tr>
+        <td class="label-cell">اسم اللاعب:</td>
+        <td class="value-cell" style="font-size: 1.1rem; color: #0f172a;">{{ member.name }}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">كود العضو:</td>
+        <td class="value-cell" style="font-family: monospace;">{{ member.member_id }}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">نوع العملية:</td>
+        <td class="value-cell">{{ payment.get_operation_type_display }}</td>
+      </tr>
+      {% if subscription %}
+      <tr>
+        <td class="label-cell">الباقة:</td>
+        <td class="value-cell">{{ subscription.plan_name }}</td>
+      </tr>
+      <tr>
+        <td class="label-cell">فترة الاشتراك:</td>
+        <td class="value-cell" style="font-family: monospace;">
+          {{ subscription.start_date|date:"Y-m-d" }} إلى {{ subscription.end_date|date:"Y-m-d" }}
+        </td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td class="label-cell">طريقة الدفع:</td>
+        <td class="value-cell">{{ payment.payment_method }}</td>
+      </tr>
+      {% if payment.notes %}
+      <tr>
+        <td class="label-cell">ملاحظات:</td>
+        <td class="value-cell" style="font-weight: 500; color: #475569;">{{ payment.notes }}</td>
+      </tr>
+      {% endif %}
+    </table>
+
+    <div class="total-banner">
+      <span>المبلغ المدفوع:</span>
+      <span class="amount-value">{{ payment.amount }} {{ profile.currency|default:"ج.م" }}</span>
+    </div>
+
+    {% if member.current_remaining > 0 %}
+    <div class="remaining-banner">
+      <span>المتبقي دين على العضو:</span>
+      <span style="font-family: monospace;">{{ member.current_remaining }} {{ profile.currency|default:"ج.م" }}</span>
+    </div>
+    {% else %}
+    <div style="margin-top: 10px; padding: 8px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; display: flex; justify-content: space-between; font-size: 0.88rem; color: #16a34a; font-weight: 700;">
+      <span>حالة الحساب:</span>
+      <span>خالص السداد بالكامل ✓</span>
+    </div>
+    {% endif %}
+
+    <div class="footer-note">
+      <p>المحصل: <strong>{{ payment.created_by.first_name|default:payment.created_by.username|default:"كاشير الصالة" }}</strong></p>
+      <p style="margin-top: 5px;">شكراً لاختيارك {{ profile.gym_name|default:"HULK GYM" }} 💪 نتمنى لك فورمة وتمرين ممتع!</p>
+    </div>
+
+  </div>
+
+</body>
+</html>
