@@ -287,16 +287,28 @@ def api_live_events_view(request):
     Enables instant full-screen takeover overlay without camera restarts.
     """
     engine = get_face_engine()
+    now_ts = time.time()
     try:
         since_ts = float(request.GET.get("since", 0))
     except (ValueError, TypeError):
         since_ts = 0.0
 
+    # If initial poll from a newly loaded page (since_ts <= 0), synchronize timestamp and do not replay old past events
+    if since_ts <= 0.0:
+        return JsonResponse({
+            "success": True,
+            "has_event": False,
+            "server_time": now_ts,
+            "camera_running": engine.camera_running,
+            "camera_error": engine.camera_error,
+        })
+
     event = engine.get_latest_event()
-    if event and event.get("timestamp", 0) > since_ts:
+    if event and (event.get("timestamp", 0) > since_ts) and (now_ts - float(event.get("timestamp", 0)) <= 3.5):
         return JsonResponse({
             "success": True,
             "has_event": True,
+            "server_time": now_ts,
             "camera_running": engine.camera_running,
             "camera_error": engine.camera_error,
             "event": event,
@@ -305,6 +317,7 @@ def api_live_events_view(request):
     return JsonResponse({
         "success": True,
         "has_event": False,
+        "server_time": now_ts,
         "camera_running": engine.camera_running,
         "camera_error": engine.camera_error,
     })

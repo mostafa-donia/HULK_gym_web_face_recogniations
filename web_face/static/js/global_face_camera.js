@@ -13,11 +13,35 @@
   let audioCtx = null;
   let eventPollInterval = null;
   let lastEventTimestamp = 0;
-  const memberLastOverlayMap = {};
 
   // Global variables shared across page scripts (e.g., face enrollment modal)
   window.isGlobalCameraActive = true;
   window.isEnrollModalOpen = false;
+
+  // Persistent Cooldown Manager using localStorage to strictly enforce > 1 minute debounce across page switches
+  function getMemberCooldowns() {
+    try {
+      const raw = localStorage.getItem('hulk_gym_member_overlay_cooldowns');
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function setMemberCooldown(memberId) {
+    try {
+      const cooldowns = getMemberCooldowns();
+      cooldowns[String(memberId)] = Date.now();
+      localStorage.setItem('hulk_gym_member_overlay_cooldowns', JSON.stringify(cooldowns));
+    } catch (e) {}
+  }
+
+  function isMemberInCooldown(memberId) {
+    const cooldowns = getMemberCooldowns();
+    const lastTime = cooldowns[String(memberId)] || 0;
+    // Enforce strict 65-second (more than 1 minute) cooldown
+    return (Date.now() - lastTime) < 65000;
+  }
 
   // Sound synthesis using Web Audio API (100% offline, zero audio files needed)
   function getAudioContext() {
@@ -139,6 +163,11 @@
         if (!res.ok) return;
         const data = await res.json();
 
+        // On first response, sync timestamp with server to prevent past event replay
+        if (lastEventTimestamp === 0 && data.server_time) {
+          lastEventTimestamp = data.server_time;
+        }
+
         if (data.camera_running !== undefined) {
           if (data.camera_running) {
             updateStatusPill('active', 'الكاميرا المستقلة نشطة');
@@ -155,15 +184,13 @@
 
           const m = ev.member;
           const mId = m.id;
-          const now = Date.now();
-          const lastShown = memberLastOverlayMap[mId] || 0;
 
-          // Enforce 1-minute (60 seconds) debounce per member
-          if (now - lastShown < 60000) {
+          // Strict > 1 Minute cooldown check across all page switches and tabs
+          if (isMemberInCooldown(mId)) {
             return;
           }
 
-          memberLastOverlayMap[mId] = now;
+          setMemberCooldown(mId);
           showFullscreenNotification(m, ev.score, ev.gate_opened);
         }
       } catch (e) {
@@ -320,14 +347,20 @@
   window.toggleCameraDockPreview = function () {
     const dock = document.getElementById('globalCamDock');
     if (!dock) return;
+    const dockImg = document.getElementById('dockPreviewImg');
     if (dock.style.display === 'none' || !dock.style.display) {
       dock.style.display = 'block';
-      const dockImg = document.getElementById('dockPreviewImg');
       if (dockImg) {
-        dockImg.src = '/face/video-feed/?t=' + Date.now();
+        dockImg.style.display = 'block';
+        const streamUrl = dockImg.getAttribute('data-src') || '/face/video-feed/';
+        dockImg.src = streamUrl + '?t=' + Date.now();
       }
     } else {
       dock.style.display = 'none';
+      if (dockImg) {
+        dockImg.src = ''; // disconnect stream to free browser HTTP connection and thread
+        dockImg.style.display = 'none';
+      }
     }
   };
 

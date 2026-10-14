@@ -60,6 +60,7 @@ class FaceEngine:
         self.latest_jpeg_bytes = None
         self.latest_event = None
         self.last_event_time = 0
+        self.member_last_overlay_time: Dict[int, float] = {}
         self._placeholder_jpeg = None
 
         self._init_models()
@@ -433,9 +434,9 @@ class FaceEngine:
                 self.annotated_frame = frame
                 return
 
-            det_thresh = float(profile.face_min_confidence or 0.55)
-            thresh = float(profile.face_match_threshold or 0.363)
-            debounce_sec = int(profile.face_debounce_seconds or 60)
+            det_thresh = max(float(profile.face_min_confidence or 0.68), 0.65)
+            thresh = max(float(profile.face_match_threshold or 0.45), 0.42)
+            debounce_sec = max(int(profile.face_debounce_seconds or 60), 60)
 
             faces = self.detect_faces(frame, score_threshold=det_thresh)
             if not faces:
@@ -445,6 +446,18 @@ class FaceEngine:
             annotated = frame.copy()
             for face in faces:
                 x, y, w, h = int(face[0]), int(face[1]), int(face[2]), int(face[3])
+                # Filter out background noise, artifacts, and tiny blurry detections (min 70x70)
+                if w < 70 or h < 70:
+                    continue
+                # Aspect ratio check: face bounding box must be plausible (0.7 to 1.85)
+                aspect = float(h) / max(float(w), 1.0)
+                if aspect < 0.7 or aspect > 1.85:
+                    continue
+                # YuNet confidence score check
+                face_conf = float(face[14]) if len(face) > 14 else 1.0
+                if face_conf < det_thresh:
+                    continue
+
                 emb = self.extract_embedding_for_face(frame, face)
                 if not emb:
                     continue
@@ -463,7 +476,15 @@ class FaceEngine:
                         cv2.putText(annotated, status_txt, (x, max(25, y - 10)),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.65, color, 2, cv2.LINE_AA)
 
+                        # Strict 1-Minute (or configured debounce) Cooldown Check
                         now = timezone.now()
+                        now_ts = time.time()
+                        last_overlay_ts = self.member_last_overlay_time.get(member.id, 0.0)
+
+                        if (now_ts - last_overlay_ts) < debounce_sec:
+                            # Already notified and logged recently - suppress duplicate overlay!
+                            continue
+
                         cutoff = now - timedelta(seconds=debounce_sec)
                         recent_checkin = CheckInEvent.objects.filter(
                             member=member,
@@ -480,35 +501,39 @@ class FaceEngine:
                                 debt_snapshot=member.current_remaining,
                             )
 
-                            if is_active and profile.gate_relay_enabled:
-                                self.trigger_gate_relay(port=profile.gate_relay_port or "COM3")
+                        if is_active and profile.gate_relay_enabled:
+                            self.trigger_gate_relay(port=profile.gate_relay_port or "COM3")
 
-                            today = timezone.localdate()
-                            expired_days = (today - member.last_subscription_end).days if (member.last_subscription_end and not is_active) else 0
-                            end_date_str = member.last_subscription_end.strftime("%d/%m/%Y") if member.last_subscription_end else "غير محدد"
+                        today = timezone.localdate()
+                        expired_days = (today - member.last_subscription_end).days if (member.last_subscription_end and not is_active) else 0
+                        end_date_str = member.last_subscription_end.strftime("%d/%m/%Y") if member.last_subscription_end else "غير محدد"
 
-                            event_data = {
-                                "id": str(time.time()),
-                                "timestamp": time.time(),
-                                "score": round(match_score * 100, 1),
-                                "gate_opened": is_active and profile.gate_relay_enabled,
-                                "member": {
-                                    "id": member.id,
-                                    "name": member.name,
-                                    "member_id": member.member_id,
-                                    "is_active": is_active,
-                                    "days_left": member.days_left,
-                                    "end_date": end_date_str,
-                                    "expired_days": expired_days,
-                                    "has_debt": member.has_debt,
-                                    "remaining": str(member.current_remaining),
-                                    "plan": member.last_subscription_type or "باقة أساسية",
-                                    "photo_url": member.face_photo.url if member.face_photo else None,
-                                }
+                        event_data = {
+                            "id": str(now_ts),
+                            "timestamp": now_ts,
+                            "score": round(match_score * 100, 1),
+                            "gate_opened": is_active and profile.gate_relay_enabled,
+                            "member": {
+                                "id": member.id,
+                                "name": member.name,
+                                "member_id": member.member_id,
+                                "is_active": is_active,
+                                "days_left": member.days_left,
+                                "end_date": end_date_str,
+                                "expired_days": expired_days,
+                                "has_debt": member.has_debt,
+                                "remaining": str(member.current_remaining),
+                                "plan": member.last_subscription_type or "باقة أساسية",
+                                "photo_url": member.face_photo.url if member.face_photo else None,
                             }
-                            with self.event_lock:
-                                self.latest_event = event_data
-                                self.last_event_time = time.time()
+                        }
+
+                        # Record overlay timestamp to enforce the > 1 minute debounce strictly
+                        self.member_last_overlay_time[member.id] = now_ts
+
+                        with self.event_lock:
+                            self.latest_event = event_data
+                            self.last_event_time = now_ts
                 else:
                     cv2.rectangle(annotated, (x, y), (x + w, y + h), (160, 160, 160), 1)
 
@@ -541,8 +566,11 @@ class FaceEngine:
             self._placeholder_jpeg = buf.tobytes()
 
     def get_latest_event(self) -> Optional[dict]:
-        """Returns the most recent face recognition event."""
+        """Returns the most recent face recognition event if fresh (within 3.5 seconds)."""
         with self.event_lock:
+            if self.latest_event:
+                if (time.time() - float(self.latest_event.get("timestamp", 0))) > 3.5:
+                    self.latest_event = None
             return self.latest_event
 
     def capture_current_frame(self) -> Tuple[bool, Optional[str], str]:
