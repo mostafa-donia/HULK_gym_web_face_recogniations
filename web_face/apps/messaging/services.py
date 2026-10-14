@@ -104,11 +104,47 @@ def dispatch_message_record(msg_obj: WhatsAppMessage) -> bool:
         return False
 
 
-def dispatch_all_pending(limit: int = 25) -> dict:
+def get_pending_summary() -> dict:
     """
-    Dispatches a batch of pending messages.
+    Returns total pending count and categorized breakdown for routine messages:
+    - Invoices / Receipts (receipt)
+    - 1 Last day reminder (reminder_1)
+    - 3 Days reminder (reminder_3)
+    - Finished / Expired subscription (expired)
+    - Others / Custom (bulk, custom, etc.)
     """
-    pending = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING).order_by("created_at")[:limit]
+    qs = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING)
+    total = qs.count()
+    receipt_count = qs.filter(msg_type=MessageType.RECEIPT).count()
+    reminder_1_count = qs.filter(msg_type=MessageType.REMINDER_1).count()
+    reminder_3_count = qs.filter(msg_type=MessageType.REMINDER_3).count()
+    expired_count = qs.filter(msg_type=MessageType.EXPIRED).count()
+    other_count = max(0, total - (receipt_count + reminder_1_count + reminder_3_count + expired_count))
+
+    return {
+        "pending_count": total,
+        "has_pending": total > 0,
+        "breakdown": {
+            "receipt": receipt_count,
+            "reminder_1": reminder_1_count,
+            "reminder_3": reminder_3_count,
+            "expired": expired_count,
+            "other": other_count,
+        },
+    }
+
+
+def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: str = None) -> dict:
+    """
+    Dispatches a batch of pending messages, optionally filtered by selected IDs or message type.
+    """
+    qs = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING)
+    if selected_ids:
+        qs = qs.filter(id__in=selected_ids)
+    if msg_type and msg_type != "all":
+        qs = qs.filter(msg_type=msg_type)
+
+    pending = list(qs.order_by("created_at")[:limit])
     sent_count = 0
     failed_count = 0
 

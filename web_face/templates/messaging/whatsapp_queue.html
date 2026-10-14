@@ -96,8 +96,8 @@
       <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(30, 41, 59, 0.45); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 0.65rem;">
         <span style="font-weight: 700; color: var(--text-muted); min-width: 95px; font-size: 0.88rem;">إرسال:</span>
         
-        <button type="button" onclick="submitBatchAction('send_pending')" class="btn" style="background: #22c55e; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.2rem; border-radius: 6px;">
-          🚀 إرسال غير المرسل / المعلق
+        <button type="button" onclick="openSendPendingModal()" class="btn" style="background: #22c55e; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.2rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+          🚀 إرسال غير المرسل / المعلق (فحص وتحديد)
         </button>
 
         <button type="button" onclick="submitBatchAction('resend_selected')" class="btn btn-secondary" style="font-weight: 700; padding: 0.4rem 1rem; border-radius: 6px;">
@@ -249,6 +249,107 @@
         </table>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- MODAL: إرسال الرسائل المعلقة (Send Pending Routine Messages) -->
+<!-- ==================================================================== -->
+<div id="sendPendingModal" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: #090e17; border: 2px solid #22c55e; border-radius: 20px; width: 100%; max-width: 840px; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 75px rgba(0,0,0,0.95); animation: popIn 0.25s ease;">
+    
+    <!-- Modal Header -->
+    <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(34, 197, 94, 0.06);">
+      <div>
+        <h2 style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span style="color: #22c55e;">🚀</span> إرسال الرسائل المعلقة (طابور الواتساب)
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.84rem; margin: 3px 0 0;">
+          فلترة الرسائل الروتينية الجاهزة، تحديد ما ترغب بإرساله واستبعاد أي عضو قبل البدء
+        </p>
+      </div>
+      <button type="button" onclick="closeSendPendingModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">✕</button>
+    </div>
+
+    <!-- Category Filter Tabs Bar -->
+    <div style="padding: 12px 20px; background: rgba(15, 23, 42, 0.85); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+      <span style="color: #cbd5e1; font-size: 0.82rem; font-weight: 700; margin-left: 6px;">فلترة النوع:</span>
+      <button type="button" class="pending-filter-pill active-pill" data-type="all" onclick="filterPendingCategory('all', this)">
+        🔘 الكل (<span id="modalCountAll">0</span>)
+      </button>
+      <button type="button" class="pending-filter-pill" data-type="receipt" onclick="filterPendingCategory('receipt', this)">
+        🧾 فواتير الدفع (<span id="modalCountReceipt">0</span>)
+      </button>
+      <button type="button" class="pending-filter-pill" data-type="reminder_1" onclick="filterPendingCategory('reminder_1', this)">
+        ⏰ تذكير آخر يوم (<span id="modalCountRem1">0</span>)
+      </button>
+      <button type="button" class="pending-filter-pill" data-type="reminder_3" onclick="filterPendingCategory('reminder_3', this)">
+        ⏳ باقي 3 أيام (<span id="modalCountRem3">0</span>)
+      </button>
+      <button type="button" class="pending-filter-pill" data-type="expired" onclick="filterPendingCategory('expired', this)">
+        🛑 اشتراك منتهي (<span id="modalCountExp">0</span>)
+      </button>
+      <button type="button" class="pending-filter-pill" data-type="other" onclick="filterPendingCategory('other', this)">
+        📢 أخرى (<span id="modalCountOther">0</span>)
+      </button>
+    </div>
+
+    <!-- Selection & Search Controls Toolbar -->
+    <div style="padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: rgba(30, 41, 59, 0.35); border-bottom: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap;">
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <button type="button" onclick="toggleSelectAllPendingInModal(true)" class="btn btn-secondary btn-sm" style="font-size: 0.78rem; padding: 4px 10px; background: rgba(255,255,255,0.08);">
+          ✓ تحديد كل المعروض
+        </button>
+        <button type="button" onclick="toggleSelectAllPendingInModal(false)" class="btn btn-secondary btn-sm" style="font-size: 0.78rem; padding: 4px 10px; background: rgba(255,255,255,0.08);">
+          ✕ إلغاء تحديد المعروض
+        </button>
+        <span style="color: var(--text-muted); font-size: 0.82rem; margin-right: 6px;">
+          محدد للإرسال: <strong style="color: #22c55e; font-size: 0.95rem;" id="modalSelectedCount">0</strong> من أصل <span id="modalVisibleCount">0</span> معروضة
+        </span>
+      </div>
+
+      <div style="min-width: 210px;">
+        <input type="text" id="modalSearchFilter" placeholder="بحث بالاسم أو الموبايل..." oninput="onFilterPendingSearch()" style="background: #070d17; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; width: 100%;">
+      </div>
+    </div>
+
+    <!-- Scrollable Message Cards List -->
+    <div id="modalPendingListContainer" style="flex: 1; overflow-y: auto; padding: 14px 20px; min-height: 280px; max-height: 460px; background: #070d17;">
+      <div id="modalPendingLoading" style="text-align: center; padding: 40px; color: var(--text-muted);">
+        <div style="font-size: 2rem; margin-bottom: 8px;">⏳</div>
+        جار تحميل الرسائل المعلقة...
+      </div>
+      <div id="modalPendingItemsList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      <div id="modalPendingEmpty" style="display: none; text-align: center; padding: 45px 10px; color: var(--text-muted);">
+        <div style="font-size: 2.4rem; margin-bottom: 8px;">🎉</div>
+        <strong style="color: #fff; font-size: 1.1rem; display: block;">لا توجد رسائل معلقة في هذا التصنيف</strong>
+        <p style="margin: 4px 0 0; font-size: 0.85rem;">جميع الرسائل في هذا القسم تم إرسالها أو الطابور فارغ.</p>
+      </div>
+    </div>
+
+    <!-- Live Sending Status / Progress Box -->
+    <div id="modalSendingStatusBox" style="display: none; padding: 10px 20px; background: rgba(34, 197, 94, 0.12); border-top: 1px solid rgba(34, 197, 94, 0.3); color: #4ade80; font-size: 0.88rem; font-weight: 700; align-items: center; justify-content: space-between;">
+      <span id="modalSendingStatusText">جار الإرسال عبر واتساب...</span>
+      <span id="modalSendingSpinner">⏳</span>
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div style="padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.95); flex-wrap: wrap; gap: 10px;">
+      <button type="button" onclick="closeSendPendingModal()" class="btn btn-secondary" style="padding: 0.5rem 1.25rem;">
+        إلغاء
+      </button>
+
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button type="button" id="btnModalSend10" onclick="dispatchSelectedFromModal(10)" class="btn btn-secondary" style="font-weight: 800; padding: 0.5rem 1.2rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8;">
+          ⚡ إرسال 10 الآن
+        </button>
+
+        <button type="button" id="btnModalSendSelected" onclick="dispatchSelectedFromModal('all_selected')" class="btn" style="background: #22c55e; color: #000; font-weight: 800; border: none; padding: 0.5rem 1.5rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+          <span>🚀</span> إرسال المحدد الآن (<span id="modalFooterSelectedCount">0</span>)
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -507,12 +608,262 @@
       badge.textContent = 'خطأ في الحساب';
     }
   }
+  // =========================================================================
+  // Send Pending Messages Modal Logic (Routine Messages Filtering & Selection)
+  // =========================================================================
+  let allPendingMessagesCache = [];
+  let currentPendingTypeFilter = 'all';
+
+  async function openSendPendingModal() {
+    const modal = document.getElementById('sendPendingModal');
+    modal.style.display = 'flex';
+    document.getElementById('modalPendingLoading').style.display = 'block';
+    document.getElementById('modalPendingEmpty').style.display = 'none';
+    document.getElementById('modalPendingItemsList').innerHTML = '';
+    document.getElementById('modalSendingStatusBox').style.display = 'none';
+
+    try {
+      const res = await fetch("{% url 'messaging:whatsapp_pending_messages' %}");
+      const data = await res.json();
+      allPendingMessagesCache = data.messages || [];
+
+      // Update badge counts
+      const s = data.summary || {};
+      const b = s.breakdown || {};
+      document.getElementById('modalCountAll').textContent = s.pending_count || 0;
+      document.getElementById('modalCountReceipt').textContent = b.receipt || 0;
+      document.getElementById('modalCountRem1').textContent = b.reminder_1 || 0;
+      document.getElementById('modalCountRem3').textContent = b.reminder_3 || 0;
+      document.getElementById('modalCountExp').textContent = b.expired || 0;
+      document.getElementById('modalCountOther').textContent = b.other || 0;
+
+      // Render with current filter
+      renderPendingList();
+    } catch (err) {
+      document.getElementById('modalPendingLoading').innerHTML = '<div style="color: #f87171;">⚠️ تعذر تحميل الرسائل المعلقة، يرجى المحاولة ثانية.</div>';
+    }
+  }
+
+  function closeSendPendingModal() {
+    document.getElementById('sendPendingModal').style.display = 'none';
+  }
+
+  function filterPendingCategory(type, btnElement) {
+    currentPendingTypeFilter = type;
+    document.querySelectorAll('.pending-filter-pill').forEach(btn => {
+      btn.classList.remove('active-pill');
+    });
+    if (btnElement) {
+      btnElement.classList.add('active-pill');
+    }
+    renderPendingList();
+  }
+
+  function onFilterPendingSearch() {
+    renderPendingList();
+  }
+
+  function renderPendingList() {
+    document.getElementById('modalPendingLoading').style.display = 'none';
+    const container = document.getElementById('modalPendingItemsList');
+    const emptyNotice = document.getElementById('modalPendingEmpty');
+    const searchVal = (document.getElementById('modalSearchFilter').value || '').trim().toLowerCase();
+
+    // Routine type categories
+    const routineTypes = ['receipt', 'reminder_1', 'reminder_3', 'expired'];
+
+    let filtered = allPendingMessagesCache.filter(item => {
+      // Type filtering
+      if (currentPendingTypeFilter !== 'all') {
+        if (currentPendingTypeFilter === 'other') {
+          if (routineTypes.includes(item.msg_type)) return false;
+        } else {
+          if (item.msg_type !== currentPendingTypeFilter) return false;
+        }
+      }
+      // Search filtering
+      if (searchVal) {
+        const textToSearch = `${item.recipient_name} ${item.mobile} ${item.message}`.toLowerCase();
+        if (!textToSearch.includes(searchVal)) return false;
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = '';
+      emptyNotice.style.display = 'block';
+      updateModalSelectionCounts();
+      return;
+    }
+
+    emptyNotice.style.display = 'none';
+
+    let html = '';
+    filtered.forEach(msg => {
+      let badgeStyle = 'background: rgba(255,255,255,0.08); color: #cbd5e1;';
+      let icon = '💬';
+      if (msg.msg_type === 'receipt') {
+        badgeStyle = 'background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);';
+        icon = '🧾';
+      } else if (msg.msg_type === 'reminder_1') {
+        badgeStyle = 'background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);';
+        icon = '⏰';
+      } else if (msg.msg_type === 'reminder_3') {
+        badgeStyle = 'background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);';
+        icon = '⏳';
+      } else if (msg.msg_type === 'expired') {
+        badgeStyle = 'background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);';
+        icon = '🛑';
+      }
+
+      html += `
+        <div class="pending-msg-card" data-id="${msg.id}" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px; display: flex; align-items: flex-start; gap: 12px; transition: border-color 0.15s;">
+          <input type="checkbox" value="${msg.id}" class="modal-pending-cb" checked onchange="updateModalSelectionCounts()" style="cursor: pointer; width: 18px; height: 18px; margin-top: 3px; accent-color: #22c55e;">
+          
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 6px;">
+              <div>
+                <strong style="color: #fff; font-size: 0.95rem;">${msg.recipient_name}</strong>
+                <span dir="ltr" style="font-family: monospace; color: #38bdf8; font-size: 0.85rem; margin-right: 8px;">${msg.mobile}</span>
+              </div>
+              <span class="badge" style="${badgeStyle} font-size: 0.76rem; padding: 2px 8px; border-radius: 6px; font-weight: 700;">
+                ${icon} ${msg.msg_type_display}
+              </span>
+            </div>
+
+            <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.4; white-space: pre-wrap; max-height: 54px; overflow-y: auto;">
+              ${msg.message}
+            </div>
+
+            ${msg.has_attachment ? `<div style="margin-top: 4px; font-size: 0.75rem; color: #38bdf8;">📎 مرفق ملف / صورة</div>` : ''}
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+    updateModalSelectionCounts();
+  }
+
+  function updateModalSelectionCounts() {
+    const visibleCheckboxes = document.querySelectorAll('.modal-pending-cb');
+    const checked = Array.from(visibleCheckboxes).filter(cb => cb.checked);
+    document.getElementById('modalSelectedCount').textContent = checked.length;
+    document.getElementById('modalVisibleCount').textContent = visibleCheckboxes.length;
+    document.getElementById('modalFooterSelectedCount').textContent = checked.length;
+
+    const sendBtn = document.getElementById('btnModalSendSelected');
+    if (sendBtn) {
+      sendBtn.disabled = (checked.length === 0);
+    }
+  }
+
+  function toggleSelectAllPendingInModal(selectState) {
+    const visibleCheckboxes = document.querySelectorAll('.modal-pending-cb');
+    visibleCheckboxes.forEach(cb => {
+      cb.checked = selectState;
+    });
+    updateModalSelectionCounts();
+  }
+
+  async function dispatchSelectedFromModal(mode) {
+    const checkedCheckboxes = Array.from(document.querySelectorAll('.modal-pending-cb')).filter(cb => cb.checked);
+    if (checkedCheckboxes.length === 0) {
+      alert("يرجى تحديد رسالة واحدة على الأقل بالضغط على المربع بجانبها.");
+      return;
+    }
+
+    let idsToSend = checkedCheckboxes.map(cb => parseInt(cb.value));
+    if (mode === 10) {
+      idsToSend = idsToSend.slice(0, 10);
+    }
+
+    const statusBox = document.getElementById('modalSendingStatusBox');
+    const statusText = document.getElementById('modalSendingStatusText');
+    const btnSendSelected = document.getElementById('btnModalSendSelected');
+    const btnSend10 = document.getElementById('btnModalSend10');
+
+    statusBox.style.display = 'flex';
+    statusText.textContent = `⏳ جار إرسال ${idsToSend.length} رسالة عبر واتساب... يرجى الانتظار`;
+    btnSendSelected.disabled = true;
+    btnSend10.disabled = true;
+
+    try {
+      const res = await fetch("{% url 'messaging:whatsapp_dispatch_batch' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken()
+        },
+        body: JSON.stringify({
+          selected_ids: idsToSend,
+          limit: idsToSend.length
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        statusText.textContent = `✓ تمت معالجة الدفعة: ${data.sent} مرسلة بنجاح، ${data.failed} فاشلة.`;
+        // Refresh list after 1.2s
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      } else {
+        statusText.textContent = "⚠️ حدث خطأ أثناء الإرسال.";
+        btnSendSelected.disabled = false;
+        btnSend10.disabled = false;
+      }
+    } catch (err) {
+      statusText.textContent = "⚠️ فشل الاتصال بالخادم.";
+      btnSendSelected.disabled = false;
+      btnSend10.disabled = false;
+    }
+  }
+
+  function getCsrfToken() {
+    const cookies = document.cookie.split(';');
+    for (let c of cookies) {
+      c = c.trim();
+      if (c.startsWith('csrftoken=')) {
+        return c.substring('csrftoken='.length);
+      }
+    }
+    return '';
+  }
+
+  // Auto open modal if requested via URL param (e.g. from 30-min overlay)
+  {% if open_send_pending %}
+    window.addEventListener('DOMContentLoaded', () => {
+      openSendPendingModal();
+    });
+  {% endif %}
 </script>
 
 <style>
   @keyframes popIn {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
+  }
+
+  .pending-filter-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .pending-filter-pill:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+  .pending-filter-pill.active-pill {
+    background: #22c55e !important;
+    color: #000 !important;
+    border-color: #22c55e !important;
+    font-weight: 800;
   }
 </style>
 {% endblock %}

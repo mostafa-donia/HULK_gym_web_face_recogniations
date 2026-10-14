@@ -235,6 +235,197 @@
   <script src="{% static 'js/global_face_camera.js' %}"></script>
   {% endif %}
 
+  {% if user.is_authenticated %}
+  <!-- ==================================================================== -->
+  <!-- 30-Minute WhatsApp Pending Messages Reminder Overlay -->
+  <!-- ==================================================================== -->
+  <div id="whatsapp30MinOverlay" style="display: none; position: fixed; inset: 0; z-index: 99997; background: rgba(3, 7, 18, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #0b1320; border: 2px solid #22c55e; border-radius: 20px; width: 100%; max-width: 540px; padding: 26px 22px; box-shadow: 0 25px 70px rgba(0,0,0,0.95); position: relative; animation: popInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+      
+      <!-- Top Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+            💬
+          </div>
+          <div>
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">
+              تنبيه رسائل الواتساب المعلقة
+            </h3>
+            <span style="font-size: 0.78rem; color: #94a3b8;">
+              تذكير دوري كل 30 دقيقة بمتابعة طابور الإرسال
+            </span>
+          </div>
+        </div>
+
+        <button type="button" onclick="dismiss30MinReminder()" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer; line-height: 1;" title="إغلاق وتأجيل 30 دقيقة">✕</button>
+      </div>
+
+      <!-- Main Notification Body -->
+      <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+        <div style="font-size: 1rem; color: #f1f5f9; font-weight: 700; margin-bottom: 10px;">
+          يوجد لديك حالياً <span id="wa30TotalCount" style="color: #22c55e; font-size: 1.35rem; font-weight: 900;">0</span> رسالة معلقة في طابور الواتساب بحاجة للإرسال:
+        </div>
+
+        <!-- Breakdown Badges -->
+        <div style="display: flex; gap: 7px; flex-wrap: wrap;">
+          <span id="wa30BadgeReceipt" class="badge" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); font-size: 0.78rem; padding: 4px 9px; border-radius: 6px;">
+            🧾 فواتير: <b id="wa30CountReceipt">0</b>
+          </span>
+          <span id="wa30BadgeRem1" class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-size: 0.78rem; padding: 4px 9px; border-radius: 6px;">
+            ⏰ تذكير آخر يوم: <b id="wa30CountRem1">0</b>
+          </span>
+          <span id="wa30BadgeRem3" class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 0.78rem; padding: 4px 9px; border-radius: 6px;">
+            ⏳ باقي 3 أيام: <b id="wa30CountRem3">0</b>
+          </span>
+          <span id="wa30BadgeExp" class="badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.78rem; padding: 4px 9px; border-radius: 6px;">
+            🛑 اشتراك منتهي: <b id="wa30CountExp">0</b>
+          </span>
+        </div>
+      </div>
+
+      <!-- Live Action Status Box -->
+      <div id="wa30ActionStatusBox" style="display: none; padding: 10px 14px; border-radius: 8px; margin-bottom: 14px; font-weight: 700; font-size: 0.88rem; text-align: center;">
+        <span id="wa30ActionStatusText">جار الإرسال...</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 8px; flex-direction: column;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <!-- Option 1: Send 10 Now -->
+          <button type="button" id="btnWa30Send10" onclick="trigger30MinSend10()" class="btn" style="background: #22c55e; color: #000; font-weight: 900; font-size: 0.95rem; border: none; padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
+            <span>🚀</span> إرسال 10 الآن
+          </button>
+
+          <!-- Option 2: Review & Select in Modal -->
+          <button type="button" onclick="goToPendingQueueAndSelect()" class="btn btn-secondary" style="font-weight: 800; font-size: 0.92rem; padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; cursor: pointer;">
+            <span>📋</span> اختيار وفلترة
+          </button>
+        </div>
+
+        <!-- Option 3: Not Now / Later -->
+        <button type="button" onclick="dismiss30MinReminder()" class="btn btn-secondary" style="width: 100%; padding: 8px; font-size: 0.85rem; color: #94a3b8; cursor: pointer;">
+          ⏰ ليس الآن / تذكيري بعد 30 دقيقة
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const WA_REMINDER_KEY = 'wa_pending_reminder_last_ts';
+      const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+
+      function check30MinWhatsAppReminder() {
+        const lastDismissed = localStorage.getItem(WA_REMINDER_KEY);
+        const now = Date.now();
+        if (lastDismissed && (now - parseInt(lastDismissed)) < THIRTY_MINUTES_MS) {
+          return;
+        }
+
+        fetch("{% url 'messaging:whatsapp_pending_summary' %}")
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.pending_count > 0) {
+              show30MinReminderOverlay(data);
+            }
+          })
+          .catch(() => {});
+      }
+
+      function show30MinReminderOverlay(data) {
+        const overlay = document.getElementById('whatsapp30MinOverlay');
+        if (!overlay) return;
+
+        document.getElementById('wa30TotalCount').textContent = data.pending_count;
+        const b = data.breakdown || {};
+        document.getElementById('wa30CountReceipt').textContent = b.receipt || 0;
+        document.getElementById('wa30CountRem1').textContent = b.reminder_1 || 0;
+        document.getElementById('wa30CountRem3').textContent = b.reminder_3 || 0;
+        document.getElementById('wa30CountExp').textContent = b.expired || 0;
+
+        overlay.style.display = 'flex';
+      }
+
+      window.dismiss30MinReminder = function() {
+        localStorage.setItem(WA_REMINDER_KEY, Date.now());
+        const overlay = document.getElementById('whatsapp30MinOverlay');
+        if (overlay) overlay.style.display = 'none';
+      };
+
+      window.trigger30MinSend10 = function() {
+        const statusBox = document.getElementById('wa30ActionStatusBox');
+        const statusText = document.getElementById('wa30ActionStatusText');
+        const btn = document.getElementById('btnWa30Send10');
+
+        statusBox.style.display = 'block';
+        statusBox.style.background = 'rgba(56, 189, 248, 0.15)';
+        statusBox.style.color = '#38bdf8';
+        statusText.textContent = '⏳ جار إرسال 10 رسائل عبر واتساب...';
+        btn.disabled = true;
+
+        function getCsrf() {
+          const cookies = document.cookie.split(';');
+          for (let c of cookies) {
+            c = c.trim();
+            if (c.startsWith('csrftoken=')) return c.substring('csrftoken='.length);
+          }
+          return '';
+        }
+
+        fetch("{% url 'messaging:whatsapp_dispatch_batch' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": getCsrf()
+          },
+          body: "limit=10"
+        })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            statusBox.style.background = 'rgba(34, 197, 94, 0.15)';
+            statusBox.style.color = '#4ade80';
+            statusText.textContent = `✓ تم إرسال ${res.sent} رسالة بنجاح! متبقي ${res.summary ? res.summary.pending_count : 0} معلقة.`;
+            localStorage.setItem(WA_REMINDER_KEY, Date.now());
+            setTimeout(() => {
+              dismiss30MinReminder();
+              if (window.location.pathname.includes('/messaging/')) {
+                window.location.reload();
+              }
+            }, 2000);
+          } else {
+            statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+            statusBox.style.color = '#f87171';
+            statusText.textContent = 'تعذر إرسال الدفعة حالياً.';
+            btn.disabled = false;
+          }
+        })
+        .catch(() => {
+          statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+          statusBox.style.color = '#f87171';
+          statusText.textContent = 'حدث خطأ في الاتصال بالخادم.';
+          btn.disabled = false;
+        });
+      };
+
+      window.goToPendingQueueAndSelect = function() {
+        dismiss30MinReminder();
+        if (typeof openSendPendingModal === 'function') {
+          openSendPendingModal();
+        } else {
+          window.location.href = "{% url 'messaging:whatsapp_queue' %}?open_send_pending=1";
+        }
+      };
+
+      // Check on page load and every 60 seconds
+      setTimeout(check30MinWhatsAppReminder, 2000);
+      setInterval(check30MinWhatsAppReminder, 60 * 1000);
+    })();
+  </script>
+  {% endif %}
+
   {% block extra_js %}{% endblock %}
 </body>
 </html>

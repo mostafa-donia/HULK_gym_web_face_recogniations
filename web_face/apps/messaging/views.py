@@ -18,6 +18,7 @@ from apps.messaging.services import (
     prepare_manager_daily_report,
     filter_members_for_bulk,
     prepare_bulk_campaign,
+    get_pending_summary,
 )
 
 
@@ -54,6 +55,7 @@ def whatsapp_queue_view(request):
     total_count = WhatsAppMessage.objects.count()
 
     profile = GymProfile.get_solo()
+    pending_summary = get_pending_summary()
 
     context = {
         "messages_list": qs[:250],  # display latest 250
@@ -68,6 +70,8 @@ def whatsapp_queue_view(request):
         "status_choices": MessageStatus.choices,
         "type_choices": MessageType.choices,
         "gym_profile": profile,
+        "pending_summary": pending_summary,
+        "open_send_pending": request.GET.get("open_send_pending") == "1",
     }
     return render(request, "messaging/whatsapp_queue.html", context)
 
@@ -204,12 +208,23 @@ def whatsapp_batch_action_view(request):
     selected_ids = request.POST.getlist("selected_ids")
 
     if action == "send_pending":
-        # Send all pending messages
-        res = dispatch_all_pending(limit=25)
+        # Send all pending messages (up to 50)
+        res = dispatch_all_pending(limit=50)
         if res["processed"] == 0:
             messages.info(request, "لا توجد رسائل معلقة حالياً في الطابور.")
         else:
             messages.info(request, f"تمت معالجة {res['processed']} رسالة: {res['sent']} نجاح، {res['failed']} فشل.")
+
+    elif action in ["send_selected_pending", "send_selected"]:
+        if not selected_ids:
+            messages.warning(request, "يرجى تحديد رسالة واحدة على الأقل بالضغط على المربع بجانبها.")
+        else:
+            res = dispatch_all_pending(limit=len(selected_ids), selected_ids=selected_ids)
+            messages.success(request, f"تمت معالجة إرسال {res['processed']} رسالة محددة: {res['sent']} نجاح، {res['failed']} فشل.")
+
+    elif action == "send_10_pending":
+        res = dispatch_all_pending(limit=10)
+        messages.success(request, f"تمت معالجة دفعة 10 رسائل معلقة: {res['sent']} نجاح، {res['failed']} فشل.")
 
     elif action == "resend_selected":
         # Reset selected to pending and send
@@ -319,3 +334,105 @@ def whatsapp_delete_view(request, message_id):
     msg_obj.delete()
     messages.info(request, "تم حذف الرسالة من الطابور.")
     return redirect("messaging:whatsapp_queue")
+
+
+@login_required
+def whatsapp_pending_summary_api(request):
+    """
+    Returns live count and breakdown of pending routine messages
+    for the 30-min reminder overlay and the send pending modal.
+    """
+    summary = get_pending_summary()
+    return JsonResponse({"success": True, **summary})
+
+
+@login_required
+def whatsapp_pending_messages_api(request):
+    """
+    Returns pending messages for the send pending modal with filtering by routine type.
+    """
+    msg_type = request.GET.get("msg_type", "all").strip()
+    search = request.GET.get("q", "").strip()
+
+    qs = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING).order_by("created_at")
+
+    if msg_type and msg_type != "all":
+        if msg_type == "other":
+            routine_types = [MessageType.RECEIPT, MessageType.REMINDER_1, MessageType.REMINDER_3, MessageType.EXPIRED]
+            qs = qs.exclude(msg_type__in=routine_types)
+        elif msg_type in dict(MessageType.choices):
+            qs = qs.filter(msg_type=msg_type)
+
+    if search:
+        qs = qs.filter(
+            Q(recipient_name__icontains=search)
+            | Q(mobile__icontains=search)
+            | Q(message__icontains=search)
+        )
+
+    items = []
+    for m in qs[:250]:
+        items.append({
+            "id": m.id,
+            "recipient_name": m.recipient_name or "عضو",
+            "mobile": m.mobile,
+            "msg_type": m.msg_type,
+            "msg_type_display": m.get_msg_type_display(),
+            "message": m.message,
+            "has_attachment": bool(m.attachment),
+            "attachment_url": m.attachment.url if m.attachment else "",
+            "link": m.link or "",
+            "created_at": m.created_at.strftime("%Y-%m-%d %H:%M"),
+        })
+
+    summary = get_pending_summary()
+
+    return JsonResponse({
+        "success": True,
+        "count": len(items),
+        "messages": items,
+        "summary": summary,
+    })
+
+
+@login_required
+def whatsapp_dispatch_batch_api(request):
+    """
+    AJAX endpoint to dispatch a batch of pending messages (e.g. 10 now, or specific selected IDs).
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "POST method required"}, status=405)
+
+    limit = 10
+    selected_ids = []
+    msg_type = None
+
+    # Support application/json or x-www-form-urlencoded
+    content_type = request.headers.get("Content-Type", "")
+    if "application/json" in content_type:
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+            selected_ids = body.get("selected_ids", [])
+            limit = int(body.get("limit", 10) or 10)
+            msg_type = body.get("msg_type") or None
+        except Exception:
+            pass
+    else:
+        limit = int(request.POST.get("limit", 10) or 10)
+        selected_ids = request.POST.getlist("selected_ids")
+        msg_type = request.POST.get("msg_type") or None
+
+    if selected_ids:
+        # If specific IDs were selected, ensure limit is at least length of selected
+        limit = max(limit, len(selected_ids))
+
+    res = dispatch_all_pending(limit=limit, selected_ids=selected_ids if selected_ids else None, msg_type=msg_type)
+    summary = get_pending_summary()
+
+    return JsonResponse({
+        "success": True,
+        "processed": res["processed"],
+        "sent": res["sent"],
+        "failed": res["failed"],
+        "summary": summary,
+    })
