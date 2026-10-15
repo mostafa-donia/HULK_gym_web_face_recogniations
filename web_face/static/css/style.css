@@ -232,19 +232,19 @@ body {
 .top-nav-links {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .top-nav-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
+  justify-content: center;
+  padding: 8px 16px;
   border-radius: var(--radius-sm);
   text-decoration: none;
   color: var(--text-secondary);
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   font-weight: 700;
   border: 1px solid transparent;
   transition: all 0.15s ease;
@@ -265,12 +265,7 @@ body {
 }
 
 .top-nav-item svg {
-  flex-shrink: 0;
-  opacity: 0.85;
-}
-
-.top-nav-item.active svg {
-  opacity: 1;
+  display: none !important;
 }
 
 /* ==========================================================================
@@ -929,17 +924,9 @@ select.form-control {
   font-weight: 700 !important;
 }
 
-[data-theme="light"] .top-nav-item svg {
-  stroke: #334155 !important;
-}
-
 [data-theme="light"] .top-nav-item:hover {
   color: #0F172A !important;
   background-color: #F1F5F9 !important;
-}
-
-[data-theme="light"] .top-nav-item:hover svg {
-  stroke: #0F172A !important;
 }
 
 [data-theme="light"] .top-nav-item.active {
@@ -947,10 +934,6 @@ select.form-control {
   background-color: #ECFDF5 !important;
   border: 1px solid #86EFAC !important;
   font-weight: 800 !important;
-}
-
-[data-theme="light"] .top-nav-item.active svg {
-  stroke: #15803D !important;
 }
 
 [data-theme="light"] .top-brand span {
