@@ -1109,7 +1109,22 @@ async function checkGitHubUpdates() {
   previewBox.style.display = 'none';
 
   try {
-    const res = await fetch("{% url 'core:check_updates' %}");
+    const res = await fetch("{% url 'core:check_updates' %}", {
+      headers: {
+        "Accept": "application/json",
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    });
+
+    if (!res.ok) {
+      let errMsg = `خطأ في استجابة الخادم (${res.status})`;
+      try {
+        const errJson = await res.json();
+        if (errJson && errJson.message) errMsg = errJson.message;
+      } catch (e) {}
+      throw new Error(errMsg);
+    }
+
     const data = await res.json();
 
     if (data.success && data.update_available) {
@@ -1186,7 +1201,9 @@ async function performSystemUpdate() {
     const res = await fetch("{% url 'core:perform_update' %}", {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken") || ""
+        "X-CSRFToken": getCookie("csrftoken") || "",
+        "Accept": "application/json",
+        "X-Requested-With": "XMLHttpRequest"
       }
     });
     const data = await res.json();
