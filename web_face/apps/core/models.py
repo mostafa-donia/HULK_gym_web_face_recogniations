@@ -97,6 +97,21 @@ class GymProfile(models.Model):
         profile, _ = cls.objects.get_or_create(id=1)
         return profile
 
+    @property
+    def primary_contrast_color(self) -> str:
+        """Calculate high-contrast foreground color (#081104 or #FFFFFF) for primary accent."""
+        try:
+            hex_str = (self.primary_color or "#84CC16").lstrip("#")
+            if len(hex_str) == 3:
+                hex_str = "".join([c * 2 for c in hex_str])
+            r = int(hex_str[0:2], 16)
+            g = int(hex_str[2:4], 16)
+            b = int(hex_str[4:6], 16)
+            luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+            return "#081104" if luminance > 0.55 else "#FFFFFF"
+        except Exception:
+            return "#081104"
+
     def __str__(self) -> str:
         return self.gym_name
 

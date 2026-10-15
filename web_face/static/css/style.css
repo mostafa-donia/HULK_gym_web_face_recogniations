@@ -718,17 +718,19 @@ body {
   transform: translateY(0);
 }
 
-/* Primary Athletic Hulk Green CTA */
+/* Primary Athletic CTA - Palette Adaptive */
 .btn-lime {
-  background: linear-gradient(135deg, #84CC16 0%, #65A30D 100%);
-  color: #081104;
-  border: 1px solid #9AE62E;
-  box-shadow: 0 4px 18px rgba(132, 204, 22, 0.28);
+  background-color: var(--lime-btn-bg, var(--hulk-primary, #84CC16));
+  background: linear-gradient(135deg, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 0%, color-mix(in srgb, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 75%, #000) 100%);
+  color: var(--lime-btn-text, #081104);
+  border: 1px solid color-mix(in srgb, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 85%, #fff);
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 28%, transparent);
 }
 
 .btn-lime:hover {
-  background: linear-gradient(135deg, #93E21E 0%, #72B810 100%);
-  filter: brightness(1.04);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 88%, #fff) 0%, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 100%);
+  color: var(--lime-btn-text, #081104);
+  filter: brightness(1.05);
 }
 
 .btn-split-row {

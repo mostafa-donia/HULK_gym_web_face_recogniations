@@ -21,7 +21,7 @@
   {% else %}
     <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
   {% endif %}
-  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20261015_06">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20261015_08">
   
   <!-- Dynamic White-Label Branding & Theme Injection -->
   <style>
@@ -30,6 +30,7 @@
         --hulk-primary: {{ gym_profile.primary_color }};
         --hulk-hover: {{ gym_profile.primary_color }};
         --lime-btn-bg: {{ gym_profile.primary_color }};
+        --lime-btn-text: {{ gym_profile.primary_contrast_color|default:"#081104" }};
         --accent-green: {{ gym_profile.primary_color }};
         --hulk-text: {{ gym_profile.primary_color }};
         --nav-active-text: {{ gym_profile.primary_color }};
@@ -38,6 +39,19 @@
         --border-focus: {{ gym_profile.primary_color }};
       {% endif %}
     }
+    {% if gym_profile.primary_color %}
+    .btn-lime {
+      background-color: {{ gym_profile.primary_color }} !important;
+      background: linear-gradient(135deg, {{ gym_profile.primary_color }} 0%, color-mix(in srgb, {{ gym_profile.primary_color }} 75%, #000) 100%) !important;
+      color: {{ gym_profile.primary_contrast_color|default:"#081104" }} !important;
+      border: 1px solid color-mix(in srgb, {{ gym_profile.primary_color }} 85%, #fff) !important;
+      box-shadow: 0 4px 18px color-mix(in srgb, {{ gym_profile.primary_color }} 30%, transparent) !important;
+    }
+    .btn-lime:hover {
+      background: linear-gradient(135deg, color-mix(in srgb, {{ gym_profile.primary_color }} 88%, #fff) 0%, {{ gym_profile.primary_color }} 100%) !important;
+      color: {{ gym_profile.primary_contrast_color|default:"#081104" }} !important;
+    }
+    {% endif %}
     [data-theme="dark"] {
       {% if gym_profile.secondary_color %}
         --bg-card: {{ gym_profile.secondary_color }};
