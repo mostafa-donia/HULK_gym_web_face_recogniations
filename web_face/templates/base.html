@@ -26,6 +26,23 @@
         --status-active-text: {{ gym_profile.primary_color }};
         --border-focus: {{ gym_profile.primary_color }};
       {% endif %}
+      {% if gym_profile.secondary_color %}
+        --bg-card: {{ gym_profile.secondary_color }};
+        --bg-surface: {{ gym_profile.secondary_color }};
+        --bg-sidebar: {{ gym_profile.secondary_color }};
+        --bg-surface-elevated: {{ gym_profile.secondary_color }};
+      {% endif %}
+      {% if gym_profile.tertiary_color %}
+        --bg-main: {{ gym_profile.tertiary_color }};
+        --bg-surface-subtle: {{ gym_profile.tertiary_color }};
+        --bg-input: {{ gym_profile.tertiary_color }};
+      {% endif %}
+    }
+    body {
+      background-color: var(--bg-main, #0B0E14) !important;
+    }
+    .top-navbar {
+      background-color: var(--bg-sidebar, #0E121B) !important;
     }
   </style>
 

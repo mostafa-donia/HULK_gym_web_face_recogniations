@@ -24,16 +24,16 @@
   <!-- Row 1: Branding & Basic Camera/WhatsApp Essentials -->
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 22px;" class="settings-grid">
 
-    <!-- Card 1: White-Label Branding & Colors -->
+    <!-- Card 1: Gym Business Profile -->
     <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
       <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px;">
         <h3 class="card-title" style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
-          🎨 هوية وشعار الصالة (White-Label Branding)
+          🏢 بيانات الصالة الرياضية
         </h3>
-        <span style="color: #8D99A3; font-size: 0.82rem;">تخصيص اسم الصالة، الشعار اللفظي، اللوجو، واللون الرئيسي للواجهة.</span>
+        <span style="color: #8D99A3; font-size: 0.82rem;">الاسم التجاري، العملة المستخدمة، والشعار اللفظي.</span>
       </div>
 
-      <form method="post" action="{% url 'core:settings' %}" enctype="multipart/form-data">
+      <form method="post" action="{% url 'core:settings' %}">
         {% csrf_token %}
         <input type="hidden" name="action" value="save_branding">
 
@@ -49,56 +49,20 @@
           </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 14px;">
+        <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">الشعار اللفظي / السلوجان (Tagline)</label>
           <input type="text" name="gym_tagline" class="form-control" value="{{ profile.gym_tagline|default:'' }}" placeholder="مثال: The Ultimate Fitness Club" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
         </div>
 
-        <!-- Logo Upload & Preview -->
-        <div class="form-group" style="margin-bottom: 16px; background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
-          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">لوجو الصالة (Logo Image)</label>
-          
-          {% if profile.logo %}
-            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 10px;">
-              <div style="width: 50px; height: 50px; border-radius: 8px; overflow: hidden; background: #0f172a; border: 1px solid #334155; display: flex; align-items: center; justify-content: center;">
-                <img src="{{ profile.logo.url }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-              </div>
-              <label style="color: #f87171; font-size: 0.84rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                <input type="checkbox" name="remove_logo" value="1" style="accent-color: #ef4444;">
-                حذف الشعار الحالي والعودة للشعار الافتراضي
-              </label>
-            </div>
-          {% endif %}
-
-          <input type="file" name="logo" accept="image/*" style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; font-size: 0.85rem; padding: 6px; border-radius: 6px; width: 100%;">
-          <small style="color: #64748b; font-size: 0.78rem; display: block; margin-top: 4px;">يفضل صورة بخلفية شفافة PNG أو SVG بحجم حتى 2MB.</small>
+        <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 1.4rem;">🛠️</span>
+          <span style="color: #93c5fd; font-size: 0.82rem; line-height: 1.5;">
+            <strong>خيارات المطور:</strong> تخصيص لوجو الصالة (Logo) وتعديل باليتة ألوان الواجهة بالكامل (الأساسي، الثانوي، والخلفية) موجود في قسم <strong>خيارات المطور</strong> في أسفل الصفحة ومحمي بكلمة السر.
+          </span>
         </div>
 
-        <!-- Primary Brand Color Picker & Presets -->
-        <div class="form-group" style="margin-bottom: 18px;">
-          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">اللون الرئيسي للواجهة (Primary Brand Color)</label>
-          
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-            <input type="color" id="primaryColorInput" name="primary_color" value="{{ profile.primary_color|default:'#84CC16' }}" style="width: 48px; height: 40px; padding: 0; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
-            <span style="font-family: monospace; font-weight: 800; color: #FFFFFF; font-size: 0.95rem;">
-              {{ profile.primary_color|default:'#84CC16' }}
-            </span>
-          </div>
-
-          <!-- Color Presets -->
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button type="button" onclick="pickThemeColor('#84CC16')" title="هالك لايم" style="width: 28px; height: 28px; border-radius: 6px; background: #84CC16; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
-            <button type="button" onclick="pickThemeColor('#06B6D4')" title="سيان رقمي" style="width: 28px; height: 28px; border-radius: 6px; background: #06B6D4; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
-            <button type="button" onclick="pickThemeColor('#F97316')" title="برتقالي ناري" style="width: 28px; height: 28px; border-radius: 6px; background: #F97316; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
-            <button type="button" onclick="pickThemeColor('#EF4444')" title="أحمر رياضي" style="width: 28px; height: 28px; border-radius: 6px; background: #EF4444; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
-            <button type="button" onclick="pickThemeColor('#F59E0B')" title="ذهبي" style="width: 28px; height: 28px; border-radius: 6px; background: #F59E0B; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
-            <button type="button" onclick="pickThemeColor('#8B5CF6')" title="بنفسجي ملكي" style="width: 28px; height: 28px; border-radius: 6px; background: #8B5CF6; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
-            <button type="button" onclick="pickThemeColor('#10B981')" title="زمردي" style="width: 28px; height: 28px; border-radius: 6px; background: #10B981; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;"></button>
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary" style="background: var(--lime-btn-bg, #84CC16); border: none; color: #050B10; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
-          💾 حفظ هوية وشعار الصالة
+        <button type="submit" class="btn btn-primary" style="background: #173322; border: 1px solid #7ED321; color: #7ED321; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
+          💾 حفظ بيانات الصالة
         </button>
       </form>
     </div>
@@ -415,7 +379,277 @@
         </div>
       </div>
 
-      <!-- Dev Card 1: Face AI Models & Hardware Turnstile Relay Control -->
+      <!-- Dev Card 1: Full UI Color Palette, Theme & Logo Customization -->
+      <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
+        <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h3 class="card-title" style="color: #60a5fa; font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+              🎨 تخصيص باليتة ألوان الواجهة بالكامل واللوجو (UI Palette & Logo)
+            </h3>
+            <span style="color: #8D99A3; font-size: 0.82rem;">
+              التحكم في اللون الأساسي، الثانوي، والثالث للخلفية، واختيار باليتات جاهزة بنقرة واحدة، وإدارة لوجو الصالة.
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="background: rgba(37, 99, 235, 0.15); border: 1px solid #3b82f6; color: #60a5fa; font-size: 0.78rem; font-weight: 800; padding: 4px 10px; border-radius: 12px;">
+              White-Label Engine
+            </span>
+          </div>
+        </div>
+
+        <form method="post" action="{% url 'core:settings' %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save_branding">
+
+          <!-- Section A: Logo Upload & Management -->
+          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+            <h4 style="color: #FFFFFF; font-size: 0.95rem; font-weight: 800; margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
+              <span>🖼️</span> شعار الصالة (Logo)
+            </h4>
+
+            <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
+              <div style="width: 64px; height: 64px; border-radius: 10px; background: #0b141e; border: 2px dashed #1e3a52; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                {% if profile.logo %}
+                  <img src="{{ profile.logo.url }}" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                {% else %}
+                  <span style="color: #64748b; font-size: 0.75rem; text-align: center;">لا يوجد شعار</span>
+                {% endif %}
+              </div>
+
+              <div style="flex: 1; min-width: 240px;">
+                <input type="file" name="logo" accept="image/*" style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; font-size: 0.85rem; padding: 8px; border-radius: 6px; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; flex-wrap: wrap; gap: 8px;">
+                  <small style="color: #64748b; font-size: 0.75rem;">PNG أو SVG شفاف أو JPG عالي الدقة (أقل من 2MB).</small>
+                  {% if profile.logo %}
+                    <label style="color: #f87171; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 700;">
+                      <input type="checkbox" name="remove_logo" value="1" style="accent-color: #ef4444;">
+                      حذف الشعار واستعادة الافتراضي
+                    </label>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section B: Ready-made Complete Palettes (1-Click) -->
+          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <h4 style="color: #FFFFFF; font-size: 0.95rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
+                <span>⚡</span> باليتات ألوان متكاملة جاهزة (One-Click Palettes)
+              </h4>
+              <span style="color: #64748b; font-size: 0.78rem;">انقر على أي باليتة لتطبيق درجات الألوان الثلاثة معاً</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
+              <!-- 1. Hulk Lime -->
+              <button type="button" onclick="applyPresetPalette('#84CC16', '#121723', '#0B0E14')" class="palette-preset-btn" style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px; text-align: right; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <strong style="color: #A3E635; font-size: 0.85rem; display: block;">Hulk Volt Lime</strong>
+                  <span style="color: #64748b; font-size: 0.72rem;">أخضر هالك الرياضي</span>
+                </div>
+                <div style="display: flex; gap: 3px;">
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #84CC16;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #121723; border: 1px solid #334155;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #0B0E14; border: 1px solid #334155;"></span>
+                </div>
+              </button>
+
+              <!-- 2. Cyber Titanium Blue -->
+              <button type="button" onclick="applyPresetPalette('#0EA5E9', '#0F172A', '#020617')" class="palette-preset-btn" style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px; text-align: right; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <strong style="color: #38BDF8; font-size: 0.85rem; display: block;">Titanium Blue</strong>
+                  <span style="color: #64748b; font-size: 0.72rem;">أزرق تيتانيوم رقمي</span>
+                </div>
+                <div style="display: flex; gap: 3px;">
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #0EA5E9;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #0F172A; border: 1px solid #334155;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #020617; border: 1px solid #334155;"></span>
+                </div>
+              </button>
+
+              <!-- 3. Crimson Power Red -->
+              <button type="button" onclick="applyPresetPalette('#EF4444', '#1E1214', '#0D0708')" class="palette-preset-btn" style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px; text-align: right; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <strong style="color: #F87171; font-size: 0.85rem; display: block;">Power Crimson</strong>
+                  <span style="color: #64748b; font-size: 0.72rem;">أحمر طاقة حديدي</span>
+                </div>
+                <div style="display: flex; gap: 3px;">
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #EF4444;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #1E1214; border: 1px solid #334155;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #0D0708; border: 1px solid #334155;"></span>
+                </div>
+              </button>
+
+              <!-- 4. Blaze Amber Orange -->
+              <button type="button" onclick="applyPresetPalette('#F97316', '#1E1610', '#0E0906')" class="palette-preset-btn" style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px; text-align: right; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <strong style="color: #FB923C; font-size: 0.85rem; display: block;">Blaze Orange</strong>
+                  <span style="color: #64748b; font-size: 0.72rem;">برتقالي حماسي</span>
+                </div>
+                <div style="display: flex; gap: 3px;">
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #F97316;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #1E1610; border: 1px solid #334155;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #0E0906; border: 1px solid #334155;"></span>
+                </div>
+              </button>
+
+              <!-- 5. Royal Gold -->
+              <button type="button" onclick="applyPresetPalette('#EAB308', '#1D190D', '#0F0D06')" class="palette-preset-btn" style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px; text-align: right; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <strong style="color: #FACC15; font-size: 0.85rem; display: block;">Royal Gold</strong>
+                  <span style="color: #64748b; font-size: 0.72rem;">ذهبي ملكي</span>
+                </div>
+                <div style="display: flex; gap: 3px;">
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #EAB308;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #1D190D; border: 1px solid #334155;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #0F0D06; border: 1px solid #334155;"></span>
+                </div>
+              </button>
+
+              <!-- 6. Cyberpunk Purple -->
+              <button type="button" onclick="applyPresetPalette('#A855F7', '#1A1126', '#0E0816')" class="palette-preset-btn" style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px; text-align: right; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <strong style="color: #C084FC; font-size: 0.85rem; display: block;">Cyber Purple</strong>
+                  <span style="color: #64748b; font-size: 0.72rem;">أرجواني سايبربانك</span>
+                </div>
+                <div style="display: flex; gap: 3px;">
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #A855F7;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #1A1126; border: 1px solid #334155;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #0E0816; border: 1px solid #334155;"></span>
+                </div>
+              </button>
+
+              <!-- 7. Dark Emerald -->
+              <button type="button" onclick="applyPresetPalette('#10B981', '#0E1E18', '#06100D')" class="palette-preset-btn" style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px; text-align: right; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <strong style="color: #34D399; font-size: 0.85rem; display: block;">Dark Emerald</strong>
+                  <span style="color: #64748b; font-size: 0.72rem;">زمردي داكن فاخر</span>
+                </div>
+                <div style="display: flex; gap: 3px;">
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #10B981;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #0E1E18; border: 1px solid #334155;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #06100D; border: 1px solid #334155;"></span>
+                </div>
+              </button>
+
+              <!-- 8. Obsidian Monochrome -->
+              <button type="button" onclick="applyPresetPalette('#E2E8F0', '#18181B', '#09090B')" class="palette-preset-btn" style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px; text-align: right; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <strong style="color: #F1F5F9; font-size: 0.85rem; display: block;">Obsidian Mono</strong>
+                  <span style="color: #64748b; font-size: 0.72rem;">فضي داكن أحادي</span>
+                </div>
+                <div style="display: flex; gap: 3px;">
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #E2E8F0;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #18181B; border: 1px solid #334155;"></span>
+                  <span style="width: 14px; height: 24px; border-radius: 3px; background: #09090B; border: 1px solid #334155;"></span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Section C: Custom 3-Color Pickers & Hex Codes -->
+          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+            <h4 style="color: #FFFFFF; font-size: 0.95rem; font-weight: 800; margin: 0 0 14px 0; display: flex; align-items: center; gap: 6px;">
+              <span>🎛️</span> معايرة الدرجات الثلاث يدوياً (Custom 3-Color Pickers)
+            </h4>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;" class="color-pickers-grid">
+              
+              <!-- 1. Primary Color -->
+              <div style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 12px;">
+                <label style="color: #CAD6E2; font-weight: 800; font-size: 0.85rem; margin-bottom: 4px; display: block;">
+                  اللون الأساسي (Primary Accent)
+                </label>
+                <span style="color: #64748b; font-size: 0.74rem; display: block; margin-bottom: 10px;">
+                  الأزرار الرئيسية، التمييز، والروابط النشطة.
+                </span>
+
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="color" id="primaryColorInput" name="primary_color" value="{{ profile.primary_color|default:'#84CC16' }}" oninput="syncColor('primary', this.value)" style="width: 44px; height: 38px; padding: 0; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
+                  <input type="text" id="primaryColorHex" value="{{ profile.primary_color|default:'#84CC16' }}" oninput="syncColorHex('primary', this.value)" style="background: #060d15; border: 1px solid #1e3a52; color: #FFFFFF; font-family: monospace; font-size: 0.9rem; font-weight: 800; height: 38px; border-radius: 6px; padding: 0 10px; width: 100px; text-transform: uppercase;">
+                </div>
+              </div>
+
+              <!-- 2. Secondary Color (Cards & Surfaces) -->
+              <div style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 12px;">
+                <label style="color: #CAD6E2; font-weight: 800; font-size: 0.85rem; margin-bottom: 4px; display: block;">
+                  اللون الثانوي (Secondary / Cards)
+                </label>
+                <span style="color: #64748b; font-size: 0.74rem; display: block; margin-bottom: 10px;">
+                  خلفية البطاقات، الشريط العلوي، والأسطح.
+                </span>
+
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="color" id="secondaryColorInput" name="secondary_color" value="{{ profile.secondary_color|default:'#121723' }}" oninput="syncColor('secondary', this.value)" style="width: 44px; height: 38px; padding: 0; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
+                  <input type="text" id="secondaryColorHex" value="{{ profile.secondary_color|default:'#121723' }}" oninput="syncColorHex('secondary', this.value)" style="background: #060d15; border: 1px solid #1e3a52; color: #FFFFFF; font-family: monospace; font-size: 0.9rem; font-weight: 800; height: 38px; border-radius: 6px; padding: 0 10px; width: 100px; text-transform: uppercase;">
+                </div>
+              </div>
+
+              <!-- 3. Tertiary Color (Main Background) -->
+              <div style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 12px;">
+                <label style="color: #CAD6E2; font-weight: 800; font-size: 0.85rem; margin-bottom: 4px; display: block;">
+                  اللون الثالث (Tertiary / Background)
+                </label>
+                <span style="color: #64748b; font-size: 0.74rem; display: block; margin-bottom: 10px;">
+                  خلفية شاشات التطبيق وقاع الواجهة.
+                </span>
+
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="color" id="tertiaryColorInput" name="tertiary_color" value="{{ profile.tertiary_color|default:'#0B0E14' }}" oninput="syncColor('tertiary', this.value)" style="width: 44px; height: 38px; padding: 0; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
+                  <input type="text" id="tertiaryColorHex" value="{{ profile.tertiary_color|default:'#0B0E14' }}" oninput="syncColorHex('tertiary', this.value)" style="background: #060d15; border: 1px solid #1e3a52; color: #FFFFFF; font-family: monospace; font-size: 0.9rem; font-weight: 800; height: 38px; border-radius: 6px; padding: 0 10px; width: 100px; text-transform: uppercase;">
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Section D: Live Preview Box -->
+          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <h4 style="color: #FFFFFF; font-size: 0.9rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
+                <span>👁️</span> معاينة حية للألوان المختارة (Live UI Preview)
+              </h4>
+              <span style="color: #64748b; font-size: 0.75rem;">تتغير ديناميكياً فور اختيار أي لون</span>
+            </div>
+
+            <!-- Mini Mockup Component -->
+            <div id="livePreviewContainer" style="border-radius: 10px; padding: 14px; border: 1px solid #1f2937; background: {{ profile.tertiary_color|default:'#0B0E14' }}; transition: all 0.2s ease;">
+              
+              <!-- Mock Topbar -->
+              <div id="mockNav" style="border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: {{ profile.secondary_color|default:'#121723' }}; border: 1px solid rgba(255,255,255,0.08);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span id="mockLogoDot" style="width: 14px; height: 14px; border-radius: 50%; background: {{ profile.primary_color|default:'#84CC16' }}; display: inline-block;"></span>
+                  <span style="color: #FFFFFF; font-size: 0.8rem; font-weight: 800;">{{ profile.gym_name|default:"HULK GYM" }}</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span id="mockNavActive" style="font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; color: {{ profile.primary_color|default:'#84CC16' }}; background: rgba(255,255,255,0.06);">الرئيسية</span>
+                  <span style="color: #94a3b8; font-size: 0.75rem;">الأعضاء</span>
+                </div>
+              </div>
+
+              <!-- Mock Card -->
+              <div id="mockCard" style="border-radius: 8px; padding: 12px; background: {{ profile.secondary_color|default:'#121723' }}; border: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div>
+                  <span style="color: #94a3b8; font-size: 0.74rem; display: block;">إجمالي الأعضاء النشطين</span>
+                  <strong style="color: #FFFFFF; font-size: 1.1rem; font-weight: 900;">245 مشترك</strong>
+                </div>
+                <button type="button" id="mockBtn" style="border: none; border-radius: 6px; font-weight: 800; font-size: 0.8rem; padding: 6px 14px; cursor: default; background: {{ profile.primary_color|default:'#84CC16' }}; color: #000000;">
+                  + تسجيل مشترك جديد
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="background: #2563eb; border: none; color: #FFFFFF; font-weight: 800; font-size: 0.95rem; padding: 12px 24px; border-radius: 8px; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span>💾</span>
+            <span>حفظ باليتة الألوان والهوية والشعار</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Dev Card 2: Face AI Models & Hardware Turnstile Relay Control -->
       <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
         <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px;">
           <h3 class="card-title" style="color: #4DB3FF; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
@@ -693,15 +927,84 @@
       grid-template-columns: 1fr;
     }
   }
+  .palette-preset-btn:hover {
+    border-color: #3b82f6 !important;
+    background: #0f1c2b !important;
+    transform: translateY(-1px);
+  }
+  .color-pickers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 800px) {
+    .color-pickers-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 
 <script>
-function pickThemeColor(hex) {
-  const input = document.getElementById('primaryColorInput');
-  if (input) {
-    input.value = hex;
-    input.dispatchEvent(new Event('change'));
+function syncColor(type, value) {
+  if (type === 'primary') {
+    const el = document.getElementById('primaryColorInput');
+    const hex = document.getElementById('primaryColorHex');
+    if (el) el.value = value;
+    if (hex) hex.value = value.toUpperCase();
+  } else if (type === 'secondary') {
+    const el = document.getElementById('secondaryColorInput');
+    const hex = document.getElementById('secondaryColorHex');
+    if (el) el.value = value;
+    if (hex) hex.value = value.toUpperCase();
+  } else if (type === 'tertiary') {
+    const el = document.getElementById('tertiaryColorInput');
+    const hex = document.getElementById('tertiaryColorHex');
+    if (el) el.value = value;
+    if (hex) hex.value = value.toUpperCase();
   }
+  updateLivePreview();
+}
+
+function syncColorHex(type, value) {
+  if (value && value.startsWith('#') && (value.length === 4 || value.length === 7)) {
+    if (type === 'primary') {
+      const el = document.getElementById('primaryColorInput');
+      if (el) el.value = value;
+    } else if (type === 'secondary') {
+      const el = document.getElementById('secondaryColorInput');
+      if (el) el.value = value;
+    } else if (type === 'tertiary') {
+      const el = document.getElementById('tertiaryColorInput');
+      if (el) el.value = value;
+    }
+    updateLivePreview();
+  }
+}
+
+function applyPresetPalette(primary, secondary, tertiary) {
+  syncColor('primary', primary);
+  syncColor('secondary', secondary);
+  syncColor('tertiary', tertiary);
+}
+
+function updateLivePreview() {
+  const p = document.getElementById('primaryColorInput')?.value || '#84CC16';
+  const s = document.getElementById('secondaryColorInput')?.value || '#121723';
+  const t = document.getElementById('tertiaryColorInput')?.value || '#0B0E14';
+
+  const container = document.getElementById('livePreviewContainer');
+  const mockNav = document.getElementById('mockNav');
+  const mockCard = document.getElementById('mockCard');
+  const mockLogoDot = document.getElementById('mockLogoDot');
+  const mockNavActive = document.getElementById('mockNavActive');
+  const mockBtn = document.getElementById('mockBtn');
+
+  if (container) container.style.backgroundColor = t;
+  if (mockNav) mockNav.style.backgroundColor = s;
+  if (mockCard) mockCard.style.backgroundColor = s;
+  if (mockLogoDot) mockLogoDot.style.backgroundColor = p;
+  if (mockNavActive) mockNavActive.style.color = p;
+  if (mockBtn) mockBtn.style.backgroundColor = p;
 }
 
 function togglePasswordVisibility(...inputIds) {

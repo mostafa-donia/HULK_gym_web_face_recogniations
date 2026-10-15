@@ -565,6 +565,8 @@ def settings_view(request):
                 profile.primary_color = request.POST.get("primary_color", profile.primary_color).strip() or "#84CC16"
             if "secondary_color" in request.POST:
                 profile.secondary_color = request.POST.get("secondary_color", profile.secondary_color).strip() or "#121723"
+            if "tertiary_color" in request.POST:
+                profile.tertiary_color = request.POST.get("tertiary_color", profile.tertiary_color).strip() or "#0B0E14"
             if "accent_theme" in request.POST:
                 profile.accent_theme = request.POST.get("accent_theme", profile.accent_theme)
             if "manager_mobile" in request.POST:

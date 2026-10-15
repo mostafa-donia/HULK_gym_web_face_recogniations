@@ -8,17 +8,20 @@ class GymProfile(models.Model):
     gym_tagline = models.CharField(max_length=150, default="مركز اللياقة البدنية والكمال الجسماني", verbose_name="الشعار اللفظي (Slogan)")
     logo = models.ImageField(upload_to="branding/", null=True, blank=True, verbose_name="شعار الصالة (Logo)")
     primary_color = models.CharField(max_length=20, default="#84CC16", verbose_name="لون الهوية الأساسي (Primary Accent)")
-    secondary_color = models.CharField(max_length=20, default="#121723", verbose_name="لون الخلفية (Surface)")
+    secondary_color = models.CharField(max_length=20, default="#121723", verbose_name="لون البطاقات والأسطح (Secondary / Surface)")
+    tertiary_color = models.CharField(max_length=20, default="#0B0E14", verbose_name="اللون الثالث / خلفية النظام (Tertiary / Background)")
     accent_theme = models.CharField(
         max_length=30,
         choices=[
-            ("lime", "أخضر رياضي (Hulk Lime #84CC16)"),
-            ("blue", "أزرق تيتانيوم (Titanium Blue #0EA5E9)"),
-            ("red", "أحمر طاقة (Power Red #EF4444)"),
-            ("orange", "برتقالي حماسي (Blaze Orange #F97316)"),
-            ("gold", "ذهبي ملكي (Royal Gold #EAB308)"),
-            ("purple", "أرجواني مميز (Cyber Purple #8B5CF6)"),
-            ("custom", "لون مخصص (Custom Hex)"),
+            ("lime", "أخضر رياضي (Hulk Lime)"),
+            ("blue", "أزرق تيتانيوم (Titanium Blue)"),
+            ("red", "أحمر طاقة (Power Red)"),
+            ("orange", "برتقالي حماسي (Blaze Orange)"),
+            ("gold", "ذهبي ملكي (Royal Gold)"),
+            ("purple", "أرجواني مميز (Cyber Purple)"),
+            ("emerald", "زمردي داكن (Dark Emerald)"),
+            ("monochrome", "أسود أحادي (Obsidian Monochrome)"),
+            ("custom", "ألوان مخصصة (Custom Hex)"),
         ],
         default="lime",
         verbose_name="طابع الألوان المعتمد",

@@ -18,8 +18,8 @@
     
     :root {
       --primary: {{ profile.primary_color|default:"#84CC16" }};
-      --bg-dark: #070e17;
-      --card-bg: #0d1926;
+      --bg-dark: {{ profile.tertiary_color|default:"#070e17" }};
+      --card-bg: {{ profile.secondary_color|default:"#0d1926" }};
       --card-border: #16283b;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
