@@ -2,6 +2,7 @@ import os
 import logging
 from datetime import timedelta, date
 from decimal import Decimal
+from django.conf import settings
 from django.utils import timezone
 from django.db.models import Sum, Q
 
@@ -74,10 +75,30 @@ def dispatch_message_record(msg_obj: WhatsAppMessage, return_to_system: bool = F
         image_path = None
         if msg_obj.attachment:
             try:
-                if os.path.exists(msg_obj.attachment.path):
-                    image_path = msg_obj.attachment.path
+                p = getattr(msg_obj.attachment, "path", None)
+                if p and os.path.exists(p):
+                    image_path = str(p)
             except Exception:
                 pass
+
+            if not image_path:
+                try:
+                    name = str(msg_obj.attachment)
+                    cand = os.path.join(settings.MEDIA_ROOT, name)
+                    if os.path.exists(cand):
+                        image_path = os.path.abspath(cand)
+                except Exception:
+                    pass
+
+            if not image_path:
+                try:
+                    name = str(msg_obj.attachment)
+                    if os.path.exists(name):
+                        image_path = os.path.abspath(name)
+                except Exception:
+                    pass
+
+        print(f"[dispatch_message_record] Sending msg id={msg_obj.id} to {msg_obj.mobile}, image_path={image_path}")
 
         success = whatsapp_sender.send_message(
             phone=msg_obj.mobile,
@@ -138,7 +159,9 @@ def get_pending_summary() -> dict:
 def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: str = None) -> dict:
     """
     Dispatches a batch of pending messages, optionally filtered by selected IDs or message type.
+    Focuses WhatsApp once at batch start and returns to the system once when batch finishes.
     """
+    import time
     qs = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING)
     if selected_ids:
         qs = qs.filter(id__in=selected_ids)
@@ -149,18 +172,20 @@ def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: s
     sent_count = 0
     failed_count = 0
 
-    for msg in pending:
-        if dispatch_message_record(msg):
-            sent_count += 1
-        else:
-            failed_count += 1
-
     if pending:
         try:
             from apps.messaging import whatsapp_sender
-            whatsapp_sender.return_to_system_tab()
-        except Exception:
-            pass
+            whatsapp_sender.whatsupp_ready()
+        except Exception as e:
+            logger.warning("whatsupp_ready batch init error: %s", e)
+
+    for idx, msg in enumerate(pending):
+        is_last = (idx == len(pending) - 1)
+        if dispatch_message_record(msg, return_to_system=is_last):
+            sent_count += 1
+        else:
+            failed_count += 1
+        time.sleep(0.5)
 
     return {
         "processed": len(pending),
