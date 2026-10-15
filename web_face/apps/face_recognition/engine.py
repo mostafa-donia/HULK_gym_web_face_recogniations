@@ -406,13 +406,21 @@ class FaceEngine:
     def _capture_worker(self):
         try:
             self.cap = None
-            backends = [cv2.CAP_MSMF, cv2.CAP_ANY, cv2.CAP_DSHOW]
+            # Prioritize DirectShow (CAP_DSHOW) on Windows to eliminate MSMF error -1072873822
+            backends = [cv2.CAP_DSHOW, cv2.CAP_ANY, cv2.CAP_MSMF]
             for backend in backends:
                 try:
                     c = cv2.VideoCapture(self.camera_index, backend)
                     if c and c.isOpened():
-                        self.cap = c
-                        break
+                        c.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                        c.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                        c.set(cv2.CAP_PROP_FPS, 30)
+                        ret, test_frame = c.read()
+                        if ret and test_frame is not None and test_frame.size > 0:
+                            self.cap = c
+                            break
+                        else:
+                            c.release()
                 except Exception:
                     continue
 
@@ -423,21 +431,32 @@ class FaceEngine:
                 self.camera_starting = False
                 return
 
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-            self.cap.set(cv2.CAP_PROP_FPS, 30)
             self.camera_error = None
             self.camera_running = True
             self.camera_starting = False
-            print(f"[FaceEngine] Independent Camera #{self.camera_index} is active and running in background.")
+            print(f"[FaceEngine] Independent Camera #{self.camera_index} is active and running in background via DirectShow.")
 
             frame_count = 0
+            consecutive_failures = 0
             while self.camera_running:
                 ret, frame = self.cap.read()
                 if not ret or frame is None:
+                    consecutive_failures += 1
+                    if consecutive_failures > 30:
+                        # Attempt soft auto-reconnect via DirectShow
+                        time.sleep(1.0)
+                        try:
+                            self.cap.release()
+                            self.cap = cv2.VideoCapture(self.camera_index, cv2.CAP_DSHOW)
+                            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                            consecutive_failures = 0
+                        except Exception:
+                            pass
                     time.sleep(0.03)
                     continue
 
+                consecutive_failures = 0
                 with self.frame_lock:
                     self.current_raw_frame = frame.copy()
 
