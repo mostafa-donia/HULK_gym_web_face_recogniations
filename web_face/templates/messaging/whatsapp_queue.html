@@ -93,9 +93,9 @@
     <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(30, 41, 59, 0.45); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
       <span style="font-weight: 700; color: var(--text-muted); min-width: 95px; font-size: 0.88rem;">تجهيز الرسائل:</span>
       
-      <a href="{% url 'messaging:whatsapp_manager_report' %}" class="btn" style="background: #84cc16; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.1rem; border-radius: 6px;" onclick="return confirm('هل تريد إعداد وإرسال تقرير المدير المالي واليومي الآن؟');">
+      <button type="button" class="btn" style="background: #84cc16; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.1rem; border-radius: 6px; cursor: pointer;" onclick="openManagerReportModal();">
         تقرير المدير
-      </a>
+      </button>
 
       <!-- BULK SEND BUTTON (Replaces old limited button) -->
       <button type="button" class="btn btn-primary" onclick="openBulkSendModal()" style="font-weight: 800; padding: 0.4rem 1.2rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: 1px solid #38bdf8;">
@@ -849,6 +849,23 @@
     return '';
   }
 
+  // Manager Report Password Modal
+  function openManagerReportModal() {
+    const modal = document.getElementById('managerReportModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      setTimeout(() => {
+        const inp = document.getElementById('mgr_rpt_pwd');
+        if (inp) inp.focus();
+      }, 50);
+    }
+  }
+
+  function closeManagerReportModal() {
+    const modal = document.getElementById('managerReportModal');
+    if (modal) modal.style.display = 'none';
+  }
+
   // Auto open modal if requested via URL param (e.g. from 30-min overlay)
   {% if open_send_pending %}
     window.addEventListener('DOMContentLoaded', () => {
@@ -856,6 +873,39 @@
     });
   {% endif %}
 </script>
+
+<!-- Manager Report Password Modal -->
+<div id="managerReportModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 1rem;">
+  <div style="background: var(--bg-card, #0f172a); border: 1px solid var(--border-color, #1e293b); border-radius: 14px; max-width: 440px; width: 100%; padding: 1.5rem; box-shadow: var(--shadow-md, 0 10px 30px rgba(0,0,0,0.6)); text-align: right;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color, #1e293b); padding-bottom: 0.75rem;">
+      <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main, #f8fafc); display: flex; align-items: center; gap: 8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--hulk-primary, #84cc16)" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        إرسال تقرير الإدارة للمدير
+      </h3>
+      <button type="button" onclick="closeManagerReportModal()" style="background: none; border: none; color: var(--text-muted, #94a3b8); font-size: 1.25rem; cursor: pointer;">&times;</button>
+    </div>
+    
+    <p style="color: var(--text-secondary, #cbd5e1); font-size: 0.88rem; line-height: 1.5; margin-bottom: 1.2rem;">
+      يتضمن التقرير ملخص الإيرادات والمصروفات وصافي الدخل وإحصائيات الحضور والاشتراكات. يُرجى إدخال كلمة سر المدير للتأكيد:
+    </p>
+
+    <form method="POST" action="{% url 'messaging:whatsapp_manager_report' %}">
+      {% csrf_token %}
+      <div style="margin-bottom: 1.2rem;">
+        <label for="mgr_rpt_pwd" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted, #94a3b8); margin-bottom: 0.4rem;">كلمة سر المدير:</label>
+        <input type="password" id="mgr_rpt_pwd" name="manager_password" required placeholder="أدخل كلمة المرور..." style="width: 100%; padding: 0.65rem 0.85rem; background: var(--bg-surface-subtle, #020617); border: 1px solid var(--border-color, #334155); border-radius: 8px; color: var(--text-main, #fff); font-size: 1rem; outline: none; text-align: center; letter-spacing: 2px;">
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button type="button" onclick="closeManagerReportModal()" class="btn btn-secondary" style="padding: 0.45rem 1rem;">إلغاء</button>
+        <button type="submit" class="btn btn-primary" style="padding: 0.45rem 1.25rem; font-weight: 800;">تأكيد وإرسال التقرير</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <style>
   @keyframes popIn {

@@ -93,26 +93,26 @@
 
   </div>
 
-  <!-- Filter & PDF Export Bar (Direct Mirror of Legacy Action Bar) -->
+  <!-- Filter & Action Bar -->
   <div class="no-print" style="display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap; margin-top: 6px;">
     
     <!-- Day Report Button -->
     <a href="?period=today" style="text-decoration: none;">
-      <button type="button" class="btn {% if period == 'today' %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 38px; padding: 0 20px;">
+      <button type="button" class="btn {% if period == 'today' %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 38px; padding: 0 18px;">
         تقرير اليوم
       </button>
     </a>
 
     <!-- Week Report Button -->
     <a href="?period=week" style="text-decoration: none;">
-      <button type="button" class="btn {% if period == 'week' %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 38px; padding: 0 20px;">
+      <button type="button" class="btn {% if period == 'week' %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 38px; padding: 0 18px;">
         تقرير الأسبوع
       </button>
     </a>
 
     <!-- Month Report Button -->
     <a href="?period=month" style="text-decoration: none;">
-      <button type="button" class="btn {% if period == 'month' and not selected_month %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 38px; padding: 0 20px;">
+      <button type="button" class="btn {% if period == 'month' and not selected_month %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 38px; padding: 0 18px;">
         تقرير الشهر
       </button>
     </a>
@@ -120,7 +120,7 @@
     <!-- Month Selector Dropdown -->
     <form method="GET" action="" style="margin: 0; display: inline-block;">
       <input type="hidden" name="period" value="month">
-      <select name="selected_month" onchange="this.form.submit()" class="form-control" style="height: 38px; padding: 0 14px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: inline-block; width: auto;">
+      <select name="selected_month" onchange="this.form.submit()" class="form-control" style="height: 38px; padding: 0 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: inline-block; width: auto;">
         <option value="">{{ current_month_badge }}</option>
         {% for m in months_choices %}
           <option value="{{ m.value }}" {% if selected_month == m.value %}selected{% endif %}>{{ m.label }}</option>
@@ -128,17 +128,332 @@
       </select>
     </form>
 
+    <!-- Compare Periods Button (AI Analysis) -->
+    <a href="?period=compare" style="text-decoration: none;">
+      <button type="button" class="btn {% if period == 'compare' %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 38px; padding: 0 18px; display: inline-flex; align-items: center; gap: 6px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        مقارنة فترتين (AI)
+      </button>
+    </a>
+
     <!-- PDF / Print Export Button -->
-    <button type="button" onclick="window.print()" class="btn btn-primary" style="height: 38px; padding: 0 22px; display: flex; align-items: center; gap: 6px;">
+    <button type="button" onclick="window.print()" class="btn btn-secondary" style="height: 38px; padding: 0 16px; display: flex; align-items: center; gap: 6px;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
         <polyline points="14 2 14 8 20 8"></polyline>
-        <line x1="16" y1="13" x2="8" y2="13"></line>
-        <line x1="16" y1="17" x2="8" y2="17"></line>
-        <polyline points="10 9 9 9 8 9"></polyline>
       </svg>
       تصدير PDF
     </button>
+
+    <!-- Send Manager Report to WhatsApp (Protected by Password Modal) -->
+    <button type="button" onclick="openManagerReportModal()" class="btn" style="height: 38px; padding: 0 18px; display: flex; align-items: center; gap: 6px; background: #22c55e; color: #000; font-weight: 800; border: none; border-radius: 8px; margin-right: auto; cursor: pointer;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+      </svg>
+      إرسال تقرير الواتساب للمدير
+    </button>
+
+  </div>
+
+  {% if period == 'compare' and comparison_data %}
+  <!-- ==================== PERIOD COMPARISON MODE (AI ANALYTICS) ==================== -->
+  
+  <!-- Comparison Filter & Range Selection Bar -->
+  <div class="card no-print" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; box-shadow: var(--shadow-sm);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+      <h3 style="margin: 0; color: var(--text-main); font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--hulk-primary)" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        إعداد فترات المقارنة والتحليل الذكي
+      </h3>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <a href="?period=compare&preset=this_vs_last_week" class="btn btn-sm {% if preset == 'this_vs_last_week' %}btn-primary{% else %}btn-secondary{% endif %}">هذا الأسبوع مقابل السابق</a>
+        <a href="?period=compare&preset=this_vs_last_month" class="btn btn-sm {% if preset == 'this_vs_last_month' %}btn-primary{% else %}btn-secondary{% endif %}">هذا الشهر مقابل السابق</a>
+        <a href="?period=compare&preset=last_15_days" class="btn btn-sm {% if preset == 'last_15_days' %}btn-primary{% else %}btn-secondary{% endif %}">آخر 15 يوماً مقابل السابقة</a>
+        <a href="?period=compare&preset=last_30_days" class="btn btn-sm {% if preset == 'last_30_days' %}btn-primary{% else %}btn-secondary{% endif %}">آخر 30 يوماً مقابل السابقة</a>
+      </div>
+    </div>
+
+    <!-- Custom Date Range Form -->
+    <form method="GET" action="" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 14px; align-items: flex-end;" class="compare-form-grid">
+      <input type="hidden" name="period" value="compare">
+      <input type="hidden" name="preset" value="custom">
+
+      <!-- Range A -->
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px;">
+        <span style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--accent-green); margin-bottom: 6px;">الفترة الأولى (الحالية / المستهدفة):</span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="date" name="range_a_start" value="{{ comparison_data.a_start|date:'Y-m-d' }}" required class="form-control" style="font-size: 0.88rem; padding: 6px 8px;">
+          <span style="color: var(--text-muted); font-size: 0.85rem;">إلى</span>
+          <input type="date" name="range_a_end" value="{{ comparison_data.a_end|date:'Y-m-d' }}" required class="form-control" style="font-size: 0.88rem; padding: 6px 8px;">
+        </div>
+      </div>
+
+      <!-- Range B -->
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px;">
+        <span style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--accent-blue); margin-bottom: 6px;">الفترة الثانية (السابقة / المقارنة):</span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="date" name="range_b_start" value="{{ comparison_data.b_start|date:'Y-m-d' }}" required class="form-control" style="font-size: 0.88rem; padding: 6px 8px;">
+          <span style="color: var(--text-muted); font-size: 0.85rem;">إلى</span>
+          <input type="date" name="range_b_end" value="{{ comparison_data.b_end|date:'Y-m-d' }}" required class="form-control" style="font-size: 0.88rem; padding: 6px 8px;">
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary" style="height: 42px; padding: 0 22px; font-weight: 800; white-space: nowrap;">
+        تحديث المقارنة
+      </button>
+    </form>
+  </div>
+
+  <!-- Comparison Metrics Scorecards (6 Cards) -->
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;" class="metric-grid-3x3">
+    
+    <!-- 1. Revenue Comparison -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="color: var(--text-muted); font-size: 0.88rem; font-weight: 700;">إجمالي الإيرادات</span>
+        <span style="font-size: 0.82rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; {% if comparison_data.revenue_pct >= 0 %}background: var(--status-active-bg); color: var(--accent-green);{% else %}background: var(--status-expired-bg); color: var(--accent-red);{% endif %}">
+          {% if comparison_data.revenue_pct >= 0 %}+{% endif %}{{ comparison_data.revenue_pct }}%
+        </span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+        <strong style="color: var(--accent-green); font-size: 1.5rem; font-weight: 800;">{{ comparison_data.a_revenue }} <small style="font-size: 0.8rem;">{{ gym_profile.currency }}</small></strong>
+        <span style="color: var(--text-muted); font-size: 0.95rem;">مقابل {{ comparison_data.b_revenue }}</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted);">
+        الفارق: <strong style="color: {% if comparison_data.revenue_diff >= 0 %}var(--accent-green){% else %}var(--accent-red){% endif %};">{% if comparison_data.revenue_diff >= 0 %}+{% endif %}{{ comparison_data.revenue_diff }} {{ gym_profile.currency }}</strong>
+      </div>
+    </div>
+
+    <!-- 2. Expenses Comparison -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="color: var(--text-muted); font-size: 0.88rem; font-weight: 700;">المصروفات التشغيلية</span>
+        <span style="font-size: 0.82rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; {% if comparison_data.expenses_diff <= 0 %}background: var(--status-active-bg); color: var(--accent-green);{% else %}background: var(--status-expired-bg); color: var(--accent-red);{% endif %}">
+          {% if comparison_data.expenses_pct >= 0 %}+{% endif %}{{ comparison_data.expenses_pct }}%
+        </span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+        <strong style="color: var(--accent-red); font-size: 1.5rem; font-weight: 800;">{{ comparison_data.a_expenses }} <small style="font-size: 0.8rem;">{{ gym_profile.currency }}</small></strong>
+        <span style="color: var(--text-muted); font-size: 0.95rem;">مقابل {{ comparison_data.b_expenses }}</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted);">
+        الفارق: <strong style="color: {% if comparison_data.expenses_diff <= 0 %}var(--accent-green){% else %}var(--accent-red){% endif %};">{% if comparison_data.expenses_diff >= 0 %}+{% endif %}{{ comparison_data.expenses_diff }} {{ gym_profile.currency }}</strong>
+      </div>
+    </div>
+
+    <!-- 3. Net Profit Comparison -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="color: var(--text-muted); font-size: 0.88rem; font-weight: 700;">صافي الربح / التدفق</span>
+        <span style="font-size: 0.82rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; {% if comparison_data.net_pct >= 0 %}background: var(--status-active-bg); color: var(--accent-green);{% else %}background: var(--status-expired-bg); color: var(--accent-red);{% endif %}">
+          {% if comparison_data.net_pct >= 0 %}+{% endif %}{{ comparison_data.net_pct }}%
+        </span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+        <strong style="color: {% if comparison_data.a_net >= 0 %}var(--accent-green){% else %}var(--accent-red){% endif %}; font-size: 1.5rem; font-weight: 800;">{{ comparison_data.a_net }} <small style="font-size: 0.8rem;">{{ gym_profile.currency }}</small></strong>
+        <span style="color: var(--text-muted); font-size: 0.95rem;">مقابل {{ comparison_data.b_net }}</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted);">
+        الفارق: <strong style="color: {% if comparison_data.net_diff >= 0 %}var(--accent-green){% else %}var(--accent-red){% endif %};">{% if comparison_data.net_diff >= 0 %}+{% endif %}{{ comparison_data.net_diff }} {{ gym_profile.currency }}</strong>
+      </div>
+    </div>
+
+    <!-- 4. New Members Comparison -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="color: var(--text-muted); font-size: 0.88rem; font-weight: 700;">مشتركون جدد</span>
+        <span style="font-size: 0.82rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; {% if comparison_data.new_members_pct >= 0 %}background: var(--status-active-bg); color: var(--accent-green);{% else %}background: var(--status-expired-bg); color: var(--accent-red);{% endif %}">
+          {% if comparison_data.new_members_pct >= 0 %}+{% endif %}{{ comparison_data.new_members_pct }}%
+        </span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+        <strong style="color: var(--text-main); font-size: 1.5rem; font-weight: 800;">{{ comparison_data.a_new_members }}</strong>
+        <span style="color: var(--text-muted); font-size: 0.95rem;">مقابل {{ comparison_data.b_new_members }}</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted);">
+        الفارق: <strong style="color: {% if comparison_data.new_members_diff >= 0 %}var(--accent-green){% else %}var(--accent-red){% endif %};">{% if comparison_data.new_members_diff >= 0 %}+{% endif %}{{ comparison_data.new_members_diff }} عضو</strong>
+      </div>
+    </div>
+
+    <!-- 5. Renewals Comparison -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="color: var(--text-muted); font-size: 0.88rem; font-weight: 700;">تجديد الاشتراكات</span>
+        <span style="font-size: 0.82rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; {% if comparison_data.renewals_pct >= 0 %}background: var(--status-active-bg); color: var(--accent-green);{% else %}background: var(--status-expired-bg); color: var(--accent-red);{% endif %}">
+          {% if comparison_data.renewals_pct >= 0 %}+{% endif %}{{ comparison_data.renewals_pct }}%
+        </span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+        <strong style="color: var(--accent-blue); font-size: 1.5rem; font-weight: 800;">{{ comparison_data.a_renewals }}</strong>
+        <span style="color: var(--text-muted); font-size: 0.95rem;">مقابل {{ comparison_data.b_renewals }}</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted);">
+        الفارق: <strong style="color: {% if comparison_data.renewals_diff >= 0 %}var(--accent-green){% else %}var(--accent-red){% endif %};">{% if comparison_data.renewals_diff >= 0 %}+{% endif %}{{ comparison_data.renewals_diff }} تجديد</strong>
+      </div>
+    </div>
+
+    <!-- 6. Check-ins Attendance Comparison -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="color: var(--text-muted); font-size: 0.88rem; font-weight: 700;">مرات الحضور والدخول</span>
+        <span style="font-size: 0.82rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; {% if comparison_data.checkins_pct >= 0 %}background: var(--status-active-bg); color: var(--accent-green);{% else %}background: var(--status-expired-bg); color: var(--accent-red);{% endif %}">
+          {% if comparison_data.checkins_pct >= 0 %}+{% endif %}{{ comparison_data.checkins_pct }}%
+        </span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+        <strong style="color: var(--accent-orange); font-size: 1.5rem; font-weight: 800;">{{ comparison_data.a_checkins }}</strong>
+        <span style="color: var(--text-muted); font-size: 0.95rem;">مقابل {{ comparison_data.b_checkins }}</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted);">
+        الفارق: <strong style="color: {% if comparison_data.checkins_diff >= 0 %}var(--accent-green){% else %}var(--accent-red){% endif %};">{% if comparison_data.checkins_diff >= 0 %}+{% endif %}{{ comparison_data.checkins_diff }} دخول</strong>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modern Dual Comparison Chart (Side-by-Side Canvas) -->
+  <div class="card no-print" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+      <h3 style="margin: 0; color: var(--text-main); font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--hulk-primary)" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        الرسم البياني المقارن بين الفترتين
+      </h3>
+      <span style="font-size: 0.85rem; color: var(--text-muted);">مقارنة بيانية مباشرة للمؤشرات الرئيسية</span>
+    </div>
+    <div style="height: 280px; position: relative;">
+      <canvas id="comparisonChart"></canvas>
+    </div>
+  </div>
+
+  <!-- AI Comparative Strategic Analysis Cards -->
+  <div class="card no-print" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <h3 style="margin: 0; color: var(--text-main); font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--hulk-primary)" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 16v-4"></path>
+          <path d="M12 8h.01"></path>
+        </svg>
+        التقرير والتحليل المقارن الذكي (AI Executive Insights)
+      </h3>
+      <span style="font-size: 0.85rem; color: var(--text-muted); background: var(--bg-surface-subtle); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+        تحليل آلي مقارن للأداء المالي والتشغيلي
+      </span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      <!-- Insight 1: Financial & Net -->
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px 16px;">
+        <strong style="display: block; color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px;">
+          المسار المالي وصافي الأرباح:
+        </strong>
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+          حققت الفترة الحالية إيرادات بلغت {{ comparison_data.a_revenue }} {{ gym_profile.currency }} بنمو قدره 
+          <strong style="color: {% if comparison_data.revenue_pct >= 0 %}var(--accent-green){% else %}var(--accent-red){% endif %};">
+            {% if comparison_data.revenue_pct >= 0 %}+{% endif %}{{ comparison_data.revenue_pct }}%
+          </strong>
+          مقارنة بالفترة السابقة ({{ comparison_data.b_revenue }} {{ gym_profile.currency }}). وبلغ صافي الربح {{ comparison_data.a_net }} {{ gym_profile.currency }} مقابل {{ comparison_data.b_net }} {{ gym_profile.currency }} (تغير {% if comparison_data.net_pct >= 0 %}+{% endif %}{{ comparison_data.net_pct }}%).
+          {% if comparison_data.revenue_pct >= 10 %}
+            يعكس هذا النمو نشاطاً تسويقياً ممتازاً وقدرة تحصيلية أعلى خلال هذه الفترة.
+          {% elif comparison_data.revenue_pct < -5 %}
+            تراجع الإيرادات يتطلب مراجعة فورية لحملات الترويج وتكثيف التواصل مع الأعضاء المتأخرين عن التجديد.
+          {% else %}
+            الأداء المالي متزن ومستقر نسبياً بين الفترتين مع الحفاظ على هامش تشغيلي آمن.
+          {% endif %}
+        </p>
+      </div>
+
+      <!-- Insight 2: Member Acquisition & Retention -->
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px 16px;">
+        <strong style="display: block; color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px;">
+          اكتساب الأعضاء والاحتفاظ (Acquisition & Retention):
+        </strong>
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+          انضم {{ comparison_data.a_new_members }} مشترك جديد خلال الفترة الحالية ({% if comparison_data.new_members_pct >= 0 %}+{% endif %}{{ comparison_data.new_members_pct }}% مقارنة بـ {{ comparison_data.b_new_members }} في الفترة السابقة)، بينما سجلت التجديدات {{ comparison_data.a_renewals }} عملية ({% if comparison_data.renewals_pct >= 0 %}+{% endif %}{{ comparison_data.renewals_pct }}%).
+          {% if comparison_data.renewals_pct > 0 and comparison_data.new_members_pct > 0 %}
+            المؤشرات تشير إلى زخم ثنائي صحي يجمع بين ولاء الأعضاء القدامى واستقطاب متدربين جدد.
+          {% elif comparison_data.renewals_pct < 0 %}
+            انخفاض معدل التجديدات يستدعي تفعيل حملة رسائل تذكير الواتساب التلقائية قبل انتهاء الاشتراكات لتفادي انقطاع اللاعبين.
+          {% endif %}
+        </p>
+      </div>
+
+      <!-- Insight 3: Attendance Foot Traffic -->
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px 16px;">
+        <strong style="display: block; color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px;">
+          كثافة الحضور واستخدام الصالة (Foot Traffic):
+        </strong>
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+          سجلت بصمة الوجه وأنظمة الدخول {{ comparison_data.a_checkins }} عملية حضور في الفترة الحالية مقارنة بـ {{ comparison_data.b_checkins }} في الفترة المقارنة ({% if comparison_data.checkins_pct >= 0 %}+{% endif %}{{ comparison_data.checkins_pct }}%).
+          زيادة الحضور ترتبط إيجابياً بفرص بيع المكملات الغذائية وخدمات التدريب الخاص (PT).
+        </p>
+      </div>
+
+      <!-- Insight 4: Strategic Action Plan -->
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px 16px;">
+        <strong style="display: block; color: var(--text-main); font-size: 0.95rem; margin-bottom: 4px;">
+          القرارات والتوجيهات الإدارية المقترحة:
+        </strong>
+        <ul style="margin: 6px 0 0 0; padding-right: 20px; color: var(--text-secondary); font-size: 0.88rem; line-height: 1.7;">
+          <li>التركيز على تحصيل المتبقيات غير المسددة عبر شاشات الدخول التلقائية لتغذية رصيد الخزينة.</li>
+          <li>توجيه المدربين لتحفيز تجديد اشتراكات المتدربين المنتهية عضوياتهم خلال الأسبوع الماضي.</li>
+          <li>استثمار أوقات الهدوء الصباحية بطرح باقات مخفضة مخصصة للفترات الصباحية لزيادة الطاقة الاستيعابية.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  {% else %}
+  <!-- ==================== STANDARD DASHBOARD MODE (CHARTS & INSIGHTS) ==================== -->
+
+  <!-- Modern Interactive Offline Charts Row -->
+  <div class="no-print" style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-top: 6px;" class="charts-row-grid">
+    
+    <!-- Chart 1: Daily Revenue Trend -->
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+        <h3 style="margin: 0; color: var(--text-main); font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--hulk-primary)" stroke-width="2">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+            <polyline points="17 6 23 6 23 12"></polyline>
+          </svg>
+          مسار الإيرادات اليومية
+        </h3>
+        <span style="font-size: 0.82rem; color: var(--text-muted);">تحليل التدفق المالي بالعملة</span>
+      </div>
+      <div style="height: 220px; position: relative;">
+        <canvas id="revenueTrendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Chart 2: Hourly Attendance Distribution -->
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+        <h3 style="margin: 0; color: var(--text-main); font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          أوقات الذروة والحضور
+        </h3>
+        <span style="font-size: 0.82rem; color: var(--text-muted);">توزيع الدخول بالساعات</span>
+      </div>
+      <div style="height: 220px; position: relative;">
+        <canvas id="hourlyAttendanceChart"></canvas>
+      </div>
+    </div>
 
   </div>
 
@@ -196,7 +511,7 @@
         <div style="display: flex; justify-content: space-between; align-items: baseline;">
           <span style="color: var(--text-main); font-weight: 800; font-size: 1.15rem;">{{ today_revenue }} <small style="font-size: 0.8rem;">{{ gym_profile.currency|default:"ج" }}</small></span>
           <span style="font-size: 0.85rem; font-weight: 800; color: {% if today_revenue >= yesterday_revenue %}var(--accent-green){% else %}var(--accent-red){% endif %};">
-            {% if today_revenue >= yesterday_revenue %}▲ +{% else %}▼ {% endif %}{{ day_comp_pct }}%
+            {% if today_revenue >= yesterday_revenue %}+{% endif %}{{ day_comp_pct }}%
           </span>
         </div>
         <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">أمس: {{ yesterday_revenue }} {{ gym_profile.currency|default:"ج" }}</div>
@@ -208,7 +523,7 @@
         <div style="display: flex; justify-content: space-between; align-items: baseline;">
           <span style="color: var(--text-main); font-weight: 800; font-size: 1.15rem;">{{ week_revenue }} <small style="font-size: 0.8rem;">{{ gym_profile.currency|default:"ج" }}</small></span>
           <span style="font-size: 0.85rem; font-weight: 800; color: {% if week_revenue >= prev_week_revenue %}var(--accent-green){% else %}var(--accent-red){% endif %};">
-            {% if week_revenue >= prev_week_revenue %}▲ +{% else %}▼ {% endif %}{{ week_comp_pct }}%
+            {% if week_revenue >= prev_week_revenue %}+{% endif %}{{ week_comp_pct }}%
           </span>
         </div>
         <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">السابق: {{ prev_week_revenue }} {{ gym_profile.currency|default:"ج" }}</div>
@@ -220,7 +535,7 @@
         <div style="display: flex; justify-content: space-between; align-items: baseline;">
           <span style="color: var(--text-main); font-weight: 800; font-size: 1.15rem;">{{ month_revenue }} <small style="font-size: 0.8rem;">{{ gym_profile.currency|default:"ج" }}</small></span>
           <span style="font-size: 0.85rem; font-weight: 800; color: {% if month_revenue >= last_month_revenue %}var(--accent-green){% else %}var(--accent-red){% endif %};">
-            {% if month_revenue >= last_month_revenue %}▲ +{% else %}▼ {% endif %}{{ month_comp_pct }}%
+            {% if month_revenue >= last_month_revenue %}+{% endif %}{{ month_comp_pct }}%
           </span>
         </div>
         <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">السابق: {{ last_month_revenue }} {{ gym_profile.currency|default:"ج" }}</div>
@@ -242,6 +557,8 @@
     </div>
 
   </div>
+  {% endif %}
+
 
   <!-- Period Report Header & Summary Counters (Direct Mirror of Screenshot Bottom Section) -->
   <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px; box-shadow: var(--shadow-sm);">
@@ -360,7 +677,242 @@
 
 </div>
 
-<!-- Print Styles for clean PDF export -->
+<!-- Manager Report Password Modal -->
+<div id="managerReportModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 1rem;" class="no-print">
+  <div style="background: var(--bg-card, #0f172a); border: 1px solid var(--border-color, #1e293b); border-radius: 14px; max-width: 440px; width: 100%; padding: 1.5rem; box-shadow: var(--shadow-md, 0 10px 30px rgba(0,0,0,0.6)); text-align: right;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color, #1e293b); padding-bottom: 0.75rem;">
+      <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main, #f8fafc); display: flex; align-items: center; gap: 8px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--hulk-primary, #84cc16)" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        إرسال تقرير الإدارة إلى واتساب
+      </h3>
+      <button type="button" onclick="closeManagerReportModal()" style="background: none; border: none; color: var(--text-muted, #94a3b8); font-size: 1.25rem; cursor: pointer;">&times;</button>
+    </div>
+    
+    <p style="color: var(--text-secondary, #cbd5e1); font-size: 0.88rem; line-height: 1.5; margin-bottom: 1.2rem;">
+      يتضمن التقرير ملخص الإيرادات والمصروفات وصافي الدخل وإحصائيات الحضور والاشتراكات. يُرجى إدخال كلمة سر المدير للتأكيد:
+    </p>
+
+    <form method="POST" action="{% url 'messaging:whatsapp_manager_report' %}">
+      {% csrf_token %}
+      <div style="margin-bottom: 1.2rem;">
+        <label for="mgr_rpt_pwd" style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted, #94a3b8); margin-bottom: 0.4rem;">كلمة سر المدير:</label>
+        <input type="password" id="mgr_rpt_pwd" name="manager_password" required placeholder="أدخل كلمة المرور..." style="width: 100%; padding: 0.65rem 0.85rem; background: var(--bg-surface-subtle, #020617); border: 1px solid var(--border-color, #334155); border-radius: 8px; color: var(--text-main, #fff); font-size: 1rem; outline: none; text-align: center; letter-spacing: 2px;">
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button type="button" onclick="closeManagerReportModal()" class="btn btn-secondary" style="padding: 0.45rem 1rem;">إلغاء</button>
+        <button type="submit" class="btn btn-primary" style="padding: 0.45rem 1.25rem; font-weight: 800;">تأكيد وإرسال التقرير</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% load static %}
+<script src="{% static 'js/chart.min.js' %}"></script>
+<script>
+  function openManagerReportModal() {
+    const modal = document.getElementById('managerReportModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      setTimeout(() => {
+        const inp = document.getElementById('mgr_rpt_pwd');
+        if (inp) inp.focus();
+      }, 50);
+    }
+  }
+
+  function closeManagerReportModal() {
+    const modal = document.getElementById('managerReportModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  // Modern Chart.js Rendering
+  document.addEventListener('DOMContentLoaded', function () {
+    const computedStyle = getComputedStyle(document.documentElement);
+    const primaryColor = computedStyle.getPropertyValue('--hulk-primary').trim() || '#84cc16';
+    const textColor = computedStyle.getPropertyValue('--text-main').trim() || '#f8fafc';
+    const textMuted = computedStyle.getPropertyValue('--text-muted').trim() || '#94a3b8';
+    const borderColor = computedStyle.getPropertyValue('--border-color').trim() || 'rgba(255,255,255,0.08)';
+
+    Chart.defaults.color = textMuted;
+    Chart.defaults.font.family = "'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+
+    // 1. Comparison Dual Bar Chart (if in compare mode)
+    {% if period == 'compare' and comparison_data %}
+    const compCanvas = document.getElementById('comparisonChart');
+    if (compCanvas) {
+      new Chart(compCanvas, {
+        type: 'bar',
+        data: {
+          labels: ['الإيرادات', 'المصروفات', 'صافي الدخل', 'مشتركون جدد (×100)', 'التجديدات (×100)', 'مرات الحضور (×10)'],
+          datasets: [
+            {
+              label: 'الفترة الأولى (الحالية)',
+              data: [
+                {{ comparison_data.a_revenue }},
+                {{ comparison_data.a_expenses }},
+                {{ comparison_data.a_net }},
+                {{ comparison_data.a_new_members }} * 100,
+                {{ comparison_data.a_renewals }} * 100,
+                {{ comparison_data.a_checkins }} * 10
+              ],
+              backgroundColor: primaryColor,
+              borderRadius: 6,
+            },
+            {
+              label: 'الفترة الثانية (المقارنة)',
+              data: [
+                {{ comparison_data.b_revenue }},
+                {{ comparison_data.b_expenses }},
+                {{ comparison_data.b_net }},
+                {{ comparison_data.b_new_members }} * 100,
+                {{ comparison_data.b_renewals }} * 100,
+                {{ comparison_data.b_checkins }} * 10
+              ],
+              backgroundColor: 'rgba(56, 189, 248, 0.85)',
+              borderRadius: 6,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                color: textColor,
+                font: { weight: 'bold', size: 12 }
+              }
+            },
+            tooltip: {
+              rtl: true,
+              callbacks: {
+                label: function (ctx) {
+                  return ctx.dataset.label + ': ' + Number(ctx.raw).toLocaleString();
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'transparent' },
+              ticks: { color: textMuted }
+            },
+            y: {
+              grid: { color: borderColor },
+              ticks: { color: textMuted }
+            }
+          }
+        }
+      });
+    }
+    {% else %}
+    // 2. Standard Mode Charts
+    // A) Revenue Trend Line/Area Chart
+    const revCanvas = document.getElementById('revenueTrendChart');
+    if (revCanvas) {
+      const revLabels = {{ revenue_trend_labels|safe }};
+      const revData = {{ revenue_trend_data|safe }};
+
+      new Chart(revCanvas, {
+        type: 'line',
+        data: {
+          labels: revLabels,
+          datasets: [{
+            label: 'الإيراد اليومي',
+            data: revData,
+            borderColor: primaryColor,
+            backgroundColor: 'rgba(132, 204, 22, 0.12)',
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.35,
+            pointBackgroundColor: primaryColor,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              rtl: true,
+              callbacks: {
+                label: function(ctx) {
+                  return 'الإيراد: ' + Number(ctx.raw).toLocaleString() + ' {{ gym_profile.currency }}';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'transparent' },
+              ticks: { color: textMuted }
+            },
+            y: {
+              grid: { color: borderColor },
+              ticks: { color: textMuted }
+            }
+          }
+        }
+      });
+    }
+
+    // B) Hourly Attendance Distribution
+    const attCanvas = document.getElementById('hourlyAttendanceChart');
+    if (attCanvas) {
+      const attLabels = {{ hourly_labels|safe }};
+      const attData = {{ hourly_data|safe }};
+
+      new Chart(attCanvas, {
+        type: 'bar',
+        data: {
+          labels: attLabels,
+          datasets: [{
+            label: 'مرات الحضور',
+            data: attData,
+            backgroundColor: 'rgba(56, 189, 248, 0.75)',
+            hoverBackgroundColor: '#38bdf8',
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              rtl: true,
+              callbacks: {
+                label: function(ctx) {
+                  return 'عدد الحضور: ' + ctx.raw + ' لاعب';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'transparent' },
+              ticks: { color: textMuted, maxRotation: 45, minRotation: 0 }
+            },
+            y: {
+              grid: { color: borderColor },
+              ticks: { color: textMuted, precision: 0 }
+            }
+          }
+        }
+      });
+    }
+    {% endif %}
+  });
+</script>
+
+<!-- Responsive & Print Styles -->
 <style>
 @media print {
   body {
@@ -386,7 +938,13 @@
   .metric-grid-3x3 {
     grid-template-columns: repeat(2, 1fr) !important;
   }
+  .charts-row-grid {
+    grid-template-columns: 1fr !important;
+  }
   .period-comp-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .compare-form-grid {
     grid-template-columns: 1fr !important;
   }
   .extended-stats-grid {

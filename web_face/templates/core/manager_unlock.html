@@ -4,30 +4,34 @@
 
 {% block content %}
 <div style="min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
-  <div style="background: #0B171E; border: 2px solid #1A2B36; border-radius: 20px; width: 100%; max-width: 480px; padding: 36px 28px; box-shadow: 0 16px 40px rgba(0,0,0,0.6); text-align: center;">
+  <div style="background: var(--bg-card, #0B171E); border: 1px solid var(--border-color, #1A2B36); border-radius: 16px; width: 100%; max-width: 480px; padding: 36px 28px; box-shadow: var(--shadow-md, 0 16px 40px rgba(0,0,0,0.6)); text-align: center;">
     
     <!-- Lock Icon -->
-    <div style="width: 76px; height: 76px; background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.3rem; margin: 0 auto 20px auto;">
-      🔐
+    <div style="width: 64px; height: 64px; background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; color: #ef4444;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
     </div>
 
-    <h2 style="color: #F3F8FB; font-size: 1.5rem; font-weight: 900; margin-bottom: 8px;">
+    <h2 style="color: var(--text-main, #F3F8FB); font-size: 1.45rem; font-weight: 800; margin-bottom: 8px;">
       منطقة المدير والإعدادات محمية
     </h2>
 
-    <p style="color: #8D99A3; font-size: 0.92rem; line-height: 1.6; margin-bottom: 24px;">
+    <p style="color: var(--text-muted, #8D99A3); font-size: 0.92rem; line-height: 1.6; margin-bottom: 24px;">
       يرجى إدخال كلمة سر المدير للوصول إلى لوحة الإدارة أو الإعدادات الحساسة.
       <br>
-      <span style="color: #fbbf24; font-size: 0.84rem; display: inline-block; margin-top: 6px;">
-        ⚠️ يتم إعادة قفل الصفحة تلقائياً بمجرد الخروج منها لأي صفحة أخرى.
+      <span style="color: var(--accent-orange, #f59e0b); font-size: 0.84rem; display: inline-block; margin-top: 6px;">
+        يتم إعادة قفل الصفحة تلقائياً بمجرد الخروج منها لأي قسم آخر.
       </span>
     </p>
 
-    <form method="post" action="{{ target_url|default:request.path }}" style="display: flex; flex-direction: column; gap: 16px;">
+    <form method="post" action="{{ target_url|default:request.get_full_path }}" style="display: flex; flex-direction: column; gap: 16px;">
       {% csrf_token %}
+      <input type="hidden" name="target_url" value="{{ target_url|default:request.get_full_path }}">
 
       <div style="text-align: right;">
-        <label for="mgr-pwd" style="display: block; color: #A9B7C1; font-size: 0.88rem; font-weight: 700; margin-bottom: 8px;">
+        <label for="mgr-pwd" style="display: block; color: var(--text-muted, #A9B7C1); font-size: 0.88rem; font-weight: 700; margin-bottom: 8px;">
           كلمة مرور المدير:
         </label>
         <input 
@@ -37,12 +41,16 @@
           required 
           autofocus
           placeholder="أدخل كلمة المرور هنا..."
-          style="width: 100%; background: #07131B; border: 2px solid #182834; color: #FFFFFF; font-size: 1.1rem; padding: 14px 16px; border-radius: 10px; outline: none; text-align: center; letter-spacing: 2px;"
+          style="width: 100%; background: var(--bg-surface-subtle, #07131B); border: 1px solid var(--border-color, #182834); color: var(--text-main, #FFFFFF); font-size: 1.1rem; padding: 14px 16px; border-radius: 10px; outline: none; text-align: center; letter-spacing: 2px;"
         >
       </div>
 
-      <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1.1rem; padding: 14px; font-weight: 900;">
-        🔓 فتح القفل والمتابعة
+      <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1.05rem; padding: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+        </svg>
+        فتح القفل والمتابعة
       </button>
 
       <a href="{% url 'core:dashboard' %}" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.95rem;">
@@ -50,8 +58,8 @@
       </a>
     </form>
 
-    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #14202A; font-size: 0.8rem; color: #586571;">
-      🛡️ نظام الحماية الفوري — يعود للقفل مباشرة فور الانتقال لصفحة أخرى
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color, #14202A); font-size: 0.8rem; color: var(--text-muted, #586571);">
+      نظام أمان فوري — يعود للقفل مباشرة فور الانتقال لقسم آخر
     </div>
 
   </div>

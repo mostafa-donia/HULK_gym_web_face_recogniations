@@ -210,14 +210,16 @@
 
   <div class="unlock-card">
     <!-- Icon -->
-    <div class="icon-box">
-      🔒
+    <div class="icon-box" style="color: var(--primary);">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
     </div>
 
     <!-- Gym Name & Badge -->
     <h1 class="brand-title">{{ profile.gym_name|default:"HULK GYM" }}</h1>
     <div class="badge-lock">
-      <span>🛡️</span>
       <span>وضع الموبايل محمي بكلمة مرور</span>
     </div>
 
@@ -229,14 +231,15 @@
     {% if messages %}
       {% for message in messages %}
         <div class="alert-error">
-          ⚠️ {{ message }}
+          {{ message }}
         </div>
       {% endfor %}
     {% endif %}
 
     <!-- Unlock Form -->
-    <form method="post" action="{{ target_url|default:request.path }}">
+    <form method="post" action="{{ target_url|default:request.get_full_path }}">
       {% csrf_token %}
+      <input type="hidden" name="target_url" value="{{ target_url|default:request.get_full_path }}">
 
       <div class="input-wrapper">
         <label for="mobile-pwd">كلمة مرور المدير:</label>
@@ -252,12 +255,14 @@
           autocomplete="current-password"
         >
         <button type="button" class="toggle-visibility-btn" onclick="togglePasswordVisibility()" title="إظهار/إخفاء">
-          👁️
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
         </button>
       </div>
 
       <button type="submit" class="btn-submit">
-        <span>🔓</span>
         <span>دخول وضع الموبايل</span>
       </button>
 
