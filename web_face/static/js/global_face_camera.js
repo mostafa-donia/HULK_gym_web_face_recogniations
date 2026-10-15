@@ -266,8 +266,7 @@
       badge.style.background = 'rgba(16, 185, 129, 0.2)';
       badge.style.border = '2px solid #10b981';
       badge.style.color = '#34d399';
-      icon.textContent = '🟢';
-      title.textContent = 'مسموح بالدخول — مرحباً بك!';
+      icon.innerHTML = '<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#10b981; box-shadow:0 0 8px #10b981;"></span>';
 
       infoBox.style.background = 'rgba(16, 185, 129, 0.1)';
       infoBox.style.border = '1px solid rgba(16, 185, 129, 0.25)';
@@ -277,10 +276,19 @@
       dateVal.textContent = m.end_date || 'غير محدد';
       dateVal.style.color = '#6ee7b7';
 
-      daysLabel.textContent = 'الأيام المتبقية';
-      daysLabel.style.color = '#a7f3d0';
-      daysVal.textContent = (m.days_left || 0) + ' يوم';
-      daysVal.style.color = '#34d399';
+      if (m.window_hours_left !== undefined && m.window_hours_left !== null) {
+        daysLabel.textContent = 'نافذة اليوم المتبقية';
+        daysLabel.style.color = '#a7f3d0';
+        daysVal.textContent = m.window_hours_left + ' ساعة';
+        daysVal.style.color = '#38bdf8';
+        title.textContent = `مسموح بالدخول — نافذة التمرين (${m.window_hours_left} س)`;
+      } else {
+        daysLabel.textContent = 'الأيام المتبقية';
+        daysLabel.style.color = '#a7f3d0';
+        daysVal.textContent = (m.days_left || 0) + ' يوم';
+        daysVal.style.color = '#34d399';
+        title.textContent = 'مسموح بالدخول — مرحباً بك!';
+      }
 
       gateNotice.style.display = 'block';
       alertInstruction.style.display = 'none';
@@ -288,7 +296,7 @@
 
       playSuccessChime();
     } else {
-      // Crimson Red Expired Theme
+      // Crimson Red Expired / Denied Theme
       card.style.background = 'linear-gradient(145deg, #2b0b10 0%, #150508 100%)';
       card.style.border = '3px solid #f43f5e';
       card.style.boxShadow = '0 0 80px rgba(244, 63, 94, 0.45), inset 0 0 40px rgba(244, 63, 94, 0.2)';
@@ -298,22 +306,52 @@
       badge.style.background = 'rgba(244, 63, 94, 0.22)';
       badge.style.border = '2px solid #f43f5e';
       badge.style.color = '#fda4af';
-      icon.textContent = '⛔';
-      title.textContent = 'غير مسموح بالدخول — الاشتراك منتهي!';
+      icon.innerHTML = '<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#f43f5e; box-shadow:0 0 8px #f43f5e;"></span>';
 
       infoBox.style.background = 'rgba(244, 63, 94, 0.12)';
       infoBox.style.border = '1px solid rgba(244, 63, 94, 0.3)';
 
-      dateLabel.textContent = 'انتهى بتاريخ';
-      dateLabel.style.color = '#fecdd3';
-      dateVal.textContent = m.end_date || 'منتهي مسبقاً';
-      dateVal.style.color = '#f87171';
+      if (m.deny_code === 'consecutive_day_blocked') {
+        title.textContent = 'غير مسموح بالدخول — باقة يوم ويوم (سجلت حضوراً بالأمس)';
+        dateLabel.textContent = 'نظام الباقة';
+        dateLabel.style.color = '#fecdd3';
+        dateVal.textContent = m.plan || 'يوم ويوم';
+        dateVal.style.color = '#f87171';
 
-      daysLabel.textContent = 'مدة الانتهاء';
-      daysLabel.style.color = '#fecdd3';
-      const expDays = m.expired_days || 0;
-      daysVal.textContent = expDays > 0 ? ('منتهي منذ ' + expDays + ' يوم') : 'منتهي اليوم';
-      daysVal.style.color = '#fb7185';
+        daysLabel.textContent = 'حضور الأمس';
+        daysLabel.style.color = '#fecdd3';
+        daysVal.textContent = 'مسجل حضور بالأمس';
+        daysVal.style.color = '#fb7185';
+
+        alertInstruction.textContent = m.deny_reason || 'عفواً، باقتك بنظام (يوم ويوم) ولا يُسمح بالدخول يومين متتاليين.';
+      } else if (m.deny_code === 'daily_window_expired') {
+        title.textContent = 'غير مسموح بالدخول — انتهت نافذة الـ 4 ساعات اليوم';
+        dateLabel.textContent = 'أول دخول اليوم';
+        dateLabel.style.color = '#fecdd3';
+        dateVal.textContent = m.first_entry_time_str || 'اليوم';
+        dateVal.style.color = '#f87171';
+
+        daysLabel.textContent = 'نافذة اليوم';
+        daysLabel.style.color = '#fecdd3';
+        daysVal.textContent = 'انتهت (4 ساعات)';
+        daysVal.style.color = '#fb7185';
+
+        alertInstruction.textContent = m.deny_reason || 'عفواً، انتهت نافذة التمرين اليومية المسموحة (4 ساعات من أول دخول).';
+      } else {
+        title.textContent = 'غير مسموح بالدخول — الاشتراك منتهي!';
+        dateLabel.textContent = 'انتهى بتاريخ';
+        dateLabel.style.color = '#fecdd3';
+        dateVal.textContent = m.end_date || 'منتهي مسبقاً';
+        dateVal.style.color = '#f87171';
+
+        daysLabel.textContent = 'مدة الانتهاء';
+        daysLabel.style.color = '#fecdd3';
+        const expDays = m.expired_days || 0;
+        daysVal.textContent = expDays > 0 ? ('منتهي منذ ' + expDays + ' يوم') : 'منتهي اليوم';
+        daysVal.style.color = '#fb7185';
+
+        alertInstruction.textContent = m.deny_reason || 'يرجى مراجعة موظف الاستقبال لتجديد الاشتراك وتحديث العضوية.';
+      }
 
       gateNotice.style.display = 'none';
       alertInstruction.style.display = 'block';

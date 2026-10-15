@@ -118,20 +118,27 @@ class Member(models.Model):
     def is_alternate_days_subscription(self) -> bool:
         """
         Checks whether the member's current subscription follows 'day on day off' (يوم ويوم).
+        Handles all common variations:
+        'يوم ويوم', 'يوم و يوم', 'يوم بعد يوم', 'day on day off', 'alternate'
         """
-        target_keywords = ["يوم ويوم", "يوم بعد يوم", "day on day off", "alternate"]
-        if self.last_subscription_type:
-            name_lower = self.last_subscription_type.lower()
-            if any(kw in name_lower for kw in target_keywords):
-                return True
+        target_normalized = ["يومويوم", "يومبعديوم", "dayondayoff", "alternate"]
 
-        latest_sub = self.subscriptions.order_by("-created_at").first()
+        def matches(text: str) -> bool:
+            if not text:
+                return False
+            clean = text.lower().replace(" ", "").replace("-", "").replace("/", "").replace("_", "")
+            return any(kw in clean for kw in target_normalized)
+
+        if matches(self.last_subscription_type):
+            return True
+
+        active_sub = self.subscriptions.filter(end_date__gte=timezone.localdate()).order_by("-created_at").first()
+        latest_sub = active_sub or self.subscriptions.order_by("-created_at").first()
         if latest_sub:
-            if latest_sub.plan_name:
-                if any(kw in latest_sub.plan_name.lower() for kw in target_keywords):
-                    return True
-            if latest_sub.plan and latest_sub.plan.frequency:
-                if any(kw in latest_sub.plan.frequency.lower() for kw in target_keywords):
+            if matches(latest_sub.plan_name):
+                return True
+            if latest_sub.plan:
+                if matches(latest_sub.plan.frequency) or matches(latest_sub.plan.name):
                     return True
         return False
 
@@ -145,6 +152,8 @@ class Member(models.Model):
            - Rule B: Daily workout window is 4 hours from their first entry today.
                      If 4 hours have elapsed since the first check-in today, entry is denied for the rest of today.
         """
+        import datetime
+
         if current_time is None:
             current_time = timezone.now()
 
@@ -156,6 +165,7 @@ class Member(models.Model):
                 "reason": "الاشتراك منتهي. يرجى التجديد بمكتب الاستقبال.",
                 "window_hours_left": None,
                 "first_entry_time": None,
+                "first_entry_time_str": None,
             }
 
         # If not day-on-day-off subscription, normal entry allowed
@@ -166,43 +176,55 @@ class Member(models.Model):
                 "reason": "مسموح بالدخول",
                 "window_hours_left": None,
                 "first_entry_time": None,
+                "first_entry_time_str": None,
             }
 
         # 2. Alternate days rules ('يوم ويوم')
-        today = timezone.localdate(current_time)
+        current_local = timezone.localtime(current_time)
+        today = current_local.date()
         yesterday = today - timedelta(days=1)
+
+        start_yesterday = timezone.make_aware(datetime.datetime.combine(yesterday, datetime.time.min))
+        end_yesterday = timezone.make_aware(datetime.datetime.combine(yesterday, datetime.time.max))
+
+        start_today = timezone.make_aware(datetime.datetime.combine(today, datetime.time.min))
+        end_today = timezone.make_aware(datetime.datetime.combine(today, datetime.time.max))
 
         # Rule A: Cannot attend 2 days in a row (check if member attended yesterday, excluding denied events)
         yesterday_attended = self.check_ins.filter(
-            checked_in_at__date=yesterday
+            checked_in_at__range=(start_yesterday, end_yesterday)
         ).exclude(status_snapshot__startswith="denied").exists()
 
         if yesterday_attended:
             return {
                 "allowed": False,
                 "reason_code": "consecutive_day_blocked",
-                "reason": "عفواً، باقتك (يوم ويوم) وغير مسموح بالدخول يومين متتاليين (سجلت حضوراً بالأمس).",
+                "reason": "عفواً، باقتك بنظام (يوم ويوم) وغير مسموح بالدخول يومين متتاليين (سجلت حضوراً بالأمس).",
                 "window_hours_left": None,
                 "first_entry_time": None,
+                "first_entry_time_str": None,
             }
 
         # Rule B: 4-hour window from first entry today
         today_checkins = self.check_ins.filter(
-            checked_in_at__date=today
+            checked_in_at__range=(start_today, end_today)
         ).exclude(status_snapshot__startswith="denied").order_by("checked_in_at")
 
         if today_checkins.exists():
             first_entry = today_checkins.first()
+            first_entry_local = timezone.localtime(first_entry.checked_in_at)
+            first_entry_time_str = first_entry_local.strftime("%I:%M %p")
             elapsed = current_time - first_entry.checked_in_at
             max_window = timedelta(hours=4)
+
             if elapsed > max_window:
-                first_entry_local = timezone.localtime(first_entry.checked_in_at).strftime("%I:%M %p")
                 return {
                     "allowed": False,
                     "reason_code": "daily_window_expired",
-                    "reason": f"عفواً، انتهت نافذة التمرين اليومية (4 ساعات من أول دخول الساعة {first_entry_local}).",
+                    "reason": f"عفواً، انتهت نافذة التمرين اليومية المسموحة (4 ساعات من أول دخول الساعة {first_entry_time_str}). غير مسموح بالدخول مرة أخرى اليوم.",
                     "window_hours_left": 0.0,
                     "first_entry_time": first_entry.checked_in_at,
+                    "first_entry_time_str": first_entry_time_str,
                 }
             else:
                 remaining_seconds = (max_window - elapsed).total_seconds()
@@ -210,9 +232,10 @@ class Member(models.Model):
                 return {
                     "allowed": True,
                     "reason_code": "active_within_window",
-                    "reason": f"مسموح بالدخول (متبقي من نافذة تمرينك اليوم {remaining_hours} ساعة)",
+                    "reason": f"مسموح بالدخول (متبقي من نافذة تمرينك اليوم {remaining_hours} ساعة — أول دخول الساعة {first_entry_time_str})",
                     "window_hours_left": remaining_hours,
                     "first_entry_time": first_entry.checked_in_at,
+                    "first_entry_time_str": first_entry_time_str,
                 }
 
         # First entry of the day
@@ -222,6 +245,7 @@ class Member(models.Model):
             "reason": "مسموح بالدخول (أول دخول اليوم — نافذة التمرين 4 ساعات)",
             "window_hours_left": 4.0,
             "first_entry_time": None,
+            "first_entry_time_str": None,
         }
 
 

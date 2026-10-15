@@ -553,7 +553,10 @@ class FaceEngine:
                                 "plan": member.last_subscription_type or "باقة أساسية",
                                 "photo_url": member.face_photo.url if member.face_photo else None,
                                 "deny_reason": eligibility["reason"] if not access_allowed else None,
+                                "deny_code": eligibility.get("reason_code"),
                                 "window_hours_left": eligibility.get("window_hours_left"),
+                                "first_entry_time_str": eligibility.get("first_entry_time_str"),
+                                "is_alternate_days": member.is_alternate_days_subscription(),
                             }
                         }
 

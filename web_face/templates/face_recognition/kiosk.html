@@ -610,8 +610,17 @@
       fsStatusBadge.style.background = 'rgba(34, 197, 94, 0.18)';
       fsStatusBadge.style.border = '2px solid #22c55e';
       fsStatusBadge.style.color = '#4ade80';
-      fsStatusIcon.textContent = '🟢';
-      fsStatusTitle.textContent = 'مسموح بالدخول — مرحباً بك!';
+      fsStatusIcon.innerHTML = '<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px #22c55e;"></span>';
+      
+      if (m.window_hours_left !== undefined && m.window_hours_left !== null) {
+        fsStatusTitle.textContent = `مسموح بالدخول — نافذة تمرين (${m.window_hours_left} س)`;
+        fsDaysLabel.textContent = 'نافذة اليوم المتبقية';
+        fsDaysValue.textContent = `${m.window_hours_left} ساعة`;
+      } else {
+        fsStatusTitle.textContent = 'مسموح بالدخول — مرحباً بك!';
+        fsDaysLabel.textContent = 'الصلاحية المتبقية';
+        fsDaysValue.textContent = `متبقي ${m.days_left} يوم`;
+      }
 
       fsInfoBox.style.background = 'rgba(0, 0, 0, 0.45)';
       fsInfoBox.style.border = '1px solid rgba(34, 197, 94, 0.3)';
@@ -621,22 +630,20 @@
       fsDateValue.textContent = m.end_date || 'نشط';
       fsDateValue.style.color = '#ffffff';
 
-      fsDaysLabel.textContent = 'الصلاحية المتبقية';
       fsDaysLabel.style.color = '#86efac';
-      fsDaysValue.textContent = `متبقي ${m.days_left} يوم`;
       fsDaysValue.style.color = '#4ade80';
 
       if (gateOpened) {
-        fsFooterMsg.innerHTML = '🚪 <span style="color: #4ade80;">تم إرسال إشارة فتح البوابة الإلكترونية — تفضل بالدخول!</span>';
+        fsFooterMsg.innerHTML = '<span style="color: #4ade80; font-weight:800;">تم إرسال إشارة فتح البوابة الإلكترونية — تفضل بالدخول</span>';
       } else {
-        fsFooterMsg.innerHTML = '💪 <span style="color: #ffffff;">نورتنا في الصالة — نتمنى لك تمريناً ممتعاً وموفقاً!</span>';
+        fsFooterMsg.innerHTML = '<span style="color: #ffffff; font-weight:700;">نورتنا في الصالة — نتمنى لك تمريناً ممتعاً وموفقاً</span>';
       }
 
       fsProgressBar.style.background = '#22c55e';
       playSuccessChime();
 
     } else {
-      // 🔴 ACCESS DENIED (EXPIRED OR ALTERNATE-DAYS WINDOW / CONSECUTIVE BLOCK)
+      // ACCESS DENIED (EXPIRED OR ALTERNATE-DAYS WINDOW / CONSECUTIVE BLOCK)
       durationMs = 4500;
       fsCard.style.background = 'radial-gradient(circle at center, #3c0609 0%, #1a0204 100%)';
       fsCard.style.border = '2px solid #ef4444';
@@ -647,8 +654,8 @@
       fsStatusBadge.style.background = 'rgba(239, 68, 68, 0.22)';
       fsStatusBadge.style.border = '2px solid #ef4444';
       fsStatusBadge.style.color = '#f87171';
-      fsStatusIcon.textContent = '🔴';
-      fsStatusTitle.textContent = m.deny_reason ? 'غير مسموح بالدخول — تنبيه الصالة!' : 'غير مسموح بالدخول — الاشتراك منتهي!';
+      fsStatusIcon.innerHTML = '<span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:#ef4444; box-shadow:0 0 8px #ef4444;"></span>';
+      fsStatusTitle.textContent = m.deny_reason ? 'غير مسموح بالدخول' : 'غير مسموح بالدخول — الاشتراك منتهي';
 
       fsInfoBox.style.background = 'rgba(0, 0, 0, 0.55)';
       fsInfoBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
@@ -664,7 +671,7 @@
         fsDaysValue.textContent = m.plan || 'يوم ويوم';
         fsDaysValue.style.color = '#ffffff';
 
-        fsFooterMsg.innerHTML = `🛑 <span style="color: #fca5a5;">${m.deny_reason}</span>`;
+        fsFooterMsg.innerHTML = `<span style="color: #fca5a5; font-weight:800;">${m.deny_reason}</span>`;
       } else {
         fsDateLabel.textContent = 'تاريخ انتهاء الاشتراك';
         fsDateLabel.style.color = '#fca5a5';
@@ -676,7 +683,7 @@
         fsDaysValue.textContent = `منتهي منذ ${m.expired_days || 1} يوم`;
         fsDaysValue.style.color = '#f87171';
 
-        fsFooterMsg.innerHTML = '🛑 <span style="color: #fca5a5;">عفواً، لا يمكنك الدخول. يرجى التوجه لمكتب الاستقبال لتجديد الاشتراك.</span>';
+        fsFooterMsg.innerHTML = '<span style="color: #fca5a5; font-weight:700;">عفواً، لا يمكنك الدخول. يرجى التوجه لمكتب الاستقبال لتجديد الاشتراك.</span>';
       }
 
       fsProgressBar.style.background = '#ef4444';
