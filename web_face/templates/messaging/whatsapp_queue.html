@@ -8,7 +8,7 @@
   <!-- Page Header -->
   <div style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
     <div>
-      <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0; color: #fff; display: flex; align-items: center; gap: 10px;">
+      <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0; color: var(--text-main); display: flex; align-items: center; gap: 10px;">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" style="vertical-align: middle;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> واتساب
       </h1>
       <p style="color: var(--text-muted); margin: 0.35rem 0 0; font-size: 0.95rem;">
@@ -40,7 +40,7 @@
 
   <!-- Search & Filter Controls -->
   <form method="GET" action="{% url 'messaging:whatsapp_queue' %}" style="margin-bottom: 1rem;">
-    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; background: rgba(15, 23, 42, 0.65); padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; background: var(--bg-surface-subtle); padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
       
       <!-- Search Input -->
       <div style="flex: 1; min-width: 260px;">
@@ -50,13 +50,13 @@
           value="{{ search_q }}" 
           placeholder="ابحث بالاسم أو الموبايل أو النوع أو الحالة..." 
           class="form-control"
-          style="background: #090e17; border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.55rem 1rem; border-radius: 8px; width: 100%;"
+          style="background: var(--bg-input); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); padding: 0.55rem 1rem; border-radius: 8px; width: 100%;"
         >
       </div>
 
       <!-- Type Filter -->
       <div style="min-width: 170px;">
-        <select name="msg_type" onchange="this.form.submit()" class="form-control" style="background: #090e17; border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.55rem 0.75rem; border-radius: 8px; width: 100%;">
+        <select name="msg_type" onchange="this.form.submit()" class="form-control" style="background: var(--bg-input); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); padding: 0.55rem 0.75rem; border-radius: 8px; width: 100%;">
           <option value="all" {% if type_filter == 'all' %}selected{% endif %}>جميع الأنواع</option>
           {% for code, label in type_choices %}
             <option value="{{ code }}" {% if type_filter == code %}selected{% endif %}>{{ label }}</option>
@@ -66,7 +66,7 @@
 
       <!-- Status Filter Dropdown / Tabs -->
       <div style="min-width: 150px;">
-        <select name="status" onchange="this.form.submit()" class="form-control" style="background: #090e17; border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.55rem 0.75rem; border-radius: 8px; width: 100%;">
+        <select name="status" onchange="this.form.submit()" class="form-control" style="background: var(--bg-input); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); padding: 0.55rem 0.75rem; border-radius: 8px; width: 100%;">
           <option value="all" {% if status_filter == 'all' %}selected{% endif %}>الكل ({{ total_count }})</option>
           <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>المعلق ({{ total_pending }})</option>
           <option value="sent" {% if status_filter == 'sent' %}selected{% endif %}>تم الإرسال ({{ total_sent }})</option>
@@ -90,7 +90,7 @@
   <div style="display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.25rem;">
     
     <!-- 1. تجهيز الرسائل Group -->
-    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(30, 41, 59, 0.45); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: var(--bg-surface-subtle); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid var(--border-color);">
       <span style="font-weight: 700; color: var(--text-muted); min-width: 95px; font-size: 0.88rem;">تجهيز الرسائل:</span>
       
       <button type="button" class="btn" style="background: #84cc16; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.1rem; border-radius: 6px; cursor: pointer;" onclick="openManagerReportModal();">
@@ -116,7 +116,7 @@
       {% csrf_token %}
       <input type="hidden" name="action" id="batchActionInput" value="">
       
-      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(30, 41, 59, 0.45); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 0.65rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: var(--bg-surface-subtle); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 0.65rem;">
         <span style="font-weight: 700; color: var(--text-muted); min-width: 95px; font-size: 0.88rem;">إرسال:</span>
         
         <button type="button" onclick="openSendPendingModal()" class="btn" style="background: #22c55e; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.2rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
@@ -137,7 +137,7 @@
       </div>
 
       <!-- 3. حذف Group -->
-      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: rgba(30, 41, 59, 0.45); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: var(--bg-surface-subtle); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid var(--border-color);">
         <span style="font-weight: 700; color: var(--text-muted); min-width: 95px; font-size: 0.88rem;">حذف:</span>
         
         <button type="button" onclick="if(confirm('هل تريد بالتأكيد حذف الرسائل المحددة؟')) submitBatchAction('delete_selected')" class="btn" style="background: #ef4444; color: #fff; font-weight: 700; border: none; padding: 0.4rem 1.1rem; border-radius: 6px;">
@@ -150,7 +150,7 @@
             حذف متقدم ▼
           </button>
           
-          <div id="deleteMenuDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: #0f172a; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 999; min-width: 180px; overflow: hidden;">
+          <div id="deleteMenuDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: var(--bg-surface-elevated); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 999; min-width: 180px; overflow: hidden;">
             <a href="javascript:void(0)" onclick="if(confirm('حذف جميع الرسائل التي تم إرسالها بنجاح؟')) submitBatchAction('delete_sent')" style="display: block; padding: 8px 16px; color: #cbd5e1; text-decoration: none; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='none'">
               حذف المرسلة
             </a>
@@ -167,7 +167,7 @@
       <!-- Messages Counter Bar -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
         <div>
-          <span style="color: #fff; font-weight: 700;">{{ displayed_count }}</span> رسالة معروضة | المعلق: <span style="color: #f59e0b; font-weight: 700;">{{ total_pending }}</span>
+          <span style="color: var(--text-main); font-weight: 700;">{{ displayed_count }}</span> رسالة معروضة | المعلق: <span style="color: #f59e0b; font-weight: 700;">{{ total_pending }}</span>
         </div>
         <div style="font-size: 0.82rem;">
           يمكنك تحديد عدة رسائل والضغط على أي زر في شريط الإرسال أو الحذف.
@@ -175,10 +175,10 @@
       </div>
 
       <!-- Messages Table -->
-      <div class="table-responsive" style="border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; background: #0b1320;">
+      <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: var(--bg-card);">
         <table class="dark-table" style="width: 100%; font-size: 0.88rem; border-collapse: collapse;">
           <thead>
-            <tr style="background: rgba(15, 23, 42, 0.95); border-bottom: 2px solid rgba(255,255,255,0.1);">
+            <tr style="background: var(--bg-surface-subtle); border-bottom: 2px solid var(--border-color);">
               <th style="width: 38px; text-align: center; padding: 10px;">
                 <input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll(this)" style="cursor: pointer; width: 16px; height: 16px;">
               </th>
@@ -196,7 +196,7 @@
           </thead>
           <tbody>
             {% for msg in messages_list %}
-            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
+            <tr style="border-bottom: 1px solid var(--border-subtle); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
               <td style="text-align: center; padding: 10px;">
                 <input type="checkbox" name="selected_ids" value="{{ msg.id }}" class="msg-row-checkbox" style="cursor: pointer; width: 16px; height: 16px;">
               </td>
@@ -210,7 +210,7 @@
                 {% endif %}
               </td>
               <td>
-                <span class="badge" style="background: rgba(255,255,255,0.07); color: #e2e8f0; font-size: 0.8rem;">
+                <span class="badge" style="background: rgba(255,255,255,0.07); color: var(--text-secondary); font-size: 0.8rem;">
                   {{ msg.get_msg_type_display }}
                 </span>
               </td>
@@ -275,12 +275,12 @@
 <!-- MODAL: إرسال الرسائل المعلقة (Send Pending Routine Messages) -->
 <!-- ==================================================================== -->
 <div id="sendPendingModal" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); align-items: center; justify-content: center; padding: 20px;">
-  <div style="background: #090e17; border: 2px solid #22c55e; border-radius: 20px; width: 100%; max-width: 840px; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 75px rgba(0,0,0,0.95); animation: popIn 0.25s ease;">
+  <div style="background: var(--bg-input); border: 2px solid #22c55e; border-radius: 20px; width: 100%; max-width: 840px; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 75px rgba(0,0,0,0.95); animation: popIn 0.25s ease;">
     
     <!-- Modal Header -->
     <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(34, 197, 94, 0.06);">
       <div>
-        <h2 style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+        <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
           <span style="color: #22c55e;">🚀</span> إرسال الرسائل المعلقة (طابور الواتساب)
         </h2>
         <p style="color: var(--text-muted); font-size: 0.84rem; margin: 3px 0 0;">
@@ -328,7 +328,7 @@
       </div>
 
       <div style="min-width: 210px;">
-        <input type="text" id="modalSearchFilter" placeholder="بحث بالاسم أو الموبايل..." oninput="onFilterPendingSearch()" style="background: #070d17; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; width: 100%;">
+        <input type="text" id="modalSearchFilter" placeholder="بحث بالاسم أو الموبايل..." oninput="onFilterPendingSearch()" style="background: #070d17; border: 1px solid rgba(255,255,255,0.15); color: var(--text-main); padding: 5px 12px; border-radius: 6px; font-size: 0.82rem; width: 100%;">
       </div>
     </div>
 
@@ -353,7 +353,7 @@
     </div>
 
     <!-- Modal Footer Actions -->
-    <div style="padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.95); flex-wrap: wrap; gap: 10px;">
+    <div style="padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface-subtle); flex-wrap: wrap; gap: 10px;">
       <button type="button" onclick="closeSendPendingModal()" class="btn btn-secondary" style="padding: 0.5rem 1.25rem;">
         إلغاء
       </button>
@@ -376,12 +376,12 @@
 <!-- MODAL: إرسال جماعي مخصص (Bulk Send with Categories, Date Range, File & Link) -->
 <!-- ==================================================================== -->
 <div id="bulkSendModal" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 20px;">
-  <div style="background: #090e17; border: 2px solid #38bdf8; border-radius: 20px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; padding: 28px 24px; box-shadow: 0 25px 70px rgba(0,0,0,0.9); animation: popIn 0.25s ease;">
+  <div style="background: var(--bg-input); border: 2px solid #38bdf8; border-radius: 20px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; padding: 28px 24px; box-shadow: 0 25px 70px rgba(0,0,0,0.9); animation: popIn 0.25s ease;">
     
     <!-- Modal Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 18px;">
       <div>
-        <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+        <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
            إرسال جماعي مخصص (Bulk WhatsApp Campaign)
         </h2>
         <p style="color: var(--text-muted); font-size: 0.84rem; margin: 4px 0 0;">
@@ -397,10 +397,10 @@
 
       <!-- 1. Category Selector -->
       <div style="margin-bottom: 16px;">
-        <label style="display: block; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; font-size: 0.9rem;">
+        <label style="display: block; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; font-size: 0.9rem;">
           الفئة المستهدفة (Target Category):
         </label>
-        <select name="category" id="bulkCategorySelect" onchange="onCategoryChanged()" class="form-control" style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.65rem 0.85rem; border-radius: 8px; width: 100%; font-size: 0.95rem;">
+        <select name="category" id="bulkCategorySelect" onchange="onCategoryChanged()" class="form-control" style="background: var(--bg-surface-elevated); border: 1px solid rgba(255,255,255,0.15); color: var(--text-main); padding: 0.65rem 0.85rem; border-radius: 8px; width: 100%; font-size: 0.95rem;">
           <option value="non_sub">غير المشتركين / المنتهية اشتراكاتهم (Non-Subscribers / Expired)</option>
           <option value="active">المشتركون النشطون حالياً (Active Members)</option>
           <option value="expiring_soon">المنتهي اشتراكهم قريباً - خلال 7 أيام (Expiring Soon)</option>
@@ -438,11 +438,11 @@
         <div id="customDateRangeInputs" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
           <div>
             <label style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 3px;">من تاريخ (انتهاء الاشتراك بعد أو في):</label>
-            <input type="date" name="date_from" id="dateFromInput" onchange="fetchLiveRecipientCount()" class="form-control" style="background: #090e17; border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.45rem 0.65rem; border-radius: 6px; width: 100%; font-size: 0.85rem;">
+            <input type="date" name="date_from" id="dateFromInput" onchange="fetchLiveRecipientCount()" class="form-control" style="background: var(--bg-input); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); padding: 0.45rem 0.65rem; border-radius: 6px; width: 100%; font-size: 0.85rem;">
           </div>
           <div>
             <label style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-bottom: 3px;">إلى تاريخ (انتهاء الاشتراك قبل أو في):</label>
-            <input type="date" name="date_to" id="dateToInput" onchange="fetchLiveRecipientCount()" class="form-control" style="background: #090e17; border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 0.45rem 0.65rem; border-radius: 6px; width: 100%; font-size: 0.85rem;">
+            <input type="date" name="date_to" id="dateToInput" onchange="fetchLiveRecipientCount()" class="form-control" style="background: var(--bg-input); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); padding: 0.45rem 0.65rem; border-radius: 6px; width: 100%; font-size: 0.85rem;">
           </div>
         </div>
       </div>
@@ -460,7 +460,7 @@
       <!-- 3. Message Template Textarea -->
       <div style="margin-bottom: 14px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-          <label style="font-weight: 700; color: #e2e8f0; font-size: 0.9rem;">
+          <label style="font-weight: 700; color: var(--text-secondary); font-size: 0.9rem;">
             نص الرسالة (Message Content):
           </label>
           <span style="font-size: 0.75rem; color: var(--text-muted);">انقر لإضافة المتغير:</span>
@@ -480,7 +480,7 @@
           rows="4" 
           required
           class="form-control" 
-          style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.65rem 0.85rem; border-radius: 8px; width: 100%; font-size: 0.9rem; line-height: 1.45;"
+          style="background: var(--bg-surface-elevated); border: 1px solid rgba(255,255,255,0.15); color: var(--text-main); padding: 0.65rem 0.85rem; border-radius: 8px; width: 100%; font-size: 0.9rem; line-height: 1.45;"
         >أهلاً كابتن {name} 
 وحشتنا في {gym_name} 
 عندنا عروض وتجديدات قوية في الصالة، وبنستناك تنورنا في أي وقت ترجع لفورمتك وتمرينك!</textarea>
@@ -499,7 +499,7 @@
             name="link" 
             placeholder="https://maps.app.goo.gl/... أو صفحة العرض" 
             class="form-control"
-            style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.55rem 0.75rem; border-radius: 6px; width: 100%; font-size: 0.85rem;"
+            style="background: var(--bg-surface-elevated); border: 1px solid rgba(255,255,255,0.15); color: var(--text-main); padding: 0.55rem 0.75rem; border-radius: 6px; width: 100%; font-size: 0.85rem;"
           >
           <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px;">رابط لوكيشن، صفحة الفيسبوك، أو عرض خاص</span>
         </div>
@@ -514,7 +514,7 @@
             name="attachment" 
             accept="image/*,.pdf,.html,.htm"
             class="form-control"
-            style="background: #0f172a; border: 1px solid rgba(255,255,255,0.15); color: #fff; padding: 0.45rem 0.75rem; border-radius: 6px; width: 100%; font-size: 0.82rem;"
+            style="background: var(--bg-surface-elevated); border: 1px solid rgba(255,255,255,0.15); color: var(--text-main); padding: 0.45rem 0.75rem; border-radius: 6px; width: 100%; font-size: 0.82rem;"
           >
           <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px;">صورة العرض (JPG, PNG)، ملف PDF، أو صفحة HTML</span>
         </div>
@@ -736,7 +736,7 @@
       }
 
       html += `
-        <div class="pending-msg-card" data-id="${msg.id}" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px; display: flex; align-items: flex-start; gap: 12px; transition: border-color 0.15s;">
+        <div class="pending-msg-card" data-id="${msg.id}" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 14px; display: flex; align-items: flex-start; gap: 12px; transition: border-color 0.15s;">
           <input type="checkbox" value="${msg.id}" class="modal-pending-cb" checked onchange="updateModalSelectionCounts()" style="cursor: pointer; width: 18px; height: 18px; margin-top: 3px; accent-color: #22c55e;">
           
           <div style="flex: 1; min-width: 0;">

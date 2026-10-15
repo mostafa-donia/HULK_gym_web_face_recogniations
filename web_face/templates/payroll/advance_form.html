@@ -4,26 +4,26 @@
 
 {% block content %}
 <div style="max-width: 650px; margin: 24px auto;">
-  <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 14px; padding: 24px;">
+  <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 24px;">
 
     <!-- Header -->
-    <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 14px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
       <div>
-        <h2 class="card-title" style="color: #FFFFFF; font-size: 1.35rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+        <h2 class="card-title" style="color: var(--text-main); font-size: 1.35rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
           💸 صرف سلفة نقدية على الراتب
         </h2>
-        <span style="color: #8D99A3; font-size: 0.88rem;">
+        <span style="color: var(--text-muted); font-size: 0.88rem;">
           سحب نقدي مقدم يُصرف بإذن المدير ويُخصم تلقائياً من صافي راتب نهاية الشهر.
         </span>
       </div>
 
-      <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary" style="background: #0E1D28; border: 1px solid #1C3347; color: #CAD6E2; font-weight: 700; font-size: 0.88rem; padding: 8px 14px; border-radius: 8px; text-decoration: none;">
+      <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); font-weight: 700; font-size: 0.88rem; padding: 8px 14px; border-radius: 8px; text-decoration: none;">
         ← صفحة المدربين
       </a>
     </div>
 
     <!-- Financial Accounting Guarantee Banner -->
-    <div style="background: rgba(77,179,255,0.08); border: 1px solid #1D4363; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; font-size: 0.85rem; color: #CAD6E2; line-height: 1.6;">
+    <div style="background: rgba(77,179,255,0.08); border: 1px solid #1D4363; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
       <strong style="color: #4DB3FF; display: block; margin-bottom: 4px;">⚖️ الضمان المالي والمحاسبي:</strong>
       عند موافقة المدير على السلفة، يُسجل المبلغ فورياً كخروج نقدية من الخزينة لضبط الحسابات اليومية، ويتم خصمه تلقائياً عند إغلاق مسير رواتب الشهر المحدد لمنع أي ازدواج مالي نهائياً.
     </div>
@@ -33,10 +33,10 @@
       <input type="hidden" name="from_trainers" value="1">
 
       <div class="form-group" style="margin-bottom: 16px;">
-        <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">
+        <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">
           الموظف / المدرب المستفيد *
         </label>
-        <select name="employee_id" required class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+        <select name="employee_id" required class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
           <option value="">-- اختر المدرب أو الموظف --</option>
           {% for emp in employees %}
             <option value="{{ emp.id }}" {% if selected_employee_id == emp.id|stringformat:"s" %}selected{% endif %}>
@@ -48,29 +48,29 @@
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
         <div class="form-group">
-          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">
+          <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">
             مبلغ السلفة المطلوب (ج) *
           </label>
-          <input type="number" step="0.01" min="1" name="amount" required placeholder="مثال: 500" autofocus class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #7ED321; font-weight: 800; font-size: 1.15rem; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          <input type="number" step="0.01" min="1" name="amount" required placeholder="مثال: 500" autofocus class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: #7ED321; font-weight: 800; font-size: 1.15rem; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
         </div>
 
         <div class="form-group">
-          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">
+          <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">
             شهر الراتب المستهدف للخصم *
           </label>
-          <input type="text" name="period" value="{{ current_period }}" placeholder="YYYY-MM" required pattern="[0-9]{4}-[0-9]{2}" class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%; font-family: monospace;">
+          <input type="text" name="period" value="{{ current_period }}" placeholder="YYYY-MM" required pattern="[0-9]{4}-[0-9]{2}" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); height: 42px; border-radius: 8px; padding: 0 12px; width: 100%; font-family: monospace;">
         </div>
       </div>
 
       <div class="form-group" style="margin-bottom: 22px;">
-        <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">
+        <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">
           سبب السلفة / ملاحظات الصرف
         </label>
-        <textarea name="reason" rows="2" placeholder="مثال: سلفة شخصية عاجلة، مصاريف علاجية..." class="form-control" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; border-radius: 8px; padding: 10px; width: 100%;">سلفة نقدية على الراتب</textarea>
+        <textarea name="reason" rows="2" placeholder="مثال: سلفة شخصية عاجلة، مصاريف علاجية..." class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; padding: 10px; width: 100%;">سلفة نقدية على الراتب</textarea>
       </div>
 
       <div style="display: flex; gap: 12px; justify-content: flex-end; padding-top: 14px; border-top: 1px solid #162837;">
-        <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary" style="background: #0E1D28; border: 1px solid #1C3347; color: #CAD6E2; font-weight: 700; padding: 10px 20px; border-radius: 8px; text-decoration: none;">
+        <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); font-weight: 700; padding: 10px 20px; border-radius: 8px; text-decoration: none;">
           إلغاء
         </a>
         <button type="submit" class="btn btn-primary" style="background: #7ED321; color: #050B10; font-weight: 800; padding: 10px 26px; border-radius: 8px; border: none; font-size: 0.95rem; cursor: pointer;">

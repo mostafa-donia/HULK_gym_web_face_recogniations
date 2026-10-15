@@ -274,7 +274,7 @@ body {
 }
 
 /* ==========================================================================
-   Modern Compact Single-Icon Theme Switcher
+   Circular Theme Switcher (Matching Reference Design)
    ========================================================================== */
 .theme-toggle-compact-btn,
 .theme-toggle-btn,
@@ -282,77 +282,87 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  min-width: 38px;
-  max-width: 38px;
-  height: 38px;
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  height: 40px;
   padding: 0;
   margin: 0;
-  background-color: var(--bg-surface-subtle);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  border-radius: 10px;
+  border-radius: 50% !important;
   cursor: pointer;
   outline: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
   position: relative;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+  background: #252A36;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
 }
 
 .theme-toggle-compact-btn:hover,
-.theme-toggle-btn:hover,
 #themeToggleBtn:hover {
-  background-color: var(--nav-hover-bg);
-  border-color: var(--hulk-primary);
-  color: var(--text-main);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .theme-toggle-compact-btn:active,
-.theme-toggle-btn:active,
 #themeToggleBtn:active {
-  transform: translateY(0) scale(0.95);
+  transform: scale(0.95);
 }
 
 .theme-icon-sun,
 .theme-icon-moon {
-  width: 19px;
-  height: 19px;
-  stroke-width: 2.2;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
 }
 
-/* Dark mode (default): Show warm amber Sun icon ONLY */
-[data-theme="dark"] .theme-icon-moon,
-:root:not([data-theme="light"]) .theme-icon-moon {
-  display: none !important;
-}
+/* Dark mode (default): Show solid white Crescent Moon ONLY */
 [data-theme="dark"] .theme-icon-sun,
 :root:not([data-theme="light"]) .theme-icon-sun {
-  display: inline-block !important;
-  color: #FBBF24;
-}
-
-/* Light mode: Show deep royal indigo Moon icon ONLY */
-[data-theme="light"] .theme-icon-sun {
   display: none !important;
 }
-[data-theme="light"] .theme-icon-moon {
+[data-theme="dark"] .theme-icon-moon,
+:root:not([data-theme="light"]) .theme-icon-moon {
   display: inline-block !important;
-  color: #4F46E5;
+  color: #FFFFFF !important;
+  fill: #FFFFFF !important;
 }
 
-.theme-toggle-compact-btn:hover .theme-icon-sun {
-  transform: rotate(45deg) scale(1.1);
-  color: #F59E0B;
+/* Light mode: Show warm golden Sun ONLY */
+[data-theme="light"] .theme-toggle-compact-btn,
+[data-theme="light"] #themeToggleBtn {
+  background: #F1F5F9 !important;
+  border: 1px solid #CBD5E1 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+  color: #D97706 !important;
+}
+
+[data-theme="light"] .theme-toggle-compact-btn:hover,
+[data-theme="light"] #themeToggleBtn:hover {
+  background: #E2E8F0 !important;
+  border-color: #94A3B8 !important;
+  transform: scale(1.08);
+}
+
+[data-theme="light"] .theme-icon-moon {
+  display: none !important;
+}
+[data-theme="light"] .theme-icon-sun {
+  display: inline-block !important;
+  color: #D97706 !important;
+  fill: #D97706 !important;
 }
 
 .theme-toggle-compact-btn:hover .theme-icon-moon {
-  transform: rotate(-15deg) scale(1.1);
-  color: #3730A3;
+  transform: rotate(-15deg);
+}
+
+.theme-toggle-compact-btn:hover .theme-icon-sun {
+  transform: rotate(45deg);
 }
 
 .top-navbar-user {
@@ -1136,36 +1146,57 @@ select.form-control {
   border-color: #E2E8F0 !important;
 }
 
-/* Light Mode Text Legibility inside transformed elements */
-[data-theme="light"] div[style*="#0"]:not(.btn):not(.badge),
-[data-theme="light"] section[style*="#0"]:not(.btn):not(.badge),
-[data-theme="light"] [style*="#0C1822"],
-[data-theme="light"] [style*="#071018"],
-[data-theme="light"] [style*="#0B171E"],
-[data-theme="light"] [style*="#121723"] {
+/* Universal Light Mode Text Legibility & Inversion */
+[data-theme="light"] *[style*="color: #fff" i]:not(.btn-primary):not(.btn-lime):not(.btn-danger):not(.badge-danger):not(.badge-success):not(.alert):not([style*="background: #2563eb"]):not([style*="background: #ef4444"]):not([style*="background: #22c55e"]):not([style*="background: #10b981"]):not([style*="background: #25D366"]):not([style*="background:#2563eb"]):not([style*="background:#ef4444"]):not([style*="background:#22c55e"]),
+[data-theme="light"] *[style*="color:#fff" i]:not(.btn-primary):not(.btn-lime):not(.btn-danger):not(.badge-danger):not(.badge-success):not(.alert):not([style*="background: #2563eb"]):not([style*="background: #ef4444"]):not([style*="background: #22c55e"]):not([style*="background: #10b981"]):not([style*="background: #25D366"]),
+[data-theme="light"] *[style*="color: #ffffff" i]:not(.btn-primary):not(.btn-lime):not(.btn-danger):not(.badge-danger):not(.badge-success):not(.alert):not([style*="background: #2563eb"]):not([style*="background: #ef4444"]):not([style*="background: #22c55e"]):not([style*="background: #10b981"]):not([style*="background: #25D366"]),
+[data-theme="light"] *[style*="color:#ffffff" i]:not(.btn-primary):not(.btn-lime):not(.btn-danger):not(.badge-danger):not(.badge-success):not(.alert):not([style*="background: #2563eb"]):not([style*="background: #ef4444"]):not([style*="background: #22c55e"]):not([style*="background: #10b981"]):not([style*="background: #25D366"]),
+[data-theme="light"] *[style*="color: white" i]:not(.btn-primary):not(.btn-lime):not(.btn-danger):not(.badge-danger):not(.badge-success):not(.alert),
+[data-theme="light"] *[style*="color:white" i]:not(.btn-primary):not(.btn-lime):not(.btn-danger):not(.badge-danger):not(.badge-success):not(.alert),
+[data-theme="light"] *[style*="color: #f8fafc" i],
+[data-theme="light"] *[style*="color:#f8fafc" i] {
   color: #0F172A !important;
 }
 
-[data-theme="light"] span[style*="color: #CAD6E2"],
-[data-theme="light"] span[style*="color: #8D99A3"],
-[data-theme="light"] span[style*="color: #cbd5e1"],
-[data-theme="light"] span[style*="color: #94a3b8"],
-[data-theme="light"] p[style*="color: #CAD6E2"],
-[data-theme="light"] p[style*="color: #8D99A3"],
-[data-theme="light"] p[style*="color: #cbd5e1"],
-[data-theme="light"] p[style*="color: #94a3b8"] {
-  color: #475569 !important;
+[data-theme="light"] *[style*="color: #cad6e2" i],
+[data-theme="light"] *[style*="color:#cad6e2" i],
+[data-theme="light"] *[style*="color: #cbd5e1" i],
+[data-theme="light"] *[style*="color:#cbd5e1" i],
+[data-theme="light"] *[style*="color: #e2e8f0" i],
+[data-theme="light"] *[style*="color:#e2e8f0" i],
+[data-theme="light"] *[style*="color: #f1f5f9" i],
+[data-theme="light"] *[style*="color:#f1f5f9" i] {
+  color: #334155 !important;
 }
 
-[data-theme="light"] span[style*="color: #FFFFFF"],
-[data-theme="light"] span[style*="color: #fff"],
-[data-theme="light"] strong[style*="color: #FFFFFF"],
-[data-theme="light"] strong[style*="color: #fff"],
-[data-theme="light"] h1[style*="color: #FFFFFF"],
-[data-theme="light"] h2[style*="color: #FFFFFF"],
-[data-theme="light"] h3[style*="color: #FFFFFF"],
-[data-theme="light"] h4[style*="color: #FFFFFF"] {
+[data-theme="light"] *[style*="color: #8d99a3" i],
+[data-theme="light"] *[style*="color:#8d99a3" i],
+[data-theme="light"] *[style*="color: #94a3b8" i],
+[data-theme="light"] *[style*="color:#94a3b8" i],
+[data-theme="light"] *[style*="color: #64748b" i],
+[data-theme="light"] *[style*="color:#64748b" i],
+[data-theme="light"] *[style*="color: #a9b7c1" i],
+[data-theme="light"] *[style*="color:#a9b7c1" i] {
+  color: #64748B !important;
+}
+
+/* Force light styling for all inputs, selects, labels and cells */
+[data-theme="light"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background-color: #FFFFFF !important;
   color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+
+[data-theme="light"] label,
+[data-theme="light"] .form-label {
+  color: #334155 !important;
+}
+
+[data-theme="light"] table td,
+[data-theme="light"] table th {
+  color: #1E293B !important;
 }
 
 /* ==========================================================================

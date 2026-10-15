@@ -13,7 +13,7 @@
       <!-- Left side: Avatar & Info -->
       <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
         <!-- Avatar Circle / Photo -->
-        <div style="width: 68px; height: 68px; border-radius: var(--radius-md); background: #121926; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; overflow: hidden; flex-shrink: 0;">
+        <div style="width: 68px; height: 68px; border-radius: var(--radius-md); background: var(--bg-surface-subtle); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; overflow: hidden; flex-shrink: 0;">
           {% if member.face_photo %}
             <img src="{{ member.face_photo.url }}" style="width: 100%; height: 100%; object-fit: cover;">
           {% elif member.gender == 'female' %}
@@ -414,14 +414,14 @@
 
 <!-- Face Enrollment 5-Poses Wizard & Variants Modal -->
 <div id="faceEnrollModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(5, 8, 14, 0.88); backdrop-filter: blur(10px); align-items: center; justify-content: center; padding: 14px; overflow-y: auto;">
-  <div style="background: #0b1320; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; width: 100%; max-width: 680px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7); overflow: hidden; display: flex; flex-direction: column; margin: auto;">
+  <div style="background: var(--bg-card); border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; width: 100%; max-width: 680px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7); overflow: hidden; display: flex; flex-direction: column; margin: auto;">
     
     <!-- Modal Header -->
     <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02);">
       <div style="display: flex; align-items: center; gap: 10px;">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
         <div>
-          <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #FFFFFF;">
+          <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main);">
             معالج بصمة الوجه الذكي (5 وضعيات): {{ member.name }}
           </h3>
           <span style="font-size: 0.78rem; color: #94a3b8;">
@@ -459,33 +459,33 @@
       <!-- 5 Poses Cards Strip -->
       <div id="posesCardsStrip" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;">
         <!-- Card 0: Center -->
-        <div id="poseCard0" onclick="selectPoseStep(0)" style="cursor: pointer; background: #071018; border: 2px solid #10b981; border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
+        <div id="poseCard0" onclick="selectPoseStep(0)" style="cursor: pointer; background: var(--bg-input); border: 2px solid #10b981; border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
           <div style="font-size: 0.85rem; font-weight: 800; margin-bottom: 2px;">1</div>
-          <div style="font-size: 0.72rem; font-weight: 800; color: #e2e8f0;">مستقيم</div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-main);">مستقيم</div>
           <div id="poseStatus0" style="font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">جاهز</div>
         </div>
         <!-- Card 1: Left -->
-        <div id="poseCard1" onclick="selectPoseStep(1)" style="cursor: pointer; background: #071018; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
+        <div id="poseCard1" onclick="selectPoseStep(1)" style="cursor: pointer; background: var(--bg-input); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
           <div style="font-size: 1.1rem; margin-bottom: 2px;">⬅️</div>
-          <div style="font-size: 0.72rem; font-weight: 800; color: #e2e8f0;">يسار</div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-main);">يسار</div>
           <div id="poseStatus1" style="font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">انتظار</div>
         </div>
         <!-- Card 2: Right -->
-        <div id="poseCard2" onclick="selectPoseStep(2)" style="cursor: pointer; background: #071018; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
+        <div id="poseCard2" onclick="selectPoseStep(2)" style="cursor: pointer; background: var(--bg-input); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
           <div style="font-size: 0.85rem; font-weight: 800; margin-bottom: 2px;">2</div>
-          <div style="font-size: 0.72rem; font-weight: 800; color: #e2e8f0;">يمين</div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-main);">يمين</div>
           <div id="poseStatus2" style="font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">انتظار</div>
         </div>
         <!-- Card 3: Glasses / Up -->
-        <div id="poseCard3" onclick="selectPoseStep(3)" style="cursor: pointer; background: #071018; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
+        <div id="poseCard3" onclick="selectPoseStep(3)" style="cursor: pointer; background: var(--bg-input); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
           <div style="font-size: 0.85rem; font-weight: 800; margin-bottom: 2px;">3</div>
-          <div style="font-size: 0.72rem; font-weight: 800; color: #e2e8f0;">نظارة/أعلى</div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-main);">نظارة/أعلى</div>
           <div id="poseStatus3" style="font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">انتظار</div>
         </div>
         <!-- Card 4: Smile / Down -->
-        <div id="poseCard4" onclick="selectPoseStep(4)" style="cursor: pointer; background: #071018; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
+        <div id="poseCard4" onclick="selectPoseStep(4)" style="cursor: pointer; background: var(--bg-input); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.2s;">
           <div style="font-size: 0.85rem; font-weight: 800; margin-bottom: 2px;">4</div>
-          <div style="font-size: 0.72rem; font-weight: 800; color: #e2e8f0;">ابتسامة/أسفل</div>
+          <div style="font-size: 0.72rem; font-weight: 800; color: var(--text-main);">ابتسامة/أسفل</div>
           <div id="poseStatus4" style="font-size: 0.68rem; color: #94a3b8; margin-top: 2px;">انتظار</div>
         </div>
       </div>

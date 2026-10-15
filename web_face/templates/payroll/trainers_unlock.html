@@ -4,7 +4,7 @@
 
 {% block content %}
 <div style="min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
-  <div style="background: #0B171E; border: 2px solid #1A2B36; border-radius: 20px; width: 100%; max-width: 480px; padding: 36px 28px; box-shadow: 0 16px 40px rgba(0,0,0,0.6); text-align: center;">
+  <div style="background: var(--bg-card); border: 2px solid #1A2B36; border-radius: 20px; width: 100%; max-width: 480px; padding: 36px 28px; box-shadow: 0 16px 40px rgba(0,0,0,0.6); text-align: center;">
     
     <!-- Lock Icon -->
     <div style="width: 72px; height: 72px; background: rgba(255, 179, 0, 0.1); border: 2px solid #FFB300; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto 20px auto;">
@@ -15,7 +15,7 @@
       صفحة إدارة المدربين محمية
     </h2>
 
-    <p style="color: #8D99A3; font-size: 0.92rem; line-height: 1.6; margin-bottom: 24px;">
+    <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.6; margin-bottom: 24px;">
       يرجى إدخال كلمة مرور إدارة المدربين أو كلمة مرور المدير للوصول إلى كشوفات وحسابات وعمولات الكباتن.
     </p>
 
@@ -23,7 +23,7 @@
       {% csrf_token %}
 
       <div style="text-align: right;">
-        <label for="trainer-pwd" style="display: block; color: #A9B7C1; font-size: 0.88rem; font-weight: 700; margin-bottom: 8px;">
+        <label for="trainer-pwd" style="display: block; color: var(--text-muted); font-size: 0.88rem; font-weight: 700; margin-bottom: 8px;">
           كلمة المرور:
         </label>
         <input 
@@ -33,7 +33,7 @@
           required 
           autofocus
           placeholder="أدخل كلمة المرور هنا..."
-          style="width: 100%; background: #07131B; border: 2px solid #182834; color: #FFFFFF; font-size: 1.1rem; padding: 14px 16px; border-radius: 10px; outline: none; text-align: center; letter-spacing: 2px;"
+          style="width: 100%; background: var(--bg-card); border: 2px solid #182834; color: var(--text-main); font-size: 1.1rem; padding: 14px 16px; border-radius: 10px; outline: none; text-align: center; letter-spacing: 2px;"
         >
       </div>
 

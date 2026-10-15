@@ -34,16 +34,16 @@
 
   <!-- Summary Metric Banner -->
   <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;" class="payroll-stats-grid">
-    <div class="stat-card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 10px; padding: 14px;">
-      <span class="stat-label" style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">إجمالي الرواتب الأساسية</span>
+    <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+      <span class="stat-label" style="color: var(--text-muted); font-size: 0.82rem; font-weight: 600; display: block;">إجمالي الرواتب الأساسية</span>
       <span class="stat-val" style="color: #FFFFFF; font-size: 1.25rem; font-weight: 800; margin-top: 4px; display: block;">{{ payroll_run.total_fixed_salary }} <small style="font-size: 0.85rem;">{{ gym_profile.currency }}</small></span>
     </div>
-    <div class="stat-card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 10px; padding: 14px;">
-      <span class="stat-label" style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">إجمالي عمولات PT</span>
+    <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+      <span class="stat-label" style="color: var(--text-muted); font-size: 0.82rem; font-weight: 600; display: block;">إجمالي عمولات PT</span>
       <span class="stat-val" style="color: #4DB3FF; font-size: 1.25rem; font-weight: 800; margin-top: 4px; display: block;">{{ payroll_run.total_commissions }} <small style="font-size: 0.85rem;">{{ gym_profile.currency }}</small></span>
     </div>
-    <div class="stat-card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 10px; padding: 14px;">
-      <span class="stat-label" style="color: #8D99A3; font-size: 0.82rem; font-weight: 600; display: block;">المكافآت والجزاءات</span>
+    <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+      <span class="stat-label" style="color: var(--text-muted); font-size: 0.82rem; font-weight: 600; display: block;">المكافآت والجزاءات</span>
       <span class="stat-val" style="font-size: 1.25rem; font-weight: 800; margin-top: 4px; display: block;">
         <span style="color: #7ED321;">+{{ payroll_run.total_bonuses }}</span> / <span style="color: #FF5C67;">-{{ payroll_run.total_deductions }}</span>
       </span>
@@ -59,9 +59,9 @@
   </div>
 
   <!-- Itemized Payroll Table -->
-  <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
-    <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 16px;">
-      <h3 class="card-title" style="color: #FFFFFF; font-size: 1.2rem; font-weight: 800; margin: 0;">
+  <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+    <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+      <h3 class="card-title" style="color: var(--text-main); font-size: 1.2rem; font-weight: 800; margin: 0;">
         📋 تفصيل مستحقات الموظفين والمدربين
       </h3>
     </div>

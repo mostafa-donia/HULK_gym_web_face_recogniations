@@ -173,16 +173,23 @@
 
       <!-- User Profile, Face Camera Indicator & Logout on Left (RTL) -->
       <div class="top-navbar-user">
-        <!-- Modern Single Compact Theme Switcher Button -->
-        <button type="button" id="themeToggleBtn" class="theme-toggle-compact-btn" onclick="toggleTheme()" title="تبديل المظهر النهاري / الليلي" aria-label="تبديل المظهر">
-          <!-- Sun Icon (Active in Dark mode) -->
-          <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4"></circle>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
-          </svg>
-          <!-- Moon Icon (Active in Light mode) -->
-          <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Circular Theme Switcher Button Matching User Reference -->
+        <button type="button" id="themeToggleBtn" class="theme-toggle-compact-btn" onclick="toggleTheme()" title="الوضع الليلي نشط (انقر للتبديل إلى الوضع النهاري)" aria-label="تبديل المظهر">
+          <!-- Solid Filled Crescent Moon (Active in Dark mode) -->
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="currentColor">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <!-- Solid Sun with Rays (Active in Light mode) -->
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5" fill="currentColor"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
         </button>
 
@@ -525,7 +532,7 @@
     function updateThemeButtonTitle(theme) {
       var btn = document.getElementById('themeToggleBtn');
       if (btn) {
-        btn.setAttribute('title', theme === 'dark' ? 'تبديل إلى الوضع النهاري (Light Mode)' : 'تبديل إلى الوضع الليلي (Dark Mode)');
+        btn.setAttribute('title', theme === 'dark' ? 'الوضع الليلي نشط (انقر للتبديل إلى الوضع النهاري)' : 'الوضع النهاري نشط (انقر للتبديل إلى الوضع الليلي)');
       }
     }
 

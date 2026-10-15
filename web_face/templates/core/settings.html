@@ -8,15 +8,15 @@
   <!-- Page Header -->
   <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 14px;">
     <div>
-      <h2 style="color: #FFFFFF; font-size: 1.45rem; font-weight: 800; margin: 0 0 4px 0;">
+      <h2 style="color: var(--text-main); font-size: 1.45rem; font-weight: 800; margin: 0 0 4px 0;">
         إعدادات النظام وتكامل الخدمات
       </h2>
-      <span style="color: #8D99A3; font-size: 0.88rem;">
+      <span style="color: var(--text-muted); font-size: 0.88rem;">
         بيانات الصالة، حماية كلمة السر، الرسائل، وإدارة الباقات.
       </span>
     </div>
 
-    <a href="{% url 'core:manager_dashboard' %}" class="btn btn-secondary" style="background: #0E1D28; border: 1px solid #1C3347; color: #CAD6E2; font-weight: 700; font-size: 0.88rem; padding: 8px 16px; border-radius: 8px; text-decoration: none;">
+    <a href="{% url 'core:manager_dashboard' %}" class="btn btn-secondary" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); font-weight: 700; font-size: 0.88rem; padding: 8px 16px; border-radius: 8px; text-decoration: none;">
       ← لوحة المدير
     </a>
   </div>
@@ -27,10 +27,10 @@
     <!-- Card 1: Gym Business Profile -->
     <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
       <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px;">
-        <h3 class="card-title" style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+        <h3 class="card-title" style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
           بيانات الصالة الرياضية
         </h3>
-        <span style="color: #8D99A3; font-size: 0.82rem;">الاسم التجاري، العملة المستخدمة، والشعار اللفظي.</span>
+        <span style="color: var(--text-muted); font-size: 0.82rem;">الاسم التجاري، العملة المستخدمة، والشعار اللفظي.</span>
       </div>
 
       <form method="post" action="{% url 'core:settings' %}">
@@ -39,19 +39,19 @@
 
         <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin-bottom: 14px;">
           <div class="form-group">
-            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">اسم الصالة (Gym Name)</label>
-            <input type="text" name="gym_name" class="form-control" value="{{ profile.gym_name }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">اسم الصالة (Gym Name)</label>
+            <input type="text" name="gym_name" class="form-control" value="{{ profile.gym_name }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
           </div>
 
           <div class="form-group">
-            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">العملة</label>
-            <input type="text" name="currency" class="form-control" value="{{ profile.currency }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">العملة</label>
+            <input type="text" name="currency" class="form-control" value="{{ profile.currency }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
           </div>
         </div>
 
         <div class="form-group" style="margin-bottom: 16px;">
-          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">الشعار اللفظي / السلوجان (Tagline)</label>
-          <input type="text" name="gym_tagline" class="form-control" value="{{ profile.gym_tagline|default:'' }}" placeholder="مثال: The Ultimate Fitness Club" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">الشعار اللفظي / السلوجان (Tagline)</label>
+          <input type="text" name="gym_tagline" class="form-control" value="{{ profile.gym_tagline|default:'' }}" placeholder="مثال: The Ultimate Fitness Club" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
         </div>
 
         <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
@@ -71,10 +71,10 @@
     <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
       <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <div>
-          <h3 class="card-title" style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <h3 class="card-title" style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
             الكاميرا ورسائل الواتساب
           </h3>
-          <span style="color: #8D99A3; font-size: 0.82rem;">التحكم في تشغيل الكاميرا وإشعارات الواتساب وتقارير الإدارة.</span>
+          <span style="color: var(--text-muted); font-size: 0.82rem;">التحكم في تشغيل الكاميرا وإشعارات الواتساب وتقارير الإدارة.</span>
         </div>
         <a href="{% url 'face_recognition:kiosk' %}" target="_blank" class="btn btn-sm" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; font-weight: 700; text-decoration: none; padding: 4px 12px; border-radius: 6px;">
           فتح الكشك ↗
@@ -90,7 +90,7 @@
         <!-- Global Camera Toggle -->
         <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
           <div>
-            <label for="face_camera_enabled" style="margin: 0; color: #FFFFFF; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: block;">
+            <label for="face_camera_enabled" style="margin: 0; color: var(--text-main); font-weight: 800; font-size: 0.95rem; cursor: pointer; display: block;">
               تشغيل كاميرا التعرف على الوجه التلقائية
             </label>
             <span style="color: #94a3b8; font-size: 0.8rem;">
@@ -102,24 +102,24 @@
 
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 14px;">
           <div class="form-group">
-            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">رقم هاتف المدير (للتقارير اليومية)</label>
-            <input type="text" name="manager_mobile" class="form-control" value="{{ profile.manager_mobile }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%; direction: ltr; text-align: right;">
+            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">رقم هاتف المدير (للتقارير اليومية)</label>
+            <input type="text" name="manager_mobile" class="form-control" value="{{ profile.manager_mobile }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 12px; width: 100%; direction: ltr; text-align: right;">
           </div>
 
           <div class="form-group">
-            <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">موعد التقرير اليومي</label>
-            <input type="text" name="daily_report_time" class="form-control" value="{{ profile.daily_report_time }}" placeholder="23:30" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">موعد التقرير اليومي</label>
+            <input type="text" name="daily_report_time" class="form-control" value="{{ profile.daily_report_time }}" placeholder="23:30" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
           </div>
         </div>
 
         <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
           <input type="checkbox" id="whatsapp_enabled" name="whatsapp_enabled" {% if profile.whatsapp_enabled %}checked{% endif %} style="width: 20px; height: 20px; accent-color: #7ED321; cursor: pointer;">
-          <label for="whatsapp_enabled" class="form-label" style="margin: 0; color: #CAD6E2; font-weight: 700; cursor: pointer;">تفعيل إرسال رسائل وتنبيهات الواتساب التلقائية</label>
+          <label for="whatsapp_enabled" class="form-label" style="margin: 0; color: var(--text-secondary); font-weight: 700; cursor: pointer;">تفعيل إرسال رسائل وتنبيهات الواتساب التلقائية</label>
         </div>
 
         <div class="form-group" style="margin-bottom: 16px;">
-          <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">قالب رسالة انتهاء الاشتراك</label>
-          <textarea name="expired_message_template" class="form-control" rows="2" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; border-radius: 8px; padding: 8px; width: 100%;">{{ profile.expired_message_template }}</textarea>
+          <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">قالب رسالة انتهاء الاشتراك</label>
+          <textarea name="expired_message_template" class="form-control" rows="2" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; padding: 8px; width: 100%;">{{ profile.expired_message_template }}</textarea>
         </div>
 
         <button type="submit" class="btn btn-primary" style="background: #0d281e; border: 1px solid #10b981; color: #10b981; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
@@ -136,13 +136,13 @@
       <h3 class="card-title" style="color: #FF5C67; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
         أمان النظام وتغيير كلمة السر
       </h3>
-      <span style="color: #8D99A3; font-size: 0.82rem;">لحماية النظام، لا يمكن تغيير أي كلمة سر إلا بعد إدخال كلمة السر الحالية أولاً.</span>
+      <span style="color: var(--text-muted); font-size: 0.82rem;">لحماية النظام، لا يمكن تغيير أي كلمة سر إلا بعد إدخال كلمة السر الحالية أولاً.</span>
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;" class="settings-grid">
       
       <!-- Part A: Trainers & Dashboard Protection Password -->
-      <form method="post" action="{% url 'core:settings' %}" style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px;">
+      <form method="post" action="{% url 'core:settings' %}" style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 10px; padding: 16px;">
         {% csrf_token %}
         <input type="hidden" name="action" value="change_trainers_password">
 
@@ -151,30 +151,30 @@
         </h4>
 
         <div class="form-group" style="margin-bottom: 10px;">
-          <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+          <label class="form-label" style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
             كلمة السر الحالية *
           </label>
-          <input type="password" id="old_pwd_input" name="old_password" class="form-control" placeholder="اكتب كلمة السر الحالية للتحقق..." required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          <input type="password" id="old_pwd_input" name="old_password" class="form-control" placeholder="اكتب كلمة السر الحالية للتحقق..." required style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
           <div class="form-group">
-            <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            <label class="form-label" style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
               كلمة السر الجديدة *
             </label>
-            <input type="password" id="new_pwd_input" name="new_password" class="form-control" placeholder="4 خانات على الأقل" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+            <input type="password" id="new_pwd_input" name="new_password" class="form-control" placeholder="4 خانات على الأقل" required style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
           </div>
 
           <div class="form-group">
-            <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            <label class="form-label" style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
               تأكيد كلمة السر *
             </label>
-            <input type="password" id="confirm_pwd_input" name="confirm_password" class="form-control" placeholder="أعد كتابتها للتأكيد" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+            <input type="password" id="confirm_pwd_input" name="confirm_password" class="form-control" placeholder="أعد كتابتها للتأكيد" required style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
           </div>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <button type="button" onclick="togglePasswordVisibility('old_pwd_input', 'new_pwd_input', 'confirm_pwd_input')" style="background: transparent; border: 1px solid #1E374D; color: #8D99A3; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+          <button type="button" onclick="togglePasswordVisibility('old_pwd_input', 'new_pwd_input', 'confirm_pwd_input')" style="background: transparent; border: 1px solid #1E374D; color: var(--text-muted); font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
             إظهار / إخفاء
           </button>
 
@@ -185,7 +185,7 @@
       </form>
 
       <!-- Part B: Logged-in User Account Password -->
-      <form method="post" action="{% url 'core:settings' %}" style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px;">
+      <form method="post" action="{% url 'core:settings' %}" style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 10px; padding: 16px;">
         {% csrf_token %}
         <input type="hidden" name="action" value="change_account_password">
 
@@ -194,30 +194,30 @@
         </h4>
 
         <div class="form-group" style="margin-bottom: 10px;">
-          <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+          <label class="form-label" style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
             كلمة المرور الحالية لحسابك *
           </label>
-          <input type="password" id="user_old_pwd" name="current_user_password" class="form-control" placeholder="كلمة مرور دخولك الحالية..." required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          <input type="password" id="user_old_pwd" name="current_user_password" class="form-control" placeholder="كلمة مرور دخولك الحالية..." required style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
           <div class="form-group">
-            <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            <label class="form-label" style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
               كلمة المرور الجديدة *
             </label>
-            <input type="password" id="user_new_pwd" name="new_user_password" class="form-control" placeholder="6 خانات أو أحرف" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+            <input type="password" id="user_new_pwd" name="new_user_password" class="form-control" placeholder="6 خانات أو أحرف" required style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
           </div>
 
           <div class="form-group">
-            <label class="form-label" style="color: #CAD6E2; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            <label class="form-label" style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; display: block;">
               تأكيد كلمة المرور *
             </label>
-            <input type="password" id="user_confirm_pwd" name="confirm_user_password" class="form-control" placeholder="أعد كتابتها للتأكيد" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+            <input type="password" id="user_confirm_pwd" name="confirm_user_password" class="form-control" placeholder="أعد كتابتها للتأكيد" required style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
           </div>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <button type="button" onclick="togglePasswordVisibility('user_old_pwd', 'user_new_pwd', 'user_confirm_pwd')" style="background: transparent; border: 1px solid #1E374D; color: #8D99A3; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+          <button type="button" onclick="togglePasswordVisibility('user_old_pwd', 'user_new_pwd', 'user_confirm_pwd')" style="background: transparent; border: 1px solid #1E374D; color: var(--text-muted); font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
             إظهار / إخفاء
           </button>
 
@@ -233,32 +233,32 @@
   <!-- Row 3: Plans Management -->
   <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
     <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px;">
-      <h3 class="card-title" style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0;">
+      <h3 class="card-title" style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0;">
         باقات الاشتراكات
       </h3>
     </div>
 
     <!-- Add New Plan Form -->
-    <form method="post" action="{% url 'core:settings' %}" style="background: #071018; border: 1px solid #162A3B; padding: 16px; border-radius: 10px; margin-bottom: 18px;">
+    <form method="post" action="{% url 'core:settings' %}" style="background: var(--bg-input); border: 1px solid #162A3B; padding: 16px; border-radius: 10px; margin-bottom: 18px;">
       {% csrf_token %}
       <input type="hidden" name="action" value="add_plan">
       <h4 style="font-size: 0.95rem; margin: 0 0 12px 0; color: #A8F14B; font-weight: 800;">إضافة باقة جديدة</h4>
       
       <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px;">
         <div class="form-group">
-          <input type="text" name="name" class="form-control" placeholder="اسم الباقة (مثال: شهري شامل)" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          <input type="text" name="name" class="form-control" placeholder="اسم الباقة (مثال: شهري شامل)" required style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
         </div>
 
         <div class="form-group">
-          <input type="number" step="0.01" name="price" class="form-control" placeholder="السعر (ج)" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          <input type="number" step="0.01" name="price" class="form-control" placeholder="السعر (ج)" required style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
         </div>
 
         <div class="form-group">
-          <input type="number" name="duration_days" class="form-control" placeholder="المدة بالأيام (28)" required style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          <input type="number" name="duration_days" class="form-control" placeholder="المدة بالأيام (28)" required style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
         </div>
 
         <div class="form-group">
-          <input type="text" name="frequency" class="form-control" placeholder="النظام (كل يوم)" value="كل يوم" style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          <input type="text" name="frequency" class="form-control" placeholder="النظام (كل يوم)" value="كل يوم" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
         </div>
       </div>
 
@@ -273,21 +273,21 @@
     <div class="table-responsive" style="overflow-x: auto;">
       <table class="dark-table" style="width: 100%; border-collapse: collapse;">
         <thead>
-          <tr style="background: #071018; border-bottom: 2px solid #182C3C;">
-            <th style="padding: 12px; text-align: right; color: #8D99A3; font-size: 0.85rem; font-weight: 700;">الباقة</th>
-            <th style="padding: 12px; text-align: right; color: #8D99A3; font-size: 0.85rem; font-weight: 700;">السعر</th>
-            <th style="padding: 12px; text-align: right; color: #8D99A3; font-size: 0.85rem; font-weight: 700;">المدة</th>
-            <th style="padding: 12px; text-align: right; color: #8D99A3; font-size: 0.85rem; font-weight: 700;">النظام</th>
-            <th style="padding: 12px; text-align: center; color: #8D99A3; font-size: 0.85rem; font-weight: 700;">الحالة</th>
+          <tr style="background: var(--bg-input); border-bottom: 2px solid #182C3C;">
+            <th style="padding: 12px; text-align: right; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">الباقة</th>
+            <th style="padding: 12px; text-align: right; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">السعر</th>
+            <th style="padding: 12px; text-align: right; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">المدة</th>
+            <th style="padding: 12px; text-align: right; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">النظام</th>
+            <th style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">الحالة</th>
           </tr>
         </thead>
         <tbody>
           {% for plan in plans %}
             <tr style="border-bottom: 1px solid #132431;">
-              <td style="padding: 12px; font-weight: 700; color: #FFFFFF;">{{ plan.name }}</td>
+              <td style="padding: 12px; font-weight: 700; color: var(--text-main);">{{ plan.name }}</td>
               <td style="padding: 12px; color: #7ED321; font-weight: 800;">{{ plan.price }} {{ profile.currency }}</td>
-              <td style="padding: 12px; color: #CAD6E2;">{{ plan.duration_days }} يوم</td>
-              <td style="padding: 12px; color: #8D99A3;">{{ plan.frequency }}</td>
+              <td style="padding: 12px; color: var(--text-secondary);">{{ plan.duration_days }} يوم</td>
+              <td style="padding: 12px; color: var(--text-muted);">{{ plan.frequency }}</td>
               <td style="padding: 12px; text-align: center;">
                 <form method="post" action="{% url 'core:settings' %}" style="display: inline; margin: 0;">
                   {% csrf_token %}
@@ -315,7 +315,7 @@
         
       </div>
 
-      <h3 style="color: #FFFFFF; font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;">
+      <h3 style="color: var(--text-main); font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;">
         خيارات المطور والتهيئة المتقدمة (Developer Options)
       </h3>
 
@@ -337,7 +337,7 @@
           name="developer_password" 
           required 
           placeholder="أدخل كلمة سر المطور..." 
-          style="background: #060d15; border: 2px solid #1e3a52; color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 1rem; width: 260px; text-align: center; letter-spacing: 2px; outline: none;"
+          style="background: #060d15; border: 2px solid #1e3a52; color: var(--text-main); padding: 10px 16px; border-radius: 10px; font-size: 1rem; width: 260px; text-align: center; letter-spacing: 2px; outline: none;"
         >
 
         <button type="submit" class="btn btn-primary" style="background: #2563eb; color: #fff; border: none; font-weight: 800; font-size: 0.95rem; padding: 11px 22px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
@@ -386,7 +386,7 @@
             <h3 class="card-title" style="color: #60a5fa; font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
               تخصيص ألوان الواجهة والشعار (UI Palette & Logo)
             </h3>
-            <span style="color: #8D99A3; font-size: 0.82rem;">
+            <span style="color: var(--text-muted); font-size: 0.82rem;">
               التحكم في اللون الأساسي، الثانوي، والثالث للخلفية، واختيار باليتات جاهزة بنقرة واحدة، وإدارة لوجو الصالة.
             </span>
           </div>
@@ -403,8 +403,8 @@
           <input type="hidden" name="action" value="save_branding">
 
           <!-- Section A: Logo Upload & Management -->
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
-            <h4 style="color: #FFFFFF; font-size: 0.95rem; font-weight: 800; margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+            <h4 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
               شعار الصالة (Logo)
             </h4>
 
@@ -418,7 +418,7 @@
               </div>
 
               <div style="flex: 1; min-width: 240px;">
-                <input type="file" name="logo" accept="image/*" style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; font-size: 0.85rem; padding: 8px; border-radius: 6px; width: 100%;">
+                <input type="file" name="logo" accept="image/*" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); font-size: 0.85rem; padding: 8px; border-radius: 6px; width: 100%;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; flex-wrap: wrap; gap: 8px;">
                   <small style="color: #64748b; font-size: 0.75rem;">PNG أو SVG شفاف أو JPG عالي الدقة (أقل من 2MB).</small>
                   {% if profile.logo %}
@@ -433,9 +433,9 @@
           </div>
 
           <!-- Section B: Ready-made Complete Palettes (1-Click) -->
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-              <h4 style="color: #FFFFFF; font-size: 0.95rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
+              <h4 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
                 باليتات ألوان جاهزة (One-Click Palettes)
               </h4>
               <span style="color: #64748b; font-size: 0.78rem;">انقر على أي باليتة لتطبيق درجات الألوان الثلاثة معاً</span>
@@ -536,7 +536,7 @@
               <!-- 8. Obsidian Monochrome -->
               <button type="button" onclick="applyPresetPalette('#E2E8F0', '#18181B', '#09090B')" class="palette-preset-btn" style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px; text-align: right; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
                 <div>
-                  <strong style="color: #F1F5F9; font-size: 0.85rem; display: block;">Obsidian Mono</strong>
+                  <strong style="color: var(--text-main); font-size: 0.85rem; display: block;">Obsidian Mono</strong>
                   <span style="color: #64748b; font-size: 0.72rem;">فضي داكن أحادي</span>
                 </div>
                 <div style="display: flex; gap: 3px;">
@@ -549,8 +549,8 @@
           </div>
 
           <!-- Section C: Custom 3-Color Pickers & Hex Codes -->
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
-            <h4 style="color: #FFFFFF; font-size: 0.95rem; font-weight: 800; margin: 0 0 14px 0; display: flex; align-items: center; gap: 6px;">
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+            <h4 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin: 0 0 14px 0; display: flex; align-items: center; gap: 6px;">
               معايرة الدرجات الثلاث يدوياً
             </h4>
 
@@ -558,7 +558,7 @@
               
               <!-- 1. Primary Color -->
               <div style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 12px;">
-                <label style="color: #CAD6E2; font-weight: 800; font-size: 0.85rem; margin-bottom: 4px; display: block;">
+                <label style="color: var(--text-secondary); font-weight: 800; font-size: 0.85rem; margin-bottom: 4px; display: block;">
                   اللون الأساسي (Primary Accent)
                 </label>
                 <span style="color: #64748b; font-size: 0.74rem; display: block; margin-bottom: 10px;">
@@ -567,13 +567,13 @@
 
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <input type="color" id="primaryColorInput" name="primary_color" value="{{ profile.primary_color|default:'#84CC16' }}" oninput="syncColor('primary', this.value)" style="width: 44px; height: 38px; padding: 0; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
-                  <input type="text" id="primaryColorHex" value="{{ profile.primary_color|default:'#84CC16' }}" oninput="syncColorHex('primary', this.value)" style="background: #060d15; border: 1px solid #1e3a52; color: #FFFFFF; font-family: monospace; font-size: 0.9rem; font-weight: 800; height: 38px; border-radius: 6px; padding: 0 10px; width: 100px; text-transform: uppercase;">
+                  <input type="text" id="primaryColorHex" value="{{ profile.primary_color|default:'#84CC16' }}" oninput="syncColorHex('primary', this.value)" style="background: #060d15; border: 1px solid #1e3a52; color: var(--text-main); font-family: monospace; font-size: 0.9rem; font-weight: 800; height: 38px; border-radius: 6px; padding: 0 10px; width: 100px; text-transform: uppercase;">
                 </div>
               </div>
 
               <!-- 2. Secondary Color (Cards & Surfaces) -->
               <div style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 12px;">
-                <label style="color: #CAD6E2; font-weight: 800; font-size: 0.85rem; margin-bottom: 4px; display: block;">
+                <label style="color: var(--text-secondary); font-weight: 800; font-size: 0.85rem; margin-bottom: 4px; display: block;">
                   اللون الثانوي (Secondary / Cards)
                 </label>
                 <span style="color: #64748b; font-size: 0.74rem; display: block; margin-bottom: 10px;">
@@ -582,13 +582,13 @@
 
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <input type="color" id="secondaryColorInput" name="secondary_color" value="{{ profile.secondary_color|default:'#121723' }}" oninput="syncColor('secondary', this.value)" style="width: 44px; height: 38px; padding: 0; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
-                  <input type="text" id="secondaryColorHex" value="{{ profile.secondary_color|default:'#121723' }}" oninput="syncColorHex('secondary', this.value)" style="background: #060d15; border: 1px solid #1e3a52; color: #FFFFFF; font-family: monospace; font-size: 0.9rem; font-weight: 800; height: 38px; border-radius: 6px; padding: 0 10px; width: 100px; text-transform: uppercase;">
+                  <input type="text" id="secondaryColorHex" value="{{ profile.secondary_color|default:'#121723' }}" oninput="syncColorHex('secondary', this.value)" style="background: #060d15; border: 1px solid #1e3a52; color: var(--text-main); font-family: monospace; font-size: 0.9rem; font-weight: 800; height: 38px; border-radius: 6px; padding: 0 10px; width: 100px; text-transform: uppercase;">
                 </div>
               </div>
 
               <!-- 3. Tertiary Color (Main Background) -->
               <div style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 12px;">
-                <label style="color: #CAD6E2; font-weight: 800; font-size: 0.85rem; margin-bottom: 4px; display: block;">
+                <label style="color: var(--text-secondary); font-weight: 800; font-size: 0.85rem; margin-bottom: 4px; display: block;">
                   اللون الثالث (Tertiary / Background)
                 </label>
                 <span style="color: #64748b; font-size: 0.74rem; display: block; margin-bottom: 10px;">
@@ -597,7 +597,7 @@
 
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <input type="color" id="tertiaryColorInput" name="tertiary_color" value="{{ profile.tertiary_color|default:'#0B0E14' }}" oninput="syncColor('tertiary', this.value)" style="width: 44px; height: 38px; padding: 0; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
-                  <input type="text" id="tertiaryColorHex" value="{{ profile.tertiary_color|default:'#0B0E14' }}" oninput="syncColorHex('tertiary', this.value)" style="background: #060d15; border: 1px solid #1e3a52; color: #FFFFFF; font-family: monospace; font-size: 0.9rem; font-weight: 800; height: 38px; border-radius: 6px; padding: 0 10px; width: 100px; text-transform: uppercase;">
+                  <input type="text" id="tertiaryColorHex" value="{{ profile.tertiary_color|default:'#0B0E14' }}" oninput="syncColorHex('tertiary', this.value)" style="background: #060d15; border: 1px solid #1e3a52; color: var(--text-main); font-family: monospace; font-size: 0.9rem; font-weight: 800; height: 38px; border-radius: 6px; padding: 0 10px; width: 100px; text-transform: uppercase;">
                 </div>
               </div>
 
@@ -605,9 +605,9 @@
           </div>
 
           <!-- Section D: Live Preview Box -->
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <h4 style="color: #FFFFFF; font-size: 0.9rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
+              <h4 style="color: var(--text-main); font-size: 0.9rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
                 معاينة حية للألوان المختارة
               </h4>
               <span style="color: #64748b; font-size: 0.75rem;">تتغير ديناميكياً فور اختيار أي لون</span>
@@ -655,7 +655,7 @@
           <h3 class="card-title" style="color: #4DB3FF; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
             معايرة خوارزميات الوجه ومتحكم البوابة
           </h3>
-          <span style="color: #8D99A3; font-size: 0.82rem;">ضبط حساسية ومطابقة نماذج YuNet/SFace ومتحكم Relay عبر المنفذ التسلسلي COM.</span>
+          <span style="color: var(--text-muted); font-size: 0.82rem;">ضبط حساسية ومطابقة نماذج YuNet/SFace ومتحكم Relay عبر المنفذ التسلسلي COM.</span>
         </div>
 
         <form method="post" action="{% url 'core:settings' %}">
@@ -665,34 +665,34 @@
 
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px;">
             <div class="form-group">
-              <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">حساسية مطابقة الوجه (Cosine Threshold)</label>
-              <input type="number" step="0.01" name="face_match_threshold" class="form-control" value="{{ profile.face_match_threshold|default:'0.363' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+              <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">حساسية مطابقة الوجه (Cosine Threshold)</label>
+              <input type="number" step="0.01" name="face_match_threshold" class="form-control" value="{{ profile.face_match_threshold|default:'0.363' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
               <small style="color: #64748b; font-size: 0.75rem;">الافتراضي: 0.363</small>
             </div>
 
             <div class="form-group">
-              <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">دقة كشف الوجه (Min Confidence)</label>
-              <input type="number" step="0.05" name="face_min_confidence" class="form-control" value="{{ profile.face_min_confidence|default:'0.55' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+              <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">دقة كشف الوجه (Min Confidence)</label>
+              <input type="number" step="0.05" name="face_min_confidence" class="form-control" value="{{ profile.face_min_confidence|default:'0.55' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
               <small style="color: #64748b; font-size: 0.75rem;">الافتراضي: 0.55</small>
             </div>
 
             <div class="form-group">
-              <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">فترة منع تكرار التسجيل (بالثواني)</label>
-              <input type="number" name="face_debounce_seconds" class="form-control" value="{{ profile.face_debounce_seconds|default:'60' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+              <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">فترة منع تكرار التسجيل (بالثواني)</label>
+              <input type="number" name="face_debounce_seconds" class="form-control" value="{{ profile.face_debounce_seconds|default:'60' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
               <small style="color: #64748b; font-size: 0.75rem;">الافتراضي: 60 ثانية</small>
             </div>
           </div>
 
           <!-- Relay Hardware Control -->
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
             <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
               <input type="checkbox" id="gate_relay_enabled" name="gate_relay_enabled" {% if profile.gate_relay_enabled %}checked{% endif %} style="width: 20px; height: 20px; accent-color: #10b981; cursor: pointer;">
-              <label for="gate_relay_enabled" class="form-label" style="margin: 0; color: #CAD6E2; font-weight: 700; cursor: pointer;">تفعيل إشارة فتح البوابة الإلكترونية (Turnstile Relay Trigger)</label>
+              <label for="gate_relay_enabled" class="form-label" style="margin: 0; color: var(--text-secondary); font-weight: 700; cursor: pointer;">تفعيل إشارة فتح البوابة الإلكترونية (Turnstile Relay Trigger)</label>
             </div>
 
             <div class="form-group">
-              <label class="form-label" style="color: #8D99A3; font-size: 0.84rem; font-weight: 700; margin-bottom: 4px; display: block;">منفذ الاتصال التسلسلي (Serial / COM Port)</label>
-              <input type="text" name="gate_relay_port" class="form-control" value="{{ profile.gate_relay_port|default:'COM3' }}" placeholder="COM3 أو /dev/ttyUSB0" style="background: #0C1822; border: 1px solid #1E374D; color: #FFFFFF; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace;">
+              <label class="form-label" style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700; margin-bottom: 4px; display: block;">منفذ الاتصال التسلسلي (Serial / COM Port)</label>
+              <input type="text" name="gate_relay_port" class="form-control" value="{{ profile.gate_relay_port|default:'COM3' }}" placeholder="COM3 أو /dev/ttyUSB0" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace;">
             </div>
           </div>
 
@@ -706,10 +706,10 @@
       <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
           <div>
-            <h3 style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+            <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
               تكامل جهات اتصال جوجل (Google Contacts)
             </h3>
-            <span style="color: #8D99A3; font-size: 0.82rem;">
+            <span style="color: var(--text-muted); font-size: 0.82rem;">
               مزامنة أرقام وأسماء اللاعبين مباشرة مع حساب Google الصالة وإدارة ملفات OAuth.
             </span>
           </div>
@@ -729,20 +729,20 @@
 
         <!-- Metric Badges -->
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;">
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
-            <span style="color: #8D99A3; font-size: 0.78rem; font-weight: 600; display: block;">جهات اتصال الحساب</span>
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
+            <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 600; display: block;">جهات اتصال الحساب</span>
             <strong style="color: #4DB3FF; font-size: 1.2rem; font-weight: 800; display: block;">{{ google_status.remote_contacts_count|default:"0" }}</strong>
           </div>
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
-            <span style="color: #8D99A3; font-size: 0.78rem; font-weight: 600; display: block;">إجمالي الأعضاء</span>
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
+            <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 600; display: block;">إجمالي الأعضاء</span>
             <strong style="color: #FFFFFF; font-size: 1.2rem; font-weight: 800; display: block;">{{ google_status.total_members }}</strong>
           </div>
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
-            <span style="color: #8D99A3; font-size: 0.78rem; font-weight: 600; display: block;">تمت مزامنتهم</span>
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
+            <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 600; display: block;">تمت مزامنتهم</span>
             <strong style="color: #7ED321; font-size: 1.2rem; font-weight: 800; display: block;">{{ google_status.synced_members }}</strong>
           </div>
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
-            <span style="color: #8D99A3; font-size: 0.78rem; font-weight: 600; display: block;">بانتظار المزامنة</span>
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
+            <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 600; display: block;">بانتظار المزامنة</span>
             <strong style="color: #FFB300; font-size: 1.2rem; font-weight: 800; display: block;">{{ google_status.pending_members }}</strong>
           </div>
         </div>
@@ -766,22 +766,22 @@
           </form>
         </div>
 
-        <details style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 12px 14px;">
-          <summary style="color: #CAD6E2; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
+        <details style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 12px 14px;">
+          <summary style="color: var(--text-secondary); font-weight: 700; font-size: 0.85rem; cursor: pointer;">
             رفع ملفات credentials.json و token.json
           </summary>
           <form method="post" action="{% url 'core:settings' %}" enctype="multipart/form-data" style="margin-top: 12px; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
             {% csrf_token %}
             <input type="hidden" name="action" value="upload_google_files">
             <div style="flex: 1; min-width: 180px;">
-              <label style="color: #CAD6E2; font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 4px;">credentials.json:</label>
-              <input type="file" name="credentials_file" accept=".json" style="background: #0C1822; border: 1px solid #1B2F40; color: #FFFFFF; font-size: 0.78rem; padding: 5px; border-radius: 6px; width: 100%;">
+              <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 4px;">credentials.json:</label>
+              <input type="file" name="credentials_file" accept=".json" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.78rem; padding: 5px; border-radius: 6px; width: 100%;">
             </div>
             <div style="flex: 1; min-width: 180px;">
-              <label style="color: #CAD6E2; font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 4px;">token.json:</label>
-              <input type="file" name="token_file" accept=".json" style="background: #0C1822; border: 1px solid #1B2F40; color: #FFFFFF; font-size: 0.78rem; padding: 5px; border-radius: 6px; width: 100%;">
+              <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 4px;">token.json:</label>
+              <input type="file" name="token_file" accept=".json" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.78rem; padding: 5px; border-radius: 6px; width: 100%;">
             </div>
-            <button type="submit" class="btn btn-secondary" style="background: #0E1D28; border: 1px solid #1C3347; color: #CAD6E2; font-weight: 700; font-size: 0.82rem; padding: 7px 14px; border-radius: 6px; cursor: pointer;">
+            <button type="submit" class="btn btn-secondary" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); font-weight: 700; font-size: 0.82rem; padding: 7px 14px; border-radius: 6px; cursor: pointer;">
               حفظ الملفات
             </button>
           </form>
@@ -792,10 +792,10 @@
       <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
           <div>
-            <h3 style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+            <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
               استيراد وترحيل بيانات النظام القديم
             </h3>
-            <span style="color: #8D99A3; font-size: 0.82rem;">
+            <span style="color: var(--text-muted); font-size: 0.82rem;">
               استيراد الأعضاء والاشتراكات والإيصالات والمصروفات من ملفات JSON القديمة دون تكرار.
             </span>
           </div>
@@ -810,9 +810,9 @@
           </div>
         </div>
 
-        <div style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
           <div>
-            <span style="color: #CAD6E2; font-size: 0.84rem; font-weight: 700; display: block;">مجلد البيانات المكتشف:</span>
+            <span style="color: var(--text-secondary); font-size: 0.84rem; font-weight: 700; display: block;">مجلد البيانات المكتشف:</span>
             <code style="color: #38bdf8; font-family: monospace; font-size: 0.8rem; direction: ltr; display: inline-block;">
               {% if detected_legacy_path %}{{ detected_legacy_path }}{% else %}data/ داخل مجلد النظام الرئيسي{% endif %}
             </code>
@@ -835,10 +835,10 @@
             {% csrf_token %}
             <input type="hidden" name="action" value="import_legacy_data">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px;">
-              <div><label style="color:#CAD6E2; font-size:0.75rem;">members.json</label><input type="file" name="members_file" accept=".json" style="width:100%; font-size:0.75rem;"></div>
-              <div><label style="color:#CAD6E2; font-size:0.75rem;">payments.json</label><input type="file" name="payments_file" accept=".json" style="width:100%; font-size:0.75rem;"></div>
-              <div><label style="color:#CAD6E2; font-size:0.75rem;">expenses.json</label><input type="file" name="expenses_file" accept=".json" style="width:100%; font-size:0.75rem;"></div>
-              <div><label style="color:#CAD6E2; font-size:0.75rem;">settings.json</label><input type="file" name="settings_file" accept=".json" style="width:100%; font-size:0.75rem;"></div>
+              <div><label style="color: var(--text-secondary); font-size:0.75rem;">members.json</label><input type="file" name="members_file" accept=".json" style="width:100%; font-size:0.75rem;"></div>
+              <div><label style="color: var(--text-secondary); font-size:0.75rem;">payments.json</label><input type="file" name="payments_file" accept=".json" style="width:100%; font-size:0.75rem;"></div>
+              <div><label style="color: var(--text-secondary); font-size:0.75rem;">expenses.json</label><input type="file" name="expenses_file" accept=".json" style="width:100%; font-size:0.75rem;"></div>
+              <div><label style="color: var(--text-secondary); font-size:0.75rem;">settings.json</label><input type="file" name="settings_file" accept=".json" style="width:100%; font-size:0.75rem;"></div>
             </div>
             <button type="submit" class="btn btn-secondary" style="background:#1e293b; color:#f1f5f9; border:1px solid #334155; font-size:0.8rem; padding:6px 14px; border-radius:6px; cursor:pointer; align-self:flex-start; margin-top:4px;">
               رفع واستيراد الملفات
@@ -851,10 +851,10 @@
       <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
           <div>
-            <h3 style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+            <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
               تحديثات النظام ومستودع GitHub
             </h3>
-            <span style="color: #8D99A3; font-size: 0.82rem;">
+            <span style="color: var(--text-muted); font-size: 0.82rem;">
               سحب آخر التعديلات والإصدارات من GitHub مع النسخ الاحتياطي التلقائي بضغطة زر واحدة.
             </span>
           </div>
@@ -867,16 +867,16 @@
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px;">
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 10px 14px;">
-            <span style="color: #8D99A3; font-size: 0.78rem; display: block;">الفرع النشط (Git Branch)</span>
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 10px 14px;">
+            <span style="color: var(--text-muted); font-size: 0.78rem; display: block;">الفرع النشط (Git Branch)</span>
             <strong style="color: #4DB3FF; font-size: 1rem; font-family: monospace;">{{ version_info.branch|default:"main" }}</strong>
           </div>
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 10px 14px;">
-            <span style="color: #8D99A3; font-size: 0.78rem; display: block;">تاريخ آخر تعديل</span>
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 10px 14px;">
+            <span style="color: var(--text-muted); font-size: 0.78rem; display: block;">تاريخ آخر تعديل</span>
             <strong style="color: #A8F14B; font-size: 1rem;">{{ version_info.date|default:"محدث" }}</strong>
           </div>
-          <div style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 10px 14px;">
-            <span style="color: #8D99A3; font-size: 0.78rem; display: block;">رابط المستودع</span>
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 10px 14px;">
+            <span style="color: var(--text-muted); font-size: 0.78rem; display: block;">رابط المستودع</span>
             <code style="color: #cbd5e1; font-size: 0.78rem; direction: ltr; display: block; overflow: hidden; text-overflow: ellipsis;">{{ profile.github_repo_url|default:'mostafa-donia/HULK_gym_web_face_recogniations' }}</code>
           </div>
         </div>
@@ -896,7 +896,7 @@
 
         <div id="updateFeedbackBanner" style="display: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 14px; font-size: 0.88rem; font-weight: 700;"></div>
 
-        <div id="commitsPreviewBox" style="display: none; background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
+        <div id="commitsPreviewBox" style="display: none; background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
           <h4 style="color: #4DB3FF; font-size: 0.88rem; font-weight: 800; margin: 0 0 8px 0;">التحديثات الجديدة المتوفرة:</h4>
           <ul id="commitsListUl" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px;"></ul>
         </div>
