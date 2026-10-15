@@ -43,6 +43,12 @@ class FaceEngine:
         # {member_id: [np.ndarray(128,), ...]}
         self.cache_lock = threading.RLock()
         self.embeddings_cache: Dict[int, List[np.ndarray]] = {}
+        self.active_embeddings_cache: Dict[int, List[np.ndarray]] = {}
+        self.inactive_embeddings_cache: Dict[int, List[np.ndarray]] = {}
+        self.active_matrix: Optional[np.ndarray] = None
+        self.active_ids: Optional[np.ndarray] = None
+        self.inactive_matrix: Optional[np.ndarray] = None
+        self.inactive_ids: Optional[np.ndarray] = None
         self.cache_timestamp = 0
 
         # Persistent Independent Background Camera Worker State
@@ -232,10 +238,10 @@ class FaceEngine:
 
     def refresh_cache(self, force: bool = False):
         """
-        Pre-loads enrolled member embeddings into partitioned fast numpy vector caches:
-          - active_embeddings_cache: members with an active valid subscription today.
-          - inactive_embeddings_cache: expired or pending members.
-        Enables high-performance fast-path searching (active members matched first).
+        Pre-loads enrolled member embeddings into partitioned fast numpy vector matrices:
+          - active_matrix / active_ids: members with an active valid subscription today.
+          - inactive_matrix / inactive_ids: expired or pending members.
+        Enables ultra-high-performance vectorized BLAS searching (active members matched first).
         """
         now = time.time()
         if not force and (now - self.cache_timestamp < 10):
@@ -249,6 +255,11 @@ class FaceEngine:
         with self.cache_lock:
             new_active = {}
             new_inactive = {}
+            active_vec_list = []
+            active_id_list = []
+            inactive_vec_list = []
+            inactive_id_list = []
+
             qs = Member.objects.filter(has_face_enrolled=True).only("id", "face_embeddings", "last_subscription_end")
             for m in qs:
                 embs = m.face_embeddings or []
@@ -264,13 +275,33 @@ class FaceEngine:
                     is_active = bool(m.last_subscription_end and m.last_subscription_end >= today)
                     if is_active:
                         new_active[m.id] = vecs
+                        for v in vecs:
+                            active_vec_list.append(v)
+                            active_id_list.append(m.id)
                     else:
                         new_inactive[m.id] = vecs
+                        for v in vecs:
+                            inactive_vec_list.append(v)
+                            inactive_id_list.append(m.id)
 
             self.active_embeddings_cache = new_active
             self.inactive_embeddings_cache = new_inactive
-            # Combined cache reference for backwards compatibility
             self.embeddings_cache = {**new_active, **new_inactive}
+
+            if active_vec_list:
+                self.active_matrix = np.vstack(active_vec_list).astype(np.float32)
+                self.active_ids = np.array(active_id_list, dtype=np.int64)
+            else:
+                self.active_matrix = None
+                self.active_ids = None
+
+            if inactive_vec_list:
+                self.inactive_matrix = np.vstack(inactive_vec_list).astype(np.float32)
+                self.inactive_ids = np.array(inactive_id_list, dtype=np.int64)
+            else:
+                self.inactive_matrix = None
+                self.inactive_ids = None
+
             self.cache_timestamp = now
 
     def match_face_vector(
@@ -280,7 +311,7 @@ class FaceEngine:
     ) -> Tuple[Optional[int], float]:
         """
         Calculates cosine similarity with two-phase fast-path optimization:
-        Phase 1: Search ACTIVE members first. If matched >= threshold, return IMMEDIATELY (no time wasted).
+        Phase 1: Search ACTIVE members first using vectorized BLAS dot product. If matched >= threshold, return IMMEDIATELY.
         Phase 2: If no active match found, search INACTIVE/EXPIRED members (to trigger expired entry alerts).
         """
         self.refresh_cache()
@@ -290,43 +321,39 @@ class FaceEngine:
             q_vec = q_vec / q_norm
 
         with self.cache_lock:
-            active_cache = dict(getattr(self, "active_embeddings_cache", {}))
-            inactive_cache = dict(getattr(self, "inactive_embeddings_cache", {}))
+            act_mat = self.active_matrix
+            act_ids = self.active_ids
+            inact_mat = self.inactive_matrix
+            inact_ids = self.inactive_ids
 
         # ==========================================================
-        # PHASE 1: FAST-PATH SEARCH ACTIVE MEMBERS FIRST
+        # PHASE 1: FAST-PATH SEARCH ACTIVE MEMBERS FIRST (Instant Matrix SIMD)
         # ==========================================================
         best_active_id = None
         best_active_score = -1.0
 
-        for member_id, member_vecs in active_cache.items():
-            for v in member_vecs:
-                score = float(np.dot(q_vec, v))
-                if score > best_active_score:
-                    best_active_score = score
-                    if score >= cosine_threshold:
-                        best_active_id = member_id
-
-        # If matched an active member, return IMMEDIATELY without searching inactive faces!
-        if best_active_score >= cosine_threshold and best_active_id is not None:
-            return best_active_id, best_active_score
+        if act_mat is not None and act_mat.size > 0:
+            act_scores = np.dot(act_mat, q_vec)
+            best_idx = int(np.argmax(act_scores))
+            best_active_score = float(act_scores[best_idx])
+            if best_active_score >= cosine_threshold:
+                best_active_id = int(act_ids[best_idx])
+                # MATCH FOUND IN ACTIVE MEMBERS! Return immediately without touching inactive faces:
+                return best_active_id, best_active_score
 
         # ==========================================================
-        # PHASE 2: SEARCH INACTIVE/EXPIRED MEMBERS ONLY IF NEEDED
+        # PHASE 2: SEARCH INACTIVE/EXPIRED MEMBERS ONLY IF NO ACTIVE MATCH
         # ==========================================================
         best_inactive_id = None
         best_inactive_score = -1.0
 
-        for member_id, member_vecs in inactive_cache.items():
-            for v in member_vecs:
-                score = float(np.dot(q_vec, v))
-                if score > best_inactive_score:
-                    best_inactive_score = score
-                    if score >= cosine_threshold:
-                        best_inactive_id = member_id
-
-        if best_inactive_score >= cosine_threshold and best_inactive_id is not None:
-            return best_inactive_id, best_inactive_score
+        if inact_mat is not None and inact_mat.size > 0:
+            inact_scores = np.dot(inact_mat, q_vec)
+            best_idx = int(np.argmax(inact_scores))
+            best_inactive_score = float(inact_scores[best_idx])
+            if best_inactive_score >= cosine_threshold:
+                best_inactive_id = int(inact_ids[best_idx])
+                return best_inactive_id, best_inactive_score
 
         top_score = max(best_active_score, best_inactive_score, 0.0)
         return None, top_score
