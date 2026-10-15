@@ -51,12 +51,31 @@
         --bg-input: {{ gym_profile.tertiary_color }};
       {% endif %}
     }
+    [data-theme="light"] {
+      --bg-main: #F1F5F9;
+      --bg-sidebar: #FFFFFF;
+      --bg-card: #FFFFFF;
+      --bg-surface: #FFFFFF;
+      --bg-surface-subtle: #F8FAFC;
+      --bg-surface-elevated: #FFFFFF;
+      --bg-input: #FFFFFF;
+      --border-color: #E2E8F0;
+      --border-subtle: #F1F5F9;
+      --border-strong: #CBD5E1;
+      --border-sidebar: #E2E8F0;
+      --border-input: #CBD5E1;
+      --text-main: #0F172A;
+      --text-secondary: #334155;
+      --text-muted: #64748B;
+      --text-dim: #94A3B8;
+    }
     body {
       background-color: var(--bg-main) !important;
       color: var(--text-main);
     }
     .top-navbar {
       background-color: var(--bg-sidebar) !important;
+      border-bottom: 1px solid var(--border-sidebar) !important;
     }
   </style>
 
@@ -154,23 +173,17 @@
 
       <!-- User Profile, Face Camera Indicator & Logout on Left (RTL) -->
       <div class="top-navbar-user">
-        <!-- Sun / Moon Theme Switcher Button -->
-        <button type="button" id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="تبديل المظهر النهاري / الليلي">
+        <!-- Modern Single Compact Theme Switcher Button -->
+        <button type="button" id="themeToggleBtn" class="theme-toggle-compact-btn" onclick="toggleTheme()" title="تبديل المظهر النهاري / الليلي" aria-label="تبديل المظهر">
+          <!-- Sun Icon (Active in Dark mode) -->
           <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="5"></circle>
-            <line x1="12" y1="1" x2="12" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="23"></line>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-            <line x1="1" y1="12" x2="3" y2="12"></line>
-            <line x1="21" y1="12" x2="23" y2="12"></line>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
           </svg>
+          <!-- Moon Icon (Active in Light mode) -->
           <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
-          <span id="themeToggleLabel">المظهر</span>
         </button>
 
         {% if gym_profile.face_camera_enabled %}
@@ -509,15 +522,30 @@
 
   <!-- Global Theme Switcher Logic -->
   <script>
+    function updateThemeButtonTitle(theme) {
+      var btn = document.getElementById('themeToggleBtn');
+      if (btn) {
+        btn.setAttribute('title', theme === 'dark' ? 'تبديل إلى الوضع النهاري (Light Mode)' : 'تبديل إلى الوضع الليلي (Dark Mode)');
+      }
+    }
+
     function toggleTheme() {
       var html = document.documentElement;
       var currentTheme = html.getAttribute('data-theme') || 'dark';
       var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
       html.setAttribute('data-theme', newTheme);
+      updateThemeButtonTitle(newTheme);
       try {
         localStorage.setItem('gym_theme', newTheme);
       } catch (e) {}
+
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      updateThemeButtonTitle(currentTheme);
+    });
   </script>
 
   {% block extra_js %}{% endblock %}
