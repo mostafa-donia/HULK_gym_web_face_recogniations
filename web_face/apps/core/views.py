@@ -10,7 +10,7 @@ from django.utils import timezone
 from apps.accounts.decorators import manager_required
 from apps.core.models import GymProfile
 from apps.expenses.models import Expense, ExpenseCategory
-from apps.members.models import CheckInEvent, Member, Plan
+from apps.members.models import CheckInEvent, Member, Plan, Subscription
 from apps.messaging.models import WhatsAppMessage
 from apps.payments.models import Payment, PaymentMethod
 
