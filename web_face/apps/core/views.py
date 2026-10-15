@@ -1145,9 +1145,17 @@ def api_check_system_updates_view(request):
     Checks GitHub remote repository for any newly pushed commits or changes.
     Returns status JSON with commit comparison and list of updates.
     """
-    from apps.core.updater import check_for_updates
-    res = check_for_updates()
-    return JsonResponse(res)
+    try:
+        from apps.core.updater import check_for_updates
+        res = check_for_updates()
+        return JsonResponse(res)
+    except Exception as exc:
+        return JsonResponse({
+            "success": False,
+            "update_available": False,
+            "message": f"تعذر الاتصال بـ GitHub: {str(exc)}",
+            "error": str(exc),
+        })
 
 
 @login_required
@@ -1159,6 +1167,13 @@ def api_perform_system_update_view(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "طلب POST مطلوب."}, status=405)
 
-    from apps.core.updater import perform_system_update
-    res = perform_system_update()
-    return JsonResponse(res)
+    try:
+        from apps.core.updater import perform_system_update
+        res = perform_system_update()
+        return JsonResponse(res)
+    except Exception as exc:
+        return JsonResponse({
+            "success": False,
+            "message": f"حدث خطأ أثناء تطبيق التحديث: {str(exc)}",
+            "logs": [f"❌ خطأ غير متوقع: {str(exc)}"],
+        })

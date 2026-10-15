@@ -44,6 +44,9 @@ def run_git_command(args: list, cwd: Path = None, timeout: int = 25) -> tuple[bo
         return False, "أداة Git غير مثبتة في مسار النظام (Git is not installed or not in PATH)."
 
     target_dir = str(cwd or get_repo_dir())
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    env["GIT_ASKPASS"] = ""
     try:
         proc = subprocess.run(
             [git_bin] + args,
@@ -53,6 +56,7 @@ def run_git_command(args: list, cwd: Path = None, timeout: int = 25) -> tuple[bo
             text=True,
             encoding="utf-8",
             errors="replace",
+            env=env,
             timeout=timeout,
         )
         out = (proc.stdout or "").strip()
@@ -122,13 +126,17 @@ def check_for_updates(profile=None) -> dict:
     profile.save(update_fields=["last_update_check"])
 
     if current_info["has_git"]:
-        # 1. Fetch latest changes from remote
-        ok_fetch, out_fetch = run_git_command(["fetch", "origin", branch], timeout=30)
-        if not ok_fetch and "could not resolve host" in out_fetch.lower():
+        # 1. Fetch latest changes from remote with safe timeout
+        ok_fetch, out_fetch = run_git_command(["fetch", "origin", branch], timeout=15)
+        if not ok_fetch:
+            print(f"[check_for_updates] Git fetch warning: {out_fetch}. Trying GitHub API fallback...")
+            api_res = check_updates_via_api(profile, current_info)
+            if api_res.get("success"):
+                return api_res
             return {
                 "success": False,
                 "update_available": False,
-                "message": "تعذر الاتصال بـ GitHub. يرجى التحقق من اتصال الإنترنت.",
+                "message": f"تعذر الاتصال بـ GitHub: {out_fetch or 'يرجى التحقق من اتصال الإنترنت'}",
                 "error": out_fetch,
                 "current_info": current_info,
             }
@@ -173,21 +181,20 @@ def check_for_updates(profile=None) -> dict:
             "current_info": current_info,
         }
 
-    # Fallback to GitHub API if Git binary is absent
+    # Fallback to GitHub API if Git binary or .git folder is absent
     return check_updates_via_api(profile, current_info)
 
 
 def check_updates_via_api(profile, current_info) -> dict:
     """Fallback updater using GitHub Public REST API when Git binary is missing."""
-    repo_url = profile.github_repo_url or "https://github.com/mostafa-donia/mostafa-donia.github.io.git"
-    # Extract owner and repo from URL (e.g., https://github.com/owner/repo.git)
+    repo_url = profile.github_repo_url or "https://github.com/mostafa-donia/HULK_gym_web_face_recogniations.git"
     clean_url = repo_url.replace(".git", "").rstrip("/")
     parts = clean_url.split("/")
     if len(parts) >= 2:
         owner = parts[-2]
         repo_name = parts[-1]
     else:
-        owner, repo_name = "mostafa-donia", "mostafa-donia.github.io"
+        owner, repo_name = "mostafa-donia", "HULK_gym_web_face_recogniations"
 
     api_url = f"https://api.github.com/repos/{owner}/{repo_name}/commits/{profile.github_branch or 'main'}"
     req = urllib.request.Request(
@@ -195,7 +202,7 @@ def check_updates_via_api(profile, current_info) -> dict:
         headers={"User-Agent": "HulkGym-System-Updater", "Accept": "application/vnd.github.v3+json"}
     )
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=12) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             sha = data.get("sha", "")[:7]
             msg = data.get("commit", {}).get("message", "").splitlines()[0]
@@ -255,14 +262,14 @@ def update_via_zip_download(profile, branch: str, logs: list) -> tuple[bool, str
     import zipfile
     import tempfile
 
-    repo_url = profile.github_repo_url or "https://github.com/mostafa-donia/mostafa-donia.github.io.git"
+    repo_url = profile.github_repo_url or "https://github.com/mostafa-donia/HULK_gym_web_face_recogniations.git"
     clean_url = repo_url.replace(".git", "").rstrip("/")
     parts = clean_url.split("/")
     if len(parts) >= 2:
         owner = parts[-2]
         repo_name = parts[-1]
     else:
-        owner, repo_name = "mostafa-donia", "mostafa-donia.github.io"
+        owner, repo_name = "mostafa-donia", "HULK_gym_web_face_recogniations"
 
     zip_url = f"https://github.com/{owner}/{repo_name}/archive/refs/heads/{branch}.zip"
     logs.append(f"⏳ جاري تحميل حزمة التحديث من GitHub ({owner}/{repo_name})...")

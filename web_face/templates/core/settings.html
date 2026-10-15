@@ -1155,7 +1155,7 @@ async function checkGitHubUpdates() {
     banner.style.background = 'rgba(239, 68, 68, 0.12)';
     banner.style.border = '1px solid #ef4444';
     banner.style.color = '#f87171';
-    banner.innerHTML = ` تعذر الاتصال: ${err.message}`;
+    banner.innerHTML = `⚠️ تعذر فحص التحديثات (${err.message}). تأكد من اتصال الإنترنت أو استخدم ملف <code>UPDATE_HULK_GYM.bat</code> المباشر.`;
   } finally {
     btn.disabled = false;
     icon.style.animation = 'none';
@@ -1200,14 +1200,14 @@ async function performSystemUpdate() {
     }
 
     if (data.success) {
-      termStatus.textContent = 'اكتمل بنجاح ';
+      termStatus.textContent = 'اكتمل بنجاح ✓';
       termStatus.style.color = '#34d399';
       alert(data.message || 'تم تحديث النظام بنجاح!');
       setTimeout(() => {
         window.location.reload();
       }, 1500);
     } else {
-      termStatus.textContent = 'فشل ';
+      termStatus.textContent = 'فشل التحديث ⚠️';
       termStatus.style.color = '#ef4444';
       alert('حدث خطأ أثناء التحديث: ' + (data.message || 'فشل'));
       performBtn.disabled = false;
@@ -1215,11 +1215,36 @@ async function performSystemUpdate() {
       performTxt.textContent = 'إعادة محاولة التحديث';
     }
   } catch (err) {
-    termContent.innerHTML += `<div style="color: #ef4444;"> خطأ في الاتصال: ${err.message}</div>`;
-    termStatus.textContent = 'فشل الاتصال ';
-    performBtn.disabled = false;
-    performBtn.style.opacity = '1';
-    performTxt.textContent = 'تحديث النظام الآن';
+    // If files are updated, runserver auto-reloads and drops the active TCP connection.
+    // Poll the server health to detect when it's back online:
+    termStatus.textContent = 'جاري إعادة تشغيل الخادم وتفعيل التحديثات...';
+    termStatus.style.color = '#fbbf24';
+    termContent.innerHTML += `<div style="color: #38bdf8;">⏳ جاري تفعيل الملفات وإعادة تشغيل خادم النظام تلقائياً...</div>`;
+
+    let reloaded = false;
+    for (let i = 0; i < 12; i++) {
+      await new Promise(r => setTimeout(r, 2000));
+      try {
+        const ping = await fetch('/?ping=1', { cache: 'no-store' });
+        if (ping.ok) {
+          reloaded = true;
+          break;
+        }
+      } catch (e) {}
+    }
+
+    if (reloaded) {
+      termStatus.textContent = 'اكتمل بنجاح ✓';
+      termStatus.style.color = '#34d399';
+      termContent.innerHTML += `<div style="color: #34d399; font-weight: bold; margin-top: 8px;">✓ تم تطبيق التحديثات وإعادة تشغيل الخادم بنجاح! جاري تحديث الصفحة...</div>`;
+      setTimeout(() => { window.location.reload(); }, 1500);
+    } else {
+      termContent.innerHTML += `<div style="color: #ef4444; margin-top: 8px;">⚠️ ${err.message}. يمكنك تشغيل ملف UPDATE_HULK_GYM.bat من مجلد البرنامج لتحديث فوري وآمن.</div>`;
+      termStatus.textContent = 'تنبيه';
+      performBtn.disabled = false;
+      performBtn.style.opacity = '1';
+      performTxt.textContent = 'إعادة محاولة التحديث';
+    }
   }
 }
 

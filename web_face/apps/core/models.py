@@ -72,7 +72,7 @@ class GymProfile(models.Model):
     # GitHub System Updates & Versioning
     github_repo_url = models.CharField(
         max_length=255,
-        default="https://github.com/mostafa-donia/mostafa-donia.github.io.git",
+        default="https://github.com/mostafa-donia/HULK_gym_web_face_recogniations.git",
         blank=True,
         verbose_name="رابط مستودع التحديثات (GitHub Repo URL)",
     )
