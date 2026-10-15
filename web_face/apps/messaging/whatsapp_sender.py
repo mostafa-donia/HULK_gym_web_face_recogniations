@@ -2,6 +2,7 @@ from collections import deque
 from subprocess import Popen
 from time import sleep
 import ctypes
+from ctypes import wintypes
 import io
 import os
 import random
@@ -13,7 +14,6 @@ pyautogui.FAILSAFE = False
 import win32clipboard
 from PIL import Image
 from pyautogui import hotkey, press, write
-from pygetwindow import getAllWindows, getActiveWindow
 from pyperclip import copy, paste
 
 sent = []
@@ -21,6 +21,22 @@ unsent = []
 
 MESSAGE_SEND_MODE = "paste"
 MESSAGE_CHAR_DELAY = 0.02
+
+ORIGINAL_BROWSER_HWND = None
+
+
+def ensure_desktop_attached():
+    """Ensure process and thread are attached to interactive desktop WinSta0\\Default."""
+    try:
+        user32 = ctypes.windll.user32
+        hwinsta = user32.OpenWindowStationW("WinSta0", False, 0x037F)
+        if hwinsta:
+            user32.SetProcessWindowStation(hwinsta)
+        hdesk = user32.OpenDesktopW("Default", 0, False, 0x01FF)
+        if hdesk:
+            user32.SetThreadDesktop(hdesk)
+    except Exception as e:
+        print(f"[ensure_desktop_attached] Warning: {e}")
 
 
 def apply_send_settings(settings=None):
@@ -130,8 +146,6 @@ def copy_file(file_path: str) -> bool:
 
     # 2. CF_HDROP Windows Shell File Drop Format (for HTML, PDF, and general documents)
     try:
-        from ctypes import wintypes
-
         class DROPFILES(ctypes.Structure):
             _fields_ = [
                 ("pFiles", wintypes.DWORD),
@@ -179,14 +193,14 @@ def copy_file(file_path: str) -> bool:
         return False
 
 
+def copy_image_to_clipboard(image_path):
+    """Backward compatibility alias for copy_file."""
+    return copy_file(image_path)
+
+
 def is_whatsapp_desktop_installed() -> tuple:
     """
     Checks if WhatsApp Desktop is installed on the Windows system.
-    Supports:
-    1. Microsoft Store WhatsApp Desktop (UWP / WindowsApps)
-    2. Registry protocol (whatsapp://)
-    3. Standalone executable paths
-    4. Currently running WhatsApp desktop processes
     Returns: (is_installed: bool, message: str, details: dict)
     """
     details = {
@@ -252,160 +266,29 @@ def is_whatsapp_desktop_installed() -> tuple:
     return installed, msg, details
 
 
-def copy_image_to_clipboard(image_path):
-    """Backward compatibility alias for copy_file."""
-    return copy_file(image_path)
-
-
-def whatsupp_ready() -> bool:
-    """
-    Ensures WhatsApp Desktop (native Windows application) is installed, running, restored,
-    and active in the foreground.
-    Strictly works on WhatsApp Desktop ONLY (no Chrome or WhatsApp Web).
-    """
-    if "test" in sys.argv:
-        return True
-
-    installed, msg, _ = is_whatsapp_desktop_installed()
-    if not installed:
-        print(f"[whatsupp_ready] ERROR: {msg}")
-        return False
-
-    print("[whatsupp_ready] Checking for WhatsApp Desktop window...")
-
-    def find_whatsapp_window():
-        try:
-            from pygetwindow import getAllWindows
-            all_win = getAllWindows()
-        except Exception:
-            all_win = []
-
-        matching = []
-        for w in all_win:
-            title = getattr(w, "title", "") or ""
-            # Must contain WhatsApp or واتساب, and NOT belong to a browser
-            if ("WhatsApp" in title or "واتساب" in title) and not any(
-                b in title for b in ["Chrome", "Edge", "Firefox", "Brave", "Opera"]
-            ):
-                matching.append(w)
-        return matching
-
-    whatsapp_windows = find_whatsapp_window()
-
-    # If not running / not opened, launch WhatsApp Desktop via whatsapp: protocol
-    if not whatsapp_windows:
-        print("[whatsupp_ready] WhatsApp Desktop is not running. Launching via 'start whatsapp:' ...")
-        Popen("start whatsapp:", shell=True)
-        # Wait up to 15 seconds for WhatsApp window to appear
-ORIGINAL_BROWSER_HWND = None
-
-
 def remember_current_window():
     """Remember the foreground browser/system window HWND before activating WhatsApp Desktop."""
     global ORIGINAL_BROWSER_HWND
     try:
-        import win32gui
-        hwnd = win32gui.GetForegroundWindow()
+        ensure_desktop_attached()
+        user32 = ctypes.windll.user32
+        hwnd = user32.GetForegroundWindow()
         if hwnd:
+            import win32gui
             title = (win32gui.GetWindowText(hwnd) or "").lower()
-            if not ("whatsapp" in title or "واتساب" in title):
+            if "whatsapp" not in title and "واتساب" not in title:
                 ORIGINAL_BROWSER_HWND = hwnd
                 print(f"[remember_current_window] Saved active system HWND: {hwnd} ({title})")
     except Exception as e:
         print(f"[remember_current_window] Warning: {e}")
 
 
-def return_to_system_window() -> bool:
-    """
-    Seamlessly and reliably brings the browser / gym system window back to the foreground
-    using Win32 API window activation.
-    """
-    global ORIGINAL_BROWSER_HWND
-    import win32gui
-
-    print("[return_to_system_window] Bringing gym system browser back to foreground...")
-    sleep(0.3)
-    user32 = ctypes.windll.user32
-
-    def activate_hwnd(hwnd):
-        if not hwnd or not win32gui.IsWindow(hwnd):
-            return False
-        try:
-            # Unlock foreground switch
-            user32.SystemParametersInfoW(0x2001, 0, 0, 0x0002 | 0x0001)
-            if user32.IsIconic(hwnd):
-                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
-            else:
-                user32.ShowWindow(hwnd, 5)  # SW_SHOW
-
-            fore_hwnd = win32gui.GetForegroundWindow()
-            fore_thread = user32.GetWindowThreadProcessId(fore_hwnd, 0)
-            target_thread = user32.GetWindowThreadProcessId(hwnd, 0)
-
-            if fore_thread != target_thread:
-                user32.AttachThreadInput(fore_thread, target_thread, True)
-                user32.SetForegroundWindow(hwnd)
-                user32.BringWindowToTop(hwnd)
-                user32.AttachThreadInput(fore_thread, target_thread, False)
-            else:
-                user32.SetForegroundWindow(hwnd)
-                user32.BringWindowToTop(hwnd)
-            return True
-        except Exception as e:
-            print(f"[return_to_system_window] activate_hwnd error for {hwnd}: {e}")
-            return False
-
-    # 1. Try saved HWND
-    if ORIGINAL_BROWSER_HWND and activate_hwnd(ORIGINAL_BROWSER_HWND):
-        print(f"[return_to_system_window] Restored saved HWND: {ORIGINAL_BROWSER_HWND}")
-        return True
-
-    # 2. Search for browser windows (Edge, Chrome, Firefox, Brave, Opera)
-    found_hwnds = []
-    def enum_cb(h, _):
-        if win32gui.IsWindowVisible(h):
-            title = (win32gui.GetWindowText(h) or "").lower()
-            if any(k in title for k in ["hulk", "gym", "dashboard", "127.0.0.1", "localhost", "لوحة"]):
-                found_hwnds.append((h, 10))
-            elif any(b in title for b in ["chrome", "edge", "firefox", "brave", "opera"]):
-                if "whatsapp" not in title and "واتساب" not in title:
-                    found_hwnds.append((h, 5))
-        return True
-
-    try:
-        win32gui.EnumWindows(enum_cb, None)
-    except Exception:
-        pass
-
-    if found_hwnds:
-        found_hwnds.sort(key=lambda x: x[1], reverse=True)
-        best_hwnd = found_hwnds[0][0]
-        if activate_hwnd(best_hwnd):
-            print(f"[return_to_system_window] Brought browser window {best_hwnd} to front.")
-            return True
-
-    # 3. Fallback: Alt+Tab
-    try:
-        hotkey("alt", "tab")
-        return True
-    except Exception:
-        return False
-
-
-def return_to_system_tab() -> bool:
-    """Backward compatibility alias for return_to_system_window."""
-    return return_to_system_window()
-
-
 def whatsupp_ready() -> bool:
     """
     Ensures WhatsApp Desktop (native Windows application) is installed, running, restored,
     and active in the foreground.
-    Strictly works on WhatsApp Desktop ONLY (no Chrome or WhatsApp Web).
     """
-    if "test" in sys.argv:
-        return True
-
+    ensure_desktop_attached()
     installed, msg, _ = is_whatsapp_desktop_installed()
     if not installed:
         print(f"[whatsupp_ready] ERROR: {msg}")
@@ -414,60 +297,107 @@ def whatsupp_ready() -> bool:
     # Save active browser window before WhatsApp steals focus
     remember_current_window()
 
-    print("[whatsupp_ready] Checking for WhatsApp Desktop window...")
+    user32 = ctypes.windll.user32
+    hwnd = user32.FindWindowW(None, "WhatsApp")
+    if not hwnd:
+        hwnd = user32.FindWindowW("WinUIDesktopWin32WindowClass", None)
 
-    def find_whatsapp_window():
-        try:
-            from pygetwindow import getAllWindows
-            all_win = getAllWindows()
-        except Exception:
-            all_win = []
-
-        matching = []
-        for w in all_win:
-            title = getattr(w, "title", "") or ""
-            if ("WhatsApp" in title or "واتساب" in title) and not any(
-                b in title for b in ["Chrome", "Edge", "Firefox", "Brave", "Opera"]
-            ):
-                matching.append(w)
-        return matching
-
-    whatsapp_windows = find_whatsapp_window()
-
-    if not whatsapp_windows:
-        print("[whatsupp_ready] WhatsApp Desktop is not running. Launching via 'start whatsapp:' ...")
+    if not hwnd:
+        print("[whatsupp_ready] WhatsApp Desktop is not visible. Launching via 'start whatsapp:' ...")
         Popen("start whatsapp:", shell=True)
-        for _ in range(30):
+        for _ in range(20):
             sleep(0.5)
-            whatsapp_windows = find_whatsapp_window()
-            if whatsapp_windows:
+            hwnd = user32.FindWindowW(None, "WhatsApp") or user32.FindWindowW("WinUIDesktopWin32WindowClass", None)
+            if hwnd:
                 break
 
-    if not whatsapp_windows:
+    if not hwnd:
         print("[whatsupp_ready] Could not find or open WhatsApp Desktop window.")
         return False
 
-    target = whatsapp_windows[0]
-    hwnd = getattr(target, "_hWnd", None)
+    # Restore if minimized
+    if user32.IsIconic(hwnd):
+        user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+    else:
+        user32.ShowWindow(hwnd, 5)  # SW_SHOW
 
-    try:
-        if hwnd:
-            user32 = ctypes.windll.user32
-            if user32.IsIconic(hwnd):
-                user32.ShowWindow(hwnd, 9)  # SW_RESTORE = 9
-            else:
-                user32.ShowWindow(hwnd, 5)  # SW_SHOW = 5
-            user32.SetForegroundWindow(hwnd)
-        else:
-            if getattr(target, "isMinimized", False):
-                target.restore()
-            target.activate()
-    except Exception as e:
-        print(f"[whatsupp_ready] Focus warning: {e}")
+    fore_hwnd = user32.GetForegroundWindow()
+    fore_thread = user32.GetWindowThreadProcessId(fore_hwnd, 0)
+    target_thread = user32.GetWindowThreadProcessId(hwnd, 0)
+
+    if fore_thread != target_thread:
+        user32.AttachThreadInput(fore_thread, target_thread, True)
+        user32.SetForegroundWindow(hwnd)
+        user32.BringWindowToTop(hwnd)
+        user32.AttachThreadInput(fore_thread, target_thread, False)
+    else:
+        user32.SetForegroundWindow(hwnd)
+        user32.BringWindowToTop(hwnd)
 
     sleep(0.8)
-    print(f"[whatsupp_ready] WhatsApp Desktop is focused: {getattr(target, 'title', 'WhatsApp')}")
+    print(f"[whatsupp_ready] WhatsApp Desktop focused: HWND={hwnd}")
     return True
+
+
+def return_to_system_window() -> bool:
+    """
+    Seamlessly and reliably brings the browser / gym system window back to the foreground.
+    """
+    global ORIGINAL_BROWSER_HWND
+    try:
+        ensure_desktop_attached()
+        user32 = ctypes.windll.user32
+        import win32gui
+
+        target_hwnd = ORIGINAL_BROWSER_HWND
+        if not target_hwnd or not win32gui.IsWindow(target_hwnd):
+            found = []
+            def enum_cb(h, _):
+                if win32gui.IsWindowVisible(h):
+                    t = (win32gui.GetWindowText(h) or "").lower()
+                    if any(k in t for k in ["hulk", "gym", "127.0.0.1", "localhost", "لوحة"]):
+                        found.append(h)
+                    elif any(b in t for b in ["chrome", "edge", "firefox", "brave", "opera"]):
+                        if "whatsapp" not in t and "واتساب" not in t:
+                            found.append(h)
+                return True
+            try:
+                win32gui.EnumWindows(enum_cb, None)
+            except Exception:
+                pass
+            if found:
+                target_hwnd = found[0]
+
+        if target_hwnd and win32gui.IsWindow(target_hwnd):
+            if user32.IsIconic(target_hwnd):
+                user32.ShowWindow(target_hwnd, 9)
+            else:
+                user32.ShowWindow(target_hwnd, 5)
+            fore = user32.GetForegroundWindow()
+            f_th = user32.GetWindowThreadProcessId(fore, 0)
+            t_th = user32.GetWindowThreadProcessId(target_hwnd, 0)
+            if f_th != t_th:
+                user32.AttachThreadInput(f_th, t_th, True)
+                user32.SetForegroundWindow(target_hwnd)
+                user32.BringWindowToTop(target_hwnd)
+                user32.AttachThreadInput(f_th, t_th, False)
+            else:
+                user32.SetForegroundWindow(target_hwnd)
+                user32.BringWindowToTop(target_hwnd)
+            print(f"[return_to_system_window] Returned focus to window {target_hwnd}")
+            return True
+        else:
+            hotkey("alt", "tab")
+            return True
+    except Exception as e:
+        print(f"[return_to_system_window] Warning: {e}")
+        hotkey("alt", "tab")
+        return False
+
+
+def return_to_system_tab() -> bool:
+    """Backward compatibility alias for return_to_system_window."""
+    return return_to_system_window()
 
 
 def choose_message_for_group(messages, group_name):
@@ -499,19 +429,17 @@ def send_message(
     Works strictly on WhatsApp Desktop using user-configured search bar coordinates.
     """
     global sent, unsent
-    if "test" in sys.argv:
-        return True
 
     # Retrieve coordinates from GymProfile if not explicitly provided
     if x_search is None or y_search is None:
         try:
             from apps.core.models import GymProfile
             prof = GymProfile.get_solo()
-            x_search = prof.whatsapp_search_x if prof.whatsapp_search_x is not None else 280
-            y_search = prof.whatsapp_search_y if prof.whatsapp_search_y is not None else 120
+            x_search = prof.whatsapp_search_x if prof.whatsapp_search_x is not None else 300
+            y_search = prof.whatsapp_search_y if prof.whatsapp_search_y is not None else 190
         except Exception:
-            x_search = x_search or 280
-            y_search = y_search or 120
+            x_search = x_search or 300
+            y_search = y_search or 190
 
     if isinstance(message, dict):
         message_bank = message
@@ -538,32 +466,18 @@ def send_message(
     set_keyboard_layout_to_english()
     random_delay(0.2, 0.4)
 
-    # 2. Focus the GLOBAL search bar via user-calibrated coordinates
-    # Close any open chat search / dialog first
-    press("esc")
+    # 2. Focus the search bar via coordinates
+    human_move_to(x_search, y_search)
+    pyautogui.click()
     random_delay(0.15, 0.25)
 
-    if x_search and y_search:
-        try:
-            human_move_to(x_search, y_search)
-            pyautogui.click()
-            random_delay(0.2, 0.3)
-        except Exception as e:
-            print(f"[send_message] Click at search coords error: {e}")
-
-    # Clear previous search content cleanly
+    # Clear previous search content cleanly and type space then phone
     hotkey("ctrl", "a")
-    press("backspace")
-    random_delay(0.15, 0.25)
-
-    # Paste phone number to avoid keyboard layout discrepancies
-    copy(phone)
-    hotkey("ctrl", "v")
-    random_delay(1.5, 2.2)
-
-    # In WhatsApp Desktop, press Enter to open the conversation
+    write(" ")
+    write(phone)
+    random_delay()
     press("enter")
-    random_delay(2.2, 3.2)
+    random_delay()
 
     # 3. Paste file / invoice attachment if present
     target_img = None
@@ -575,44 +489,61 @@ def send_message(
             if ext.lower() == ".html" and os.path.exists(stem + ".png"):
                 target_img = stem + ".png"
 
-    if target_img:
-        print(f"[send_message] Attaching file/invoice image: {target_img}")
+    if target_img and os.path.exists(target_img):
+        print(f"[send_message] Attaching file/invoice: {target_img}")
         if copy_file(target_img):
-            random_delay(0.4, 0.7)
+            random_delay()
             hotkey("ctrl", "v")
-            # Wait for WhatsApp Desktop attachment preview modal to appear
-            random_delay(2.8, 3.8)
+            # Wait 5.0 to 7.5 seconds for WhatsApp attachment preview to fully render
+            random_delay(5.0, 7.5)
             if message:
                 copy(message)
-                random_delay(0.3, 0.6)
+                random_delay()
                 hotkey("ctrl", "v")
-                random_delay(0.5, 0.9)
+                random_delay()
             press("enter")
-            random_delay(1.6, 2.6)
+            random_delay(1.5, 2.5)
         else:
             print("[send_message] copy_file failed, falling back to message text")
             if message:
                 copy(message)
-                random_delay(0.3, 0.6)
+                random_delay()
                 hotkey("ctrl", "v")
-                random_delay(0.3, 0.6)
+                random_delay()
                 press("enter")
-                random_delay(1.2, 2.0)
+                random_delay(1.0, 1.8)
     else:
         if message:
             copy(message)
-            random_delay(0.3, 0.6)
+            random_delay()
             hotkey("ctrl", "v")
-            random_delay(0.3, 0.6)
+            random_delay()
             press("enter")
-            random_delay(1.2, 2.0)
+            random_delay(1.0, 1.8)
 
-    # 4. Clean search bar
-    try:
+    # 4. Verification Check: Check if search still contains the typed phone
+    human_move_to(x_search, y_search)
+    pyautogui.click()
+    hotkey("ctrl", "a")
+    hotkey("ctrl", "c")
+    random_delay(0.25, 0.45)
+    search = paste()
+    x = len(phone) + 1
+    if search and search[0:x] == " " + phone:
+        print(f"[send_message] Target contact {phone} was NOT found on WhatsApp.")
+        hotkey("ctrl", "a")
+        press("backspace")
         press("esc")
-    except Exception:
-        pass
+        if return_to_system:
+            return_to_system_window()
+        return False
 
+    # Clear search bar cleanly
+    hotkey("ctrl", "a")
+    press("backspace")
+    press("esc")
+
+    # 5. Return focus to browser if requested
     if return_to_system:
         return_to_system_window()
 
@@ -658,75 +589,85 @@ def sending(
             topic = selected_groups[i]
             context = contexts[i] if contexts and i < len(contexts) else None
             msg_text = choose_message_for_group(messages, topic)
-            res = send_message(phone, msg_text, image=image, context=context, x_search=x_search, y_search=y_search)
-            if res:
+
+            is_last = (i == total_count - 1)
+            result = send_message(
+                phone,
+                msg_text,
+                image,
+                x_search=x_search,
+                y_search=y_search,
+                return_to_system=is_last,
+                context=context,
+            )
+            processed += 1
+            if result:
                 sent.append(phone)
             else:
                 unsent.append(phone)
-            processed += 1
+
             if progress_callback:
-                try:
-                    progress_callback(processed, total_count)
-                except Exception:
-                    pass
+                progress_callback(processed, total_count, phone, result)
             sleep(0.5)
 
-        return_to_system_tab()
-        return f"total: {len(phones)}, Sent: {len(sent)}, Unsent: {len(unsent)}"
-
-    if len(phones) != len(messages) and len(messages) != 1:
-        print("[sending] Number of phones and messages must be the same")
-        return "Number of phones and messages must be the same"
-
-    total_count = len(phones)
-    processed = 0
-
-    if len(messages) == 1:
+    elif len(messages) == 1:
         message = messages[0]
+        total_count = len(phones)
         for i, phone in enumerate(phones):
             if i == 0:
                 whatsupp_ready()
-            res = send_message(phone, message, image=image, x_search=x_search, y_search=y_search)
-            if res:
+            context = contexts[i] if contexts and i < len(contexts) else None
+            is_last = (i == total_count - 1)
+            result = send_message(
+                phone,
+                message,
+                image,
+                x_search=x_search,
+                y_search=y_search,
+                return_to_system=is_last,
+                context=context,
+            )
+            if result:
                 sent.append(phone)
             else:
                 unsent.append(phone)
-            processed += 1
+
             if progress_callback:
-                try:
-                    progress_callback(processed, total_count)
-                except Exception:
-                    pass
+                progress_callback(i + 1, total_count, phone, result)
             sleep(0.5)
     else:
+        if len(phones) != len(messages):
+            print("[sending] Number of phones and messages must be the same")
+            return "Number of phones and messages must be the same"
+
+        total_count = len(phones)
         for i, phone in enumerate(phones):
             if i == 0:
                 whatsupp_ready()
-            res = send_message(phone, str(messages[i]), image=image, x_search=x_search, y_search=y_search)
-            if res:
+            context = contexts[i] if contexts and i < len(contexts) else None
+            is_last = (i == total_count - 1)
+            result = send_message(
+                phone,
+                messages[i],
+                image,
+                x_search=x_search,
+                y_search=y_search,
+                return_to_system=is_last,
+                context=context,
+            )
+            if result:
                 sent.append(phone)
             else:
                 unsent.append(phone)
-            processed += 1
+
             if progress_callback:
-                try:
-                    progress_callback(processed, total_count)
-                except Exception:
-                    pass
+                progress_callback(i + 1, total_count, phone, result)
             sleep(0.5)
 
-    return_to_system_tab()
+    return_to_system_window()
     return f"""
     total: {len(phones)}
     Sent: {len(sent)}
     Unsent: {len(unsent)}
     Unsent numbers: {unsent}
     """
-
-
-if __name__ == "__main__":
-    phones = ["01080922432"]
-    messages = ["صلي علي سيدنا محمد صلي الله عليه وسلم"]
-    image = r"logo.png"
-    result = sending(phones, messages, image=image, y_search=200)
-    print(result)

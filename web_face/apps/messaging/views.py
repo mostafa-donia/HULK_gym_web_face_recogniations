@@ -557,8 +557,9 @@ def whatsapp_test_search_coords_api(request):
         return JsonResponse({"success": False, "error": "إحداثيات غير صالحة"}, status=400)
 
     try:
-        import pyautogui
-        pyautogui.moveTo(x, y, duration=0.45)
+        from apps.messaging import whatsapp_sender
+        whatsapp_sender.whatsupp_ready()
+        whatsapp_sender.human_move_to(x, y)
         return JsonResponse({"success": True, "x": x, "y": y})
     except Exception as exc:
         return JsonResponse({"success": False, "error": str(exc)}, status=500)
