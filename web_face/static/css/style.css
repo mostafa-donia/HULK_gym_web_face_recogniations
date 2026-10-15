@@ -286,6 +286,9 @@ body {
   min-width: 40px;
   max-width: 40px;
   height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  flex-shrink: 0;
   padding: 0;
   margin: 0;
   border-radius: 50% !important;
@@ -921,7 +924,12 @@ select.form-control {
 }
 
 [data-theme="light"] .top-nav-item {
-  color: #64748B !important;
+  color: #1E293B !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .top-nav-item svg {
+  stroke: #334155 !important;
 }
 
 [data-theme="light"] .top-nav-item:hover {
@@ -929,14 +937,26 @@ select.form-control {
   background-color: #F1F5F9 !important;
 }
 
+[data-theme="light"] .top-nav-item:hover svg {
+  stroke: #0F172A !important;
+}
+
 [data-theme="light"] .top-nav-item.active {
   color: #15803D !important;
-  background-color: rgba(22, 163, 74, 0.1) !important;
-  border: 1px solid rgba(22, 163, 74, 0.3) !important;
+  background-color: #ECFDF5 !important;
+  border: 1px solid #86EFAC !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] .top-nav-item.active svg {
+  stroke: #15803D !important;
 }
 
 [data-theme="light"] .top-brand span {
   color: #0F172A !important;
+  -webkit-text-fill-color: #0F172A !important;
+  background: none !important;
+  font-weight: 900 !important;
 }
 
 [data-theme="light"] .user-pill {

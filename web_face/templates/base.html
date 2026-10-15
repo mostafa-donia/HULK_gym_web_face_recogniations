@@ -21,7 +21,7 @@
   {% else %}
     <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
   {% endif %}
-  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20261015_05">
   
   <!-- Dynamic White-Label Branding & Theme Injection -->
   <style>
@@ -52,11 +52,11 @@
       {% endif %}
     }
     [data-theme="light"] {
-      --bg-main: #F1F5F9;
+      --bg-main: #F4F6F9;
       --bg-sidebar: #FFFFFF;
       --bg-card: #FFFFFF;
       --bg-surface: #FFFFFF;
-      --bg-surface-subtle: #F8FAFC;
+      --bg-surface-subtle: #F1F5F9;
       --bg-surface-elevated: #FFFFFF;
       --bg-input: #FFFFFF;
       --border-color: #E2E8F0;
@@ -65,17 +65,207 @@
       --border-sidebar: #E2E8F0;
       --border-input: #CBD5E1;
       --text-main: #0F172A;
-      --text-secondary: #334155;
-      --text-muted: #64748B;
-      --text-dim: #94A3B8;
+      --text-secondary: #1E293B;
+      --text-muted: #475569;
+      --text-dim: #64748B;
+      --nav-hover-bg: #F1F5F9;
+      --nav-active-bg: #ECFDF5;
+      --nav-active-border: #86EFAC;
+      --nav-active-text: #15803D;
     }
-    body {
-      background-color: var(--bg-main) !important;
-      color: var(--text-main);
+    [data-theme="light"] body {
+      background-color: #F4F6F9 !important;
+      color: #0F172A !important;
     }
-    .top-navbar {
-      background-color: var(--bg-sidebar) !important;
-      border-bottom: 1px solid var(--border-sidebar) !important;
+    [data-theme="light"] .top-navbar {
+      background-color: #FFFFFF !important;
+      border-bottom: 1px solid #E2E8F0 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    }
+    [data-theme="light"] .top-brand span {
+      color: #0F172A !important;
+      -webkit-text-fill-color: #0F172A !important;
+      background: none !important;
+      font-weight: 900 !important;
+    }
+    [data-theme="light"] .top-nav-item {
+      color: #1E293B !important;
+      font-weight: 700 !important;
+    }
+    [data-theme="light"] .top-nav-item svg {
+      stroke: #334155 !important;
+    }
+    [data-theme="light"] .top-nav-item:hover {
+      color: #0F172A !important;
+      background-color: #F1F5F9 !important;
+    }
+    [data-theme="light"] .top-nav-item:hover svg {
+      stroke: #0F172A !important;
+    }
+    [data-theme="light"] .top-nav-item.active {
+      color: #15803D !important;
+      background-color: #ECFDF5 !important;
+      border: 1px solid #86EFAC !important;
+      font-weight: 800 !important;
+    }
+    [data-theme="light"] .top-nav-item.active svg {
+      stroke: #15803D !important;
+    }
+    [data-theme="light"] .user-pill {
+      background: #F8FAFC !important;
+      border-color: #CBD5E1 !important;
+    }
+    [data-theme="light"] .user-pill-name {
+      color: #0F172A !important;
+      font-weight: 800 !important;
+    }
+    [data-theme="light"] .user-pill-role {
+      color: #16A34A !important;
+      font-weight: 800 !important;
+    }
+    [data-theme="light"] #globalCameraStatusPill {
+      background: #ECFDF5 !important;
+      border-color: #A7F3D0 !important;
+    }
+    [data-theme="light"] #globalCamText {
+      color: #047857 !important;
+      font-weight: 800 !important;
+    }
+    [data-theme="light"] .top-btn-logout {
+      background: #FFF1F2 !important;
+      border-color: #FECDD3 !important;
+      color: #E11D48 !important;
+    }
+    [data-theme="light"] .top-btn-logout:hover {
+      background: #FFE4E6 !important;
+      color: #BE123C !important;
+    }
+
+    /* Cards, Tables, Text Legibility in Light Mode */
+    [data-theme="light"] .card,
+    [data-theme="light"] .table-responsive,
+    [data-theme="light"] .table-header-bar,
+    [data-theme="light"] .member-result-card {
+      background-color: #FFFFFF !important;
+      border-color: #E2E8F0 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    }
+    [data-theme="light"] .table-header-bar {
+      background-color: #F8FAFC !important;
+      border-bottom: 1px solid #E2E8F0 !important;
+    }
+    [data-theme="light"] h1,
+    [data-theme="light"] h2,
+    [data-theme="light"] h3,
+    [data-theme="light"] h4,
+    [data-theme="light"] h5,
+    [data-theme="light"] h6 {
+      color: #0F172A !important;
+    }
+    [data-theme="light"] p,
+    [data-theme="light"] .text-muted {
+      color: #475569 !important;
+    }
+    [data-theme="light"] .dark-table,
+    [data-theme="light"] .table {
+      color: #0F172A !important;
+    }
+    [data-theme="light"] .dark-table th,
+    [data-theme="light"] .table th {
+      background-color: #F8FAFC !important;
+      color: #0F172A !important;
+      font-weight: 800 !important;
+      border-bottom: 2px solid #CBD5E1 !important;
+    }
+    [data-theme="light"] .dark-table td,
+    [data-theme="light"] .table td {
+      color: #1E293B !important;
+      font-weight: 600 !important;
+      border-bottom: 1px solid #F1F5F9 !important;
+    }
+    [data-theme="light"] .dark-table tbody tr:nth-child(even),
+    [data-theme="light"] .table tbody tr:nth-child(even) {
+      background-color: #FAFAFA !important;
+    }
+    [data-theme="light"] .dark-table tbody tr:hover,
+    [data-theme="light"] .table tbody tr:hover {
+      background-color: rgba(22, 163, 74, 0.06) !important;
+    }
+
+    /* Badges */
+    [data-theme="light"] .badge-neutral {
+      background: #F1F5F9 !important;
+      border: 1px solid #CBD5E1 !important;
+      color: #0F172A !important;
+      font-weight: 800 !important;
+    }
+    [data-theme="light"] .badge-info {
+      background: #EFF6FF !important;
+      border: 1px solid #BFDBFE !important;
+      color: #1D4ED8 !important;
+      font-weight: 800 !important;
+    }
+    [data-theme="light"] .badge-active {
+      background: #ECFDF5 !important;
+      border: 1px solid #A7F3D0 !important;
+      color: #047857 !important;
+      font-weight: 800 !important;
+    }
+    [data-theme="light"] .badge-debt {
+      background: #FFFBEB !important;
+      border: 1px solid #FDE68A !important;
+      color: #B45309 !important;
+      font-weight: 800 !important;
+    }
+
+    /* Form Controls & Action Buttons */
+    [data-theme="light"] .form-control,
+    [data-theme="light"] .search-input,
+    [data-theme="light"] input[type="text"],
+    [data-theme="light"] input[type="search"],
+    [data-theme="light"] input[type="number"],
+    [data-theme="light"] input[type="date"],
+    [data-theme="light"] select,
+    [data-theme="light"] textarea {
+      background-color: #FFFFFF !important;
+      border: 1px solid #CBD5E1 !important;
+      color: #0F172A !important;
+    }
+    [data-theme="light"] .form-control::placeholder,
+    [data-theme="light"] .search-input::placeholder,
+    [data-theme="light"] input::placeholder {
+      color: #64748B !important;
+    }
+    [data-theme="light"] .btn-secondary,
+    [data-theme="light"] .search-btn {
+      background-color: #F1F5F9 !important;
+      border: 1px solid #CBD5E1 !important;
+      color: #0F172A !important;
+      font-weight: 700 !important;
+    }
+    [data-theme="light"] .btn-secondary:hover,
+    [data-theme="light"] .search-btn:hover {
+      background-color: #E2E8F0 !important;
+      border-color: #94A3B8 !important;
+      color: #000000 !important;
+    }
+    [data-theme="light"] a[style*="color: var(--text-main)"] {
+      color: #0F172A !important;
+    }
+    [data-theme="light"] td[style*="color: var(--text-secondary)"] {
+      color: #334155 !important;
+    }
+    [data-theme="light"] td[style*="color: var(--text-muted)"] {
+      color: #475569 !important;
+    }
+    [data-theme="light"] span[style*="color: var(--text-muted)"] {
+      color: #475569 !important;
+    }
+    [data-theme="light"] small[style*="color: var(--text-muted)"] {
+      color: #475569 !important;
+    }
+    [data-theme="light"] p[style*="color: var(--text-muted)"] {
+      color: #475569 !important;
     }
   </style>
 
@@ -174,14 +364,15 @@
       <!-- User Profile, Face Camera Indicator & Logout on Left (RTL) -->
       <div class="top-navbar-user">
         <!-- Circular Theme Switcher Button Matching User Reference -->
-        <button type="button" id="themeToggleBtn" class="theme-toggle-compact-btn" onclick="toggleTheme()" title="الوضع الليلي نشط (انقر للتبديل إلى الوضع النهاري)" aria-label="تبديل المظهر">
+        <button type="button" id="themeToggleBtn" class="theme-toggle-compact-btn" onclick="toggleTheme()" title="الوضع الليلي نشط (انقر للتبديل إلى الوضع النهاري)" aria-label="تبديل المظهر"
+          style="display: inline-flex; align-items: center; justify-content: center; width: 40px; min-width: 40px; max-width: 40px; height: 40px; min-height: 40px; max-height: 40px; border-radius: 50% !important; cursor: pointer; padding: 0; margin: 0; outline: none; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.22); transition: all 0.2s ease; border: 1px solid rgba(255,255,255,0.16); background: #252B3B; color: #FFFFFF;">
           <!-- Solid Filled Crescent Moon (Active in Dark mode) -->
-          <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="currentColor">
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="#FFFFFF" style="width: 20px; height: 20px; display: inline-block;">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
           <!-- Solid Sun with Rays (Active in Light mode) -->
-          <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="5" fill="currentColor"></circle>
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" width="20" height="20" fill="#D97706" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; display: none;">
+            <circle cx="12" cy="12" r="5" fill="#D97706"></circle>
             <line x1="12" y1="1" x2="12" y2="3"></line>
             <line x1="12" y1="21" x2="12" y2="23"></line>
             <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
@@ -192,6 +383,31 @@
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
           </svg>
         </button>
+        <script>
+          (function() {
+            try {
+              var t = document.documentElement.getAttribute('data-theme') || 'dark';
+              var b = document.getElementById('themeToggleBtn');
+              if (b) {
+                var m = b.querySelector('.theme-icon-moon');
+                var s = b.querySelector('.theme-icon-sun');
+                if (t === 'light') {
+                  b.style.backgroundColor = '#F1F5F9';
+                  b.style.borderColor = '#CBD5E1';
+                  b.style.color = '#D97706';
+                  if (m) m.style.display = 'none';
+                  if (s) s.style.display = 'inline-block';
+                } else {
+                  b.style.backgroundColor = '#252B3B';
+                  b.style.borderColor = 'rgba(255, 255, 255, 0.16)';
+                  b.style.color = '#FFFFFF';
+                  if (m) m.style.display = 'inline-block';
+                  if (s) s.style.display = 'none';
+                }
+              }
+            } catch(e) {}
+          })();
+        </script>
 
         {% if gym_profile.face_camera_enabled %}
         <div id="globalCameraStatusPill" class="user-pill" onclick="toggleCameraDockPreview()" style="cursor: pointer; display: flex; align-items: center; gap: 7px; border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08); padding: 4px 12px; border-radius: 20px;" title="كاميرا التعرف على الوجه الذكية (انقر للمعاينة المباشرة)">
@@ -529,10 +745,26 @@
 
   <!-- Global Theme Switcher Logic -->
   <script>
-    function updateThemeButtonTitle(theme) {
+    function syncThemeButtonVisuals(theme) {
       var btn = document.getElementById('themeToggleBtn');
-      if (btn) {
-        btn.setAttribute('title', theme === 'dark' ? 'الوضع الليلي نشط (انقر للتبديل إلى الوضع النهاري)' : 'الوضع النهاري نشط (انقر للتبديل إلى الوضع الليلي)');
+      if (!btn) return;
+      var moon = btn.querySelector('.theme-icon-moon');
+      var sun = btn.querySelector('.theme-icon-sun');
+
+      if (theme === 'light') {
+        btn.style.backgroundColor = '#F1F5F9';
+        btn.style.borderColor = '#CBD5E1';
+        btn.style.color = '#D97706';
+        if (moon) moon.style.display = 'none';
+        if (sun) sun.style.display = 'inline-block';
+        btn.setAttribute('title', 'الوضع النهاري نشط (انقر للتبديل إلى الوضع الليلي)');
+      } else {
+        btn.style.backgroundColor = '#252B3B';
+        btn.style.borderColor = 'rgba(255, 255, 255, 0.16)';
+        btn.style.color = '#FFFFFF';
+        if (moon) moon.style.display = 'inline-block';
+        if (sun) sun.style.display = 'none';
+        btn.setAttribute('title', 'الوضع الليلي نشط (انقر للتبديل إلى الوضع النهاري)');
       }
     }
 
@@ -541,7 +773,7 @@
       var currentTheme = html.getAttribute('data-theme') || 'dark';
       var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
       html.setAttribute('data-theme', newTheme);
-      updateThemeButtonTitle(newTheme);
+      syncThemeButtonVisuals(newTheme);
       try {
         localStorage.setItem('gym_theme', newTheme);
       } catch (e) {}
@@ -551,7 +783,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      updateThemeButtonTitle(currentTheme);
+      syncThemeButtonVisuals(currentTheme);
     });
   </script>
 
