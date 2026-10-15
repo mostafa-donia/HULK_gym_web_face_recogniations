@@ -1151,7 +1151,9 @@ def settings_view(request):
         elif action == "unlock_developer":
             dev_pwd = request.POST.get("developer_password", "").strip()
             if dev_pwd == "P@ssw4568231rd":
+                request.session["settings_page_unlocked"] = True
                 request.session["developer_options_unlocked"] = True
+                request.session.modified = True
                 messages.success(request, "🔓 تم فتح وتفعيل خيارات المطور بنجاح.")
             else:
                 messages.error(request, "❌ كلمة سر المطور غير صحيحة!")
@@ -1159,6 +1161,8 @@ def settings_view(request):
 
         elif action == "lock_developer":
             request.session["developer_options_unlocked"] = False
+            request.session["settings_page_unlocked"] = True
+            request.session.modified = True
             messages.info(request, "🔒 تم قفل خيارات المطور.")
             return redirect("core:settings")
 

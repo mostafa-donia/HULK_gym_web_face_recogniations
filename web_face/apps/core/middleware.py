@@ -12,16 +12,28 @@ class ManagerPageAutoLockMiddleware:
         path = request.path or ""
 
         # Background AJAX/polling requests or assets should never clear the unlock status
+        sec_dest = (request.headers.get("sec-fetch-dest") or "").lower()
+        sec_mode = (request.headers.get("sec-fetch-mode") or "").lower()
+        accept = (request.headers.get("accept") or "").lower()
+
         is_background_or_asset = (
             request.headers.get("x-requested-with") == "XMLHttpRequest"
-            or "application/json" in request.headers.get("accept", "")
-            or path.startswith("/messaging/whatsapp/pending")
-            or path.startswith("/messaging/whatsapp/dispatch")
-            or path.startswith("/face/api/")
-            or path.startswith("/api/")
-            or path.startswith("/static/")
-            or path.startswith("/media/")
-            or path.startswith("/favicon")
+            or "application/json" in accept
+            or sec_dest in ["empty", "image", "script", "style", "font", "video", "audio"]
+            or sec_mode in ["cors", "no-cors"]
+            or "/api/" in path
+            or path.startswith((
+                "/static/",
+                "/media/",
+                "/favicon",
+                "/ping",
+                "/quick-search",
+                "/messaging/api",
+                "/face/",
+                "/settings/updates/",
+            ))
+            or path.endswith((".ico", ".png", ".jpg", ".jpeg", ".svg", ".css", ".js", ".map", ".json"))
+            or "ping" in request.GET
         )
 
         if not is_background_or_asset:

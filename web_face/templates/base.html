@@ -614,7 +614,12 @@
           return;
         }
 
-        fetch("{% url 'messaging:whatsapp_pending_summary' %}")
+        fetch("{% url 'messaging:whatsapp_pending_summary' %}", {
+          headers: {
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        })
           .then(res => res.json())
           .then(data => {
             if (data.success && data.pending_count > 0) {
