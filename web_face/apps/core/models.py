@@ -53,6 +53,8 @@ class GymProfile(models.Model):
         verbose_name="نمط إرسال الرسائل",
     )
     whatsapp_letter_delay = models.FloatField(default=0.001, verbose_name="سرعة كتابة الحروف")
+    whatsapp_search_x = models.IntegerField(default=280, verbose_name="إحداثي X لشريط بحث واتساب (WhatsApp Search X)")
+    whatsapp_search_y = models.IntegerField(default=120, verbose_name="إحداثي Y لشريط بحث واتساب (WhatsApp Search Y)")
     expired_message_template = models.TextField(
         default="تنبيه من {gym_name}\nأهلاً {name}\nاشتراكك انتهى بتاريخ: {end_date}\nنورتنا في أي وقت للتجديد والرجوع للتمرين 💪",
         verbose_name="قالب رسالة انتهاء الاشتراك",

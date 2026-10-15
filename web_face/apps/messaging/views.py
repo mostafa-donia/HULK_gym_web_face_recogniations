@@ -466,3 +466,99 @@ def whatsapp_dispatch_batch_api(request):
         "desktop_installed": True,
         "summary": summary,
     })
+
+
+@login_required
+def whatsapp_dispatch_single_api(request):
+    """
+    AJAX endpoint to dispatch a single message sequentially with real-time UI feedback.
+    Enables step-by-step progress tracking and instant user cancellation.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "POST method required"}, status=405)
+
+    data = {}
+    content_type = request.headers.get("Content-Type", "")
+    if "application/json" in content_type:
+        try:
+            data = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            pass
+    else:
+        data = request.POST
+
+    msg_id = data.get("message_id")
+    is_last = bool(data.get("is_last", False))
+
+    if not msg_id:
+        msg_obj = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING).order_by("created_at").first()
+    else:
+        try:
+            msg_obj = WhatsAppMessage.objects.filter(id=int(msg_id)).first()
+        except (ValueError, TypeError):
+            msg_obj = None
+
+    if not msg_obj:
+        return JsonResponse({"success": False, "error": "لا توجد رسالة معلقة بهذا المعرف."}, status=404)
+
+    success = dispatch_message_record(msg_obj, return_to_system=is_last)
+    remaining_count = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING).count()
+
+    return JsonResponse({
+        "success": success,
+        "message_id": msg_obj.id,
+        "recipient_name": msg_obj.recipient_name or "عضو",
+        "mobile": msg_obj.mobile,
+        "status": msg_obj.status,
+        "remaining_count": remaining_count,
+        "error": msg_obj.error_detail if not success else "",
+    })
+
+
+@login_required
+def whatsapp_return_focus_api(request):
+    """
+    AJAX endpoint to immediately restore focus back to the browser window.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "POST method required"}, status=405)
+
+    try:
+        from apps.messaging import whatsapp_sender
+        res = whatsapp_sender.return_to_system_window()
+        return JsonResponse({"success": res})
+    except Exception as exc:
+        return JsonResponse({"success": False, "error": str(exc)}, status=500)
+
+
+@login_required
+def whatsapp_test_search_coords_api(request):
+    """
+    AJAX endpoint to test and visually preview the WhatsApp search bar coordinates
+    by moving the mouse cursor to (x, y) on the screen.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "POST method required"}, status=405)
+
+    data = {}
+    content_type = request.headers.get("Content-Type", "")
+    if "application/json" in content_type:
+        try:
+            data = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            pass
+    else:
+        data = request.POST
+
+    try:
+        x = int(data.get("x", 280))
+        y = int(data.get("y", 120))
+    except (ValueError, TypeError):
+        return JsonResponse({"success": False, "error": "إحداثيات غير صالحة"}, status=400)
+
+    try:
+        import pyautogui
+        pyautogui.moveTo(x, y, duration=0.45)
+        return JsonResponse({"success": True, "x": x, "y": y})
+    except Exception as exc:
+        return JsonResponse({"success": False, "error": str(exc)}, status=500)

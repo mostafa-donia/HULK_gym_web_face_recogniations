@@ -180,6 +180,17 @@
           <label for="whatsapp_enabled" class="form-label" style="margin: 0; color: var(--text-secondary); font-weight: 700; cursor: pointer;">تفعيل إرسال رسائل وتنبيهات الواتساب التلقائية</label>
         </div>
 
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+          <div>
+            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block; font-size: 0.82rem;">إحداثي X لشريط بحث واتساب</label>
+            <input type="number" name="whatsapp_search_x" class="form-control" value="{{ profile.whatsapp_search_x|default:'280' }}" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; padding: 6px 10px; width: 100%; font-family: monospace;">
+          </div>
+          <div>
+            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block; font-size: 0.82rem;">إحداثي Y لشريط بحث واتساب</label>
+            <input type="number" name="whatsapp_search_y" class="form-control" value="{{ profile.whatsapp_search_y|default:'120' }}" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; padding: 6px 10px; width: 100%; font-family: monospace;">
+          </div>
+        </div>
+
         <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">قالب رسالة انتهاء الاشتراك</label>
           <textarea name="expired_message_template" class="form-control" rows="2" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; padding: 8px; width: 100%;">{{ profile.expired_message_template }}</textarea>
@@ -762,6 +773,58 @@
           <button type="submit" class="btn btn-primary" style="background: #1C3347; border: 1px solid #4DB3FF; color: #4DB3FF; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
             حفظ معايرة خوارزميات الوجه والبوابة
           </button>
+      <!-- Dev Card: WhatsApp Desktop Calibration & Search Coordinates (X, Y) -->
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+        <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px;">
+          <h3 class="card-title" style="color: #22c55e; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <svg width="22" height="22" fill="#22c55e" viewBox="0 0 16 16">
+              <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.655.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/>
+            </svg>
+            معايرة إحداثيات واتساب للكمبيوتر (WhatsApp Desktop Calibration)
+          </h3>
+          <span style="color: var(--text-muted); font-size: 0.82rem;">
+            تحديد إحداثيات (X, Y) لشريط البحث بدقة على شاشة جهازك لضمان نقر شريط البحث الصحيح وتفادي البحث الداخلي.
+          </span>
+        </div>
+
+        <form method="post" action="{% url 'core:settings' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save_profile">
+          <input type="hidden" name="form_whatsapp" value="1">
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 16px;">
+            <div class="form-group">
+              <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">
+                الإحداثي الأفقي لشريط البحث (X Coordinate)
+              </label>
+              <input type="number" id="wa_dev_search_x" name="whatsapp_search_x" class="form-control" value="{{ profile.whatsapp_search_x|default:'280' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 42px; border-radius: 8px; padding: 0 12px; width: 100%; font-family: monospace; font-size: 1rem;">
+              <small style="color: #64748b; font-size: 0.75rem;">المسافة الأفقية بالبكسل من أقصى يسار الشاشة لشريط بحث واتساب (الافتراضي: 280).</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">
+                الإحداثي الرأسي لشريط البحث (Y Coordinate)
+              </label>
+              <input type="number" id="wa_dev_search_y" name="whatsapp_search_y" class="form-control" value="{{ profile.whatsapp_search_y|default:'120' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 42px; border-radius: 8px; padding: 0 12px; width: 100%; font-family: monospace; font-size: 1rem;">
+              <small style="color: #64748b; font-size: 0.75rem;">المسافة الرأسية بالبكسل من أعلى الشاشة (الافتراضي: 120).</small>
+            </div>
+          </div>
+
+          <!-- Quick Test Coordinates Button -->
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 14px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <strong style="color: #38bdf8; font-size: 0.88rem; display: block; margin-bottom: 2px;">أداة المعاينة الحية لموضع الماوس</strong>
+              <span style="color: #64748b; font-size: 0.76rem;">اضغط على الزر ليتحرك مؤشر الماوس تلقائياً على شاشتك إلى النقطة المحددة لتتأكد أنها فوق شريط بحث واتساب.</span>
+              <div id="waCoordsTestFeedback" style="display: none; font-size: 0.82rem; font-weight: 700; margin-top: 6px;"></div>
+            </div>
+            <button type="button" onclick="testWhatsAppMouseCoordinates()" class="btn btn-secondary" style="background: #0c2d3e; border: 1px solid #0284c7; color: #38bdf8; font-weight: 800; padding: 8px 18px; border-radius: 6px; cursor: pointer; white-space: nowrap;">
+              تحريك الماوس للاختبار ⌖
+            </button>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="background: #064e3b; border: 1px solid #10b981; color: #34d399; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
+            حفظ إحداثيات شريط بحث واتساب
+          </button>
         </form>
       </div>
 
@@ -1157,6 +1220,42 @@ async function performSystemUpdate() {
     performBtn.disabled = false;
     performBtn.style.opacity = '1';
     performTxt.textContent = 'تحديث النظام الآن';
+  }
+}
+
+async function testWhatsAppMouseCoordinates() {
+  const xInp = document.getElementById('wa_dev_search_x');
+  const yInp = document.getElementById('wa_dev_search_y');
+  const x = parseInt(xInp ? xInp.value : 280) || 280;
+  const y = parseInt(yInp ? yInp.value : 120) || 120;
+  const fb = document.getElementById('waCoordsTestFeedback');
+  if (fb) {
+    fb.style.display = 'block';
+    fb.style.color = '#38bdf8';
+    fb.textContent = `جار تحريك الماوس إلى الإحداثيات (X=${x}, Y=${y})...`;
+  }
+  try {
+    const res = await fetch("{% url 'messaging:whatsapp_test_search_coords' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken") || "{{ csrf_token }}"
+      },
+      body: JSON.stringify({ x: x, y: y })
+    });
+    const data = await res.json();
+    if (data.success && fb) {
+      fb.style.color = '#4ade80';
+      fb.textContent = `✓ تم تحريك الماوس إلى X=${data.x}, Y=${data.y}. تأكد أن المؤشر يستقر فوق شريط بحث واتساب.`;
+    } else if (fb) {
+      fb.style.color = '#f87171';
+      fb.textContent = `خطأ: ${data.error || 'تعذر تحريك الماوس'}`;
+    }
+  } catch (err) {
+    if (fb) {
+      fb.style.color = '#f87171';
+      fb.textContent = 'تعذر الاتصال بالخادم.';
+    }
   }
 }
 </script>

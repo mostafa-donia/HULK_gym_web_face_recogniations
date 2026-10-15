@@ -787,6 +787,235 @@
     });
   </script>
 
+  <!-- Top-Right Floating WhatsApp Dispatch Overlay Widget -->
+  <div id="whatsappOverlayWidget" style="display: none; position: fixed; top: 22px; right: 22px; z-index: 9999999; width: 370px; max-width: calc(100vw - 40px); background: rgba(11, 14, 20, 0.96); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1.5px solid rgba(132, 204, 22, 0.5); border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.85), 0 0 20px rgba(132, 204, 22, 0.2); padding: 16px 18px; color: #fff; direction: rtl; font-family: inherit; transition: opacity 0.3s ease, transform 0.3s ease;">
+    <!-- Header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span id="waOverlayPulse" style="width: 10px; height: 10px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 10px #22c55e; display: inline-block;"></span>
+        <svg width="20" height="20" fill="#22c55e" viewBox="0 0 16 16">
+          <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.655.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/>
+        </svg>
+        <strong style="font-size: 0.95rem; color: #fff;">إرسال رسائل واتساب</strong>
+      </div>
+      <!-- Counter Badge -->
+      <div style="background: rgba(132, 204, 22, 0.15); border: 1px solid rgba(132, 204, 22, 0.4); border-radius: 8px; padding: 2px 10px; font-weight: 800; font-size: 0.88rem; color: #a3e635; font-family: monospace;">
+        <span id="waOverlayCurrent">0</span> / <span id="waOverlayTotal">0</span>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div style="height: 6px; background: rgba(255,255,255,0.12); border-radius: 6px; overflow: hidden; margin-bottom: 10px;">
+      <div id="waOverlayProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #22c55e, #84cc16); transition: width 0.3s ease;"></div>
+    </div>
+
+    <!-- Recipient & Status Info -->
+    <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+        <strong id="waOverlayRecipientName" style="color: #38bdf8; font-size: 0.9rem;">-</strong>
+        <span id="waOverlayPhone" dir="ltr" style="font-family: monospace; color: #94a3b8; font-size: 0.8rem;"></span>
+      </div>
+      <div id="waOverlayStatusMsg" style="font-size: 0.78rem; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+        جار الاتصال بـ WhatsApp Desktop...
+      </div>
+    </div>
+
+    <!-- Cancel Button -->
+    <button type="button" id="waOverlayCancelBtn" onclick="window.whatsappQueueRunner.cancel()" style="width: 100%; background: #ef4444; color: #fff; font-weight: 800; font-size: 0.88rem; border: none; border-radius: 8px; padding: 9px 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
+      <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M2.5 1A1.5 1.5 0 0 0 1 2.5v11A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-11A1.5 1.5 0 0 0 13.5 1h-11z"/>
+      </svg>
+      <span>إلغاء الإرسال (إيقاف فوري)</span>
+    </button>
+  </div>
+
+  <script>
+    window.whatsappQueueRunner = {
+      queue: [],
+      currentIndex: 0,
+      totalCount: 0,
+      isCancelled: false,
+      isRunning: false,
+
+      start: function(messageIds) {
+        if (!messageIds || messageIds.length === 0) return;
+        this.queue = messageIds.slice();
+        this.totalCount = this.queue.length;
+        this.currentIndex = 0;
+        this.isCancelled = false;
+        this.isRunning = true;
+
+        const widget = document.getElementById('whatsappOverlayWidget');
+        const cancelBtn = document.getElementById('waOverlayCancelBtn');
+        const pulse = document.getElementById('waOverlayPulse');
+        if (widget) {
+          widget.style.display = 'block';
+          widget.style.opacity = '1';
+          widget.style.transform = 'translateY(0)';
+        }
+        if (cancelBtn) {
+          cancelBtn.style.background = '#ef4444';
+          cancelBtn.innerHTML = '<svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5 1A1.5 1.5 0 0 0 1 2.5v11A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-11A1.5 1.5 0 0 0 13.5 1h-11z"/></svg><span>إلغاء الإرسال (إيقاف فوري)</span>';
+          cancelBtn.onclick = () => this.cancel();
+        }
+        if (pulse) {
+          pulse.style.background = '#22c55e';
+          pulse.style.boxShadow = '0 0 10px #22c55e';
+        }
+
+        this.processNext();
+      },
+
+      processNext: async function() {
+        if (this.isCancelled) {
+          this.handleCancelled();
+          return;
+        }
+
+        if (this.currentIndex >= this.queue.length) {
+          this.handleCompleted();
+          return;
+        }
+
+        const msgId = this.queue[this.currentIndex];
+        const currentNum = this.currentIndex + 1;
+        const isLast = (currentNum === this.totalCount);
+
+        this.updateUI(currentNum, this.totalCount, "جار التجهيز والإرسال عبر واتساب...", "");
+
+        try {
+          const res = await fetch("{% url 'messaging:whatsapp_dispatch_single' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": (typeof getCookie === 'function' ? getCookie("csrftoken") : "") || ""
+            },
+            body: JSON.stringify({
+              message_id: msgId,
+              is_last: isLast
+            })
+          });
+
+          const data = await res.json();
+          if (this.isCancelled) {
+            this.handleCancelled();
+            return;
+          }
+
+          if (data.success) {
+            this.updateUI(currentNum, this.totalCount, `✓ تم الإرسال بنجاح`, data.recipient_name, data.mobile);
+          } else {
+            this.updateUI(currentNum, this.totalCount, ` فشل الإرسال: ${data.error || 'خطأ'}`, data.recipient_name, data.mobile);
+          }
+        } catch (err) {
+          if (this.isCancelled) {
+            this.handleCancelled();
+            return;
+          }
+          this.updateUI(currentNum, this.totalCount, "تعذر الاتصال بالخادم أثناء الإرسال.", "-", "");
+        }
+
+        this.currentIndex++;
+        if (this.currentIndex < this.totalCount && !this.isCancelled) {
+          setTimeout(() => this.processNext(), 500);
+        } else if (this.currentIndex >= this.totalCount && !this.isCancelled) {
+          this.handleCompleted();
+        }
+      },
+
+      updateUI: function(current, total, statusText, recipientName, mobile) {
+        const curEl = document.getElementById('waOverlayCurrent');
+        const totEl = document.getElementById('waOverlayTotal');
+        const bar = document.getElementById('waOverlayProgressBar');
+        const statusEl = document.getElementById('waOverlayStatusMsg');
+        const recEl = document.getElementById('waOverlayRecipientName');
+        const phoneEl = document.getElementById('waOverlayPhone');
+
+        if (curEl) curEl.textContent = current;
+        if (totEl) totEl.textContent = total;
+        if (bar) bar.style.width = Math.round((current / total) * 100) + '%';
+        if (statusEl) statusEl.textContent = statusText;
+        if (recEl && recipientName) recEl.textContent = recipientName;
+        if (phoneEl && mobile) phoneEl.textContent = mobile;
+      },
+
+      cancel: async function() {
+        this.isCancelled = true;
+        this.isRunning = false;
+        this.handleCancelled();
+        try {
+          await fetch("{% url 'messaging:whatsapp_return_focus' %}", {
+            method: "POST",
+            headers: { "X-CSRFToken": (typeof getCookie === 'function' ? getCookie("csrftoken") : "") || "" }
+          });
+        } catch (e) {}
+      },
+
+      handleCancelled: function() {
+        const statusEl = document.getElementById('waOverlayStatusMsg');
+        const cancelBtn = document.getElementById('waOverlayCancelBtn');
+        const pulse = document.getElementById('waOverlayPulse');
+
+        if (statusEl) statusEl.textContent = `تم إلغاء الإرسال بواسطة المستخدم. تم إرسال ${this.currentIndex} من ${this.totalCount}.`;
+        if (cancelBtn) {
+          cancelBtn.style.background = '#64748b';
+          cancelBtn.innerHTML = '<span>إغلاق الإشعار</span>';
+          cancelBtn.onclick = () => this.hideOverlay();
+        }
+        if (pulse) {
+          pulse.style.background = '#ef4444';
+          pulse.style.boxShadow = '0 0 10px #ef4444';
+        }
+
+        setTimeout(() => {
+          this.hideOverlay();
+          if (window.location.pathname.includes('/messaging/')) {
+            window.location.reload();
+          }
+        }, 3200);
+      },
+
+      handleCompleted: async function() {
+        this.isRunning = false;
+        const statusEl = document.getElementById('waOverlayStatusMsg');
+        const cancelBtn = document.getElementById('waOverlayCancelBtn');
+        const pulse = document.getElementById('waOverlayPulse');
+
+        if (statusEl) statusEl.textContent = `✓ اكتمل الإرسال بنجاح! تم إرسال كافة الرسائل (${this.totalCount}).`;
+        if (cancelBtn) {
+          cancelBtn.style.background = '#22c55e';
+          cancelBtn.innerHTML = '<span>اكتمل بنجاح ✓</span>';
+          cancelBtn.onclick = () => this.hideOverlay();
+        }
+        if (pulse) {
+          pulse.style.background = '#22c55e';
+          pulse.style.boxShadow = '0 0 10px #22c55e';
+        }
+
+        try {
+          await fetch("{% url 'messaging:whatsapp_return_focus' %}", {
+            method: "POST",
+            headers: { "X-CSRFToken": (typeof getCookie === 'function' ? getCookie("csrftoken") : "") || "" }
+          });
+        } catch (e) {}
+
+        setTimeout(() => {
+          this.hideOverlay();
+          if (window.location.pathname.includes('/messaging/')) {
+            window.location.reload();
+          }
+        }, 2500);
+      },
+
+      hideOverlay: function() {
+        const widget = document.getElementById('whatsappOverlayWidget');
+        if (widget) {
+          widget.style.display = 'none';
+        }
+      }
+    };
+  </script>
+
   {% block extra_js %}{% endblock %}
 </body>
 </html>

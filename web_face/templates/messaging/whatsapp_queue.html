@@ -549,6 +549,17 @@
   }
 
   function submitBatchAction(actionName) {
+    if (actionName === 'resend_selected' || actionName === 'force_resend_selected') {
+      const checkedBoxes = Array.from(document.querySelectorAll('input[name="selected_ids"]:checked')).map(cb => parseInt(cb.value));
+      if (checkedBoxes.length === 0) {
+        alert("يرجى تحديد رسالة واحدة على الأقل بالضغط على المربع بجانبها.");
+        return;
+      }
+      if (window.whatsappQueueRunner) {
+        window.whatsappQueueRunner.start(checkedBoxes);
+        return;
+      }
+    }
     const actionInput = document.getElementById('batchActionInput');
     const form = document.getElementById('batchActionForm');
     actionInput.value = actionName;
@@ -785,7 +796,7 @@
     updateModalSelectionCounts();
   }
 
-  async function dispatchSelectedFromModal(mode) {
+  function dispatchSelectedFromModal(mode) {
     const checkedCheckboxes = Array.from(document.querySelectorAll('.modal-pending-cb')).filter(cb => cb.checked);
     if (checkedCheckboxes.length === 0) {
       alert("يرجى تحديد رسالة واحدة على الأقل بالضغط على المربع بجانبها.");
@@ -797,44 +808,10 @@
       idsToSend = idsToSend.slice(0, 10);
     }
 
-    const statusBox = document.getElementById('modalSendingStatusBox');
-    const statusText = document.getElementById('modalSendingStatusText');
-    const btnSendSelected = document.getElementById('btnModalSendSelected');
-    const btnSend10 = document.getElementById('btnModalSend10');
+    closeSendPendingModal();
 
-    statusBox.style.display = 'flex';
-    statusText.textContent = `جار إرسال ${idsToSend.length} رسالة عبر واتساب... يرجى الانتظار`;
-    btnSendSelected.disabled = true;
-    btnSend10.disabled = true;
-
-    try {
-      const res = await fetch("{% url 'messaging:whatsapp_dispatch_batch' %}", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCsrfToken()
-        },
-        body: JSON.stringify({
-          selected_ids: idsToSend,
-          limit: idsToSend.length
-        })
-      });
-      const data = await res.json();
-      if (data.success) {
-        statusText.textContent = `تمت معالجة الدفعة: ${data.sent} مرسلة بنجاح، ${data.failed} فاشلة.`;
-        // Refresh list after 1.2s
-        setTimeout(() => {
-          window.location.reload();
-        }, 1200);
-      } else {
-        statusText.textContent = "حدث خطأ أثناء الإرسال.";
-        btnSendSelected.disabled = false;
-        btnSend10.disabled = false;
-      }
-    } catch (err) {
-      statusText.textContent = "فشل الاتصال بالخادم.";
-      btnSendSelected.disabled = false;
-      btnSend10.disabled = false;
+    if (window.whatsappQueueRunner) {
+      window.whatsappQueueRunner.start(idsToSend);
     }
   }
 

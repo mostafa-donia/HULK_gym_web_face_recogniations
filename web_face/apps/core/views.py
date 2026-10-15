@@ -855,6 +855,17 @@ def settings_view(request):
                 profile.whatsapp_send_mode = request.POST.get("whatsapp_send_mode", profile.whatsapp_send_mode)
                 profile.expired_message_template = request.POST.get("expired_message_template", profile.expired_message_template)
 
+            if "whatsapp_search_x" in request.POST:
+                try:
+                    profile.whatsapp_search_x = int(request.POST.get("whatsapp_search_x", profile.whatsapp_search_x or 280))
+                except (ValueError, TypeError):
+                    pass
+            if "whatsapp_search_y" in request.POST:
+                try:
+                    profile.whatsapp_search_y = int(request.POST.get("whatsapp_search_y", profile.whatsapp_search_y or 120))
+                except (ValueError, TypeError):
+                    pass
+
             profile.save()
             messages.success(request, "تم حفظ الإعدادات بنجاح.")
             return redirect("core:settings")

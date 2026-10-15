@@ -297,6 +297,146 @@ def whatsupp_ready() -> bool:
         print("[whatsupp_ready] WhatsApp Desktop is not running. Launching via 'start whatsapp:' ...")
         Popen("start whatsapp:", shell=True)
         # Wait up to 15 seconds for WhatsApp window to appear
+ORIGINAL_BROWSER_HWND = None
+
+
+def remember_current_window():
+    """Remember the foreground browser/system window HWND before activating WhatsApp Desktop."""
+    global ORIGINAL_BROWSER_HWND
+    try:
+        import win32gui
+        hwnd = win32gui.GetForegroundWindow()
+        if hwnd:
+            title = (win32gui.GetWindowText(hwnd) or "").lower()
+            if not ("whatsapp" in title or "واتساب" in title):
+                ORIGINAL_BROWSER_HWND = hwnd
+                print(f"[remember_current_window] Saved active system HWND: {hwnd} ({title})")
+    except Exception as e:
+        print(f"[remember_current_window] Warning: {e}")
+
+
+def return_to_system_window() -> bool:
+    """
+    Seamlessly and reliably brings the browser / gym system window back to the foreground
+    using Win32 API window activation.
+    """
+    global ORIGINAL_BROWSER_HWND
+    import win32gui
+
+    print("[return_to_system_window] Bringing gym system browser back to foreground...")
+    sleep(0.3)
+    user32 = ctypes.windll.user32
+
+    def activate_hwnd(hwnd):
+        if not hwnd or not win32gui.IsWindow(hwnd):
+            return False
+        try:
+            # Unlock foreground switch
+            user32.SystemParametersInfoW(0x2001, 0, 0, 0x0002 | 0x0001)
+            if user32.IsIconic(hwnd):
+                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+            else:
+                user32.ShowWindow(hwnd, 5)  # SW_SHOW
+
+            fore_hwnd = win32gui.GetForegroundWindow()
+            fore_thread = user32.GetWindowThreadProcessId(fore_hwnd, 0)
+            target_thread = user32.GetWindowThreadProcessId(hwnd, 0)
+
+            if fore_thread != target_thread:
+                user32.AttachThreadInput(fore_thread, target_thread, True)
+                user32.SetForegroundWindow(hwnd)
+                user32.BringWindowToTop(hwnd)
+                user32.AttachThreadInput(fore_thread, target_thread, False)
+            else:
+                user32.SetForegroundWindow(hwnd)
+                user32.BringWindowToTop(hwnd)
+            return True
+        except Exception as e:
+            print(f"[return_to_system_window] activate_hwnd error for {hwnd}: {e}")
+            return False
+
+    # 1. Try saved HWND
+    if ORIGINAL_BROWSER_HWND and activate_hwnd(ORIGINAL_BROWSER_HWND):
+        print(f"[return_to_system_window] Restored saved HWND: {ORIGINAL_BROWSER_HWND}")
+        return True
+
+    # 2. Search for browser windows (Edge, Chrome, Firefox, Brave, Opera)
+    found_hwnds = []
+    def enum_cb(h, _):
+        if win32gui.IsWindowVisible(h):
+            title = (win32gui.GetWindowText(h) or "").lower()
+            if any(k in title for k in ["hulk", "gym", "dashboard", "127.0.0.1", "localhost", "لوحة"]):
+                found_hwnds.append((h, 10))
+            elif any(b in title for b in ["chrome", "edge", "firefox", "brave", "opera"]):
+                if "whatsapp" not in title and "واتساب" not in title:
+                    found_hwnds.append((h, 5))
+        return True
+
+    try:
+        win32gui.EnumWindows(enum_cb, None)
+    except Exception:
+        pass
+
+    if found_hwnds:
+        found_hwnds.sort(key=lambda x: x[1], reverse=True)
+        best_hwnd = found_hwnds[0][0]
+        if activate_hwnd(best_hwnd):
+            print(f"[return_to_system_window] Brought browser window {best_hwnd} to front.")
+            return True
+
+    # 3. Fallback: Alt+Tab
+    try:
+        hotkey("alt", "tab")
+        return True
+    except Exception:
+        return False
+
+
+def return_to_system_tab() -> bool:
+    """Backward compatibility alias for return_to_system_window."""
+    return return_to_system_window()
+
+
+def whatsupp_ready() -> bool:
+    """
+    Ensures WhatsApp Desktop (native Windows application) is installed, running, restored,
+    and active in the foreground.
+    Strictly works on WhatsApp Desktop ONLY (no Chrome or WhatsApp Web).
+    """
+    if "test" in sys.argv:
+        return True
+
+    installed, msg, _ = is_whatsapp_desktop_installed()
+    if not installed:
+        print(f"[whatsupp_ready] ERROR: {msg}")
+        return False
+
+    # Save active browser window before WhatsApp steals focus
+    remember_current_window()
+
+    print("[whatsupp_ready] Checking for WhatsApp Desktop window...")
+
+    def find_whatsapp_window():
+        try:
+            from pygetwindow import getAllWindows
+            all_win = getAllWindows()
+        except Exception:
+            all_win = []
+
+        matching = []
+        for w in all_win:
+            title = getattr(w, "title", "") or ""
+            if ("WhatsApp" in title or "واتساب" in title) and not any(
+                b in title for b in ["Chrome", "Edge", "Firefox", "Brave", "Opera"]
+            ):
+                matching.append(w)
+        return matching
+
+    whatsapp_windows = find_whatsapp_window()
+
+    if not whatsapp_windows:
+        print("[whatsupp_ready] WhatsApp Desktop is not running. Launching via 'start whatsapp:' ...")
+        Popen("start whatsapp:", shell=True)
         for _ in range(30):
             sleep(0.5)
             whatsapp_windows = find_whatsapp_window()
@@ -310,7 +450,6 @@ def whatsupp_ready() -> bool:
     target = whatsapp_windows[0]
     hwnd = getattr(target, "_hWnd", None)
 
-    # Restore if minimized and bring to foreground reliably via Win32 API
     try:
         if hwnd:
             user32 = ctypes.windll.user32
@@ -331,21 +470,6 @@ def whatsupp_ready() -> bool:
     return True
 
 
-def return_to_system_tab() -> bool:
-    """
-    Seamlessly switches focus back to the previously active system window using Alt+Tab.
-    """
-    print("[return_to_system_tab] Returning focus via Alt+Tab...")
-    sleep(0.3)
-    try:
-        hotkey("alt", "tab")
-        sleep(0.3)
-        return True
-    except Exception as e:
-        print(f"[return_to_system_tab] Error: {e}")
-        return False
-
-
 def choose_message_for_group(messages, group_name):
     """Select a random message from the specific selected group for a phone."""
     if not isinstance(messages, dict):
@@ -363,8 +487,8 @@ def send_message(
     phone: str,
     message: str = "",
     image: str = None,
-    x_search: int = 300,
-    y_search: int = 190,
+    x_search: int = None,
+    y_search: int = None,
     return_to_system: bool = False,
     topic: str = None,
     message_bank: dict = None,
@@ -372,11 +496,22 @@ def send_message(
 ) -> bool:
     """
     Sends a WhatsApp message and/or file attachment (invoice, report, image) to the specified phone.
-    Works strictly on WhatsApp Desktop.
+    Works strictly on WhatsApp Desktop using user-configured search bar coordinates.
     """
     global sent, unsent
     if "test" in sys.argv:
         return True
+
+    # Retrieve coordinates from GymProfile if not explicitly provided
+    if x_search is None or y_search is None:
+        try:
+            from apps.core.models import GymProfile
+            prof = GymProfile.get_solo()
+            x_search = prof.whatsapp_search_x if prof.whatsapp_search_x is not None else 280
+            y_search = prof.whatsapp_search_y if prof.whatsapp_search_y is not None else 120
+        except Exception:
+            x_search = x_search or 280
+            y_search = y_search or 120
 
     if isinstance(message, dict):
         message_bank = message
@@ -393,7 +528,7 @@ def send_message(
             pass
 
     phone = str(phone).strip()
-    print(f"[send_message] Sending to: {phone} via WhatsApp Desktop")
+    print(f"[send_message] Sending to: {phone} (search coords: x={x_search}, y={y_search})")
 
     # 1. Focus WhatsApp Desktop and switch keyboard layout
     if not whatsupp_ready():
@@ -403,32 +538,34 @@ def send_message(
     set_keyboard_layout_to_english()
     random_delay(0.2, 0.4)
 
-    # 2. Focus search in WhatsApp Desktop (Ctrl+F is native search in WhatsApp Desktop)
-    hotkey("ctrl", "f")
-    random_delay(0.2, 0.3)
+    # 2. Focus the GLOBAL search bar via user-calibrated coordinates
+    # Close any open chat search / dialog first
+    press("esc")
+    random_delay(0.15, 0.25)
 
     if x_search and y_search:
         try:
             human_move_to(x_search, y_search)
             pyautogui.click()
-            random_delay(0.15, 0.25)
-        except Exception:
-            pass
+            random_delay(0.2, 0.3)
+        except Exception as e:
+            print(f"[send_message] Click at search coords error: {e}")
 
-    # Clear previous search content
+    # Clear previous search content cleanly
     hotkey("ctrl", "a")
     press("backspace")
-    random_delay(0.1, 0.2)
+    random_delay(0.15, 0.25)
 
     # Paste phone number to avoid keyboard layout discrepancies
     copy(phone)
     hotkey("ctrl", "v")
-    random_delay(1.2, 1.8)
+    random_delay(1.5, 2.2)
+
+    # In WhatsApp Desktop, press Enter to open the conversation
     press("enter")
-    random_delay(1.8, 2.8)
+    random_delay(2.2, 3.2)
 
     # 3. Paste file / invoice attachment if present
-    # Check if image path exists (or if .html has a matching .png)
     target_img = None
     if image and isinstance(image, str):
         if os.path.exists(image):
@@ -444,14 +581,14 @@ def send_message(
             random_delay(0.4, 0.7)
             hotkey("ctrl", "v")
             # Wait for WhatsApp Desktop attachment preview modal to appear
-            random_delay(2.5, 3.8)
+            random_delay(2.8, 3.8)
             if message:
                 copy(message)
                 random_delay(0.3, 0.6)
                 hotkey("ctrl", "v")
-                random_delay(0.4, 0.8)
+                random_delay(0.5, 0.9)
             press("enter")
-            random_delay(1.5, 2.5)
+            random_delay(1.6, 2.6)
         else:
             print("[send_message] copy_file failed, falling back to message text")
             if message:
@@ -470,18 +607,14 @@ def send_message(
             press("enter")
             random_delay(1.2, 2.0)
 
-    # 4. Clean search bar without destructive coordinate clicks
+    # 4. Clean search bar
     try:
-        hotkey("ctrl", "f")
-        random_delay(0.15, 0.25)
-        hotkey("ctrl", "a")
-        press("backspace")
         press("esc")
     except Exception:
         pass
 
     if return_to_system:
-        return_to_system_tab()
+        return_to_system_window()
 
     return True
 
