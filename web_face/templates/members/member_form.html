@@ -119,13 +119,38 @@
       function togglePrivateInputs() {
         const chk = document.getElementById('has_private_chk');
         const cont = document.getElementById('private_fields_container');
+        const coachSelect = document.querySelector('select[name="assigned_coach_id"]');
         if (cont) cont.style.display = chk.checked ? 'grid' : 'none';
+        if (coachSelect) {
+          coachSelect.required = chk.checked;
+          if (chk.checked) coachSelect.style.borderColor = '#A8F14B';
+          else coachSelect.style.borderColor = 'var(--border-color)';
+        }
       }
       function toggleDiscountInputs() {
         const chk = document.getElementById('discount_enabled_chk');
         const cont = document.getElementById('discount_fields_container');
         if (cont) cont.style.display = chk.checked ? 'block' : 'none';
       }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        const memberForm = document.querySelector('form');
+        if (memberForm) {
+          memberForm.addEventListener('submit', function(e) {
+            const chk = document.getElementById('has_private_chk');
+            if (chk && chk.checked) {
+              const coachSelect = document.querySelector('select[name="assigned_coach_id"]');
+              if (coachSelect && !coachSelect.value) {
+                alert("يرجى اختيار الكابتن المسؤول عن التدريب الخاص (Private).");
+                coachSelect.focus();
+                e.preventDefault();
+                return false;
+              }
+            }
+          });
+        }
+        togglePrivateInputs();
+      });
       </script>
 
       <!-- Face Recognition Biometrics Section -->

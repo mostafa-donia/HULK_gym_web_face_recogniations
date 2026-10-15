@@ -198,8 +198,14 @@ function updatePlanCalculations() {
   // Private Add-on Calculation
   const hasPrivate = document.getElementById('has_private').checked;
   const privateFields = document.getElementById('private_sub_fields');
+  const coachSelect = document.getElementById('coach_select');
   if (privateFields) {
     privateFields.style.display = hasPrivate ? 'grid' : 'none';
+  }
+  if (coachSelect) {
+    coachSelect.required = hasPrivate;
+    if (hasPrivate) coachSelect.style.borderColor = '#A8F14B';
+    else coachSelect.style.borderColor = 'var(--border-color)';
   }
   const privatePrice = hasPrivate ? (parseFloat(document.getElementById('private_price_input').value) || 0) : 0;
   const gross = basePrice + privatePrice;
@@ -299,6 +305,17 @@ if (allowanceInput) {
 const subForm = document.getElementById('sub-form');
 if (subForm) {
   subForm.addEventListener('submit', function(e) {
+    const hasPriv = document.getElementById('has_private').checked;
+    if (hasPriv) {
+      const coachSel = document.getElementById('coach_select');
+      if (!coachSel.value) {
+        alert("تنبيه: يجب اختيار الكابتن (المدرب المسؤول) عند تفعيل باقة التدريب الخاص (Private).");
+        coachSel.focus();
+        e.preventDefault();
+        return false;
+      }
+    }
+
     const rem = parseFloat(document.getElementById('remaining_disp').value || 0);
     if (rem > 0) {
       const allowance = parseInt(document.getElementById('allowance_days').value || 0);

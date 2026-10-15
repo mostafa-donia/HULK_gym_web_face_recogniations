@@ -252,6 +252,10 @@ def member_create_view(request):
         if coach_id:
             assigned_coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first()
 
+        if has_private and not assigned_coach:
+            messages.error(request, "يرجى اختيار الكابتن المسؤول عن التدريب الخاص (Private).")
+            return render(request, "members/member_form.html", {"initial_name": name, "coaches": coaches})
+
         renewal_discount = Decimal(request.POST.get("renewal_discount", "0.00") or "0.00")
         discount_enabled = request.POST.get("discount_enabled") in ["1", "on", "true"]
 
@@ -337,6 +341,11 @@ def member_edit_view(request, member_id):
         new_private_price = Decimal(request.POST.get("private_price", str(member.private_price or "600.00")) or "600.00")
         coach_id = request.POST.get("assigned_coach_id")
         new_coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first() if coach_id else None
+
+        if new_has_private and not new_coach:
+            messages.error(request, "يرجى اختيار الكابتن المسؤول عن التدريب الخاص (Private).")
+            return render(request, "members/member_form.html", {"member": member, "is_edit": True, "coaches": coaches, "plans": plans})
+
         new_discount_enabled = request.POST.get("discount_enabled") in ["1", "on", "true"]
         new_renewal_discount = Decimal(request.POST.get("renewal_discount", str(member.renewal_discount or "0.00")) or "0.00")
 
@@ -456,6 +465,10 @@ def member_quick_private_update_view(request, member_id):
             new_private_price = Decimal(request.POST.get("private_price", str(member.private_price or "600.00")) or "600.00")
             coach_id = request.POST.get("assigned_coach_id")
             new_coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first() if coach_id else None
+
+            if new_has_private and not new_coach:
+                messages.error(request, "يرجى اختيار الكابتن المسؤول عن التدريب الخاص (Private).")
+                return redirect(f"/members/{member.id}/")
 
             member.has_private = new_has_private
             member.private_price = new_private_price if new_has_private else Decimal("0.00")
@@ -628,6 +641,9 @@ def subscription_create_view(request):
                 coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first()
             if not coach and member.assigned_coach:
                 coach = member.assigned_coach
+            if not coach:
+                messages.error(request, "يرجى اختيار الكابتن المسؤول عن التدريب الخاص (Private).")
+                return redirect(f"{reverse('members:subscription_create')}?member_id={member.id}")
 
         total_sub_price = plan_price + private_price
 
@@ -851,6 +867,13 @@ def smart_operations_view(request):
                 plan_id = request.POST.get("plan_id")
                 plan = get_object_or_404(Plan, id=plan_id)
 
+                # Pre-lookup existing member if provided
+                member = None
+                if member_id:
+                    member = Member.objects.filter(id=member_id).first()
+                if not member and mobile:
+                    member = Member.objects.filter(mobile=mobile).first()
+
                 start_date_str = request.POST.get("start_date")
                 try:
                     start_date = date.fromisoformat(start_date_str)
@@ -862,8 +885,14 @@ def smart_operations_view(request):
                 private_price = Decimal(request.POST.get("private_price", "0.00") or "0.00") if has_private else Decimal("0.00")
                 coach_id = request.POST.get("coach_id")
                 coach = None
-                if has_private and coach_id:
-                    coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first()
+                if has_private:
+                    if coach_id:
+                        coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first()
+                    if not coach and member and member.assigned_coach:
+                        coach = member.assigned_coach
+                    if not coach:
+                        messages.error(request, "يرجى اختيار الكابتن المسؤول عن التدريب الخاص (Private).")
+                        return redirect("members:smart_operations")
 
                 discount = Decimal(request.POST.get("discount", "0.00") or "0.00")
                 total_sub_price = plan_price + private_price
@@ -894,13 +923,6 @@ def smart_operations_view(request):
                     allowance_days = 0
 
                 end_date = compute_plan_end_date(plan, start_date)
-
-                # Find or create member
-                member = None
-                if member_id:
-                    member = Member.objects.filter(id=member_id).first()
-                if not member and mobile:
-                    member = Member.objects.filter(mobile=mobile).first()
 
                 if not member:
                     # New Member

@@ -1,9 +1,9 @@
 class ManagerPageAutoLockMiddleware:
     """
-    Automatically re-locks the Manager Dashboard, Mobile Dashboard, and Settings pages
-    as soon as the user navigates away to any other non-manager part of the system
-    (e.g., Home Dashboard, Members, Payments, Expenses, etc.).
-    Background AJAX/API requests and asset loading do NOT trigger a re-lock.
+    Granular Auto-Lock Middleware:
+    Automatically re-locks password-protected sections (Manager Dashboard, Settings, Developer Options,
+    Trainers & Coaches) as soon as the user navigates away from each respective zone.
+    Background AJAX/API requests, polling endpoints, and static/media assets do NOT trigger a re-lock.
     """
     def __init__(self, get_response):
         self.get_response = get_response
@@ -24,21 +24,39 @@ class ManagerPageAutoLockMiddleware:
             or path.startswith("/favicon")
         )
 
-        # Paths that maintain the unlocked manager session
-        is_manager_zone = (
-            path.startswith("/manager") or
-            path.startswith("/mobile") or
-            path.startswith("/settings") or
-            path.startswith("/payroll") or
-            path.startswith("/reports") or
-            (path == "/" and request.session.get("view_mode") == "mobile")
-        )
+        if not is_background_or_asset:
+            # 1. Settings & Developer Options Zone
+            is_settings_zone = path.startswith("/settings")
+            if not is_settings_zone:
+                if request.session.get("settings_page_unlocked"):
+                    request.session["settings_page_unlocked"] = False
+                    request.session.modified = True
+                if request.session.get("developer_options_unlocked"):
+                    request.session["developer_options_unlocked"] = False
+                    request.session.modified = True
 
-        # If navigating anywhere outside the manager zone, immediately clear unlock flag
-        if not is_background_or_asset and not is_manager_zone:
-            if request.session.get("manager_page_unlocked"):
-                request.session["manager_page_unlocked"] = False
-                request.session.modified = True
+            # 2. Trainers & Coaches Zone
+            is_trainers_zone = (
+                path.startswith("/payroll/trainers")
+                or path.startswith("/payroll/coaches")
+                or path.startswith("/payroll/trainer-assignments")
+                or path.startswith("/payroll/private-training")
+            )
+            if not is_trainers_zone:
+                if request.session.get("trainers_page_unlocked"):
+                    request.session["trainers_page_unlocked"] = False
+                    request.session.modified = True
+
+            # 3. Manager & Mobile Dashboard Zone
+            is_manager_zone = (
+                path.startswith("/manager")
+                or path.startswith("/mobile")
+                or (path == "/" and request.session.get("view_mode") == "mobile")
+            )
+            if not is_manager_zone:
+                if request.session.get("manager_page_unlocked"):
+                    request.session["manager_page_unlocked"] = False
+                    request.session.modified = True
 
         response = self.get_response(request)
         return response

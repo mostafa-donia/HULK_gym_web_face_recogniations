@@ -17,10 +17,15 @@
 
     <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.6; margin-bottom: 24px;">
       يرجى إدخال كلمة مرور إدارة المدربين أو كلمة مرور المدير للوصول إلى كشوفات وحسابات وعمولات الكباتن.
+      <br>
+      <span style="color: #f59e0b; font-size: 0.84rem; display: inline-block; margin-top: 6px;">
+        يتم إعادة قفل الصفحة تلقائياً بمجرد الخروج منها لأي قسم آخر.
+      </span>
     </p>
 
-    <form method="post" action="{% url 'payroll:trainers_index' %}" style="display: flex; flex-direction: column; gap: 16px;">
+    <form method="post" action="{{ target_url|default:request.get_full_path }}" style="display: flex; flex-direction: column; gap: 16px;">
       {% csrf_token %}
+      <input type="hidden" name="target_url" value="{{ target_url|default:request.get_full_path }}">
 
       <div style="text-align: right;">
         <label for="trainer-pwd" style="display: block; color: var(--text-muted); font-size: 0.88rem; font-weight: 700; margin-bottom: 8px;">
@@ -47,7 +52,7 @@
     </form>
 
     <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #14202A; font-size: 0.8rem; color: #586571;">
-      🔒 يتم حفظ فتح القفل طوال جلستك الحالية فقط ويمكنك قفلها في أي وقت
+      نظام أمان فوري — يعود للقفل مباشرة فور الانتقال لقسم آخر
     </div>
 
   </div>

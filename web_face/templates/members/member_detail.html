@@ -1145,7 +1145,13 @@ function closeQuickPrivateModal() {
 function toggleModalPrivate() {
   const chk = document.getElementById('modal_has_private');
   const box = document.getElementById('modal_private_box');
+  const coachSelect = document.querySelector('#quickPrivateModal select[name="assigned_coach_id"]');
   if (box) box.style.display = chk.checked ? 'block' : 'none';
+  if (coachSelect) {
+    coachSelect.required = chk.checked;
+    if (chk.checked) coachSelect.style.borderColor = '#A8F14B';
+    else coachSelect.style.borderColor = 'var(--border-color)';
+  }
 }
 
 function openQuickDiscountModal() {
@@ -1161,6 +1167,25 @@ function toggleModalDiscount() {
   const box = document.getElementById('modal_discount_box');
   if (box) box.style.display = chk.checked ? 'block' : 'none';
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const privForm = document.querySelector('#quickPrivateModal form');
+  if (privForm) {
+    privForm.addEventListener('submit', function(e) {
+      const chk = document.getElementById('modal_has_private');
+      if (chk && chk.checked) {
+        const coachSelect = document.querySelector('#quickPrivateModal select[name="assigned_coach_id"]');
+        if (coachSelect && !coachSelect.value) {
+          alert("يرجى اختيار الكابتن المسؤول عن التدريب الخاص (Private).");
+          coachSelect.focus();
+          e.preventDefault();
+          return false;
+        }
+      }
+    });
+  }
+  toggleModalPrivate();
+});
 </script>
 
 <style>

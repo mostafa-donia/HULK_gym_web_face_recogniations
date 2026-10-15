@@ -396,7 +396,13 @@ document.addEventListener("DOMContentLoaded", function() {
     window.toggleSmartPrivate = function() {
       const chk = document.getElementById("smart_has_private");
       const fields = document.getElementById("smart_private_fields");
+      const coachSelect = document.getElementById("smart_coach_select");
       if (fields) fields.style.display = chk.checked ? "grid" : "none";
+      if (coachSelect) {
+        coachSelect.required = chk.checked;
+        if (chk.checked) coachSelect.style.borderColor = "#A8F14B";
+        else coachSelect.style.borderColor = "var(--border-color)";
+      }
       syncPlanPrice();
       updateLiveCalculation();
     };
@@ -654,6 +660,18 @@ document.addEventListener("DOMContentLoaded", function() {
   if (smartForm) {
     smartForm.addEventListener("submit", function(e) {
       if (fieldOpType.value === "remaining") return true;
+
+      const hasPrivate = document.getElementById("smart_has_private").checked;
+      if (hasPrivate) {
+        const coachSelect = document.getElementById("smart_coach_select");
+        if (!coachSelect.value) {
+          alert("تنبيه: يجب اختيار الكابتن (المدرب المسؤول) عند تفعيل باقة التدريب الخاص (Private).");
+          coachSelect.focus();
+          e.preventDefault();
+          return false;
+        }
+      }
+
       const selectedOpt = fieldPlan.options[fieldPlan.selectedIndex];
       const planPrice = selectedOpt ? parseFloat(selectedOpt.getAttribute("data-price") || 0) : 0;
       const paid = parseFloat(fieldPaidAmount.value || 0);

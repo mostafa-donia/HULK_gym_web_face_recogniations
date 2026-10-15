@@ -15,11 +15,11 @@
     </div>
 
     <h2 style="color: var(--text-main, #F3F8FB); font-size: 1.45rem; font-weight: 800; margin-bottom: 8px;">
-      منطقة المدير والإعدادات محمية
+      {{ unlock_title|default:"منطقة المدير والإعدادات محمية" }}
     </h2>
 
     <p style="color: var(--text-muted, #8D99A3); font-size: 0.92rem; line-height: 1.6; margin-bottom: 24px;">
-      يرجى إدخال كلمة سر المدير للوصول إلى لوحة الإدارة أو الإعدادات الحساسة.
+      {{ unlock_subtitle|default:"يرجى إدخال كلمة سر المدير للوصول إلى لوحة الإدارة أو الإعدادات الحساسة." }}
       <br>
       <span style="color: var(--accent-orange, #f59e0b); font-size: 0.84rem; display: inline-block; margin-top: 6px;">
         يتم إعادة قفل الصفحة تلقائياً بمجرد الخروج منها لأي قسم آخر.

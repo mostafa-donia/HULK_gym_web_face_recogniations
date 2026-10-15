@@ -728,4 +728,128 @@ class ComprehensivePayrollAndSystemTests(TestCase):
         self.assertEqual(sub_session.end_date, date(2026, 10, 13))
         self.assertEqual(member_session.last_subscription_end, date(2026, 10, 13))
 
+    def test_private_trainer_requirement_and_auto_lock_isolation(self):
+        """
+        Verify:
+        1. Trainer must be selected if has_private is enabled.
+        2. Settings, Trainers, and Manager zones have isolated unlock states.
+        3. Navigating away immediately re-locks that specific section.
+        """
+        self.client.login(username="test_manager", password="password123")
+
+        # --- 1. Settings Isolation & Auto-Lock ---
+        resp_settings = self.client.get(reverse("core:settings"))
+        self.assertEqual(resp_settings.status_code, 200)
+        self.assertContains(resp_settings, "صفحة إعدادات النظام محمية")
+
+        # Unlock Settings
+        resp_settings_unlock = self.client.post(
+            reverse("core:settings"),
+            {"manager_unlock_password": "1234"},
+            follow=True
+        )
+        self.assertEqual(resp_settings_unlock.status_code, 200)
+        self.assertContains(resp_settings_unlock, "إعدادات النظام")
+
+        # Session has settings_page_unlocked
+        session = self.client.session
+        self.assertTrue(session.get("settings_page_unlocked"))
+
+        # Navigate away to Members -> Settings must immediately lock!
+        self.client.get(reverse("members:member_list"))
+        session = self.client.session
+        self.assertFalse(session.get("settings_page_unlocked", False))
+
+        # Accessing Settings again requires password
+        resp_settings_relocked = self.client.get(reverse("core:settings"))
+        self.assertEqual(resp_settings_relocked.status_code, 200)
+        self.assertContains(resp_settings_relocked, "صفحة إعدادات النظام محمية")
+
+        # --- 2. Coach Detail View & Trainers Auto-Lock ---
+        resp_coach = self.client.get(reverse("payroll:coach_detail", kwargs={"employee_id": self.trainer_1.id}))
+        self.assertEqual(resp_coach.status_code, 200)
+        self.assertContains(resp_coach, "صفحة إدارة المدربين محمية")
+
+        # Unlock Trainers
+        resp_coach_unlock = self.client.post(
+            reverse("payroll:coach_detail", kwargs={"employee_id": self.trainer_1.id}),
+            {"password": "1234"},
+            follow=True
+        )
+        self.assertEqual(resp_coach_unlock.status_code, 200)
+        self.assertContains(resp_coach_unlock, "كابتن طارق")
+
+        # Session has trainers_page_unlocked
+        session = self.client.session
+        self.assertTrue(session.get("trainers_page_unlocked"))
+
+        # Navigate away to Settings -> Trainers must immediately lock!
+        self.client.get(reverse("core:settings"))
+        session = self.client.session
+        self.assertFalse(session.get("trainers_page_unlocked", False))
+
+        # Accessing coach detail again requires password
+        resp_coach_relocked = self.client.get(reverse("payroll:coach_detail", kwargs={"employee_id": self.trainer_1.id}))
+        self.assertEqual(resp_coach_relocked.status_code, 200)
+        self.assertContains(resp_coach_relocked, "صفحة إدارة المدربين محمية")
+
+        # --- 3. Mandatory Trainer Selection for Private Training ---
+        # A) Member Create with private enabled but NO trainer -> should fail
+        resp_create_fail = self.client.post(
+            reverse("members:member_create"),
+            {
+                "name": "لاعب برايفت بدون مدرب",
+                "mobile": "01055554444",
+                "gender": "male",
+                "has_private": "1",
+                "assigned_coach_id": "",
+                "private_price": "600.00",
+            },
+            follow=True
+        )
+        self.assertEqual(resp_create_fail.status_code, 200)
+        self.assertContains(resp_create_fail, "يرجى اختيار الكابتن المسؤول عن التدريب الخاص")
+        self.assertFalse(Member.objects.filter(mobile="01055554444").exists())
+
+        # B) Member Create with private enabled AND valid trainer -> should succeed
+        resp_create_ok = self.client.post(
+            reverse("members:member_create"),
+            {
+                "name": "لاعب برايفت مع مدرب",
+                "mobile": "01055554444",
+                "gender": "male",
+                "has_private": "1",
+                "assigned_coach_id": str(self.trainer_1.id),
+                "private_price": "700.00",
+            },
+            follow=True
+        )
+        self.assertEqual(resp_create_ok.status_code, 200)
+        member_priv = Member.objects.get(mobile="01055554444")
+        self.assertTrue(member_priv.has_private)
+        self.assertEqual(member_priv.assigned_coach, self.trainer_1)
+        self.assertEqual(member_priv.private_price, Decimal("700.00"))
+
+        # C) Smart Operations with private enabled but NO trainer -> should fail
+        resp_smart_fail = self.client.post(
+            reverse("members:smart_operations"),
+            {
+                "operation_type": "new_subscription",
+                "name": "مشترك ذكي برايفت بدون كابتن",
+                "mobile": "01033332222",
+                "gender": "male",
+                "plan_id": self.standard_plan.id,
+                "start_date": "2026-10-15",
+                "has_private": "1",
+                "coach_id": "",
+                "private_price": "600.00",
+                "paid_amount": "1000.00",
+            },
+            follow=True
+        )
+        self.assertEqual(resp_smart_fail.status_code, 200)
+        self.assertContains(resp_smart_fail, "يرجى اختيار الكابتن المسؤول عن التدريب الخاص")
+        self.assertFalse(Member.objects.filter(mobile="01033332222").exists())
+
+
 
