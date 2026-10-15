@@ -363,6 +363,21 @@ def whatsupp_ready() -> bool:
     return True
 
 
+def get_browser_executable() -> str:
+    """Finds Google Chrome or Microsoft Edge executable on Windows."""
+    candidates = [
+        os.path.join(os.environ.get("PROGRAMFILES", "C:\\Program Files"), "Google", "Chrome", "Application", "chrome.exe"),
+        os.path.join(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"), "Google", "Chrome", "Application", "chrome.exe"),
+        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Google", "Chrome", "Application", "chrome.exe"),
+        os.path.join(os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)"), "Microsoft", "Edge", "Application", "msedge.exe"),
+        os.path.join(os.environ.get("PROGRAMFILES", "C:\\Program Files"), "Microsoft", "Edge", "Application", "msedge.exe"),
+    ]
+    for c in candidates:
+        if c and os.path.exists(c):
+            return c
+    return "chrome"
+
+
 def return_to_system_window(url: str = "http://127.0.0.1:8000/messaging/") -> bool:
     """
     Seamlessly and reliably brings Google Chrome and the gym system back to the foreground.
@@ -404,17 +419,36 @@ def return_to_system_window(url: str = "http://127.0.0.1:8000/messaging/") -> bo
                 user32.ShowWindow(target_hwnd, 9)  # SW_RESTORE
             else:
                 user32.ShowWindow(target_hwnd, 5)  # SW_SHOW
-            user32.SetForegroundWindow(target_hwnd)
-            user32.BringWindowToTop(target_hwnd)
+
+            fore_hwnd = user32.GetForegroundWindow()
+            fore_thread = user32.GetWindowThreadProcessId(fore_hwnd, 0)
+            target_thread = user32.GetWindowThreadProcessId(target_hwnd, 0)
+
+            if fore_thread != target_thread:
+                user32.AttachThreadInput(fore_thread, target_thread, True)
+                user32.SetForegroundWindow(target_hwnd)
+                user32.BringWindowToTop(target_hwnd)
+                user32.AttachThreadInput(fore_thread, target_thread, False)
+            else:
+                user32.SetForegroundWindow(target_hwnd)
+                user32.BringWindowToTop(target_hwnd)
             print(f"[return_to_system_window] Restored and focused Chrome HWND: {target_hwnd}")
 
-        # Unconditionally launch/activate Chrome to system URL as explicitly requested by user
-        Popen(f'start chrome "{url}"', shell=True)
+        # Direct execution of Chrome/Edge executable with exact binary path
+        browser_exe = get_browser_executable()
+        if os.path.isabs(browser_exe):
+            Popen([browser_exe, url])
+        else:
+            Popen(f'start "" "{browser_exe}" "{url}"', shell=True)
         return True
     except Exception as e:
         print(f"[return_to_system_window] Warning: {e}")
         try:
-            Popen(f'start chrome "{url}"', shell=True)
+            browser_exe = get_browser_executable()
+            if os.path.isabs(browser_exe):
+                Popen([browser_exe, url])
+            else:
+                Popen(f'start "" "{browser_exe}" "{url}"', shell=True)
             return True
         except Exception:
             hotkey("alt", "tab")

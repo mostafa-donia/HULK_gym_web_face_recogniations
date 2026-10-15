@@ -213,9 +213,18 @@ def whatsapp_manager_report_view(request):
         messages.error(request, "تعذر إرسال التقرير: يرجى كتابة رقم هاتف المدير أولاً في صفحة الإعدادات.")
         return redirect(redirect_target)
 
-    success = prepare_manager_daily_report()
-    if success:
-        messages.success(request, f"تم إعداد تقرير المدير اليومي وإضافته لطابور الإرسال للرقم ({profile.manager_mobile}).")
+    msg_obj = prepare_manager_daily_report()
+    if msg_obj:
+        try:
+            from apps.messaging.services import dispatch_message_record
+            sent = dispatch_message_record(msg_obj, return_to_system=True)
+            if sent:
+                messages.success(request, f"تم إرسال تقرير المدير اليومي وصورة الإحصائيات الرسمية بنجاح إلى الرقم ({profile.manager_mobile}).")
+            else:
+                messages.warning(request, f"تم حفظ تقرير المدير والصورة وإضافته للطابور، تعذر الإرسال الفوري لعدم استجابة واتساب.")
+        except Exception as exc:
+            logger.exception("Error dispatching manager report: %s", exc)
+            messages.success(request, f"تم إعداد تقرير المدير اليومي وإضافته لطابور الإرسال للرقم ({profile.manager_mobile}).")
     else:
         messages.error(request, "تعذر تجهيز تقرير المدير اليومي.")
     return redirect(redirect_target)

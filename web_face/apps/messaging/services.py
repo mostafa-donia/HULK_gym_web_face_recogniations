@@ -335,14 +335,182 @@ def prepare_due_reminders() -> dict:
     return {"queued": queued_count}
 
 
-def prepare_manager_daily_report() -> bool:
+from pathlib import Path
+from PIL import Image, ImageDraw, ImageFont
+from apps.core.text_utils import reshape_arabic
+
+
+def generate_manager_report_image_file(report_data: dict) -> str:
     """
-    Compiles today's complete managerial report and enqueues to the manager mobile number.
+    Renders an official executive graphical summary card (PNG) for the manager daily report.
+    Saved to media/reports/manager_report_{date}_{ts}.png and returns the relative path.
+    """
+    reports_dir = Path(settings.MEDIA_ROOT) / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    date_str = report_data.get("date_str", "")
+    ts = int(timezone.now().timestamp())
+    png_filename = f"manager_report_{date_str}_{ts}.png"
+    png_file_path = reports_dir / png_filename
+
+    w, h = 820, 1060
+    # Rich dark background
+    img = Image.new("RGB", (w, h), color=(11, 15, 25))
+    draw = ImageDraw.Draw(img)
+
+    # Outer border / card
+    draw.rounded_rectangle([20, 20, w - 20, h - 20], radius=18, fill=(15, 23, 42), outline=(30, 41, 59), width=2)
+
+    try:
+        font_badge = ImageFont.truetype("tahomabd.ttf", 14)
+        font_title = ImageFont.truetype("tahomabd.ttf", 26)
+        font_sub = ImageFont.truetype("tahoma.ttf", 15)
+        font_card_val = ImageFont.truetype("tahomabd.ttf", 22)
+        font_card_lbl = ImageFont.truetype("tahomabd.ttf", 14)
+        font_card_sub = ImageFont.truetype("tahoma.ttf", 13)
+        font_sec_title = ImageFont.truetype("tahomabd.ttf", 17)
+        font_normal = ImageFont.truetype("tahoma.ttf", 15)
+        font_sm = ImageFont.truetype("tahoma.ttf", 13)
+    except Exception:
+        try:
+            font_badge = ImageFont.truetype("arialbd.ttf", 14)
+            font_title = ImageFont.truetype("arialbd.ttf", 26)
+            font_sub = ImageFont.truetype("arial.ttf", 15)
+            font_card_val = ImageFont.truetype("arialbd.ttf", 22)
+            font_card_lbl = ImageFont.truetype("arialbd.ttf", 14)
+            font_card_sub = ImageFont.truetype("arial.ttf", 13)
+            font_sec_title = ImageFont.truetype("arialbd.ttf", 17)
+            font_normal = ImageFont.truetype("arial.ttf", 15)
+            font_sm = ImageFont.truetype("arial.ttf", 13)
+        except Exception:
+            font_badge = font_title = font_sub = font_card_val = font_card_lbl = font_card_sub = font_sec_title = font_normal = font_sm = ImageFont.load_default()
+
+    gym_name = report_data.get("gym_name", "HULK GYM")
+    curr = report_data.get("currency", "ج.م")
+
+    # Header Top Badge
+    draw.rounded_rectangle([w // 2 - 130, 35, w // 2 + 130, 65], radius=8, fill=(30, 41, 59), outline=(71, 85, 105), width=1)
+    draw.text((w // 2, 50), reshape_arabic("تقرير الإدارة اليومي الرسمي"), fill=(251, 191, 36), font=font_badge, anchor="mm")
+
+    # Gym Name
+    draw.text((w // 2, 95), reshape_arabic(gym_name), fill=(163, 230, 53), font=font_title, anchor="mm")
+
+    # Date & Time
+    time_str = report_data.get("time_str", "")
+    meta_str = reshape_arabic(f"تاريخ التقرير: {date_str}   |   وقت الإعداد: {time_str}")
+    draw.text((w // 2, 130), meta_str, fill=(148, 163, 184), font=font_sub, anchor="mm")
+
+    draw.line([(40, 155), (w - 40, 155)], fill=(30, 41, 59), width=1)
+
+    # 4 Key Financial Stats (2x2 grid)
+    card_w = (w - 100) // 2  # 360 px each
+    card_h = 100
+
+    cards = [
+        {
+            "x": 50,
+            "y": 175,
+            "bg": (20, 83, 45),
+            "border": (34, 197, 94),
+            "lbl": "إجمالي الإيرادات اليوم",
+            "val": f"{report_data.get('total_revenue', 0)} {curr}",
+            "sub": f"عدد عمليات التحصيل: {report_data.get('total_payments_count', 0)}",
+            "val_color": (74, 222, 128),
+        },
+        {
+            "x": 50 + card_w + 20,
+            "y": 175,
+            "bg": (127, 29, 29),
+            "border": (239, 68, 68),
+            "lbl": "إجمالي المصروفات اليوم",
+            "val": f"{report_data.get('total_expenses', 0)} {curr}",
+            "sub": "مصروفات الصالة المسجلة",
+            "val_color": (248, 113, 113),
+        },
+        {
+            "x": 50,
+            "y": 290,
+            "bg": (6, 78, 59),
+            "border": (16, 185, 129),
+            "lbl": "صافي الخزينة النقدية",
+            "val": f"{report_data.get('net_cash', 0)} {curr}",
+            "sub": "الإيراد بعد خصم المصروفات",
+            "val_color": (52, 211, 153),
+        },
+        {
+            "x": 50 + card_w + 20,
+            "y": 290,
+            "bg": (120, 53, 15),
+            "border": (245, 158, 11),
+            "lbl": "الخصومات الممنوحة اليوم",
+            "val": f"{report_data.get('total_discounts_today', 0)} {curr}",
+            "sub": "إجمالي الخصم على الاشتراكات",
+            "val_color": (251, 191, 36),
+        },
+    ]
+
+    for c in cards:
+        draw.rounded_rectangle([c["x"], c["y"], c["x"] + card_w, c["y"] + card_h], radius=12, fill=c["bg"], outline=c["border"], width=1)
+        draw.text((c["x"] + card_w // 2, c["y"] + 24), reshape_arabic(c["lbl"]), fill=(226, 232, 240), font=font_card_lbl, anchor="mm")
+        draw.text((c["x"] + card_w // 2, c["y"] + 54), reshape_arabic(c["val"]), fill=c["val_color"], font=font_card_val, anchor="mm")
+        draw.text((c["x"] + card_w // 2, c["y"] + 82), reshape_arabic(c["sub"]), fill=(203, 213, 225), font=font_card_sub, anchor="mm")
+
+    # Section: Subscriptions & Private Sessions
+    sy = 415
+    draw.rounded_rectangle([40, sy, w - 40, sy + 250], radius=14, fill=(17, 24, 39), outline=(51, 65, 85), width=1)
+    draw.text((w - 60, sy + 22), reshape_arabic("🏋️‍♂️ إحصائيات الاشتراكات والتدريب الخاص:"), fill=(56, 189, 248), font=font_sec_title, anchor="ra")
+
+    draw.line([(55, sy + 48), (w - 55, sy + 48)], fill=(30, 41, 59), width=1)
+
+    items = [
+        ("اشتراكات جديدة ومجددة اليوم:", f"{report_data.get('new_subs_count', 0)} اشتراك"),
+        ("حالات الدخول ببصمة الوجه اليوم:", f"{report_data.get('checkins_today_count', 0)} دخول"),
+        ("اشتراكات التدريب الخاص (Private):", f"{report_data.get('private_count', 0)} اشتراك"),
+        ("إجمالي دخل اشتراكات البرايفت:", f"{report_data.get('private_rev', 0)} {curr}"),
+        ("عمولة الكباتن المستحقة عن اليوم:", f"{report_data.get('coaches_comm', 0)} {curr}"),
+        ("صافي دخل الصالة من البرايفت:", f"{report_data.get('gym_private_profit', 0)} {curr}"),
+    ]
+
+    iy = sy + 62
+    for label, val in items:
+        draw.text((w - 65, iy), reshape_arabic(label), fill=(203, 213, 225), font=font_normal, anchor="ra")
+        draw.text((65, iy), reshape_arabic(val), fill=(255, 255, 255), font=font_card_lbl)
+        iy += 30
+
+    # Section: Sensitive Operations & Audit
+    ay = 685
+    draw.rounded_rectangle([40, ay, w - 40, ay + 260], radius=14, fill=(17, 24, 39), outline=(51, 65, 85), width=1)
+    draw.text((w - 60, ay + 22), reshape_arabic("🚨 رقابة العمليات الحساسة والتعديلات اليوم:"), fill=(251, 146, 60), font=font_sec_title, anchor="ra")
+
+    draw.line([(55, ay + 48), (w - 55, ay + 48)], fill=(30, 41, 59), width=1)
+
+    audit_lines = report_data.get("audit_lines", [])
+    if not audit_lines:
+        draw.text((w // 2, ay + 140), reshape_arabic("لا توجد عمليات حساسة أو استثنائية مسجلة اليوم ✓"), fill=(148, 163, 184), font=font_normal, anchor="mm")
+    else:
+        line_y = ay + 65
+        for line in audit_lines[:5]:
+            draw.text((w - 65, line_y), reshape_arabic(f"• {line}"), fill=(226, 232, 240), font=font_sm, anchor="ra")
+            line_y += 36
+
+    # Footer
+    footer_text = reshape_arabic(f"تم إعداد وتوثيق التقرير آلياً بواسطة نظام {gym_name} الذكي")
+    draw.text((w // 2, h - 35), footer_text, fill=(100, 116, 139), font=font_sm, anchor="mm")
+
+    img.save(str(png_file_path), "PNG")
+    logger.info("Generated manager report PNG at: %s", png_file_path)
+    return f"reports/{png_filename}"
+
+
+def prepare_manager_daily_report():
+    """
+    Compiles today's complete managerial report, renders executive graphics summary image,
+    and enqueues to the manager mobile number with the report image attached.
     """
     profile = GymProfile.get_solo()
     manager_phone = profile.manager_mobile
     if not manager_phone:
-        return False
+        return None
 
     today = timezone.localdate()
     gym_name = profile.gym_name or "HULK GYM"
@@ -378,8 +546,8 @@ def prepare_manager_daily_report() -> bool:
     audit_today = AuditLog.objects.filter(created_at__date=today).order_by("-created_at")[:10]
     audit_count = audit_today.count()
     audit_section = ""
+    audit_lines = []
     if audit_count > 0:
-        audit_lines = []
         for a in audit_today:
             time_str = timezone.localtime(a.created_at).strftime("%H:%M")
             user_str = a.user.username if a.user else "النظام"
@@ -412,8 +580,34 @@ def prepare_manager_daily_report() -> bool:
         f"👤 حالات الدخول ببصمة الوجه اليوم: {checkins_today_count}\n"
         f"{audit_section}"
         f"━━━━━━━━━━━━━━━━━━━\n"
+        f"مرفق بطاقة التقرير والإحصائيات الرسمية 📊\n"
         f"تم إعداد التقرير تلقائياً بواسطة نظام {gym_name} الذكي."
     )
+
+    report_data = {
+        "gym_name": gym_name,
+        "currency": profile.currency or "ج.م",
+        "date_str": today.strftime("%Y-%m-%d"),
+        "time_str": timezone.localtime().strftime("%I:%M %p"),
+        "total_revenue": total_revenue,
+        "total_payments_count": total_payments_count,
+        "total_expenses": total_expenses,
+        "net_cash": net_cash,
+        "total_discounts_today": total_discounts_today,
+        "new_subs_count": new_subs_count,
+        "private_count": private_count,
+        "private_rev": private_rev,
+        "coaches_comm": coaches_comm,
+        "gym_private_profit": gym_private_profit,
+        "checkins_today_count": checkins_today_count,
+        "audit_lines": [f"[{timezone.localtime(a.created_at).strftime('%H:%M')}] {a.details} ({a.user.username if a.user else 'النظام'})" for a in audit_today[:5]],
+    }
+
+    rel_report_image = ""
+    try:
+        rel_report_image = generate_manager_report_image_file(report_data)
+    except Exception as exc:
+        logger.exception("Failed to generate manager report image: %s", exc)
 
     dedup = f"mgr_report_{today.isoformat()}_{int(timezone.now().timestamp())}"
     msg = enqueue_message(
@@ -423,8 +617,9 @@ def prepare_manager_daily_report() -> bool:
         recipient_name="إدارة الصالة",
         recipient_type="manager",
         dedup_key=dedup,
+        attachment=rel_report_image or None,
     )
-    return bool(msg)
+    return msg
 
 
 def filter_members_for_bulk(
