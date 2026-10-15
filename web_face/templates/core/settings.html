@@ -21,6 +21,69 @@
     </a>
   </div>
 
+  <!-- Top System Update Section (On Top of Normal Settings) -->
+  <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <div>
+        <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+          🔄 تحديثات النظام ومستودع GitHub
+        </h3>
+        <span style="color: var(--text-muted); font-size: 0.82rem;">
+          سحب وتثبيت آخر الإصدارات والتحديثات من GitHub مع الحفاظ التلقائي على البيانات وقاعدة البيانات.
+        </span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span id="updateStatusBadge" class="badge badge-active" style="font-size: 0.84rem; padding: 6px 14px; border-radius: 20px; font-weight: 800;">
+          المثبت حالياً: <strong>{{ version_info.version_tag|default:"v2.1.0" }}</strong> (<code style="font-family: monospace;">{{ version_info.commit }}</code>)
+        </span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px;">
+        <span style="color: var(--text-muted); font-size: 0.78rem; display: block; font-weight: 700;">الفرع النشط (Git Branch)</span>
+        <strong style="color: #0284c7; font-size: 0.95rem; font-family: monospace;">{{ version_info.branch|default:"main" }}</strong>
+      </div>
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px;">
+        <span style="color: var(--text-muted); font-size: 0.78rem; display: block; font-weight: 700;">تاريخ آخر تعديل</span>
+        <strong style="color: #16a34a; font-size: 0.95rem;">{{ version_info.date|default:"محدث" }}</strong>
+      </div>
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px;">
+        <span style="color: var(--text-muted); font-size: 0.78rem; display: block; font-weight: 700;">المستودع السحابي</span>
+        <code style="color: var(--text-main); font-size: 0.78rem; direction: ltr; display: block; overflow: hidden; text-overflow: ellipsis; font-weight: 600;">{{ profile.github_repo_url|default:'mostafa-donia/HULK_gym_web_face_recogniations' }}</code>
+      </div>
+    </div>
+
+    <!-- Check and Perform Update Action Buttons -->
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+      <button type="button" id="btnCheckUpdates" onclick="checkGitHubUpdates()" class="btn btn-secondary" style="font-weight: 800; font-size: 0.9rem; padding: 9px 20px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+        <span id="checkIcon">🔍</span>
+        <span id="checkBtnText">فحص وجود تحديثات على GitHub</span>
+      </button>
+
+      <button type="button" id="btnPerformUpdate" onclick="performSystemUpdate()" class="btn" style="background: #16a34a; border: none; color: #FFFFFF; font-weight: 900; font-size: 0.9rem; padding: 9px 22px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; opacity: 0.4; pointer-events: none;" disabled>
+        <span>⚡</span>
+        <span id="performBtnText">تحديث النظام الآن (Update Now)</span>
+      </button>
+    </div>
+
+    <div id="updateFeedbackBanner" style="display: none; padding: 12px 16px; border-radius: 8px; margin-top: 14px; font-size: 0.88rem; font-weight: 700;"></div>
+
+    <div id="commitsPreviewBox" style="display: none; background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; margin-top: 14px;">
+      <h4 style="color: var(--text-main); font-size: 0.9rem; font-weight: 800; margin: 0 0 8px 0;">التحديثات الجديدة المتوفرة:</h4>
+      <ul id="commitsListUl" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px;"></ul>
+    </div>
+
+    <div id="updateTerminalBox" style="display: none; background: #030712; border: 1px solid #1f2937; border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 0.82rem; color: #34d399; max-height: 200px; overflow-y: auto; margin-top: 14px;">
+      <div style="display: flex; justify-content: space-between; color: #9ca3af; border-bottom: 1px solid #1f2937; padding-bottom: 4px; margin-bottom: 8px; font-size: 0.75rem;">
+        <span>TERMINAL UPDATE LOG</span>
+        <span id="terminalStatusIndicator">جاري المعالجة...</span>
+      </div>
+      <div id="terminalLogContent" style="display: flex; flex-direction: column; gap: 4px;"></div>
+    </div>
+  </div>
+
   <!-- Row 1: Branding & Basic Camera/WhatsApp Essentials -->
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 22px;" class="settings-grid">
 
@@ -845,70 +908,6 @@
             </button>
           </form>
         </details>
-      </div>
-
-      <!-- Dev Card 4: GitHub System Updates & One-Click Upgrades -->
-      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
-          <div>
-            <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
-              تحديثات النظام ومستودع GitHub
-            </h3>
-            <span style="color: var(--text-muted); font-size: 0.82rem;">
-              سحب آخر التعديلات والإصدارات من GitHub مع النسخ الاحتياطي التلقائي بضغطة زر واحدة.
-            </span>
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span id="updateStatusBadge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; font-weight: 800; font-size: 0.84rem; padding: 5px 12px; border-radius: 20px;">
-              المثبت: <strong>{{ version_info.version_tag|default:"v2.1.0" }}</strong> (<code style="font-family: monospace;">{{ version_info.commit }}</code>)
-            </span>
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px;">
-          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 10px 14px;">
-            <span style="color: var(--text-muted); font-size: 0.78rem; display: block;">الفرع النشط (Git Branch)</span>
-            <strong style="color: #4DB3FF; font-size: 1rem; font-family: monospace;">{{ version_info.branch|default:"main" }}</strong>
-          </div>
-          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 10px 14px;">
-            <span style="color: var(--text-muted); font-size: 0.78rem; display: block;">تاريخ آخر تعديل</span>
-            <strong style="color: #A8F14B; font-size: 1rem;">{{ version_info.date|default:"محدث" }}</strong>
-          </div>
-          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 10px 14px;">
-            <span style="color: var(--text-muted); font-size: 0.78rem; display: block;">رابط المستودع</span>
-            <code style="color: #cbd5e1; font-size: 0.78rem; direction: ltr; display: block; overflow: hidden; text-overflow: ellipsis;">{{ profile.github_repo_url|default:'mostafa-donia/HULK_gym_web_face_recogniations' }}</code>
-          </div>
-        </div>
-
-        <!-- Check and Perform Update Action Buttons -->
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;">
-          <button type="button" id="btnCheckUpdates" onclick="checkGitHubUpdates()" class="btn btn-primary" style="background: #1C3347; border: 1px solid #4DB3FF; color: #4DB3FF; font-weight: 800; font-size: 0.9rem; padding: 8px 18px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            <span id="checkIcon">فحص التحديثات</span>
-            <span id="checkBtnText">فحص وجود تحديثات على GitHub</span>
-          </button>
-
-          <button type="button" id="btnPerformUpdate" onclick="performSystemUpdate()" class="btn" style="background: #10b981; border: none; color: #050B10; font-weight: 900; font-size: 0.9rem; padding: 8px 20px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; opacity: 0.4; pointer-events: none;" disabled>
-            
-            <span id="performBtnText">تحديث النظام الآن (Update Now)</span>
-          </button>
-        </div>
-
-        <div id="updateFeedbackBanner" style="display: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 14px; font-size: 0.88rem; font-weight: 700;"></div>
-
-        <div id="commitsPreviewBox" style="display: none; background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
-          <h4 style="color: #4DB3FF; font-size: 0.88rem; font-weight: 800; margin: 0 0 8px 0;">التحديثات الجديدة المتوفرة:</h4>
-          <ul id="commitsListUl" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px;"></ul>
-        </div>
-
-        <div id="updateTerminalBox" style="display: none; background: #030712; border: 1px solid #1f2937; border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 0.82rem; color: #34d399; max-height: 200px; overflow-y: auto;">
-          <div style="display: flex; justify-content: space-between; color: #9ca3af; border-bottom: 1px solid #1f2937; padding-bottom: 4px; margin-bottom: 8px; font-size: 0.75rem;">
-            <span>TERMINAL UPDATE LOG</span>
-            <span id="terminalStatusIndicator">جاري المعالجة...</span>
-          </div>
-          <div id="terminalLogContent" style="display: flex; flex-direction: column; gap: 4px;"></div>
-        </div>
-
       </div>
 
     </div>
