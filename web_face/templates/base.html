@@ -5,6 +5,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>{% block title %}{{ gym_profile.gym_name|default:"نظام إدارة الصالات الرياضية" }}{% endblock %}</title>
+  
+  <!-- Early Theme Setter to prevent Flash of Unstyled Theme -->
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('gym_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      } catch(e) {}
+    })();
+  </script>
+
   {% if gym_profile.logo %}
     <link rel="icon" type="image/png" href="{{ gym_profile.logo.url }}">
   {% else %}
@@ -26,6 +37,8 @@
         --status-active-text: {{ gym_profile.primary_color }};
         --border-focus: {{ gym_profile.primary_color }};
       {% endif %}
+    }
+    [data-theme="dark"] {
       {% if gym_profile.secondary_color %}
         --bg-card: {{ gym_profile.secondary_color }};
         --bg-surface: {{ gym_profile.secondary_color }};
@@ -39,10 +52,11 @@
       {% endif %}
     }
     body {
-      background-color: var(--bg-main, #0B0E14) !important;
+      background-color: var(--bg-main) !important;
+      color: var(--text-main);
     }
     .top-navbar {
-      background-color: var(--bg-sidebar, #0E121B) !important;
+      background-color: var(--bg-sidebar) !important;
     }
   </style>
 
@@ -70,45 +84,69 @@
       <!-- Horizontal Navigation Links -->
       <nav class="top-nav-links">
         <a href="{% url 'core:dashboard' %}" class="top-nav-item {% if request.resolver_match.view_name == 'core:dashboard' %}active{% endif %}">
-          <span class="nav-icon">🏠</span>
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
           <span>الرئيسية</span>
         </a>
 
         {% if user.is_manager %}
         <a href="{% url 'core:manager_dashboard' %}" class="top-nav-item {% if request.resolver_match.view_name == 'core:manager_dashboard' %}active{% endif %}">
-          <span class="nav-icon">👔</span>
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
           <span>لوحة المدير</span>
         </a>
         {% endif %}
 
         <a href="{% url 'payroll:trainers_index' %}" class="top-nav-item {% if 'trainers' in request.path %}active{% endif %}">
-          <span class="nav-icon">🏋️‍♂️</span>
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 5v14M18 5v14M2 9h4M18 9h4M2 15h4M18 15h4M6 12h12"></path>
+          </svg>
           <span>المدربين</span>
         </a>
 
         <a href="{% url 'members:member_list' %}" class="top-nav-item {% if 'members' in request.path and not 'subscription' in request.path %}active{% endif %}">
-          <span class="nav-icon">👥</span>
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
           <span>الأعضاء</span>
         </a>
 
         <a href="{% url 'payments:payment_list' %}" class="top-nav-item {% if 'payments' in request.path %}active{% endif %}">
-          <span class="nav-icon">💵</span>
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+            <line x1="2" y1="10" x2="22" y2="10"></line>
+          </svg>
           <span>المدفوعات</span>
         </a>
 
         <a href="{% url 'messaging:whatsapp_queue' %}" class="top-nav-item {% if 'messaging' in request.path %}active{% endif %}">
-          <span class="nav-icon">🟢</span>
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+          </svg>
           <span>واتساب</span>
         </a>
 
         {% if user.is_manager %}
         <a href="{% url 'core:settings' %}" class="top-nav-item {% if 'settings' in request.path %}active{% endif %}">
-          <span class="nav-icon">⚙</span>
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
           <span>الإعدادات</span>
         </a>
 
         <a href="{% url 'core:manager_mobile_dashboard' %}?view=mobile" class="top-nav-item" title="معاينة أو التبديل إلى نسخة الموبايل المخصصة">
-          <span class="nav-icon">📱</span>
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+          </svg>
           <span>نسخة الموبايل</span>
         </a>
         {% endif %}
@@ -116,6 +154,25 @@
 
       <!-- User Profile, Face Camera Indicator & Logout on Left (RTL) -->
       <div class="top-navbar-user">
+        <!-- Sun / Moon Theme Switcher Button -->
+        <button type="button" id="themeToggleBtn" class="theme-toggle-btn" onclick="toggleTheme()" title="تبديل المظهر النهاري / الليلي">
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <span id="themeToggleLabel">المظهر</span>
+        </button>
+
         {% if gym_profile.face_camera_enabled %}
         <div id="globalCameraStatusPill" class="user-pill" onclick="toggleCameraDockPreview()" style="cursor: pointer; display: flex; align-items: center; gap: 7px; border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08); padding: 4px 12px; border-radius: 20px;" title="كاميرا التعرف على الوجه الذكية (انقر للمعاينة المباشرة)">
           <span id="globalCamDot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
@@ -176,14 +233,19 @@
       
       <!-- Top Status Badge -->
       <div id="fs-status-badge" style="padding: 12px 32px; border-radius: 50px; font-size: 1.4rem; font-weight: 900; letter-spacing: 0.5px; margin-bottom: 22px; display: inline-flex; align-items: center; gap: 12px;">
-        <span id="fs-status-icon" style="font-size: 1.7rem;">🟢</span>
+        <span id="fs-status-icon" style="display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor;"></span>
         <span id="fs-status-title">مسموح بالدخول — مرحباً بك!</span>
       </div>
 
       <!-- Member Large Avatar Circle with Glowing Frame -->
       <div id="fs-avatar-container" style="width: 130px; height: 130px; border-radius: 50%; overflow: hidden; background: #000; border: 4px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; margin-bottom: 18px; box-shadow: 0 12px 30px rgba(0,0,0,0.6);">
         <img id="fs-avatar-img" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
-        <span id="fs-avatar-placeholder">👤</span>
+        <span id="fs-avatar-placeholder" style="display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </span>
       </div>
 
       <!-- Member Name in Big Bold Typography -->
@@ -216,17 +278,17 @@
 
       <!-- Debt Warning Banner (if member has outstanding balance) -->
       <div id="fs-debt-notice" style="display: none; width: 100%; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 10px 16px; margin-bottom: 14px; color: #fbbf24; font-weight: 800; font-size: 0.95rem;">
-        ⚠️ تنبيه: متبقي مديونية مستحقة على اللاعب: <span id="fs-debt-amount" style="font-size: 1.05rem; text-decoration: underline;">0 ج.م</span>
+        تنبيه: متبقي مديونية مستحقة على المشترك: <span id="fs-debt-amount" style="font-size: 1.05rem; text-decoration: underline;">0 ج.م</span>
       </div>
 
       <!-- Turnstile Gate Action Footer -->
       <div id="fs-gate-notice" style="font-size: 0.92rem; color: #10b981; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-        <span>🚪</span> تم فحص الصلاحية وإرسال إشارة فتح البوابة الإلكترونية
+        تم فحص الصلاحية وإرسال إشارة فتح البوابة الإلكترونية
       </div>
 
       <!-- Expired Renewal Prompt Footer -->
       <div id="fs-alert-instruction" style="display: none; font-size: 0.92rem; color: #fda4af; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-        <span>🛑</span> يرجى مراجعة موظف الاستقبال لتجديد الاشتراك وتحديث العضوية
+        يرجى مراجعة موظف الاستقبال لتجديد الاشتراك وتحديث العضوية
       </div>
 
       <!-- Close Button -->
@@ -262,8 +324,10 @@
       <!-- Top Header -->
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
-            💬
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.3); display: flex; align-items: center; justify-content: center; color: #22c55e;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+            </svg>
           </div>
           <div>
             <h3 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0;">
@@ -287,16 +351,16 @@
         <!-- Breakdown Badges -->
         <div style="display: flex; gap: 7px; flex-wrap: wrap;">
           <span id="wa30BadgeReceipt" class="badge" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); font-size: 0.78rem; padding: 4px 9px; border-radius: 6px;">
-            🧾 فواتير: <b id="wa30CountReceipt">0</b>
+            فواتير: <b id="wa30CountReceipt">0</b>
           </span>
           <span id="wa30BadgeRem1" class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-size: 0.78rem; padding: 4px 9px; border-radius: 6px;">
-            ⏰ تذكير آخر يوم: <b id="wa30CountRem1">0</b>
+            اليوم الأخير: <b id="wa30CountRem1">0</b>
           </span>
           <span id="wa30BadgeRem3" class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 0.78rem; padding: 4px 9px; border-radius: 6px;">
-            ⏳ باقي 3 أيام: <b id="wa30CountRem3">0</b>
+            متبقي 3 أيام: <b id="wa30CountRem3">0</b>
           </span>
           <span id="wa30BadgeExp" class="badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.78rem; padding: 4px 9px; border-radius: 6px;">
-            🛑 اشتراك منتهي: <b id="wa30CountExp">0</b>
+            منتهي: <b id="wa30CountExp">0</b>
           </span>
         </div>
       </div>
@@ -311,18 +375,18 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
           <!-- Option 1: Send 10 Now -->
           <button type="button" id="btnWa30Send10" onclick="trigger30MinSend10()" class="btn" style="background: #22c55e; color: #000; font-weight: 900; font-size: 0.95rem; border: none; padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;">
-            <span>🚀</span> إرسال 10 الآن
+            إرسال 10 الآن
           </button>
 
           <!-- Option 2: Review & Select in Modal -->
           <button type="button" onclick="goToPendingQueueAndSelect()" class="btn btn-secondary" style="font-weight: 800; font-size: 0.92rem; padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; cursor: pointer;">
-            <span>📋</span> اختيار وفلترة
+            اختيار وفلترة
           </button>
         </div>
 
         <!-- Option 3: Not Now / Later -->
         <button type="button" onclick="dismiss30MinReminder()" class="btn btn-secondary" style="width: 100%; padding: 8px; font-size: 0.85rem; color: #94a3b8; cursor: pointer;">
-          ⏰ ليس الآن / تذكيري بعد 30 دقيقة
+          تأجيل التذكير (30 دقيقة)
         </button>
       </div>
 
@@ -442,6 +506,19 @@
     })();
   </script>
   {% endif %}
+
+  <!-- Global Theme Switcher Logic -->
+  <script>
+    function toggleTheme() {
+      var html = document.documentElement;
+      var currentTheme = html.getAttribute('data-theme') || 'dark';
+      var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+      try {
+        localStorage.setItem('gym_theme', newTheme);
+      } catch (e) {}
+    }
+  </script>
 
   {% block extra_js %}{% endblock %}
 </body>

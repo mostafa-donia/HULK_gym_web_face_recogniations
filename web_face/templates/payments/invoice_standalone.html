@@ -174,7 +174,7 @@
 
   <div class="print-hide">
     <button onclick="window.print()" class="btn-print">
-      🖨️ طباعة الفاتورة / حفظ كـ PDF
+      طباعة الفاتورة / حفظ كـ PDF
     </button>
     <span class="btn-badge">فاتورة إلكترونية معتمدة</span>
   </div>
@@ -250,7 +250,7 @@
 
     <div class="footer-note">
       <p>المحصل: <strong>{% if payment.created_by %}{{ payment.created_by.first_name|default:payment.created_by.username }}{% else %}كاشير الصالة{% endif %}</strong></p>
-      <p style="margin-top: 5px;">شكراً لاختيارك {{ profile.gym_name|default:"HULK GYM" }} 💪 نتمنى لك فورمة وتمرين ممتع!</p>
+      <p style="margin-top: 5px;">شكراً لاختيارك {{ profile.gym_name|default:"HULK GYM" }} نتمنى لك تمريناً ممتعاً وموفقاً!</p>
     </div>
 
   </div>

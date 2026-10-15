@@ -171,7 +171,7 @@
           العضو عليه متبقي سابق. يمكنك سداد الدين أو تجديد اشتراكه.
         </span>
         <button type="button" id="btn-toggle-renewal-debt" class="btn btn-secondary btn-sm" style="background: #14202A; color: #FFFFFF;">
-          🔄 التبديل إلى تجديد اشتراك كامل
+          التبديل إلى تجديد اشتراك كامل
         </button>
       </div>
 
@@ -257,7 +257,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let html = "";
     members.forEach(m => {
       const debtText = m.remaining > 0 ? `<span style="color: #FF9F00; font-weight: 800;">(عليه متبقي: ${m.remaining} ج)</span>` : `<span style="color: #7ED321;">(خالص)</span>`;
-      const faceBadge = m.has_face_enrolled ? `<span style="color: #10b981; font-size: 0.8rem; margin-right: 6px;">📷 مسجل</span>` : `<span style="color: #ef4444; font-size: 0.8rem; margin-right: 6px;">📷❌ غير مسجل</span>`;
+      const faceBadge = m.has_face_enrolled ? `<span style="color: #10b981; font-size: 0.8rem; margin-right: 6px;">بصمة مسجلة</span>` : `<span style="color: #ef4444; font-size: 0.8rem; margin-right: 6px;">غير مسجل بالوجه</span>`;
       html += `
         <div class="autocomplete-item" data-id="${m.id}" data-json='${JSON.stringify(m)}' 
              style="padding: 12px 16px; border-bottom: 1px solid #14202A; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
@@ -333,8 +333,8 @@ document.addEventListener("DOMContentLoaded", function() {
     fieldGender.value = member.gender || "male";
 
     const faceText = member.has_face_enrolled ?
-      ` <span style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid #10b981; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 8px;">📷 بصمة الوجه: مسجل ✓</span>` :
-      ` <span style="background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 8px;">📷 بصمة الوجه غير مسجلة (سيتم فتح تسجيل الوجه فور الحفظ)</span>`;
+      ` <span style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid #10b981; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 8px;">بصمة الوجه: مسجل</span>` :
+      ` <span style="background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid #ef4444; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 8px;">بصمة الوجه غير مسجلة (سيتم فتح تسجيل الوجه فور الحفظ)</span>`;
 
     if (member.remaining > 0) {
       // Member has debt -> Activate Debt / Remaining Payment Mode
@@ -348,7 +348,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
       debtBox.style.display = "flex";
       debtModeText.innerText = `العضو عليه متبقي سابق قدره ${member.remaining} ج.م`;
-      btnToggleRenewal.innerText = "🔄 التبديل إلى تجديد اشتراك كامل";
+      btnToggleRenewal.innerText = "التبديل إلى تجديد اشتراك كامل";
     } else {
       // Member has NO debt -> Activate Renewal Mode
       isDebtPayOnly = false;
@@ -386,7 +386,7 @@ document.addEventListener("DOMContentLoaded", function() {
       fieldOpType.value = "renewal";
       labelStartDate.innerText = "بداية التجديد";
       saveBtn.innerText = "حفظ التجديد";
-      btnToggleRenewal.innerText = "💵 التبديل لسداد الدين فقط";
+      btnToggleRenewal.innerText = "التبديل لسداد الدين فقط";
       syncPlanPrice();
     } else {
       // Switch to Debt Settlement
@@ -395,7 +395,7 @@ document.addEventListener("DOMContentLoaded", function() {
       labelStartDate.innerText = "تاريخ السداد";
       saveBtn.innerText = "سداد المتبقي";
       fieldPaidAmount.value = currentSelectedMember.remaining;
-      btnToggleRenewal.innerText = "🔄 التبديل لتجديد الاشتراك";
+      btnToggleRenewal.innerText = "التبديل لتجديد الاشتراك";
     }
     updateLiveCalculation();
   });

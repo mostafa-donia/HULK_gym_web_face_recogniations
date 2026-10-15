@@ -6,10 +6,10 @@
 <div style="display: flex; flex-direction: column; gap: 24px;">
 
   <!-- Page Header -->
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #162837; padding-bottom: 14px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 14px;">
     <div>
       <h2 style="color: #FFFFFF; font-size: 1.45rem; font-weight: 800; margin: 0 0 4px 0;">
-        ⚙️ إعدادات النظام وتكامل الخدمات
+        إعدادات النظام وتكامل الخدمات
       </h2>
       <span style="color: #8D99A3; font-size: 0.88rem;">
         بيانات الصالة، حماية كلمة السر، الرسائل، وإدارة الباقات.
@@ -25,10 +25,10 @@
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 22px;" class="settings-grid">
 
     <!-- Card 1: Gym Business Profile -->
-    <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
-      <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px;">
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+      <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px;">
         <h3 class="card-title" style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
-          🏢 بيانات الصالة الرياضية
+          بيانات الصالة الرياضية
         </h3>
         <span style="color: #8D99A3; font-size: 0.82rem;">الاسم التجاري، العملة المستخدمة، والشعار اللفظي.</span>
       </div>
@@ -40,44 +40,44 @@
         <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin-bottom: 14px;">
           <div class="form-group">
             <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">اسم الصالة (Gym Name)</label>
-            <input type="text" name="gym_name" class="form-control" value="{{ profile.gym_name }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <input type="text" name="gym_name" class="form-control" value="{{ profile.gym_name }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
           </div>
 
           <div class="form-group">
             <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">العملة</label>
-            <input type="text" name="currency" class="form-control" value="{{ profile.currency }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <input type="text" name="currency" class="form-control" value="{{ profile.currency }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
           </div>
         </div>
 
         <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 6px; display: block;">الشعار اللفظي / السلوجان (Tagline)</label>
-          <input type="text" name="gym_tagline" class="form-control" value="{{ profile.gym_tagline|default:'' }}" placeholder="مثال: The Ultimate Fitness Club" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          <input type="text" name="gym_tagline" class="form-control" value="{{ profile.gym_tagline|default:'' }}" placeholder="مثال: The Ultimate Fitness Club" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
         </div>
 
         <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
-          <span style="font-size: 1.4rem;">🛠️</span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           <span style="color: #93c5fd; font-size: 0.82rem; line-height: 1.5;">
             <strong>خيارات المطور:</strong> تخصيص لوجو الصالة (Logo) وتعديل باليتة ألوان الواجهة بالكامل (الأساسي، الثانوي، والخلفية) موجود في قسم <strong>خيارات المطور</strong> في أسفل الصفحة ومحمي بكلمة السر.
           </span>
         </div>
 
         <button type="submit" class="btn btn-primary" style="background: #173322; border: 1px solid #7ED321; color: #7ED321; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
-          💾 حفظ بيانات الصالة
+          حفظ بيانات الصالة
         </button>
       </form>
     </div>
 
     <!-- Card 2: Essential Camera & WhatsApp Settings -->
-    <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
-      <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+      <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <div>
           <h3 class="card-title" style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
-            📹 الكاميرا ورسائل الواتساب
+            الكاميرا ورسائل الواتساب
           </h3>
           <span style="color: #8D99A3; font-size: 0.82rem;">التحكم في تشغيل الكاميرا وإشعارات الواتساب وتقارير الإدارة.</span>
         </div>
         <a href="{% url 'face_recognition:kiosk' %}" target="_blank" class="btn btn-sm" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; font-weight: 700; text-decoration: none; padding: 4px 12px; border-radius: 6px;">
-          📷 فتح الكشك ↗
+          فتح الكشك ↗
         </a>
       </div>
 
@@ -91,7 +91,7 @@
         <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
           <div>
             <label for="face_camera_enabled" style="margin: 0; color: #FFFFFF; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: block;">
-              🎥 تشغيل كاميرا التعرف على الوجه التلقائية
+              تشغيل كاميرا التعرف على الوجه التلقائية
             </label>
             <span style="color: #94a3b8; font-size: 0.8rem;">
               تعمل الكاميرا تلقائياً فور فتح الموقع وتقوم بمسح الوجوه وتسجيل الحضور الفوري.
@@ -103,12 +103,12 @@
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 14px;">
           <div class="form-group">
             <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">رقم هاتف المدير (للتقارير اليومية)</label>
-            <input type="text" name="manager_mobile" class="form-control" value="{{ profile.manager_mobile }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%; direction: ltr; text-align: right;">
+            <input type="text" name="manager_mobile" class="form-control" value="{{ profile.manager_mobile }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%; direction: ltr; text-align: right;">
           </div>
 
           <div class="form-group">
             <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">موعد التقرير اليومي</label>
-            <input type="text" name="daily_report_time" class="form-control" value="{{ profile.daily_report_time }}" placeholder="23:30" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <input type="text" name="daily_report_time" class="form-control" value="{{ profile.daily_report_time }}" placeholder="23:30" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
           </div>
         </div>
 
@@ -119,11 +119,11 @@
 
         <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">قالب رسالة انتهاء الاشتراك</label>
-          <textarea name="expired_message_template" class="form-control" rows="2" style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; border-radius: 8px; padding: 8px; width: 100%;">{{ profile.expired_message_template }}</textarea>
+          <textarea name="expired_message_template" class="form-control" rows="2" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; border-radius: 8px; padding: 8px; width: 100%;">{{ profile.expired_message_template }}</textarea>
         </div>
 
         <button type="submit" class="btn btn-primary" style="background: #0d281e; border: 1px solid #10b981; color: #10b981; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
-          💾 حفظ إعدادات الكاميرا والواتساب
+          حفظ إعدادات الكاميرا والواتساب
         </button>
       </form>
     </div>
@@ -131,10 +131,10 @@
   </div>
 
   <!-- Row 2: Security & Password Management -->
-  <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
-    <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px;">
+  <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+    <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px;">
       <h3 class="card-title" style="color: #FF5C67; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
-        🔐 أمان النظام وتغيير كلمة السر
+        أمان النظام وتغيير كلمة السر
       </h3>
       <span style="color: #8D99A3; font-size: 0.82rem;">لحماية النظام، لا يمكن تغيير أي كلمة سر إلا بعد إدخال كلمة السر الحالية أولاً.</span>
     </div>
@@ -147,7 +147,7 @@
         <input type="hidden" name="action" value="change_trainers_password">
 
         <h4 style="color: #4DB3FF; font-size: 0.95rem; font-weight: 800; margin: 0 0 12px 0;">
-          🛡️ كلمة سر حماية المدير والمدربين
+          كلمة سر حماية المدير والمدربين
         </h4>
 
         <div class="form-group" style="margin-bottom: 10px;">
@@ -175,11 +175,11 @@
 
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <button type="button" onclick="togglePasswordVisibility('old_pwd_input', 'new_pwd_input', 'confirm_pwd_input')" style="background: transparent; border: 1px solid #1E374D; color: #8D99A3; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
-            👁️ إظهار / إخفاء
+            إظهار / إخفاء
           </button>
 
           <button type="submit" class="btn btn-primary" style="background: #1C3347; border: 1px solid #4DB3FF; color: #4DB3FF; font-weight: 800; font-size: 0.85rem; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-            🔒 حفظ كلمة سر الحماية
+            حفظ كلمة سر الحماية
           </button>
         </div>
       </form>
@@ -190,7 +190,7 @@
         <input type="hidden" name="action" value="change_account_password">
 
         <h4 style="color: #A8F14B; font-size: 0.95rem; font-weight: 800; margin: 0 0 12px 0;">
-          👤 تغيير كلمة مرور حسابك الحالي ({{ request.user.username }})
+          تغيير كلمة مرور حسابك الحالي ({{ request.user.username }})
         </h4>
 
         <div class="form-group" style="margin-bottom: 10px;">
@@ -218,11 +218,11 @@
 
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <button type="button" onclick="togglePasswordVisibility('user_old_pwd', 'user_new_pwd', 'user_confirm_pwd')" style="background: transparent; border: 1px solid #1E374D; color: #8D99A3; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
-            👁️ إظهار / إخفاء
+            إظهار / إخفاء
           </button>
 
           <button type="submit" class="btn btn-primary" style="background: #173322; border: 1px solid #7ED321; color: #7ED321; font-weight: 800; font-size: 0.85rem; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-            👤 حفظ كلمة مرور الحساب
+            حفظ كلمة مرور الحساب
           </button>
         </div>
       </form>
@@ -231,10 +231,10 @@
   </div>
 
   <!-- Row 3: Plans Management -->
-  <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
-    <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px;">
+  <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+    <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px;">
       <h3 class="card-title" style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0;">
-        📋 باقات الاشتراكات
+        باقات الاشتراكات
       </h3>
     </div>
 
@@ -242,7 +242,7 @@
     <form method="post" action="{% url 'core:settings' %}" style="background: #071018; border: 1px solid #162A3B; padding: 16px; border-radius: 10px; margin-bottom: 18px;">
       {% csrf_token %}
       <input type="hidden" name="action" value="add_plan">
-      <h4 style="font-size: 0.95rem; margin: 0 0 12px 0; color: #A8F14B; font-weight: 800;">➕ إضافة باقة جديدة</h4>
+      <h4 style="font-size: 0.95rem; margin: 0 0 12px 0; color: #A8F14B; font-weight: 800;">إضافة باقة جديدة</h4>
       
       <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px;">
         <div class="form-group">
@@ -312,7 +312,7 @@
     <!-- Developer Lock Card -->
     <div class="card" style="background: #09131d; border: 2px dashed #1e3a52; border-radius: 16px; padding: 32px 24px; text-align: center; margin-top: 10px;">
       <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(59, 130, 246, 0.12); border: 2px solid #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 16px auto;">
-        🛠️
+        
       </div>
 
       <h3 style="color: #FFFFFF; font-size: 1.3rem; font-weight: 800; margin-bottom: 6px;">
@@ -320,7 +320,7 @@
       </h3>
 
       <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; padding: 4px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 800; margin-bottom: 14px;">
-        <span>🔒</span>
+        
         <span>المنطقة محمية بكلمة سر المطور</span>
       </div>
 
@@ -341,7 +341,7 @@
         >
 
         <button type="submit" class="btn btn-primary" style="background: #2563eb; color: #fff; border: none; font-weight: 800; font-size: 0.95rem; padding: 11px 22px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-          <span>🔓</span>
+          
           <span>فتح خيارات المطور</span>
         </button>
       </form>
@@ -354,7 +354,7 @@
       <!-- Developer Top Bar -->
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(37, 99, 235, 0.25); padding-bottom: 14px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 1.6rem;">🛠️</span>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           <div>
             <h3 style="color: #60a5fa; font-size: 1.25rem; font-weight: 900; margin: 0 0 4px 0;">
               خيارات المطور والتهيئة المتقدمة (Developer Options)
@@ -367,24 +367,24 @@
 
         <div style="display: flex; align-items: center; gap: 12px;">
           <span style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; font-weight: 800; font-size: 0.84rem; padding: 4px 12px; border-radius: 20px;">
-            🟢 وضع المطور نشط
+            وضع المطور نشط
           </span>
           <form method="post" action="{% url 'core:settings' %}" style="margin: 0;">
             {% csrf_token %}
             <input type="hidden" name="action" value="lock_developer">
             <button type="submit" class="btn btn-secondary" style="background: #1e293b; border: 1px solid #334155; color: #cbd5e1; font-weight: 700; font-size: 0.84rem; padding: 6px 14px; border-radius: 8px; cursor: pointer;">
-              🔒 قفل خيارات المطور
+              قفل خيارات المطور
             </button>
           </form>
         </div>
       </div>
 
       <!-- Dev Card 1: Full UI Color Palette, Theme & Logo Customization -->
-      <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
-        <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+        <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
           <div>
             <h3 class="card-title" style="color: #60a5fa; font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
-              🎨 تخصيص باليتة ألوان الواجهة بالكامل واللوجو (UI Palette & Logo)
+              تخصيص ألوان الواجهة والشعار (UI Palette & Logo)
             </h3>
             <span style="color: #8D99A3; font-size: 0.82rem;">
               التحكم في اللون الأساسي، الثانوي، والثالث للخلفية، واختيار باليتات جاهزة بنقرة واحدة، وإدارة لوجو الصالة.
@@ -405,7 +405,7 @@
           <!-- Section A: Logo Upload & Management -->
           <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
             <h4 style="color: #FFFFFF; font-size: 0.95rem; font-weight: 800; margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
-              <span>🖼️</span> شعار الصالة (Logo)
+              شعار الصالة (Logo)
             </h4>
 
             <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
@@ -436,7 +436,7 @@
           <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
               <h4 style="color: #FFFFFF; font-size: 0.95rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
-                <span>⚡</span> باليتات ألوان متكاملة جاهزة (One-Click Palettes)
+                باليتات ألوان جاهزة (One-Click Palettes)
               </h4>
               <span style="color: #64748b; font-size: 0.78rem;">انقر على أي باليتة لتطبيق درجات الألوان الثلاثة معاً</span>
             </div>
@@ -551,7 +551,7 @@
           <!-- Section C: Custom 3-Color Pickers & Hex Codes -->
           <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
             <h4 style="color: #FFFFFF; font-size: 0.95rem; font-weight: 800; margin: 0 0 14px 0; display: flex; align-items: center; gap: 6px;">
-              <span>🎛️</span> معايرة الدرجات الثلاث يدوياً (Custom 3-Color Pickers)
+              معايرة الدرجات الثلاث يدوياً
             </h4>
 
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;" class="color-pickers-grid">
@@ -608,7 +608,7 @@
           <div style="background: #071018; border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <h4 style="color: #FFFFFF; font-size: 0.9rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px;">
-                <span>👁️</span> معاينة حية للألوان المختارة (Live UI Preview)
+                معاينة حية للألوان المختارة
               </h4>
               <span style="color: #64748b; font-size: 0.75rem;">تتغير ديناميكياً فور اختيار أي لون</span>
             </div>
@@ -643,17 +643,17 @@
           </div>
 
           <button type="submit" class="btn btn-primary" style="background: #2563eb; border: none; color: #FFFFFF; font-weight: 800; font-size: 0.95rem; padding: 12px 24px; border-radius: 8px; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <span>💾</span>
+            
             <span>حفظ باليتة الألوان والهوية والشعار</span>
           </button>
         </form>
       </div>
 
       <!-- Dev Card 2: Face AI Models & Hardware Turnstile Relay Control -->
-      <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
-        <div class="card-header" style="border-bottom: 1px solid #162837; padding-bottom: 12px; margin-bottom: 18px;">
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+        <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px;">
           <h3 class="card-title" style="color: #4DB3FF; font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
-            🤖 معايرة خوارزميات الذكاء الاصطناعي ومتحكم البوابة (Face AI & Hardware Gate)
+            معايرة خوارزميات الوجه ومتحكم البوابة
           </h3>
           <span style="color: #8D99A3; font-size: 0.82rem;">ضبط حساسية ومطابقة نماذج YuNet/SFace ومتحكم Relay عبر المنفذ التسلسلي COM.</span>
         </div>
@@ -666,19 +666,19 @@
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px;">
             <div class="form-group">
               <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">حساسية مطابقة الوجه (Cosine Threshold)</label>
-              <input type="number" step="0.01" name="face_match_threshold" class="form-control" value="{{ profile.face_match_threshold|default:'0.363' }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+              <input type="number" step="0.01" name="face_match_threshold" class="form-control" value="{{ profile.face_match_threshold|default:'0.363' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
               <small style="color: #64748b; font-size: 0.75rem;">الافتراضي: 0.363</small>
             </div>
 
             <div class="form-group">
               <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">دقة كشف الوجه (Min Confidence)</label>
-              <input type="number" step="0.05" name="face_min_confidence" class="form-control" value="{{ profile.face_min_confidence|default:'0.55' }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+              <input type="number" step="0.05" name="face_min_confidence" class="form-control" value="{{ profile.face_min_confidence|default:'0.55' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
               <small style="color: #64748b; font-size: 0.75rem;">الافتراضي: 0.55</small>
             </div>
 
             <div class="form-group">
               <label class="form-label" style="color: #CAD6E2; font-weight: 700; margin-bottom: 4px; display: block;">فترة منع تكرار التسجيل (بالثواني)</label>
-              <input type="number" name="face_debounce_seconds" class="form-control" value="{{ profile.face_debounce_seconds|default:'60' }}" required style="background: #071018; border: 1px solid #1B2F40; color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+              <input type="number" name="face_debounce_seconds" class="form-control" value="{{ profile.face_debounce_seconds|default:'60' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: #FFFFFF; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
               <small style="color: #64748b; font-size: 0.75rem;">الافتراضي: 60 ثانية</small>
             </div>
           </div>
@@ -697,17 +697,17 @@
           </div>
 
           <button type="submit" class="btn btn-primary" style="background: #1C3347; border: 1px solid #4DB3FF; color: #4DB3FF; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
-            💾 حفظ معايرة خوارزميات الوجه والبوابة
+            حفظ معايرة خوارزميات الوجه والبوابة
           </button>
         </form>
       </div>
 
       <!-- Dev Card 2: Google Contacts Synchronization -->
-      <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid #162837; padding-bottom: 12px;">
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
           <div>
             <h3 style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
-              📱 تكامل Google Contacts API ورفع ملفات الاعتماد
+              تكامل جهات اتصال جوجل (Google Contacts)
             </h3>
             <span style="color: #8D99A3; font-size: 0.82rem;">
               مزامنة أرقام وأسماء اللاعبين مباشرة مع حساب Google الصالة وإدارة ملفات OAuth.
@@ -717,11 +717,11 @@
           <div>
             {% if google_status.connected %}
               <span style="background: rgba(126,211,33,0.15); border: 1px solid #7ED321; color: #7ED321; font-weight: 800; font-size: 0.84rem; padding: 5px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
-                🟢 متصل بـ Google People API
+                متصل بـ Google People API
               </span>
             {% else %}
               <span style="background: rgba(255,92,103,0.15); border: 1px solid #FF5C67; color: #FF5C67; font-weight: 800; font-size: 0.84rem; padding: 5px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
-                ⚠️ {{ google_status.message|default:"غير متصل بـ Google" }}
+                {{ google_status.message|default:"غير متصل بـ Google" }}
               </span>
             {% endif %}
           </div>
@@ -753,7 +753,7 @@
             {% csrf_token %}
             <input type="hidden" name="action" value="sync_google_contacts">
             <button type="submit" class="btn btn-primary" style="background: #0E291C; border: 1px solid #1C5A35; color: #7ED321; font-weight: 800; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-              🔄 مزامنة الأعضاء الجدد ({{ google_status.pending_members }})
+              مزامنة الأعضاء الجدد ({{ google_status.pending_members }})
             </button>
           </form>
 
@@ -761,14 +761,14 @@
             {% csrf_token %}
             <input type="hidden" name="action" value="force_sync_google_contacts">
             <button type="submit" class="btn btn-secondary" style="background: #142433; border: 1px solid #234563; color: #4DB3FF; font-weight: 700; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
-              ⚡ مزامنة إجبارية لكل الأرقام
+              مزامنة إجبارية لكل الأرقام
             </button>
           </form>
         </div>
 
         <details style="background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 12px 14px;">
           <summary style="color: #CAD6E2; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
-            📁 رفع ملفات credentials.json و token.json
+            رفع ملفات credentials.json و token.json
           </summary>
           <form method="post" action="{% url 'core:settings' %}" enctype="multipart/form-data" style="margin-top: 12px; display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
             {% csrf_token %}
@@ -782,18 +782,18 @@
               <input type="file" name="token_file" accept=".json" style="background: #0C1822; border: 1px solid #1B2F40; color: #FFFFFF; font-size: 0.78rem; padding: 5px; border-radius: 6px; width: 100%;">
             </div>
             <button type="submit" class="btn btn-secondary" style="background: #0E1D28; border: 1px solid #1C3347; color: #CAD6E2; font-weight: 700; font-size: 0.82rem; padding: 7px 14px; border-radius: 6px; cursor: pointer;">
-              📤 حفظ الملفات
+              حفظ الملفات
             </button>
           </form>
         </details>
       </div>
 
       <!-- Dev Card 3: Legacy Data Importer (V1 Data Files) -->
-      <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #162837; padding-bottom: 12px;">
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
           <div>
             <h3 style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
-              📥 استيراد وترحيل بيانات النظام القديم (Legacy Data Importer)
+              استيراد وترحيل بيانات النظام القديم
             </h3>
             <span style="color: #8D99A3; font-size: 0.82rem;">
               استيراد الأعضاء والاشتراكات والإيصالات والمصروفات من ملفات JSON القديمة دون تكرار.
@@ -802,10 +802,10 @@
 
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <span style="background: rgba(132, 204, 22, 0.12); border: 1px solid #84CC16; color: #A8F14B; font-weight: 800; font-size: 0.82rem; padding: 4px 10px; border-radius: 20px;">
-              👥 المسجلون: <strong>{{ total_members_count }}</strong>
+              المسجلون: <strong>{{ total_members_count }}</strong>
             </span>
             <span style="background: rgba(59, 130, 246, 0.12); border: 1px solid #3b82f6; color: #93c5fd; font-weight: 800; font-size: 0.82rem; padding: 4px 10px; border-radius: 20px;">
-              💳 الإيصالات: <strong>{{ total_payments_count }}</strong>
+              الإيصالات: <strong>{{ total_payments_count }}</strong>
             </span>
           </div>
         </div>
@@ -822,14 +822,14 @@
             {% csrf_token %}
             <input type="hidden" name="action" value="import_legacy_data">
             <button type="submit" class="btn btn-primary" style="background: #84CC16; color: #050B10; font-weight: 800; font-size: 0.85rem; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;">
-              ⚡ مزامنة البيانات من مجلد data
+              مزامنة البيانات من مجلد data
             </button>
           </form>
         </div>
 
         <details style="background: #08141e; border: 1px dashed #1e3a52; border-radius: 8px; padding: 10px 14px;">
           <summary style="color: #60a5fa; font-weight: 700; font-size: 0.84rem; cursor: pointer;">
-            📁 رفع ملفات JSON يدوياً
+            رفع ملفات JSON يدوياً
           </summary>
           <form method="post" action="{% url 'core:settings' %}" enctype="multipart/form-data" style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
             {% csrf_token %}
@@ -841,18 +841,18 @@
               <div><label style="color:#CAD6E2; font-size:0.75rem;">settings.json</label><input type="file" name="settings_file" accept=".json" style="width:100%; font-size:0.75rem;"></div>
             </div>
             <button type="submit" class="btn btn-secondary" style="background:#1e293b; color:#f1f5f9; border:1px solid #334155; font-size:0.8rem; padding:6px 14px; border-radius:6px; cursor:pointer; align-self:flex-start; margin-top:4px;">
-              📤 رفع واستيراد الملفات
+              رفع واستيراد الملفات
             </button>
           </form>
         </details>
       </div>
 
       <!-- Dev Card 4: GitHub System Updates & One-Click Upgrades -->
-      <div class="card" style="background: #0C1822; border: 1px solid #172A38; border-radius: 12px; padding: 22px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #162837; padding-bottom: 12px;">
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
           <div>
             <h3 style="color: #FFFFFF; font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
-              🚀 تحديثات النظام ومستودع GitHub (System Updates & Upgrades)
+              تحديثات النظام ومستودع GitHub
             </h3>
             <span style="color: #8D99A3; font-size: 0.82rem;">
               سحب آخر التعديلات والإصدارات من GitHub مع النسخ الاحتياطي التلقائي بضغطة زر واحدة.
@@ -861,7 +861,7 @@
 
           <div style="display: flex; align-items: center; gap: 8px;">
             <span id="updateStatusBadge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; color: #34d399; font-weight: 800; font-size: 0.84rem; padding: 5px 12px; border-radius: 20px;">
-              📦 المثبت: <strong>{{ version_info.version_tag|default:"v2.1.0" }}</strong> (<code style="font-family: monospace;">{{ version_info.commit }}</code>)
+              المثبت: <strong>{{ version_info.version_tag|default:"v2.1.0" }}</strong> (<code style="font-family: monospace;">{{ version_info.commit }}</code>)
             </span>
           </div>
         </div>
@@ -884,12 +884,12 @@
         <!-- Check and Perform Update Action Buttons -->
         <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;">
           <button type="button" id="btnCheckUpdates" onclick="checkGitHubUpdates()" class="btn btn-primary" style="background: #1C3347; border: 1px solid #4DB3FF; color: #4DB3FF; font-weight: 800; font-size: 0.9rem; padding: 8px 18px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-            <span id="checkIcon">🔄</span>
+            <span id="checkIcon">فحص التحديثات</span>
             <span id="checkBtnText">فحص وجود تحديثات على GitHub</span>
           </button>
 
           <button type="button" id="btnPerformUpdate" onclick="performSystemUpdate()" class="btn" style="background: #10b981; border: none; color: #050B10; font-weight: 900; font-size: 0.9rem; padding: 8px 20px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; opacity: 0.4; pointer-events: none;" disabled>
-            <span>⚡</span>
+            
             <span id="performBtnText">تحديث النظام الآن (Update Now)</span>
           </button>
         </div>
@@ -897,7 +897,7 @@
         <div id="updateFeedbackBanner" style="display: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 14px; font-size: 0.88rem; font-weight: 700;"></div>
 
         <div id="commitsPreviewBox" style="display: none; background: #071018; border: 1px solid #162A3B; border-radius: 8px; padding: 14px; margin-bottom: 14px;">
-          <h4 style="color: #4DB3FF; font-size: 0.88rem; font-weight: 800; margin: 0 0 8px 0;">📝 التحديثات الجديدة المتوفرة:</h4>
+          <h4 style="color: #4DB3FF; font-size: 0.88rem; font-weight: 800; margin: 0 0 8px 0;">التحديثات الجديدة المتوفرة:</h4>
           <ul id="commitsListUl" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px;"></ul>
         </div>
 
@@ -1055,7 +1055,7 @@ async function checkGitHubUpdates() {
       banner.style.background = 'rgba(16, 185, 129, 0.15)';
       banner.style.border = '1px solid #10b981';
       banner.style.color = '#34d399';
-      banner.innerHTML = `🚀 <strong>${data.message}</strong> (الإصدار الجديد: <code>${data.remote_commit}</code>)`;
+      banner.innerHTML = ` <strong>${data.message}</strong> (الإصدار الجديد: <code>${data.remote_commit}</code>)`;
 
       if (data.commits_list && data.commits_list.length > 0) {
         commitsUl.innerHTML = '';
@@ -1077,7 +1077,7 @@ async function checkGitHubUpdates() {
       banner.style.background = 'rgba(59, 130, 246, 0.12)';
       banner.style.border = '1px solid #3b82f6';
       banner.style.color = '#93c5fd';
-      banner.innerHTML = `✓ <strong>${data.message}</strong> (الـ Commit الحالي: <code>${data.current_commit}</code>)`;
+      banner.innerHTML = ` <strong>${data.message}</strong> (الـ Commit الحالي: <code>${data.current_commit}</code>)`;
       performBtn.disabled = true;
       performBtn.style.opacity = '0.4';
       performBtn.style.pointerEvents = 'none';
@@ -1086,14 +1086,14 @@ async function checkGitHubUpdates() {
       banner.style.background = 'rgba(239, 68, 68, 0.12)';
       banner.style.border = '1px solid #ef4444';
       banner.style.color = '#f87171';
-      banner.innerHTML = `❌ ${data.message || 'حدث خطأ أثناء فحص التحديثات.'}`;
+      banner.innerHTML = ` ${data.message || 'حدث خطأ أثناء فحص التحديثات.'}`;
     }
   } catch (err) {
     banner.style.display = 'block';
     banner.style.background = 'rgba(239, 68, 68, 0.12)';
     banner.style.border = '1px solid #ef4444';
     banner.style.color = '#f87171';
-    banner.innerHTML = `❌ تعذر الاتصال: ${err.message}`;
+    banner.innerHTML = ` تعذر الاتصال: ${err.message}`;
   } finally {
     btn.disabled = false;
     icon.style.animation = 'none';
@@ -1138,14 +1138,14 @@ async function performSystemUpdate() {
     }
 
     if (data.success) {
-      termStatus.textContent = 'اكتمل بنجاح ✓';
+      termStatus.textContent = 'اكتمل بنجاح ';
       termStatus.style.color = '#34d399';
       alert(data.message || 'تم تحديث النظام بنجاح!');
       setTimeout(() => {
         window.location.reload();
       }, 1500);
     } else {
-      termStatus.textContent = 'فشل ❌';
+      termStatus.textContent = 'فشل ';
       termStatus.style.color = '#ef4444';
       alert('حدث خطأ أثناء التحديث: ' + (data.message || 'فشل'));
       performBtn.disabled = false;
@@ -1153,8 +1153,8 @@ async function performSystemUpdate() {
       performTxt.textContent = 'إعادة محاولة التحديث';
     }
   } catch (err) {
-    termContent.innerHTML += `<div style="color: #ef4444;">❌ خطأ في الاتصال: ${err.message}</div>`;
-    termStatus.textContent = 'فشل الاتصال ❌';
+    termContent.innerHTML += `<div style="color: #ef4444;"> خطأ في الاتصال: ${err.message}</div>`;
+    termStatus.textContent = 'فشل الاتصال ';
     performBtn.disabled = false;
     performBtn.style.opacity = '1';
     performTxt.textContent = 'تحديث النظام الآن';

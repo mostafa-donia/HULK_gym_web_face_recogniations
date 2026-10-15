@@ -17,7 +17,7 @@
     </div>
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
       <a href="{% url 'members:smart_operations' %}" class="btn btn-secondary btn-sm">
-        ⚡ العمليات السريعة
+        العمليات السريعة
       </a>
       <a href="{% url 'members:member_create' %}" class="btn btn-primary btn-sm">
         + تسجيل عضو جديد
@@ -36,7 +36,7 @@
             <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700; display: block;">إجمالي الأعضاء</span>
             <span style="color: var(--text-main); font-size: 1.7rem; font-weight: 900; margin-top: 4px; display: block; font-variant-numeric: tabular-nums;">{{ total_count }}</span>
           </div>
-          <span style="font-size: 1.5rem; opacity: 0.8;">👥</span>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
         </div>
       </div>
     </a>
@@ -111,11 +111,11 @@
       <div style="flex: 1.5; min-width: 150px;">
         <select name="filter" class="form-control" onchange="this.form.submit()">
           <option value="all" {% if status_filter == 'all' %}selected{% endif %}>كل الحالات</option>
-          <option value="active" {% if status_filter == 'active' %}selected{% endif %}>🟢 المشتركون حالياً</option>
-          <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>🔴 العضويات المنتهية</option>
-          <option value="debt" {% if status_filter == 'debt' %}selected{% endif %}>⚠️ عليهم متبقي (ديون)</option>
+          <option value="active" {% if status_filter == 'active' %}selected{% endif %}>المشتركون حالياً</option>
+          <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>العضويات المنتهية</option>
+          <option value="debt" {% if status_filter == 'debt' %}selected{% endif %}>عليهم متبقي (ديون)</option>
           <option value="expiring_soon" {% if status_filter == 'expiring_soon' %}selected{% endif %}>⏳ تنتهي خلال 3 أيام</option>
-          <option value="face" {% if status_filter == 'face' or status_filter == 'fingerprint' %}selected{% endif %}>📷 مسجل ببصمة الوجه</option>
+          <option value="face" {% if status_filter == 'face' or status_filter == 'fingerprint' %}selected{% endif %}>مسجل ببصمة الوجه</option>
         </select>
       </div>
 
@@ -206,7 +206,7 @@
               </span>
               {% if m.mobile %}
                 <a href="https://wa.me/2{{ m.mobile }}" target="_blank" title="محادثة واتساب" style="color: #25D366; text-decoration: none; font-size: 1rem; line-height: 1;">
-                  💬
+                  واتساب
                 </a>
               {% endif %}
             </div>
@@ -279,7 +279,7 @@
           <td>
             {% if m.has_face_enrolled %}
               <span class="badge badge-active" style="font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px;">
-                📷 مسجل
+                بصمة مسجلة
               </span>
             {% else %}
               <span style="color: var(--text-dim); font-size: 0.8rem;">غير مسجل</span>

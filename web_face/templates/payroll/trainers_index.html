@@ -10,7 +10,7 @@
     <div>
       <div style="display: flex; align-items: center; gap: 10px;">
         <h1 style="color: #A8F14B; font-size: 1.6rem; font-weight: 900; margin: 0;">
-          🏋️‍♂️ إدارة المدربين وعمولات الكباتن
+          إدارة المدربين وعمولات الكباتن
         </h1>
         <span class="badge badge-active" style="font-size: 0.8rem;">مفتوح ومؤمّن</span>
       </div>
@@ -21,19 +21,19 @@
 
     <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
       <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary btn-sm">
-        ➕ إضافة مدرب جديد
+        إضافة مدرب جديد
       </a>
       <a href="{% url 'payroll:trainer_assignments' %}" class="btn btn-secondary btn-sm">
-        🤝 إسناد متدرب خاص (عقد PT)
+        إسناد متدرب خاص (عقد PT)
       </a>
       <a href="{% url 'payroll:private_training_records' %}" class="btn btn-secondary btn-sm">
         ⏱️ تسجيل حصة تدريب خاصة
       </a>
       <a href="{% url 'payroll:advance_create' %}" class="btn btn-sm" style="background: #173322; border: 1px solid #7ED321; color: #7ED321; font-weight: 800;">
-        💸 صرف سلفة نقدية
+        صرف سلفة نقدية
       </a>
       <a href="{% url 'payroll:trainers_lock' %}" class="btn btn-sm" style="background: #3D141C; color: #FF5C67; border: 1px solid #6E1B29;">
-        🔒 قفل الصفحة
+        قفل الصفحة
       </a>
     </div>
   </div>
@@ -41,22 +41,22 @@
   <!-- KPI Cards -->
   <div class="grid-4">
     <div class="stat-card">
-      <span class="stat-label">👥 إجمالي المدربين المسجلين</span>
+      <span class="stat-label">إجمالي المدربين المسجلين</span>
       <span class="stat-val" style="color: #F3F8FB;">{{ total_trainers }}</span>
     </div>
 
     <div class="stat-card green">
-      <span class="stat-label">🟢 الكباتن النشطين حالياً</span>
+      <span class="stat-label">الكباتن النشطين حالياً</span>
       <span class="stat-val">{{ active_trainers }}</span>
     </div>
 
     <div class="stat-card gold">
-      <span class="stat-label">🤝 عقود التدريب الخاص الفعالة</span>
+      <span class="stat-label">عقود التدريب الخاص الفعالة</span>
       <span class="stat-val">{{ assignments_count }}</span>
     </div>
 
     <div class="stat-card blue">
-      <span class="stat-label">💰 عمولات PT هذا الشهر</span>
+      <span class="stat-label">عمولات PT هذا الشهر</span>
       <span class="stat-val">{{ month_pt_commissions }} <small style="font-size: 0.9rem;">{{ gym_profile.currency|default:"ج.م" }}</small></span>
     </div>
   </div>
@@ -64,8 +64,8 @@
   <!-- Trainers Table -->
   <div class="card">
     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h3 class="card-title">📋 قائمة الكباتن والمدربين</h3>
-      <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary btn-sm">➕ إضافة مدرب</a>
+      <h3 class="card-title">قائمة الكباتن والمدربين</h3>
+      <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary btn-sm">إضافة مدرب</a>
     </div>
 
     {% if trainers %}
@@ -89,7 +89,7 @@
               <div style="font-size: 0.8rem; color: #8D99A3;">{{ t.notes|truncatewords:6 }}</div>
               {% endif %}
             </td>
-            <td style="color: #A9B7C1;">📱 {{ t.phone|default:"—" }}</td>
+            <td style="color: #A9B7C1;">{{ t.phone|default:"—" }}</td>
             <td style="color: #A8F14B; font-weight: 800;">{{ t.fixed_salary }} {{ gym_profile.currency }}</td>
             <td>
               {% if t.status == 'ACTIVE' %}
@@ -101,16 +101,16 @@
             <td>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <a href="{% url 'payroll:employee_edit' t.id %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem;">
-                  ✏️ تعديل
+                  تعديل
                 </a>
                 <a href="{% url 'payroll:trainer_assignments' %}?trainer_id={{ t.id }}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem;">
-                  🤝 إسناد متدرب
+                  إسناد متدرب
                 </a>
                 <a href="{% url 'payroll:private_training_records' %}?trainer_id={{ t.id }}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; background: #163652; color: #4DB3FF;">
                   ⏱️ تسجيل حصة
                 </a>
                 <a href="{% url 'payroll:advance_create' %}?employee_id={{ t.id }}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; background: #132B1C; border-color: #255936; color: #7ED321;">
-                  💸 صرف سلفة
+                  صرف سلفة
                 </a>
               </div>
             </td>
@@ -122,7 +122,7 @@
     {% else %}
       <div style="text-align: center; padding: 36px; color: #8D99A3;">
         <p style="font-size: 1.1rem; margin-bottom: 12px;">لا يوجد مدربين مسجلين في النظام حالياً.</p>
-        <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary">➕ إضافة أول مدرب الآن</a>
+        <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary">إضافة أول مدرب الآن</a>
       </div>
     {% endif %}
   </div>
@@ -132,7 +132,7 @@
     <!-- Active Contracts -->
     <div class="card">
       <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 class="card-title">🤝 أحدث عقود التدريب الخاص الفعالة</h3>
+        <h3 class="card-title">أحدث عقود التدريب الخاص الفعالة</h3>
         <a href="{% url 'payroll:trainer_assignments' %}" style="color: #A8F14B; font-size: 0.85rem; text-decoration: none;">إدارة العقود ←</a>
       </div>
       {% if assignments %}

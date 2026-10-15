@@ -79,7 +79,7 @@
     {% if not member.has_face_enrolled %}
     <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 10px; padding: 12px 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #fca5a5; font-size: 0.92rem; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);">
       <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 1.4rem;">📷</span>
+        
         <div>
           <strong style="color: #fff; font-size: 0.95rem;">تنبيه: بصمة الوجه غير مسجلة لهذا العضو!</strong>
           <div style="font-size: 0.8rem; color: #fca5a5; margin-top: 2px;">يجب التقاط بصمة الوجه لتفعيل تسجيل الحضور التلقائي عبر الكاميرا.</div>
@@ -112,18 +112,18 @@
 
     <div style="text-align: center; margin-top: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
       <button onclick="printAndStay()" class="btn btn-primary" style="padding: 10px 20px; font-size: 0.95rem; font-weight: 800;">
-        🖨️ طباعة الإيصال
+        طباعة الإيصال
       </button>
 
       {% if member.mobile %}
       <a href="{% url 'payments:send_receipt_whatsapp' payment.id %}" onclick="cancelAutoRedirect()" class="btn" style="background: #25D366; color: #fff; padding: 10px 18px; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 0.92rem; display: inline-flex; align-items: center; gap: 6px;">
-        <span>💬</span>
+        
         <span>إرسال الفاتورة بالواتساب</span>
       </a>
       {% endif %}
 
       <a href="{% url 'payments:download_invoice_html' payment.id %}" onclick="cancelAutoRedirect()" class="btn btn-secondary" style="padding: 10px 16px; text-decoration: none; font-size: 0.9rem; font-weight: 700;">
-        📥 تحميل الفاتورة (HTML)
+        تحميل الفاتورة (HTML)
       </a>
 
       <button onclick="closeOrBack()" class="btn btn-secondary" style="padding: 10px 18px; font-size: 0.9rem; font-weight: 700; cursor: pointer;">
@@ -197,7 +197,7 @@
 
     <div style="margin-top: 24px; text-align: center; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 14px;">
       <p>المحصل: {{ payment.created_by.first_name|default:payment.created_by.username|default:"كاشير الصالة" }}</p>
-      <p style="margin-top: 4px;">شكراً لاختيارك {{ profile.gym_name|default:"HULK GYM" }} 💪 نتمنى لك تمرين ممتع!</p>
+      <p style="margin-top: 4px;">شكراً لاختيارك {{ profile.gym_name|default:"HULK GYM" }} نتمنى لك تمريناً ممتعاً!</p>
     </div>
   </div>
 
