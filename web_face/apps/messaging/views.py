@@ -209,6 +209,10 @@ def whatsapp_manager_report_view(request):
         messages.error(request, "فشل التحقق: يجب إدخال كلمة سر المدير الصحيحة لإرسال تقرير الإدارة.")
         return redirect(redirect_target)
 
+    if not profile.manager_mobile:
+        messages.error(request, "تعذر إرسال التقرير: يرجى كتابة رقم هاتف المدير أولاً في صفحة الإعدادات.")
+        return redirect(redirect_target)
+
     success = prepare_manager_daily_report()
     if success:
         messages.success(request, f"تم إعداد تقرير المدير اليومي وإضافته لطابور الإرسال للرقم ({profile.manager_mobile}).")

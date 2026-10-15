@@ -353,6 +353,10 @@ def prepare_manager_daily_report() -> bool:
     # Net Cash
     net_cash = total_revenue - total_expenses
 
+    # Subscriptions today
+    subs_today = Subscription.objects.filter(created_at__date=today)
+    new_subs_count = subs_today.count()
+
     # Discounts given today
     total_discounts_today = subs_today.aggregate(total=Sum("discount"))["total"] or Decimal("0.00")
 
