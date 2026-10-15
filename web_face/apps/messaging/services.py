@@ -236,6 +236,12 @@ def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: s
             failed_count += 1
         time.sleep(0.5)
 
+    if pending:
+        try:
+            whatsapp_sender.return_to_system_window()
+        except Exception:
+            pass
+
     return {
         "processed": len(pending),
         "sent": sent_count,

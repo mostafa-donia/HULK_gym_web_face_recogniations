@@ -112,39 +112,44 @@ def set_keyboard_layout_to_english():
 
 def copy_file(file_path: str) -> bool:
     """
-    Copy image (via CF_DIB) or file/document (via CF_HDROP) to Windows clipboard.
+    Copy image (via CF_DIB + CF_HDROP) or file/document (via CF_HDROP) to Windows clipboard.
     Supports images, HTML invoices, PDF documents, and brochures.
     """
     if not file_path:
         return False
 
     abs_path = os.path.abspath(str(file_path))
+    # If not found directly, check MEDIA_ROOT
+    if not os.path.exists(abs_path):
+        try:
+            from django.conf import settings
+            cand = os.path.join(settings.MEDIA_ROOT, str(file_path))
+            if os.path.exists(cand):
+                abs_path = os.path.abspath(cand)
+        except Exception:
+            pass
+
     stem, ext = os.path.splitext(abs_path)
-    if ext.lower() in [".html", ".htm"] and os.path.exists(stem + ".png"):
-        abs_path = stem + ".png"
+    # If HTML invoice, prefer companion PNG image if available
+    if ext.lower() in [".html", ".htm"]:
+        if os.path.exists(stem + ".png"):
+            abs_path = stem + ".png"
+            stem, ext = os.path.splitext(abs_path)
+        else:
+            try:
+                from django.conf import settings
+                cand_png = os.path.join(settings.MEDIA_ROOT, "invoices", os.path.basename(stem) + ".png")
+                if os.path.exists(cand_png):
+                    abs_path = os.path.abspath(cand_png)
+                    stem, ext = os.path.splitext(abs_path)
+            except Exception:
+                pass
 
     if not os.path.exists(abs_path):
         print(f"[copy_file] File not found: {abs_path}")
         return False
 
-    # 1. Try raster image via CF_DIB (JPG, PNG, BMP, WEBP, etc.)
-    try:
-        img = Image.open(abs_path)
-        output = io.BytesIO()
-        img.convert("RGB").save(output, "BMP")
-        data = output.getvalue()[14:]  # Remove BMP header
-        output.close()
-
-        win32clipboard.OpenClipboard()
-        win32clipboard.EmptyClipboard()
-        win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
-        win32clipboard.CloseClipboard()
-        print(f"[copy_file] Copied image via CF_DIB: {abs_path}")
-        return True
-    except Exception:
-        pass
-
-    # 2. CF_HDROP Windows Shell File Drop Format (for HTML, PDF, and general documents)
+    # Universal 64-bit safe CF_HDROP and CF_DIB clipboard placement
     try:
         class DROPFILES(ctypes.Structure):
             _fields_ = [
@@ -184,12 +189,30 @@ def copy_file(file_path: str) -> bool:
 
         win32clipboard.OpenClipboard()
         win32clipboard.EmptyClipboard()
-        win32clipboard.SetClipboardData(15, h_global)  # 15 = CF_HDROP
+
+        # 1. Primary format: CF_HDROP (15) so WhatsApp Desktop (UWP/WinUI 3) accepts the file/image directly
+        win32clipboard.SetClipboardData(15, h_global)
+
+        # 2. Secondary format: CF_DIB if image for legacy or browser paste compatibility
+        try:
+            img = Image.open(abs_path)
+            output = io.BytesIO()
+            img.convert("RGB").save(output, "BMP")
+            data = output.getvalue()[14:]  # Remove BMP header
+            output.close()
+            win32clipboard.SetClipboardData(win32clipboard.CF_DIB, data)
+        except Exception:
+            pass
+
         win32clipboard.CloseClipboard()
-        print(f"[copy_file] Copied file via CF_HDROP: {abs_path}")
+        print(f"[copy_file] Copied file to clipboard (CF_HDROP + CF_DIB): {abs_path}")
         return True
     except Exception as e:
         print(f"[copy_file] Error copying file to clipboard: {e}")
+        try:
+            win32clipboard.CloseClipboard()
+        except Exception:
+            pass
         return False
 
 
@@ -278,7 +301,8 @@ def remember_current_window():
             title = (win32gui.GetWindowText(hwnd) or "").lower()
             if "whatsapp" not in title and "واتساب" not in title:
                 ORIGINAL_BROWSER_HWND = hwnd
-                print(f"[remember_current_window] Saved active system HWND: {hwnd} ({title})")
+                safe_title = title.encode("ascii", "replace").decode("ascii")
+                print(f"[remember_current_window] Saved active system HWND: {hwnd} ({safe_title})")
     except Exception as e:
         print(f"[remember_current_window] Warning: {e}")
 
@@ -339,9 +363,10 @@ def whatsupp_ready() -> bool:
     return True
 
 
-def return_to_system_window() -> bool:
+def return_to_system_window(url: str = "http://127.0.0.1:8000/messaging/") -> bool:
     """
-    Seamlessly and reliably brings the browser / gym system window back to the foreground.
+    Seamlessly and reliably brings Google Chrome and the gym system back to the foreground.
+    Bypasses Windows SetForegroundWindow restrictions and launches/switches Chrome directly.
     """
     global ORIGINAL_BROWSER_HWND
     try:
@@ -349,17 +374,23 @@ def return_to_system_window() -> bool:
         user32 = ctypes.windll.user32
         import win32gui
 
+        # Windows focus unlock trick: Send dummy Alt key down/up
+        user32.keybd_event(0x12, 0, 0, 0)
+        user32.keybd_event(0x12, 0, 2, 0)
+
         target_hwnd = ORIGINAL_BROWSER_HWND
         if not target_hwnd or not win32gui.IsWindow(target_hwnd):
             found = []
             def enum_cb(h, _):
                 if win32gui.IsWindowVisible(h):
                     t = (win32gui.GetWindowText(h) or "").lower()
-                    if any(k in t for k in ["hulk", "gym", "127.0.0.1", "localhost", "لوحة"]):
-                        found.append(h)
-                    elif any(b in t for b in ["chrome", "edge", "firefox", "brave", "opera"]):
-                        if "whatsapp" not in t and "واتساب" not in t:
+                    if "chrome" in t and "whatsapp" not in t and "واتساب" not in t:
+                        if any(k in t for k in ["hulk", "gym", "127.0.0.1", "localhost", "الرئيسية", "لوحة", "cina"]):
+                            found.insert(0, h)
+                        else:
                             found.append(h)
+                    elif any(b in t for b in ["edge", "firefox", "brave", "opera"]) and "whatsapp" not in t:
+                        found.append(h)
                 return True
             try:
                 win32gui.EnumWindows(enum_cb, None)
@@ -370,29 +401,24 @@ def return_to_system_window() -> bool:
 
         if target_hwnd and win32gui.IsWindow(target_hwnd):
             if user32.IsIconic(target_hwnd):
-                user32.ShowWindow(target_hwnd, 9)
+                user32.ShowWindow(target_hwnd, 9)  # SW_RESTORE
             else:
-                user32.ShowWindow(target_hwnd, 5)
-            fore = user32.GetForegroundWindow()
-            f_th = user32.GetWindowThreadProcessId(fore, 0)
-            t_th = user32.GetWindowThreadProcessId(target_hwnd, 0)
-            if f_th != t_th:
-                user32.AttachThreadInput(f_th, t_th, True)
-                user32.SetForegroundWindow(target_hwnd)
-                user32.BringWindowToTop(target_hwnd)
-                user32.AttachThreadInput(f_th, t_th, False)
-            else:
-                user32.SetForegroundWindow(target_hwnd)
-                user32.BringWindowToTop(target_hwnd)
-            print(f"[return_to_system_window] Returned focus to window {target_hwnd}")
-            return True
-        else:
-            hotkey("alt", "tab")
-            return True
+                user32.ShowWindow(target_hwnd, 5)  # SW_SHOW
+            user32.SetForegroundWindow(target_hwnd)
+            user32.BringWindowToTop(target_hwnd)
+            print(f"[return_to_system_window] Restored and focused Chrome HWND: {target_hwnd}")
+
+        # Unconditionally launch/activate Chrome to system URL as explicitly requested by user
+        Popen(f'start chrome "{url}"', shell=True)
+        return True
     except Exception as e:
         print(f"[return_to_system_window] Warning: {e}")
-        hotkey("alt", "tab")
-        return False
+        try:
+            Popen(f'start chrome "{url}"', shell=True)
+            return True
+        except Exception:
+            hotkey("alt", "tab")
+            return False
 
 
 def return_to_system_tab() -> bool:
@@ -475,9 +501,31 @@ def send_message(
     hotkey("ctrl", "a")
     write(" ")
     write(phone)
-    random_delay()
+    random_delay(0.8, 1.2)
     press("enter")
-    random_delay()
+    random_delay(1.2, 1.6)
+
+    # Calculate chat message input area coordinates dynamically from WhatsApp window
+    chat_input_x = None
+    chat_input_y = None
+    try:
+        user32 = ctypes.windll.user32
+        import win32gui
+        w_hwnd = user32.FindWindowW(None, "WhatsApp") or user32.FindWindowW("WinUIDesktopWin32WindowClass", None)
+        if w_hwnd:
+            rect = win32gui.GetWindowRect(w_hwnd)
+            w_width = rect[2] - rect[0]
+            w_height = rect[3] - rect[1]
+            chat_input_x = rect[0] + int(w_width * 0.65)
+            chat_input_y = rect[1] + int(w_height - 45)
+    except Exception:
+        pass
+
+    # Click in the chat message input box to ensure chat input has focus
+    if chat_input_x and chat_input_y:
+        human_move_to(chat_input_x, chat_input_y)
+        pyautogui.click()
+        random_delay(0.25, 0.45)
 
     # 3. Paste file / invoice attachment if present
     target_img = None
@@ -485,39 +533,57 @@ def send_message(
         if os.path.exists(image):
             target_img = image
         else:
+            try:
+                from django.conf import settings
+                cand = os.path.join(settings.MEDIA_ROOT, image)
+                if os.path.exists(cand):
+                    target_img = cand
+            except Exception:
+                pass
+
+        if not target_img:
             stem, ext = os.path.splitext(image)
-            if ext.lower() == ".html" and os.path.exists(stem + ".png"):
-                target_img = stem + ".png"
+            if ext.lower() in [".html", ".htm"]:
+                if os.path.exists(stem + ".png"):
+                    target_img = stem + ".png"
+                else:
+                    try:
+                        from django.conf import settings
+                        cand_png = os.path.join(settings.MEDIA_ROOT, stem + ".png")
+                        if os.path.exists(cand_png):
+                            target_img = cand_png
+                    except Exception:
+                        pass
 
     if target_img and os.path.exists(target_img):
         print(f"[send_message] Attaching file/invoice: {target_img}")
         if copy_file(target_img):
-            random_delay()
+            random_delay(0.35, 0.6)
             hotkey("ctrl", "v")
-            # Wait 5.0 to 7.5 seconds for WhatsApp attachment preview to fully render
-            random_delay(5.0, 7.5)
+            # Wait 3.5 to 5.0 seconds for WhatsApp attachment preview to fully render
+            random_delay(3.5, 5.0)
             if message:
                 copy(message)
-                random_delay()
+                random_delay(0.25, 0.4)
                 hotkey("ctrl", "v")
-                random_delay()
+                random_delay(0.25, 0.4)
             press("enter")
             random_delay(1.5, 2.5)
         else:
             print("[send_message] copy_file failed, falling back to message text")
             if message:
                 copy(message)
-                random_delay()
+                random_delay(0.25, 0.4)
                 hotkey("ctrl", "v")
-                random_delay()
+                random_delay(0.25, 0.4)
                 press("enter")
                 random_delay(1.0, 1.8)
     else:
         if message:
             copy(message)
-            random_delay()
+            random_delay(0.25, 0.4)
             hotkey("ctrl", "v")
-            random_delay()
+            random_delay(0.25, 0.4)
             press("enter")
             random_delay(1.0, 1.8)
 

@@ -256,10 +256,18 @@ def whatsapp_batch_action_view(request):
         if not selected_ids:
             messages.warning(request, "يرجى تحديد رسالة واحدة على الأقل بالضغط على المربع بجانبها.")
         else:
-            msgs = WhatsAppMessage.objects.filter(id__in=selected_ids)
-            msgs.update(status=MessageStatus.PENDING, error_detail="")
-            for m in msgs:
-                dispatch_message_record(m)
+            from apps.messaging import whatsapp_sender
+            msgs = list(WhatsAppMessage.objects.filter(id__in=selected_ids))
+            for idx, m in enumerate(msgs):
+                m.status = MessageStatus.PENDING
+                m.error_detail = ""
+                m.save()
+                is_last = (idx == len(msgs) - 1)
+                dispatch_message_record(m, return_to_system=is_last)
+            try:
+                whatsapp_sender.return_to_system_window()
+            except Exception:
+                pass
             messages.success(request, f"تمت إعادة إرسال {len(msgs)} رسالة محددة.")
 
     elif action == "force_resend_selected":
@@ -267,9 +275,15 @@ def whatsapp_batch_action_view(request):
         if not selected_ids:
             messages.warning(request, "يرجى تحديد رسائل لتنفيذ الإرسال القسري.")
         else:
-            msgs = WhatsAppMessage.objects.filter(id__in=selected_ids)
-            for m in msgs:
-                dispatch_message_record(m)
+            from apps.messaging import whatsapp_sender
+            msgs = list(WhatsAppMessage.objects.filter(id__in=selected_ids))
+            for idx, m in enumerate(msgs):
+                is_last = (idx == len(msgs) - 1)
+                dispatch_message_record(m, return_to_system=is_last)
+            try:
+                whatsapp_sender.return_to_system_window()
+            except Exception:
+                pass
             messages.success(request, f"تم تنفيذ الإرسال القسري لـ {len(msgs)} رسالة.")
 
     elif action == "resend_failed_to_pending":
