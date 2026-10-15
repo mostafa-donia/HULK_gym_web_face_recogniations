@@ -355,7 +355,7 @@ class FaceEngine:
             return
 
         with self.camera_lock:
-            if self.camera_running and self.cap is not None:
+            if self.camera_running or self.camera_starting:
                 return
             self.stop_camera()
             self.camera_index = camera_index
@@ -611,7 +611,7 @@ class FaceEngine:
 # Global Singleton accessor
 def get_face_engine() -> FaceEngine:
     engine = FaceEngine()
-    if not engine.camera_running:
+    if not engine.camera_running and not engine.camera_starting:
         try:
             from apps.core.models import GymProfile
             profile = GymProfile.get_solo()
