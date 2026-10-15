@@ -873,14 +873,14 @@ def coach_detail_view(request, employee_id):
         })
 
     # Fetch month's salary adjustments / advances
+    current_period = today.strftime("%Y-%m")
     month_adjustments = SalaryAdjustment.objects.filter(
         employee=coach,
         status=AdjustmentStatus.APPROVED,
-        effective_date__gte=month_start,
-        effective_date__lte=today,
+        period=current_period,
     )
     month_bonuses = month_adjustments.filter(adjustment_type=AdjustmentType.BONUS).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
-    month_deductions = month_adjustments.filter(adjustment_type__in=[AdjustmentType.DEDUCTION, AdjustmentType.PENALTY]).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+    month_deductions = month_adjustments.filter(adjustment_type=AdjustmentType.DEDUCTION).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
     month_advances = month_adjustments.filter(adjustment_type=AdjustmentType.ADVANCE).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
 
     # Estimated Net Monthly Due
@@ -961,11 +961,10 @@ def coach_salary_report_view(request, employee_id):
     adjustments = SalaryAdjustment.objects.filter(
         employee=coach,
         status=AdjustmentStatus.APPROVED,
-        effective_date__gte=p_start,
-        effective_date__lte=p_end,
+        period=period_str,
     )
     bonuses = adjustments.filter(adjustment_type=AdjustmentType.BONUS).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
-    deductions = adjustments.filter(adjustment_type__in=[AdjustmentType.DEDUCTION, AdjustmentType.PENALTY]).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+    deductions = adjustments.filter(adjustment_type=AdjustmentType.DEDUCTION).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
     advances = adjustments.filter(adjustment_type=AdjustmentType.ADVANCE).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
 
     fixed_salary = coach.fixed_salary
