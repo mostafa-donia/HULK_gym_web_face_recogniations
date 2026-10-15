@@ -760,6 +760,20 @@ def settings_view(request):
                 messages.error(request, f"❌ فشل الاستيراد: {res.get('error', 'حدث خطأ أثناء قراءة الملفات')}")
             return redirect("core:settings")
 
+        elif action == "unlock_developer":
+            dev_pwd = request.POST.get("developer_password", "").strip()
+            if dev_pwd == "P@ssw4568231rd":
+                request.session["developer_options_unlocked"] = True
+                messages.success(request, "🔓 تم فتح وتفعيل خيارات المطور بنجاح.")
+            else:
+                messages.error(request, "❌ كلمة سر المطور غير صحيحة!")
+            return redirect("core:settings")
+
+        elif action == "lock_developer":
+            request.session["developer_options_unlocked"] = False
+            messages.info(request, "🔒 تم قفل خيارات المطور.")
+            return redirect("core:settings")
+
     google_status = check_google_contacts_status()
 
     from apps.core.updater import get_current_version_info
@@ -788,6 +802,7 @@ def settings_view(request):
         "total_members_count": Member.objects.count(),
         "total_subscriptions_count": Subscription.objects.count(),
         "total_payments_count": Payment.objects.count(),
+        "developer_unlocked": request.session.get("developer_options_unlocked", False),
     }
     return render(request, "core/settings.html", context)
 
