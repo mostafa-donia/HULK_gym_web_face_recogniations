@@ -1,6 +1,6 @@
 class ManagerPageAutoLockMiddleware:
     """
-    Automatically re-locks the Manager Dashboard and Settings pages
+    Automatically re-locks the Manager Dashboard, Mobile Dashboard, and Settings pages
     as soon as the user navigates away to any other part of the system
     (e.g., Home Dashboard, Members, Payments, Expenses, Payroll, etc.).
     """
@@ -13,10 +13,12 @@ class ManagerPageAutoLockMiddleware:
         # Paths that maintain the unlocked manager session
         is_manager_zone = (
             path.startswith("/manager") or
+            path.startswith("/mobile") or
             path.startswith("/settings") or
             path.startswith("/static") or
             path.startswith("/media") or
-            path.startswith("/favicon")
+            path.startswith("/favicon") or
+            (path == "/" and request.session.get("view_mode") == "mobile")
         )
 
         # If navigating anywhere outside the manager zone, immediately clear unlock flag

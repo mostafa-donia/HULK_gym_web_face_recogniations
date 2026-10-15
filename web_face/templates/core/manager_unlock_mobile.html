@@ -1,0 +1,286 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>حماية وضع الموبايل — {{ profile.gym_name|default:"HULK GYM" }}</title>
+  {% if profile.logo %}
+    <link rel="icon" type="image/png" href="{{ profile.logo.url }}">
+  {% else %}
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+  {% endif %}
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+
+    :root {
+      --primary: {{ profile.primary_color|default:"#84CC16" }};
+      --bg: #070e17;
+      --card-bg: #0d1926;
+      --card-border: #16283b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 18px;
+    }
+
+    .unlock-card {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 420px;
+      padding: 32px 22px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+      text-align: center;
+      animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .icon-box {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(132, 204, 22, 0.12);
+      border: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      margin: 0 auto 18px auto;
+      box-shadow: 0 0 25px rgba(132, 204, 22, 0.2);
+    }
+
+    .brand-title {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .badge-lock {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .desc {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      margin-bottom: 18px;
+      text-align: right;
+    }
+
+    .input-wrapper label {
+      display: block;
+      color: #cbd5e1;
+      font-size: 0.84rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .password-input {
+      width: 100%;
+      background: #060d15;
+      border: 2px solid var(--card-border);
+      border-radius: 14px;
+      color: #fff;
+      font-size: 1.25rem;
+      padding: 14px 44px 14px 16px;
+      text-align: center;
+      letter-spacing: 3px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .password-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 14px rgba(132, 204, 22, 0.25);
+    }
+
+    .toggle-visibility-btn {
+      position: absolute;
+      top: 38px;
+      left: 12px;
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 1.15rem;
+      padding: 4px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--primary);
+      color: #000;
+      border: none;
+      border-radius: 14px;
+      padding: 15px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(132, 204, 22, 0.35);
+      transition: transform 0.15s, opacity 0.15s;
+    }
+
+    .btn-submit:active {
+      transform: scale(0.98);
+      opacity: 0.9;
+    }
+
+    .alert-error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .secondary-links {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .link-action {
+      color: #60a5fa;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.18);
+      display: block;
+    }
+
+    .link-logout {
+      color: #94a3b8;
+      font-size: 0.78rem;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="unlock-card">
+    <!-- Icon -->
+    <div class="icon-box">
+      🔒
+    </div>
+
+    <!-- Gym Name & Badge -->
+    <h1 class="brand-title">{{ profile.gym_name|default:"HULK GYM" }}</h1>
+    <div class="badge-lock">
+      <span>🛡️</span>
+      <span>وضع الموبايل محمي بكلمة مرور</span>
+    </div>
+
+    <p class="desc">
+      للوصول إلى لوحة تحكم المدير وتقارير الصالة على الهاتف، يرجى كتابة كلمة سر المدير للمتابعة.
+    </p>
+
+    <!-- Error Messages -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert-error">
+          ⚠️ {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Unlock Form -->
+    <form method="post" action="{{ target_url|default:request.path }}">
+      {% csrf_token %}
+
+      <div class="input-wrapper">
+        <label for="mobile-pwd">كلمة مرور المدير:</label>
+        <input 
+          type="password" 
+          id="mobile-pwd" 
+          name="manager_unlock_password" 
+          required 
+          autofocus 
+          placeholder="••••••••" 
+          class="password-input"
+          inputmode="text"
+          autocomplete="current-password"
+        >
+        <button type="button" class="toggle-visibility-btn" onclick="togglePasswordVisibility()" title="إظهار/إخفاء">
+          👁️
+        </button>
+      </div>
+
+      <button type="submit" class="btn-submit">
+        <span>🔓</span>
+        <span>دخول وضع الموبايل</span>
+      </button>
+
+      <div class="secondary-links">
+        <a href="{% url 'core:dashboard' %}?view=desktop" class="link-action">
+          💻 العرض بنسخة الكمبيوتر الكاملة
+        </a>
+        <a href="{% url 'accounts:logout' %}" class="link-logout">
+          تسجيل الخروج من الحساب
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function togglePasswordVisibility() {
+      const input = document.getElementById('mobile-pwd');
+      if (input.type === 'password') {
+        input.type = 'text';
+      } else {
+        input.type = 'password';
+      }
+    }
+  </script>
+</body>
+</html>

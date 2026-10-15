@@ -142,7 +142,7 @@ def quick_checkin_view(request, member_id):
 
 def check_manager_page_access(request, target_url=None):
     """
-    Checks if manager area is unlocked in current session.
+    Checks if manager area or mobile mode is unlocked in current session.
     If not unlocked, processes password submission or returns unlock template response.
     Returns (is_unlocked, response).
     """
@@ -150,7 +150,9 @@ def check_manager_page_access(request, target_url=None):
         return True, None
 
     profile = GymProfile.get_solo()
-    target = target_url or request.path
+    target = target_url or request.get_full_path()
+    is_mobile = is_mobile_device(request)
+    unlock_template = "core/manager_unlock_mobile.html" if is_mobile else "core/manager_unlock.html"
 
     if request.method == "POST" and "manager_unlock_password" in request.POST:
         entered = request.POST.get("manager_unlock_password", "").strip()
@@ -169,9 +171,9 @@ def check_manager_page_access(request, target_url=None):
             return True, redirect(target)
         else:
             messages.error(request, "كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى.")
-            return False, render(request, "core/manager_unlock.html", {"target_url": target, "profile": profile})
+            return False, render(request, unlock_template, {"target_url": target, "profile": profile, "is_mobile": is_mobile})
 
-    return False, render(request, "core/manager_unlock.html", {"target_url": target, "profile": profile})
+    return False, render(request, unlock_template, {"target_url": target, "profile": profile, "is_mobile": is_mobile})
 
 
 @login_required
@@ -180,9 +182,13 @@ def manager_mobile_dashboard_view(request):
     """
     Ultra-streamlined, high-performance Mobile Dashboard tailored specifically for managers
     accessing HULK GYM from their smartphone.
+    Requires manager password verification before granting access.
     Contains core KPI cards, 1-tap quick actions, live search, and live check-in / payment feed.
     """
-    request.session["manager_page_unlocked"] = True
+    unlocked, resp = check_manager_page_access(request)
+    if not unlocked or resp:
+        return resp
+
     profile = GymProfile.get_solo()
     today = timezone.localdate()
     three_days_later = today + timedelta(days=3)
