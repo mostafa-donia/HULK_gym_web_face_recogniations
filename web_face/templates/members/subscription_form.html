@@ -99,9 +99,12 @@
 
         <div class="grid-2">
           <div class="form-group">
-            <label class="form-label">مهلة السداد (أيام السماح) <span id="allowance_req_msg" style="color: var(--danger); font-size: 0.8rem; display: none;">(إلزامي: 1 إلى 10 أيام)</span></label>
+            <label class="form-label">مهلة السداد (أيام السماح) 
+              <span id="allowance_req_msg" style="color: var(--danger); font-size: 0.8rem; display: none;">(إلزامي: 1 إلى 10 أيام)</span>
+              <span id="allowance_full_msg" style="color: var(--success); font-size: 0.8rem; display: inline;">(خالص السداد - لا توجد أيام سماح ولا ديون)</span>
+            </label>
             <input type="number" id="allowance_days" name="allowance_days" value="0" min="0" max="10" class="form-control" style="font-weight: 700;">
-            <small style="color: var(--text-muted); font-size: 0.75rem;">الحد الأقصى 10 أيام في حال وجود متبقي</small>
+            <small id="allowance_subtext" style="color: var(--text-muted); font-size: 0.75rem;">خالص السداد بالكامل: لا توجد أيام سماح ولا ديون أو تذكير.</small>
           </div>
 
           <div class="form-group">
@@ -181,9 +184,17 @@ function updateRemainingCalculation() {
   document.getElementById('remaining_disp').value = rem.toFixed(2);
 
   const allowanceInput = document.getElementById('allowance_days');
-  const allowanceMsg = document.getElementById('allowance_req_msg');
+  const allowanceReqMsg = document.getElementById('allowance_req_msg');
+  const allowanceFullMsg = document.getElementById('allowance_full_msg');
+  const allowanceSubtext = document.getElementById('allowance_subtext');
+
   if (rem > 0) {
-    if (allowanceMsg) allowanceMsg.style.display = 'inline';
+    if (allowanceReqMsg) allowanceReqMsg.style.display = 'inline';
+    if (allowanceFullMsg) allowanceFullMsg.style.display = 'none';
+    if (allowanceSubtext) allowanceSubtext.textContent = 'مهلة السداد للدخول عند وجود متبقي (من 1 إلى 10 أيام كحد أقصى)';
+    allowanceInput.readOnly = false;
+    allowanceInput.style.opacity = '1';
+    allowanceInput.style.cursor = 'default';
     let val = parseInt(allowanceInput.value || 0);
     if (val === 0) {
       allowanceInput.value = "7";
@@ -191,10 +202,13 @@ function updateRemainingCalculation() {
       allowanceInput.value = "10";
     }
   } else {
-    if (allowanceMsg) allowanceMsg.style.display = 'none';
-    if (!allowanceInput.dataset.userModified) {
-      allowanceInput.value = "0";
-    }
+    if (allowanceReqMsg) allowanceReqMsg.style.display = 'none';
+    if (allowanceFullMsg) allowanceFullMsg.style.display = 'inline';
+    if (allowanceSubtext) allowanceSubtext.textContent = 'خالص السداد بالكامل: لا توجد أيام سماح ولا ديون أو تذكير.';
+    allowanceInput.value = "0";
+    allowanceInput.readOnly = true;
+    allowanceInput.style.opacity = '0.6';
+    allowanceInput.style.cursor = 'not-allowed';
   }
 }
 
@@ -206,6 +220,11 @@ document.getElementById('paid_input').addEventListener('input', function() {
 const allowanceInput = document.getElementById('allowance_days');
 if (allowanceInput) {
   allowanceInput.addEventListener('input', function() {
+    const rem = parseFloat(document.getElementById('remaining_disp').value || 0);
+    if (rem <= 0) {
+      this.value = "0";
+      return;
+    }
     this.dataset.userModified = "true";
   });
 }
@@ -223,6 +242,8 @@ if (subForm) {
         e.preventDefault();
         return false;
       }
+    } else {
+      document.getElementById('allowance_days').value = "0";
     }
   });
 }

@@ -90,8 +90,12 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">أيام السماح (Grace Days: 1 إلى 10)</label>
-            <input type="number" name="allowance_days" value="{{ subscription.allowance_days|default:0 }}" min="0" max="10" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">
+              أيام السماح (Grace Days: 1 إلى 10)
+              <span id="allowanceFullBadge" style="color: #7ED321; font-size: 0.8rem; display: none;">(خالص السداد - لا توجد أيام سماح)</span>
+            </label>
+            <input type="number" id="allowanceDaysInput" name="allowance_days" value="{{ subscription.allowance_days|default:0 }}" min="0" max="10" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+            <small id="allowanceSubtext" style="color: var(--text-muted); font-size: 0.75rem;">مهلة السداد عند وجود متبقي (من 1 إلى 10 أيام كحد أقصى)</small>
           </div>
         </div>
       </div>
@@ -178,6 +182,56 @@ function recalcRemaining() {
   const paid = parseFloat(document.getElementById('paidAmountInput').value) || 0;
   const rem = Math.max(0, price - paid);
   document.getElementById('remAmountInput').value = rem.toFixed(2);
+
+  const allowanceInput = document.getElementById('allowanceDaysInput');
+  const badge = document.getElementById('allowanceFullBadge');
+  const subtext = document.getElementById('allowanceSubtext');
+
+  if (allowanceInput) {
+    if (rem > 0) {
+      if (badge) badge.style.display = 'none';
+      if (subtext) subtext.textContent = 'مهلة السداد عند وجود متبقي (من 1 إلى 10 أيام كحد أقصى)';
+      allowanceInput.readOnly = false;
+      allowanceInput.style.opacity = '1';
+      allowanceInput.style.cursor = 'default';
+      let val = parseInt(allowanceInput.value || 0);
+      if (val === 0) {
+        allowanceInput.value = "7";
+      } else if (val > 10) {
+        allowanceInput.value = "10";
+      }
+    } else {
+      if (badge) badge.style.display = 'inline';
+      if (subtext) subtext.textContent = 'خالص السداد بالكامل: لا توجد أيام سماح ولا ديون أو تذكير.';
+      allowanceInput.value = "0";
+      allowanceInput.readOnly = true;
+      allowanceInput.style.opacity = '0.6';
+      allowanceInput.style.cursor = 'not-allowed';
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', recalcRemaining);
+
+const editForm = document.querySelector('form');
+if (editForm) {
+  editForm.addEventListener('submit', function(e) {
+    const price = parseFloat(document.getElementById('planPriceInput').value) || 0;
+    const paid = parseFloat(document.getElementById('paidAmountInput').value) || 0;
+    const rem = Math.max(0, price - paid);
+    const allowanceInput = document.getElementById('allowanceDaysInput');
+    if (rem > 0) {
+      const val = parseInt(allowanceInput.value || 0);
+      if (val < 1 || val > 10) {
+        alert("تنبيه: عند وجود متبقي (دفع جزئي)، يجب تحديد مهلة سداد (أيام السماح) بحيث تكون من 1 إلى 10 أيام كحد أقصى.");
+        if (allowanceInput) allowanceInput.focus();
+        e.preventDefault();
+        return false;
+      }
+    } else {
+      if (allowanceInput) allowanceInput.value = "0";
+    }
+  });
 }
 </script>
 {% endblock %}

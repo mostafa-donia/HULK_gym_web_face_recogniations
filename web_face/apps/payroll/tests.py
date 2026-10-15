@@ -420,6 +420,24 @@ class ComprehensivePayrollAndSystemTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "أحمد محمود")
 
+        # Active subscription for client_a
+        self.client_a.last_subscription_end = timezone.localdate() + timedelta(days=25)
+        self.client_a.last_subscription_type = self.standard_plan.name
+        self.client_a.save()
+
+        Subscription.objects.create(
+            member=self.client_a,
+            plan=self.standard_plan,
+            plan_name=self.standard_plan.name,
+            start_date=timezone.localdate() - timedelta(days=5),
+            end_date=self.client_a.last_subscription_end,
+            plan_price=Decimal("400.00"),
+            net_amount=Decimal("400.00"),
+            paid_amount=Decimal("400.00"),
+            remaining_amount=Decimal("0.00"),
+            allowance_days=0,
+        )
+
         # Reception quick check-in
         checkin_resp = self.client.post(
             reverse("core:quick_checkin", kwargs={"member_id": self.client_a.id}),

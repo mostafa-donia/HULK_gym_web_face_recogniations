@@ -119,7 +119,9 @@ def settle_debt_view(request, member_id):
             member.current_remaining = max(Decimal("0.00"), member.current_remaining - amount)
             member.total_paid += amount
             member.last_payment_date = payment.created_at
-            member.save(update_fields=["current_remaining", "total_paid", "last_payment_date"])
+            if member.current_remaining <= Decimal("0.00"):
+                member.follow_up_date = None
+            member.save(update_fields=["current_remaining", "total_paid", "last_payment_date", "follow_up_date"])
 
             # Queue WhatsApp receipt with HTML invoice
             queue_payment_receipt_whatsapp(payment)

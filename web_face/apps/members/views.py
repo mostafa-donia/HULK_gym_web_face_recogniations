@@ -395,6 +395,8 @@ def subscription_edit_view(request, subscription_id):
             else:
                 allowance_days = 0
             subscription.remaining_amount = rem_val
+        else:
+            allowance_days = 0
 
         subscription.allowance_days = allowance_days
         subscription.payment_method = payment_method
@@ -408,9 +410,9 @@ def subscription_edit_view(request, subscription_id):
             member.last_subscription_end = subscription.end_date
             member.current_paid = subscription.paid_amount
             member.current_remaining = subscription.remaining_amount
-            if allowance_days > 0:
+            if allowance_days > 0 and subscription.remaining_amount > Decimal("0.00"):
                 member.follow_up_date = subscription.start_date + timedelta(days=allowance_days)
-            elif subscription.remaining_amount == Decimal("0.00"):
+            else:
                 member.follow_up_date = None
             member.refresh_status()
             member.save()
@@ -519,9 +521,9 @@ def subscription_create_view(request):
             member.current_paid = paid_amount
             member.current_remaining = remaining_amount
             member.total_paid += paid_amount
-            if allowance_days > 0:
+            if allowance_days > 0 and remaining_amount > Decimal("0.00"):
                 member.follow_up_date = start_date + timedelta(days=allowance_days)
-            elif remaining_amount == Decimal("0.00"):
+            else:
                 member.follow_up_date = None
             if payment:
                 member.last_payment_date = payment.created_at
@@ -653,7 +655,7 @@ def smart_operations_view(request):
                         current_paid=paid_amount,
                         current_remaining=remaining_amount,
                         total_paid=paid_amount,
-                        follow_up_date=start_date + timedelta(days=allowance_days) if allowance_days > 0 else None,
+                        follow_up_date=start_date + timedelta(days=allowance_days) if (allowance_days > 0 and remaining_amount > Decimal("0.00")) else None,
                         notes=notes,
                     )
                     actual_op_type = "new_subscription"
@@ -669,9 +671,9 @@ def smart_operations_view(request):
                     member.current_paid = paid_amount
                     member.current_remaining += remaining_amount
                     member.total_paid += paid_amount
-                    if allowance_days > 0:
+                    if allowance_days > 0 and remaining_amount > Decimal("0.00"):
                         member.follow_up_date = start_date + timedelta(days=allowance_days)
-                    elif remaining_amount == Decimal("0.00") and member.current_remaining == Decimal("0.00"):
+                    elif member.current_remaining <= Decimal("0.00"):
                         member.follow_up_date = None
                     member.save()
                     actual_op_type = "renewal"

@@ -150,6 +150,7 @@
           <label style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
             <span>أيام السماح</span>
             <span id="allowance-hint" style="color: #FF9F00; font-size: 0.78rem; font-weight: 800; display: none;">(إلزامي: 1 إلى 10 أيام)</span>
+            <span id="allowance-full-badge" style="color: #22c55e; font-size: 0.78rem; font-weight: 800; display: none;">✓ خالص السداد (مغلق)</span>
           </label>
           <input 
             type="number" 
@@ -161,7 +162,7 @@
             class="form-control"
             style="background: var(--bg-card); border: 1px solid var(--border-color); height: 50px; font-size: 1.15rem; font-weight: 800; text-align: center;"
           >
-          <small style="color: #657786; font-size: 0.78rem;">مهلة السداد للدخول عند وجود متبقي (من 1 إلى 10 أيام كحد أقصى)</small>
+          <small id="allowance-subtext" style="color: #657786; font-size: 0.78rem;">مهلة السداد للدخول عند وجود متبقي (من 1 إلى 10 أيام كحد أقصى)</small>
         </div>
       </div>
 
@@ -461,8 +462,18 @@ document.addEventListener("DOMContentLoaded", function() {
     let allowanceDays = parseInt(fieldAllowanceDays.value || 0);
 
     const allowanceHint = document.getElementById("allowance-hint");
+    const allowanceFullBadge = document.getElementById("allowance-full-badge");
+    const allowanceSubtext = document.getElementById("allowance-subtext");
+
     if (remaining > 0) {
+      // Partial payment: ALLOW and REQUIRE allowance days (1 to 10)
+      fieldAllowanceDays.readOnly = false;
+      fieldAllowanceDays.style.opacity = "1";
+      fieldAllowanceDays.style.cursor = "text";
       if (allowanceHint) allowanceHint.style.display = "inline";
+      if (allowanceFullBadge) allowanceFullBadge.style.display = "none";
+      if (allowanceSubtext) allowanceSubtext.textContent = "مهلة السداد للدخول عند وجود متبقي (من 1 إلى 10 أيام كحد أقصى)";
+
       if (allowanceDays === 0) {
         allowanceDays = 7;
         fieldAllowanceDays.value = "7";
@@ -471,11 +482,15 @@ document.addEventListener("DOMContentLoaded", function() {
         fieldAllowanceDays.value = "10";
       }
     } else {
+      // Full payment: STRICTLY FORBID allowance days, lock to 0, no reminder
+      fieldAllowanceDays.value = "0";
+      fieldAllowanceDays.readOnly = true;
+      fieldAllowanceDays.style.opacity = "0.6";
+      fieldAllowanceDays.style.cursor = "not-allowed";
       if (allowanceHint) allowanceHint.style.display = "none";
-      if (!fieldAllowanceDays.dataset.userModified) {
-        fieldAllowanceDays.value = "0";
-        allowanceDays = 0;
-      }
+      if (allowanceFullBadge) allowanceFullBadge.style.display = "inline";
+      if (allowanceSubtext) allowanceSubtext.textContent = "خالص السداد بالكامل: لا توجد أيام سماح ولا ديون أو تذكير.";
+      allowanceDays = 0;
     }
 
     const startDateStr = fieldStartDate.value;
@@ -517,6 +532,13 @@ document.addEventListener("DOMContentLoaded", function() {
   });
   fieldPaidAmount.addEventListener("input", updateLiveCalculation);
   fieldAllowanceDays.addEventListener("input", function() {
+    const selectedOpt = fieldPlan.options[fieldPlan.selectedIndex];
+    const planPrice = selectedOpt ? parseFloat(selectedOpt.getAttribute("data-price") || 0) : 0;
+    const paid = parseFloat(fieldPaidAmount.value || 0);
+    if (paid >= planPrice) {
+      this.value = "0";
+      return;
+    }
     this.dataset.userModified = "true";
     updateLiveCalculation();
   });
@@ -539,6 +561,8 @@ document.addEventListener("DOMContentLoaded", function() {
           e.preventDefault();
           return false;
         }
+      } else {
+        fieldAllowanceDays.value = "0";
       }
     });
   }
