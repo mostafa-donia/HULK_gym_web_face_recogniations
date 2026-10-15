@@ -483,9 +483,9 @@
             </h4>
 
             <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
-              <div style="width: 64px; height: 64px; border-radius: 10px; background: #0b141e; border: 2px dashed #1e3a52; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+              <div style="width: 84px; height: 84px; border-radius: 50%; background: #0b141e; border: 2px solid var(--hulk-primary, #84CC16); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.45);">
                 {% if profile.logo %}
-                  <img src="{{ profile.logo.url }}" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                  <img src="{{ profile.logo.url }}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                 {% else %}
                   <span style="color: #64748b; font-size: 0.75rem; text-align: center;">لا يوجد شعار</span>
                 {% endif %}

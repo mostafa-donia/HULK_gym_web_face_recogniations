@@ -7,7 +7,11 @@
 <div style="max-width: 420px; margin: 40px auto;">
   <div class="card" style="border: 2px solid var(--border-color); padding: 28px;">
     <div style="text-align: center; margin-bottom: 24px;">
-      <img src="{% static 'images/logo.png' %}" alt="HULK GYM" style="height: 64px; border-radius: var(--radius-sm); margin-bottom: 12px;" onerror="this.style.display='none'">
+      {% if gym_profile.logo %}
+        <img src="{{ gym_profile.logo.url }}" alt="HULK GYM" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--hulk-primary, #84CC16); margin: 0 auto 14px auto; display: block; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
+      {% else %}
+        <img src="{% static 'images/logo.png' %}" alt="HULK GYM" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--hulk-primary, #84CC16); margin: 0 auto 14px auto; display: block; box-shadow: 0 4px 16px rgba(0,0,0,0.4);" onerror="this.style.display='none'">
+      {% endif %}
       <h2 style="color: var(--gold); font-size: 1.5rem; font-weight: 800;">تسجيل دخول النظام</h2>
       <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">اختر حساب المدير أو الاستقبال للدخول</p>
     </div>

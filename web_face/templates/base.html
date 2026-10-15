@@ -21,7 +21,7 @@
   {% else %}
     <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
   {% endif %}
-  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20261015_08">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20261015_09">
   
   <!-- Dynamic White-Label Branding & Theme Injection -->
   <style>
@@ -288,9 +288,9 @@
       <!-- Brand & Gym Name on Right (RTL) -->
       <a href="{% url 'core:dashboard' %}" class="top-brand">
         {% if gym_profile.logo %}
-          <img src="{{ gym_profile.logo.url }}" alt="Logo" style="width: 36px; height: 36px; object-fit: contain; border-radius: 6px;">
+          <img src="{{ gym_profile.logo.url }}" alt="Logo" class="top-brand-logo">
         {% else %}
-          <img src="{% static 'images/logo.png' %}" alt="Logo" onerror="this.style.display='none'">
+          <img src="{% static 'images/logo.png' %}" alt="Logo" class="top-brand-logo" onerror="this.style.display='none'">
         {% endif %}
         <span>{{ gym_profile.gym_name|default:"الصالة الرياضية" }}</span>
       </a>

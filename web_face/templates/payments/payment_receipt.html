@@ -138,7 +138,11 @@
 
   <div class="receipt-box">
     <div class="receipt-header">
-      <img src="{% static 'images/logo.png' %}" alt="Logo" style="height: 54px; margin-bottom: 8px;" onerror="this.style.display='none'">
+      {% if profile.logo %}
+        <img src="{{ profile.logo.url }}" alt="Logo" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid #0f172a; margin-bottom: 8px;">
+      {% else %}
+        <img src="{% static 'images/logo.png' %}" alt="Logo" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 2px solid #0f172a; margin-bottom: 8px;" onerror="this.style.display='none'">
+      {% endif %}
       <h1 style="font-size: 1.4rem; font-weight: 900; color: #0f172a; margin: 0;">{{ profile.gym_name|default:"HULK GYM" }}</h1>
       <p style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">إيصال سداد رسمي معتمد</p>
     </div>
