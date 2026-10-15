@@ -93,6 +93,76 @@
 
   </div>
 
+  <!-- Advanced Financial Executive KPI Strip (Discounts, Private, and Payroll) -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-top: 4px;">
+    
+    <div style="background: var(--bg-card); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">إجمالي الخصومات الممنوحة</span>
+        <span style="font-size: 1.1rem;">🎁</span>
+      </div>
+      <div style="color: #FF5C67; font-size: 1.6rem; font-weight: 900; margin-top: 6px; line-height: 1.1;">
+        {{ period_discounts_lost }} <small style="font-size: 0.85rem; font-weight: 600;">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+      <span style="color: var(--text-dim); font-size: 0.78rem; margin-top: 4px; display: block;">
+        هذا الشهر: {{ month_discounts_lost }} {{ gym_profile.currency|default:"ج" }}
+      </span>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.3); border-radius: 10px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">إيراد التدريب الخاص (Private)</span>
+        <span style="font-size: 1.1rem;">🏋️‍♂️</span>
+      </div>
+      <div style="color: #A8F14B; font-size: 1.6rem; font-weight: 900; margin-top: 6px; line-height: 1.1;">
+        {{ period_private_revenue }} <small style="font-size: 0.85rem; font-weight: 600;">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+      <span style="color: var(--text-dim); font-size: 0.78rem; margin-top: 4px; display: block;">
+        {{ period_private_count }} اشتراك | هذا الشهر: {{ month_private_revenue }} ج
+      </span>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(77, 179, 255, 0.3); border-radius: 10px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">عمولات الكباتن من البرايفت</span>
+        <span style="font-size: 1.1rem;">🤝</span>
+      </div>
+      <div style="color: #4DB3FF; font-size: 1.6rem; font-weight: 900; margin-top: 6px; line-height: 1.1;">
+        {{ period_coaches_commission }} <small style="font-size: 0.85rem; font-weight: 600;">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+      <span style="color: var(--text-dim); font-size: 0.78rem; margin-top: 4px; display: block;">
+        مستحقة للمدربين | هذا الشهر: {{ month_coaches_commission }} ج
+      </span>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 10px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">صافي ربح الصالة من البرايفت</span>
+        <span style="font-size: 1.1rem;">💎</span>
+      </div>
+      <div style="color: #22c55e; font-size: 1.6rem; font-weight: 900; margin-top: 6px; line-height: 1.1;">
+        {{ period_gym_private_profit }} <small style="font-size: 0.85rem; font-weight: 600;">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+      <span style="color: var(--text-dim); font-size: 0.78rem; margin-top: 4px; display: block;">
+        بعد خصم العمولات | هذا الشهر: {{ month_gym_private_profit }} ج
+      </span>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">إجمالي الرواتب والالتزامات</span>
+        <span style="font-size: 1.1rem;">💼</span>
+      </div>
+      <div style="color: #f59e0b; font-size: 1.6rem; font-weight: 900; margin-top: 6px; line-height: 1.1;">
+        {{ total_payroll_liabilities }} <small style="font-size: 0.85rem; font-weight: 600;">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+      <span style="color: var(--text-dim); font-size: 0.78rem; margin-top: 4px; display: block;">
+        رواتب أساسية: {{ total_fixed_salaries }} ج + عمولات شهرية
+      </span>
+    </div>
+
+  </div>
+
   <!-- Filter & Action Bar -->
   <div class="no-print" style="display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap; margin-top: 6px;">
     
@@ -670,6 +740,160 @@
     <div style="text-align: center; color: #8D99A3; padding: 36px 20px;">
       <p style="font-size: 1.05rem; margin: 0 0 6px 0;">لا توجد عمليات أو مقبوضات مسجلة خلال هذه الفترة.</p>
       <span style="font-size: 0.85rem; color: #617382;">يمكنك اختيار فترة أخرى أو مراجعة سجل المدفوعات العام.</span>
+    </div>
+    {% endif %}
+
+  <!-- ==================== COACHES PERFORMANCE & SALARIES SECTION ==================== -->
+  <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px; box-shadow: var(--shadow-sm);">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 18px;">
+      <div>
+        <h2 style="color: var(--text-main); font-size: 1.3rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+          🏋️‍♂️ كشف أداء الكباتن ومستحقات الرواتب والتدريب الخاص
+        </h2>
+        <span style="color: var(--text-muted); font-size: 0.86rem;">
+          بيان رواتب المدربين الأساسية، عمولات البرايفت المستحقة، وإمكانية طباعة كشف راتب فوري لكل كابتن
+        </span>
+      </div>
+
+      <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary btn-sm" style="font-weight: 800;">
+        إدارة الكباتن الكاملة ←
+      </a>
+    </div>
+
+    {% if coaches_summary %}
+    <div class="table-responsive">
+      <table class="dark-table">
+        <thead>
+          <tr>
+            <th>اسم الكابتن (المدرب)</th>
+            <th>الراتب الأساسي الثابت</th>
+            <th>نسبة عمولة البرايفت</th>
+            <th>متدربو البرايفت</th>
+            <th>إجمالي دخل البرايفت</th>
+            <th>عمولة الكابتن المستحقة</th>
+            <th>إجمالي المستحق المقدر</th>
+            <th class="no-print">إجراءات سريعة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in coaches_summary %}
+          <tr>
+            <td>
+              <a href="{% url 'payroll:coach_detail' row.coach.id %}" style="color: var(--text-main); font-weight: 800; text-decoration: none;">
+                {{ row.coach.name }}
+              </a>
+              <div style="font-size: 0.78rem; color: var(--text-muted); font-family: monospace;">{{ row.coach.phone|default:"—" }}</div>
+            </td>
+            <td style="color: var(--text-secondary); font-weight: 800;">
+              {{ row.coach.fixed_salary }} {{ gym_profile.currency|default:"ج" }}
+            </td>
+            <td style="color: var(--text-secondary); font-weight: 700;">
+              {{ row.coach.commission_percentage }} %
+            </td>
+            <td>
+              <span class="badge badge-active">{{ row.private_members_count }} متدرب</span>
+            </td>
+            <td style="color: #A8F14B; font-weight: 800;">
+              {{ row.private_revenue }} {{ gym_profile.currency|default:"ج" }}
+            </td>
+            <td style="color: #4DB3FF; font-weight: 800;">
+              {{ row.commission_amount }} {{ gym_profile.currency|default:"ج" }}
+            </td>
+            <td style="color: #A8F14B; font-size: 1.15rem; font-weight: 900;">
+              {{ row.total_due }} {{ gym_profile.currency|default:"ج" }}
+            </td>
+            <td class="no-print">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="{% url 'payroll:coach_detail' row.coach.id %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; padding: 5px 12px;">
+                  ملف الكابتن
+                </a>
+                <a href="{% url 'payroll:coach_salary_report' row.coach.id %}" target="_blank" class="btn btn-primary btn-sm" style="font-size: 0.82rem; padding: 5px 14px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+                  🖨️ طباعة كشف الراتب
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; color: var(--text-muted); padding: 24px;">
+      لا يوجد مدربين نشطين مسجلين حالياً.
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- ==================== ANTI-DECEPTION AUDIT TRAIL ==================== -->
+  <div class="card" style="background: var(--bg-card); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 22px; box-shadow: var(--shadow-sm);">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 18px;">
+      <div>
+        <h2 style="color: var(--text-main); font-size: 1.3rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+          🚨 سجل الرقابة ومكافحة التلاعب (Anti-Deception Audit Log)
+        </h2>
+        <span style="color: var(--text-muted); font-size: 0.86rem;">
+          رصد مباشر لأي خصومات ممنوحة، تعديل لحالة البرايفت، إسناد الكباتن، أو تغييرات الأسعار لحماية إيرادات الصالة
+        </span>
+      </div>
+
+      <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-weight: 800; padding: 6px 14px;">
+        رقابة تلقائية مشفرة
+      </span>
+    </div>
+
+    {% if recent_audit_logs %}
+    <div class="table-responsive">
+      <table class="dark-table">
+        <thead>
+          <tr>
+            <th>التاريخ والوقت</th>
+            <th>نوع العملية</th>
+            <th>المبلغ المرتبط</th>
+            <th>تفاصيل العملية الحساسة</th>
+            <th>الموظف المنفذ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in recent_audit_logs %}
+          <tr>
+            <td style="font-size: 0.84rem; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap;">
+              {{ log.created_at|date:"Y-m-d" }} {{ log.created_at|date:"h:i A" }}
+            </td>
+            <td>
+              {% if "discount" in log.action %}
+                <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">خصم مالي 🎁</span>
+              {% elif "private" in log.action %}
+                <span class="badge" style="background: rgba(168, 241, 75, 0.15); color: #A8F14B;">تدريب خاص 🏋️‍♂️</span>
+              {% elif "coach" in log.action %}
+                <span class="badge" style="background: rgba(77, 179, 255, 0.15); color: #4DB3FF;">إسناد كابتن 👤</span>
+              {% else %}
+                <span class="badge badge-neutral">{{ log.action }}</span>
+              {% endif %}
+            </td>
+            <td style="color: #FFB300; font-weight: 800; font-variant-numeric: tabular-nums;">
+              {% if log.amount > 0 %}
+                {{ log.amount }} {{ gym_profile.currency|default:"ج" }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td style="color: var(--text-secondary); font-size: 0.9rem;">
+              {{ log.details }}
+            </td>
+            <td style="font-size: 0.86rem; color: var(--text-main); font-weight: 700;">
+              {{ log.user.username|default:"النظام" }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; color: var(--text-muted); padding: 24px;">
+      لا توجد عمليات حساسة مسجلة في الأرشيف الرقابي مؤخراً.
     </div>
     {% endif %}
 

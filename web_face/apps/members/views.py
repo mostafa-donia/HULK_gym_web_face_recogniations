@@ -12,11 +12,12 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.decorators import manager_required
-from apps.core.models import GymProfile
+from apps.core.models import GymProfile, AuditLog, log_audit_event
 from apps.members.models import Member, MemberStatus, Plan, Subscription
 from apps.messaging.models import MessageType, WhatsAppMessage
 from apps.payments.models import Payment, PaymentMethod, PaymentOperationType
 from apps.payments.services import queue_payment_receipt_whatsapp
+from apps.payroll.models import Employee, EmployeeRole, EmployeeStatus, PrivateTrainingRecord
 
 
 def generate_next_member_id() -> str:
@@ -219,6 +220,7 @@ def member_detail_view(request, member_id):
     subscriptions = member.subscriptions.all().order_by("-start_date")
     payments = member.payments.all().order_by("-created_at")
     checkins = member.check_ins.all().order_by("-checked_in_at")[:15]
+    coaches = Employee.objects.filter(role=EmployeeRole.TRAINER, status=EmployeeStatus.ACTIVE).order_by("name")
 
     context = {
         "member": member,
@@ -228,6 +230,7 @@ def member_detail_view(request, member_id):
         "subscriptions": subscriptions,
         "payments": payments,
         "checkins": checkins,
+        "coaches": coaches,
         "today": today,
     }
     return render(request, "members/member_detail.html", context)
@@ -235,15 +238,26 @@ def member_detail_view(request, member_id):
 
 @login_required
 def member_create_view(request):
+    coaches = Employee.objects.filter(role=EmployeeRole.TRAINER, status=EmployeeStatus.ACTIVE).order_by("name")
     if request.method == "POST":
         name = request.POST.get("name", "").strip()
         mobile = request.POST.get("mobile", "").strip()
         gender = request.POST.get("gender", "male")
         notes = request.POST.get("notes", "").strip()
 
+        has_private = request.POST.get("has_private") in ["1", "on", "true"]
+        private_price = Decimal(request.POST.get("private_price", "600.00") or "600.00") if has_private else Decimal("600.00")
+        coach_id = request.POST.get("assigned_coach_id")
+        assigned_coach = None
+        if coach_id:
+            assigned_coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first()
+
+        renewal_discount = Decimal(request.POST.get("renewal_discount", "0.00") or "0.00")
+        discount_enabled = request.POST.get("discount_enabled") in ["1", "on", "true"]
+
         if not name:
             messages.error(request, "اسم العضو مطلوب.")
-            return render(request, "members/member_form.html")
+            return render(request, "members/member_form.html", {"coaches": coaches})
 
         mid = generate_next_member_id()
         member = Member.objects.create(
@@ -252,8 +266,32 @@ def member_create_view(request):
             mobile=mobile,
             gender=gender,
             notes=notes,
+            has_private=has_private,
+            private_price=private_price,
+            assigned_coach=assigned_coach,
+            renewal_discount=renewal_discount,
+            discount_enabled=discount_enabled,
             current_status=MemberStatus.EXPIRED,
         )
+
+        if has_private:
+            log_audit_event(
+                user=request.user,
+                action="private_status_changed",
+                target_model="Member",
+                target_id=str(member.id),
+                details=f"تفعيل التدريب الخاص (Private) للعضو الجديد {member.name} مع كابتن {assigned_coach.name if assigned_coach else 'غير محدد'} بسعر {private_price} ج",
+                amount=private_price,
+            )
+        if discount_enabled and renewal_discount > Decimal("0.00"):
+            log_audit_event(
+                user=request.user,
+                action="discount_preset_changed",
+                target_model="Member",
+                target_id=str(member.id),
+                details=f"تحديد خصم تجديد معتمد للعضو الجديد {member.name} بقيمة {renewal_discount} ج",
+                amount=renewal_discount,
+            )
 
         # Attempt seamless Google Contacts sync in background thread so request never hangs
         if mobile:
@@ -273,19 +311,65 @@ def member_create_view(request):
         return redirect(f"/members/{member.id}/")
 
     initial_name = request.GET.get("name", "")
-    return render(request, "members/member_form.html", {"initial_name": initial_name})
+    return render(request, "members/member_form.html", {"initial_name": initial_name, "coaches": coaches})
 
 
 @login_required
 def member_edit_view(request, member_id):
     member = get_object_or_404(Member, id=member_id)
     plans = Plan.objects.filter(is_active=True).order_by("price")
+    coaches = Employee.objects.filter(role=EmployeeRole.TRAINER, status=EmployeeStatus.ACTIVE).order_by("name")
 
     if request.method == "POST":
         member.name = request.POST.get("name", member.name).strip()
         member.mobile = request.POST.get("mobile", member.mobile).strip()
         member.gender = request.POST.get("gender", member.gender)
         member.notes = request.POST.get("notes", member.notes).strip()
+
+        # Track sensitive changes for audit
+        old_has_private = member.has_private
+        old_private_price = member.private_price
+        old_coach = member.assigned_coach
+        old_discount_enabled = member.discount_enabled
+        old_renewal_discount = member.renewal_discount
+
+        new_has_private = request.POST.get("has_private") in ["1", "on", "true"]
+        new_private_price = Decimal(request.POST.get("private_price", str(member.private_price or "600.00")) or "600.00")
+        coach_id = request.POST.get("assigned_coach_id")
+        new_coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first() if coach_id else None
+        new_discount_enabled = request.POST.get("discount_enabled") in ["1", "on", "true"]
+        new_renewal_discount = Decimal(request.POST.get("renewal_discount", str(member.renewal_discount or "0.00")) or "0.00")
+
+        member.has_private = new_has_private
+        member.private_price = new_private_price
+        member.assigned_coach = new_coach
+        member.discount_enabled = new_discount_enabled
+        member.renewal_discount = new_renewal_discount
+
+        # Log audit if private settings changed
+        if old_has_private != new_has_private or old_private_price != new_private_price or old_coach != new_coach:
+            status_desc = "تفعيل" if new_has_private else "إلغاء تفعيل"
+            coach_str = new_coach.name if new_coach else "بدون كابتن"
+            log_audit_event(
+                user=request.user,
+                action="private_status_changed",
+                target_model="Member",
+                target_id=str(member.id),
+                details=f"تم {status_desc} التدريب الخاص للاعب {member.name}. السعر: {new_private_price} ج، الكابتن: {coach_str}",
+                amount=new_private_price if new_has_private else Decimal("0.00"),
+            )
+
+        # Log audit if renewal discount changed
+        if old_discount_enabled != new_discount_enabled or old_renewal_discount != new_renewal_discount:
+            status_desc = "تفعيل" if new_discount_enabled else "إلغاء"
+            log_audit_event(
+                user=request.user,
+                action="discount_preset_changed",
+                target_model="Member",
+                target_id=str(member.id),
+                details=f"تم {status_desc} خصم التجديد للاعب {member.name}. القيمة: {new_renewal_discount} ج (سابقاً: {old_renewal_discount} ج)",
+                amount=new_renewal_discount,
+            )
 
         # Support editing and correcting the member's plan if misswritten
         edit_plan = request.POST.get("edit_plan") == "1" or "last_subscription_type" in request.POST
@@ -350,8 +434,61 @@ def member_edit_view(request, member_id):
         "member": member,
         "is_edit": True,
         "plans": plans,
+        "coaches": coaches,
     }
     return render(request, "members/member_form.html", context)
+
+
+@login_required
+def member_quick_private_update_view(request, member_id):
+    """Quick modal/card update from Member Detail page for Private Add-on and Renewal Discount."""
+    member = get_object_or_404(Member, id=member_id)
+    if request.method == "POST":
+        old_has_private = member.has_private
+        old_private_price = member.private_price
+        old_coach = member.assigned_coach
+        old_discount_enabled = member.discount_enabled
+        old_renewal_discount = member.renewal_discount
+
+        new_has_private = request.POST.get("has_private") in ["1", "on", "true"]
+        new_private_price = Decimal(request.POST.get("private_price", str(member.private_price or "600.00")) or "600.00")
+        coach_id = request.POST.get("assigned_coach_id")
+        new_coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first() if coach_id else None
+        new_discount_enabled = request.POST.get("discount_enabled") in ["1", "on", "true"]
+        new_renewal_discount = Decimal(request.POST.get("renewal_discount", str(member.renewal_discount or "0.00")) or "0.00")
+
+        member.has_private = new_has_private
+        member.private_price = new_private_price
+        member.assigned_coach = new_coach
+        member.discount_enabled = new_discount_enabled
+        member.renewal_discount = new_renewal_discount
+        member.save()
+
+        if old_has_private != new_has_private or old_private_price != new_private_price or old_coach != new_coach:
+            status_desc = "تفعيل" if new_has_private else "إلغاء تفعيل"
+            coach_str = new_coach.name if new_coach else "بدون كابتن"
+            log_audit_event(
+                user=request.user,
+                action="private_status_changed",
+                target_model="Member",
+                target_id=str(member.id),
+                details=f"تم {status_desc} التدريب الخاص للاعب {member.name}. السعر: {new_private_price} ج، الكابتن: {coach_str}",
+                amount=new_private_price if new_has_private else Decimal("0.00"),
+            )
+
+        if old_discount_enabled != new_discount_enabled or old_renewal_discount != new_renewal_discount:
+            status_desc = "تفعيل" if new_discount_enabled else "إلغاء"
+            log_audit_event(
+                user=request.user,
+                action="discount_preset_changed",
+                target_model="Member",
+                target_id=str(member.id),
+                details=f"تم {status_desc} خصم التجديد للاعب {member.name}. القيمة: {new_renewal_discount} ج (سابقاً: {old_renewal_discount} ج)",
+                amount=new_renewal_discount,
+            )
+
+        messages.success(request, f"تم تحديث بيانات التدريب الخاص والخصم للاعب {member.name} بنجاح.")
+    return redirect("members:member_detail", member_id=member.id)
 
 
 @login_required
@@ -435,6 +572,7 @@ def subscription_create_view(request):
     today = timezone.localdate()
     plans = Plan.objects.filter(is_active=True).order_by("price")
     payment_methods = PaymentMethod.objects.filter(is_active=True)
+    coaches = Employee.objects.filter(role=EmployeeRole.TRAINER, status=EmployeeStatus.ACTIVE).order_by("name")
 
     member_id_param = request.GET.get("member_id")
     selected_member = Member.objects.filter(id=member_id_param).first() if member_id_param else None
@@ -443,6 +581,10 @@ def subscription_create_view(request):
     suggested_start = today
     if selected_member and selected_member.last_subscription_end and selected_member.last_subscription_end >= today:
         suggested_start = selected_member.last_subscription_end + timedelta(days=1)
+
+    suggested_discount = Decimal("0.00")
+    if selected_member and selected_member.subscriptions.exists() and selected_member.discount_enabled:
+        suggested_discount = selected_member.renewal_discount
 
     if request.method == "POST":
         member_id = request.POST.get("member_id")
@@ -457,14 +599,37 @@ def subscription_create_view(request):
         except Exception:
             start_date = today
 
+        # 1. Base Plan + Private Add-on Calculation
         plan_price = plan.price
+
+        has_private = request.POST.get("has_private") in ["1", "on", "true"]
+        private_price = Decimal(request.POST.get("private_price", "0.00") or "0.00") if has_private else Decimal("0.00")
+        
+        coach_id = request.POST.get("coach_id")
+        coach = None
+        if has_private:
+            if coach_id:
+                coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first()
+            if not coach and member.assigned_coach:
+                coach = member.assigned_coach
+
+        total_sub_price = plan_price + private_price
+
+        # 2. Discount Handling
         discount = Decimal(request.POST.get("discount", "0.00") or "0.00")
-        net_amount = max(Decimal("0.00"), plan_price - discount)
+        net_amount = max(Decimal("0.00"), total_sub_price - discount)
         paid_amount = Decimal(request.POST.get("paid_amount", str(net_amount)) or str(net_amount))
         remaining_amount = max(Decimal("0.00"), net_amount - paid_amount)
         allowance_days = int(request.POST.get("allowance_days", "0") or "0")
         payment_method = request.POST.get("payment_method", "نقدي")
         notes = request.POST.get("notes", "").strip()
+
+        # Coach Commission (Monthly Add-on Share)
+        coach_comm_rate = Decimal("0.5000")
+        coach_comm_amount = Decimal("0.00")
+        if has_private and coach:
+            coach_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+            coach_comm_amount = (private_price * coach_comm_rate).quantize(Decimal("0.01"))
 
         if remaining_amount > Decimal("0.00"):
             if allowance_days < 1 or allowance_days > 10:
@@ -488,6 +653,11 @@ def subscription_create_view(request):
                 start_date=start_date,
                 end_date=end_date,
                 plan_price=plan_price,
+                has_private=has_private,
+                private_price=private_price,
+                coach=coach,
+                coach_commission_rate=coach_comm_rate,
+                coach_commission_amount=coach_comm_amount,
                 discount=discount,
                 net_amount=net_amount,
                 paid_amount=paid_amount,
@@ -514,13 +684,42 @@ def subscription_create_view(request):
                     created_by=request.user,
                 )
 
-            # 3. Update Member State
+            # 3. Create PrivateTrainingRecord for the Coach
+            if has_private and coach:
+                PrivateTrainingRecord.objects.create(
+                    payment=payment,
+                    trainer=coach,
+                    client=member,
+                    package_price=net_amount,
+                    standard_plan_price=plan_price,
+                    private_markup=private_price,
+                    commission_rate=coach_comm_rate,
+                    calculated_commission=coach_comm_amount,
+                )
+
+            # 4. Update Member State
             member.last_subscription_start = start_date
             member.last_subscription_end = end_date
             member.last_subscription_type = plan.name
             member.current_paid = paid_amount
             member.current_remaining = remaining_amount
             member.total_paid += paid_amount
+
+            # Update Private status on Member Profile
+            member.has_private = has_private
+            if has_private:
+                member.private_price = private_price
+                if coach:
+                    member.assigned_coach = coach
+            else:
+                member.private_price = Decimal("0.00")
+
+            # Save agreed renewal discount if requested or if renewal
+            save_discount_for_renewal = request.POST.get("save_discount_for_renewal") in ["1", "on", "true"]
+            if save_discount_for_renewal:
+                member.renewal_discount = discount
+                member.discount_enabled = (discount > 0)
+
             if allowance_days > 0 and remaining_amount > Decimal("0.00"):
                 member.follow_up_date = start_date + timedelta(days=allowance_days)
             else:
@@ -530,7 +729,27 @@ def subscription_create_view(request):
             member.refresh_status(save=False)
             member.save()
 
-            # 4. Queue WhatsApp Receipt
+            # 5. Audit Logging for Manager Transparency
+            if discount > Decimal("0.00"):
+                log_audit_event(
+                    user=request.user,
+                    action="discount_applied",
+                    target_model="Subscription",
+                    target_id=str(sub.id),
+                    details=f"منح خصم بقيمة {discount} ج.م على اشتراك ({plan.name}) للاعب {member.name} ({sub.get_operation_type_display()})",
+                    amount=discount,
+                )
+            if has_private:
+                log_audit_event(
+                    user=request.user,
+                    action="private_subscribed",
+                    target_model="Subscription",
+                    target_id=str(sub.id),
+                    details=f"تفعيل تدريب خاص (Private) للاعب {member.name} بقيمة {private_price} ج.م مع كابتن {coach.name if coach else 'غير محدد'}",
+                    amount=private_price,
+                )
+
+            # 6. Queue WhatsApp Receipt
             if member.mobile:
                 if payment:
                     queue_payment_receipt_whatsapp(payment, subscription=sub)
@@ -550,7 +769,9 @@ def subscription_create_view(request):
         "payment_methods": payment_methods,
         "selected_member": selected_member,
         "suggested_start": suggested_start,
+        "suggested_discount": suggested_discount,
         "members": members_all,
+        "coaches": coaches,
     }
     return render(request, "members/subscription_form.html", context)
 
@@ -592,6 +813,12 @@ def smart_operations_view(request):
                 "has_face_enrolled": m.has_face_enrolled,
                 "last_end": m.last_subscription_end.strftime("%Y-%m-%d") if m.last_subscription_end else "",
                 "last_plan": m.last_subscription_type or "",
+                "has_private": m.has_private,
+                "private_price": float(m.private_price),
+                "coach_id": m.assigned_coach_id,
+                "coach_name": m.assigned_coach.name if m.assigned_coach else "",
+                "discount_enabled": m.discount_enabled,
+                "renewal_discount": float(m.renewal_discount),
             })
         return JsonResponse({"results": data})
 
@@ -615,11 +842,28 @@ def smart_operations_view(request):
                     start_date = today
 
                 plan_price = plan.price
-                paid_amount = Decimal(request.POST.get("paid_amount", str(plan_price)) or str(plan_price))
-                remaining_amount = max(Decimal("0.00"), plan_price - paid_amount)
+                has_private = request.POST.get("has_private") in ["1", "on", "true"]
+                private_price = Decimal(request.POST.get("private_price", "0.00") or "0.00") if has_private else Decimal("0.00")
+                coach_id = request.POST.get("coach_id")
+                coach = None
+                if has_private and coach_id:
+                    coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first()
+
+                discount = Decimal(request.POST.get("discount", "0.00") or "0.00")
+                total_sub_price = plan_price + private_price
+                net_amount = max(Decimal("0.00"), total_sub_price - discount)
+                paid_amount = Decimal(request.POST.get("paid_amount", str(net_amount)) or str(net_amount))
+                remaining_amount = max(Decimal("0.00"), net_amount - paid_amount)
                 allowance_days = int(request.POST.get("allowance_days", 0) or 0)
                 payment_method = request.POST.get("payment_method", "نقدي")
                 notes = request.POST.get("notes", "").strip()
+
+                # Coach Commission
+                coach_comm_rate = Decimal("0.5000")
+                coach_comm_amount = Decimal("0.00")
+                if has_private and coach:
+                    coach_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+                    coach_comm_amount = (private_price * coach_comm_rate).quantize(Decimal("0.01"))
 
                 # Validation: Partial payment requires allowance_days between 1 and 10 days
                 if remaining_amount > Decimal("0.00"):
@@ -657,6 +901,9 @@ def smart_operations_view(request):
                         total_paid=paid_amount,
                         follow_up_date=start_date + timedelta(days=allowance_days) if (allowance_days > 0 and remaining_amount > Decimal("0.00")) else None,
                         notes=notes,
+                        has_private=has_private,
+                        private_price=private_price,
+                        assigned_coach=coach if has_private else None,
                     )
                     actual_op_type = "new_subscription"
                 else:
@@ -671,6 +918,14 @@ def smart_operations_view(request):
                     member.current_paid = paid_amount
                     member.current_remaining += remaining_amount
                     member.total_paid += paid_amount
+                    member.has_private = has_private
+                    if has_private:
+                        member.private_price = private_price
+                        if coach:
+                            member.assigned_coach = coach
+                    else:
+                        member.private_price = Decimal("0.00")
+
                     if allowance_days > 0 and remaining_amount > Decimal("0.00"):
                         member.follow_up_date = start_date + timedelta(days=allowance_days)
                     elif member.current_remaining <= Decimal("0.00"):
@@ -688,8 +943,13 @@ def smart_operations_view(request):
                     start_date=start_date,
                     end_date=end_date,
                     plan_price=plan_price,
-                    discount=Decimal("0.00"),
-                    net_amount=plan_price,
+                    has_private=has_private,
+                    private_price=private_price,
+                    coach=coach,
+                    coach_commission_rate=coach_comm_rate,
+                    coach_commission_amount=coach_comm_amount,
+                    discount=discount,
+                    net_amount=net_amount,
                     paid_amount=paid_amount,
                     remaining_amount=remaining_amount,
                     allowance_days=allowance_days,
@@ -714,9 +974,42 @@ def smart_operations_view(request):
                         created_by=request.user,
                     )
 
-                    # Send WhatsApp Receipt with HTML Invoice
-                    if payment:
-                        queue_payment_receipt_whatsapp(payment, subscription=sub)
+                # Create PrivateTrainingRecord for the Coach
+                if has_private and coach:
+                    PrivateTrainingRecord.objects.create(
+                        payment=payment,
+                        trainer=coach,
+                        client=member,
+                        package_price=net_amount,
+                        standard_plan_price=plan_price,
+                        private_markup=private_price,
+                        commission_rate=coach_comm_rate,
+                        calculated_commission=coach_comm_amount,
+                    )
+
+                # Audit Logging for Manager Transparency
+                if discount > Decimal("0.00"):
+                    log_audit_event(
+                        user=request.user,
+                        action="discount_applied",
+                        target_model="Subscription",
+                        target_id=str(sub.id),
+                        details=f"منح خصم بقيمة {discount} ج.م على اشتراك ({plan.name}) للاعب {member.name} عبر العمليات الذكية",
+                        amount=discount,
+                    )
+                if has_private:
+                    log_audit_event(
+                        user=request.user,
+                        action="private_subscribed",
+                        target_model="Subscription",
+                        target_id=str(sub.id),
+                        details=f"تفعيل تدريب خاص (Private) للاعب {member.name} بإضافة {private_price} ج.م مع كابتن {coach.name if coach else 'غير محدد'}",
+                        amount=private_price,
+                    )
+
+                # Send WhatsApp Receipt with HTML Invoice
+                if payment:
+                    queue_payment_receipt_whatsapp(payment, subscription=sub)
 
                 messages.success(request, f"تم حفظ {'الاشتراك الجديد' if actual_op_type == 'new_subscription' else 'التجديد'} بنجاح للعضو {member.name} حتى {end_date}!")
                 if not member.has_face_enrolled:
@@ -774,11 +1067,14 @@ def smart_operations_view(request):
         if candidates.count() == 1:
             pre_member = candidates.first()
 
+    coaches = Employee.objects.filter(role=EmployeeRole.TRAINER, status=EmployeeStatus.ACTIVE).order_by("name")
+
     context = {
         "plans": plans,
         "payment_methods": payment_methods,
         "pre_query": pre_query,
         "pre_member": pre_member,
+        "coaches": coaches,
         "today_str": today.strftime("%Y-%m-%d"),
     }
     return render(request, "members/smart_operations.html", context)

@@ -353,9 +353,32 @@ def prepare_manager_daily_report() -> bool:
     # Net Cash
     net_cash = total_revenue - total_expenses
 
-    # New / Renewed Subscriptions
-    subs_today = Subscription.objects.filter(created_at__date=today)
-    new_subs_count = subs_today.count()
+    # Discounts given today
+    total_discounts_today = subs_today.aggregate(total=Sum("discount"))["total"] or Decimal("0.00")
+
+    # Private Add-on details today
+    private_subs_today = subs_today.filter(has_private=True)
+    private_count = private_subs_today.count()
+    private_rev = private_subs_today.aggregate(total=Sum("private_price"))["total"] or Decimal("0.00")
+    coaches_comm = private_subs_today.aggregate(total=Sum("coach_commission_amount"))["total"] or Decimal("0.00")
+    gym_private_profit = private_rev - coaches_comm
+
+    # Audit Events today (Discounts, private toggling, price changes)
+    from apps.core.models import AuditLog
+    audit_today = AuditLog.objects.filter(created_at__date=today).order_by("-created_at")[:10]
+    audit_count = audit_today.count()
+    audit_section = ""
+    if audit_count > 0:
+        audit_lines = []
+        for a in audit_today:
+            time_str = timezone.localtime(a.created_at).strftime("%H:%M")
+            user_str = a.user.username if a.user else "النظام"
+            audit_lines.append(f"• [{time_str}] {a.details} (بواسطة: {user_str})")
+        audit_section = (
+            f"━━━━━━━━━━━━━━━━━━━\n"
+            f"🚨 *رقابة العمليات والتعديلات الحساسة ({audit_count})*:\n"
+            + "\n".join(audit_lines) + "\n"
+        )
 
     # Checkins today
     from apps.members.models import CheckInEvent
@@ -369,8 +392,15 @@ def prepare_manager_daily_report() -> bool:
         f"📉 إجمالي المصروفات اليوم: {total_expenses} ج.م\n"
         f"💵 صافي الخزينة: {net_cash} ج.م\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
+        f"🎁 إجمالي الخصومات الممنوحة اليوم: {total_discounts_today} ج.م\n"
+        f"🏋️‍♂️ اشتراكات التدريب الخاص (Private): {private_count}\n"
+        f"   └ إيراد البرايفت: {private_rev} ج.م\n"
+        f"   └ عمولة الكباتن المستحقة: {coaches_comm} ج.م\n"
+        f"   └ صافي دخل الصالة من البرايفت: {gym_private_profit} ج.م\n"
+        f"━━━━━━━━━━━━━━━━━━━\n"
         f"📝 اشتراكات جديدة / مجددة اليوم: {new_subs_count}\n"
         f"👤 حالات الدخول ببصمة الوجه اليوم: {checkins_today_count}\n"
+        f"{audit_section}"
         f"━━━━━━━━━━━━━━━━━━━\n"
         f"تم إعداد التقرير تلقائياً بواسطة نظام {gym_name} الذكي."
     )

@@ -37,6 +37,12 @@ class Employee(models.Model):
         default=Decimal("0.00"),
         verbose_name="الراتب الأساسي الشهري",
     )
+    commission_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("50.00"),
+        verbose_name="نسبة العمولة الافتراضية من البرايفت (%)",
+    )
     hire_date = models.DateField(null=True, blank=True, verbose_name="تاريخ التعيين")
     notes = models.TextField(blank=True, verbose_name="ملاحظات سرية")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإضافة")

@@ -9,11 +9,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from apps.accounts.decorators import manager_required
-from apps.core.models import GymProfile
+from apps.core.models import GymProfile, AuditLog
 from apps.expenses.models import Expense, ExpenseCategory
 from apps.members.models import CheckInEvent, Member, Plan, Subscription
 from apps.messaging.models import WhatsAppMessage
 from apps.payments.models import Payment, PaymentMethod
+from apps.payroll.models import Employee, EmployeeRole, EmployeeStatus
 
 
 def is_mobile_device(request) -> bool:
@@ -709,6 +710,72 @@ def manager_dashboard_view(request):
             ),
         })
 
+    # 6. Advanced Managerial Analytics: Discounts, Private Add-on, and Payroll Liabilities
+    # A) Discounts given (Lost Revenue)
+    period_discounts_lost = (
+        Subscription.objects.filter(
+            created_at__date__gte=period_start,
+            created_at__date__lte=period_end,
+        ).aggregate(Sum("discount"))["discount__sum"]
+        or Decimal("0.00")
+    )
+    month_discounts_lost = (
+        Subscription.objects.filter(
+            created_at__date__gte=month_start,
+            created_at__date__lte=today,
+        ).aggregate(Sum("discount"))["discount__sum"]
+        or Decimal("0.00")
+    )
+
+    # B) Private Add-on Revenue & Breakdown
+    period_private_subs = Subscription.objects.filter(
+        created_at__date__gte=period_start,
+        created_at__date__lte=period_end,
+        has_private=True,
+    )
+    period_private_count = period_private_subs.count()
+    period_private_revenue = period_private_subs.aggregate(Sum("private_price"))["private_price__sum"] or Decimal("0.00")
+    period_coaches_commission = period_private_subs.aggregate(Sum("coach_commission_amount"))["coach_commission_amount__sum"] or Decimal("0.00")
+    period_gym_private_profit = period_private_revenue - period_coaches_commission
+
+    month_private_subs = Subscription.objects.filter(
+        created_at__date__gte=month_start,
+        created_at__date__lte=today,
+        has_private=True,
+    )
+    month_private_revenue = month_private_subs.aggregate(Sum("private_price"))["private_price__sum"] or Decimal("0.00")
+    month_coaches_commission = month_private_subs.aggregate(Sum("coach_commission_amount"))["coach_commission_amount__sum"] or Decimal("0.00")
+    month_gym_private_profit = month_private_revenue - month_coaches_commission
+
+    # C) Total Salaries & Payroll Liabilities
+    active_trainers = Employee.objects.filter(role=EmployeeRole.TRAINER, status=EmployeeStatus.ACTIVE).order_by("name")
+    total_fixed_salaries = (
+        Employee.objects.filter(status=EmployeeStatus.ACTIVE).aggregate(Sum("fixed_salary"))["fixed_salary__sum"]
+        or Decimal("0.00")
+    )
+    total_payroll_liabilities = total_fixed_salaries + month_coaches_commission
+
+    # D) Coach Performance Summary Table
+    coaches_summary = []
+    for coach in active_trainers:
+        assigned_pts = Member.objects.filter(assigned_coach=coach, has_private=True)
+        coach_pt_count = assigned_pts.count()
+        coach_pt_revenue = assigned_pts.aggregate(Sum("private_price"))["private_price__sum"] or Decimal("0.00")
+        comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+        coach_pt_commission = (coach_pt_revenue * comm_rate).quantize(Decimal("0.01"))
+        coach_total_due = coach.fixed_salary + coach_pt_commission
+
+        coaches_summary.append({
+            "coach": coach,
+            "private_members_count": coach_pt_count,
+            "private_revenue": coach_pt_revenue,
+            "commission_amount": coach_pt_commission,
+            "total_due": coach_total_due,
+        })
+
+    # E) Anti-Deception Audit Trail (Recent Sensitive Actions)
+    recent_audit_logs = AuditLog.objects.select_related("user").order_by("-created_at")[:12]
+
     context = {
         "gym_profile": gym_profile,
         # 9 Legacy Screen Cards
@@ -765,6 +832,20 @@ def manager_dashboard_view(request):
         "month_comp_pct": month_comp_pct,
         "last_month_revenue": last_month_revenue,
         "smart_insights": smart_insights,
+        # New KPIs: Discounts, Private Add-on, Payroll, Coaches & Audit
+        "period_discounts_lost": period_discounts_lost,
+        "month_discounts_lost": month_discounts_lost,
+        "period_private_count": period_private_count,
+        "period_private_revenue": period_private_revenue,
+        "period_coaches_commission": period_coaches_commission,
+        "period_gym_private_profit": period_gym_private_profit,
+        "month_private_revenue": month_private_revenue,
+        "month_coaches_commission": month_coaches_commission,
+        "month_gym_private_profit": month_gym_private_profit,
+        "total_fixed_salaries": total_fixed_salaries,
+        "total_payroll_liabilities": total_payroll_liabilities,
+        "coaches_summary": coaches_summary,
+        "recent_audit_logs": recent_audit_logs,
     }
     return render(request, "core/manager_dashboard.html", context)
 

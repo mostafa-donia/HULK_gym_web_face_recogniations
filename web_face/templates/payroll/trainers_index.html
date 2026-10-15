@@ -84,7 +84,9 @@
           {% for t in trainers %}
           <tr>
             <td>
-              <strong style="color: #F3F8FB; font-size: 1.05rem;">{{ t.name }}</strong>
+              <a href="{% url 'payroll:coach_detail' t.id %}" style="text-decoration: none;">
+                <strong style="color: #A8F14B; font-size: 1.05rem;">{{ t.name }} 👤</strong>
+              </a>
               {% if t.notes %}
               <div style="font-size: 0.8rem; color: #8D99A3;">{{ t.notes|truncatewords:6 }}</div>
               {% endif %}
@@ -100,14 +102,14 @@
             </td>
             <td>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="{% url 'payroll:coach_detail' t.id %}" class="btn btn-primary btn-sm" style="font-size: 0.82rem; font-weight: 800;">
+                  ملف الكابتن واللاعبين 📋
+                </a>
+                <a href="{% url 'payroll:coach_salary_report' t.id %}" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; background: #183C56; color: #4DB3FF;">
+                  طباعة كشف الراتب 🖨️
+                </a>
                 <a href="{% url 'payroll:employee_edit' t.id %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem;">
                   تعديل
-                </a>
-                <a href="{% url 'payroll:trainer_assignments' %}?trainer_id={{ t.id }}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem;">
-                  إسناد متدرب
-                </a>
-                <a href="{% url 'payroll:private_training_records' %}?trainer_id={{ t.id }}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; background: #163652; color: #4DB3FF;">
-                  ⏱️ تسجيل حصة
                 </a>
                 <a href="{% url 'payroll:advance_create' %}?employee_id={{ t.id }}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; background: #132B1C; border-color: #255936; color: #7ED321;">
                   صرف سلفة

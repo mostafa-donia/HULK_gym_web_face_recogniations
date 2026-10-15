@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 from django.conf import settings
 
@@ -111,6 +112,7 @@ class AuditLog(models.Model):
     action = models.CharField(max_length=100, verbose_name="العملية")
     target_model = models.CharField(max_length=100, verbose_name="الجدول المستهدف")
     target_id = models.CharField(max_length=100, blank=True, verbose_name="معرف السجل")
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), verbose_name="المبلغ المرتبط بالعملية")
     details = models.TextField(blank=True, verbose_name="التفاصيل")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ ووقت العملية")
 
@@ -118,3 +120,19 @@ class AuditLog(models.Model):
         verbose_name = "سجل العمليات (Audit Log)"
         verbose_name_plural = "سجلات العمليات"
         ordering = ["-created_at"]
+
+
+def log_audit_event(user=None, action="", target_model="Member", target_id="", details="", amount=Decimal("0.00")):
+    """Helper to log sensitive managerial actions like discounts, private changes, and price overrides."""
+    try:
+        return AuditLog.objects.create(
+            user=user if getattr(user, "is_authenticated", False) else None,
+            action=action,
+            target_model=target_model,
+            target_id=str(target_id),
+            details=details,
+            amount=Decimal(str(amount or "0.00")),
+        )
+    except Exception as e:
+        print(f"[log_audit_event] Error: {e}")
+        return None

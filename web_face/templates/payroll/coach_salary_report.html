@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>كشف راتب الكابتن: {{ coach.name }} — {{ period_str }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-color: #166534;
+      --accent-bg: #f0fdf4;
+      --font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 24px;
+    }
+
+    .report-sheet {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 36px 44px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+    }
+
+    .no-print-bar {
+      max-width: 900px;
+      margin: 0 auto 18px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 800;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+    }
+
+    .btn-print {
+      background: #16a34a;
+      color: #ffffff;
+    }
+
+    .btn-back {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    /* Header styling */
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+    }
+
+    .gym-brand h1 {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .gym-brand p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+
+    .report-badge-box {
+      text-align: left;
+    }
+
+    .report-badge-box .badge {
+      display: inline-block;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+
+    .report-badge-box .date-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Coach Info Cards */
+    .coach-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 28px;
+    }
+
+    .meta-item .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .meta-item .value {
+      font-size: 1.15rem;
+      color: #0f172a;
+      font-weight: 800;
+      display: block;
+    }
+
+    /* Table styling */
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .clean-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 26px;
+      font-size: 0.92rem;
+    }
+
+    .clean-table th {
+      background: #f8fafc;
+      border-bottom: 2px solid #cbd5e1;
+      border-top: 1px solid #e2e8f0;
+      color: #334155;
+      font-weight: 800;
+      text-align: right;
+      padding: 10px 14px;
+    }
+
+    .clean-table td {
+      border-bottom: 1px solid #e2e8f0;
+      padding: 11px 14px;
+      color: #0f172a;
+    }
+
+    .clean-table tr:last-child td {
+      border-bottom: 2px solid #cbd5e1;
+    }
+
+    .clean-table .num {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+
+    /* Financial Summary Breakdown Box */
+    .summary-card {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 34px;
+    }
+
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 1rem;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+
+    .summary-line:last-of-type {
+      border-bottom: none;
+    }
+
+    .summary-line.total-line {
+      background: var(--accent-bg);
+      border: 2px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 14px 20px;
+      margin-top: 14px;
+    }
+
+    .total-line .title {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: var(--accent-color);
+    }
+
+    .total-line .amount {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--accent-color);
+    }
+
+    /* Signature Section */
+    .signatures-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .sig-box {
+      text-align: center;
+    }
+
+    .sig-box .role-label {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #334155;
+      margin-bottom: 45px;
+    }
+
+    .sig-box .line {
+      border-top: 1.5px dashed #94a3b8;
+      width: 70%;
+      margin: 0 auto 6px auto;
+    }
+
+    .sig-box .name {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        padding: 0;
+        background: #ffffff;
+      }
+      .no-print-bar {
+        display: none !important;
+      }
+      .report-sheet {
+        border: none;
+        box-shadow: none;
+        padding: 10px 0;
+        max-width: 100%;
+      }
+      @page {
+        size: A4;
+        margin: 15mm 15mm 15mm 15mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen Top Bar with Print & Back Buttons -->
+  <div class="no-print-bar">
+    <div>
+      <a href="{% url 'payroll:coach_detail' coach.id %}" class="btn btn-back">
+        ← العودة لملف الكابتن
+      </a>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="window.print()" class="btn btn-print">
+        🖨️ طباعة كشف الراتب (Print / PDF)
+      </button>
+    </div>
+  </div>
+
+  <!-- Printable Sheet Container -->
+  <div class="report-sheet">
+
+    <!-- Header -->
+    <div class="header-section">
+      <div class="gym-brand">
+        <h1>{{ profile.gym_name|default:"HULK GYM" }}</h1>
+        <p>كشف حساب ومستحقات المدرب الشهري (التدريب الخاص والراتب الأساسي)</p>
+      </div>
+      <div class="report-badge-box">
+        <span class="badge">كشف راتب وعمولات</span>
+        <div class="date-text">الفترة: {{ period_str }}</div>
+        <div class="date-text">تاريخ الإصدار: {{ today|date:"Y-m-d" }}</div>
+      </div>
+    </div>
+
+    <!-- Coach Meta Info -->
+    <div class="coach-meta-grid">
+      <div class="meta-item">
+        <span class="label">اسم الكابتن</span>
+        <span class="value">{{ coach.name }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">رقم الهاتف</span>
+        <span class="value" style="direction: ltr; text-align: right;">{{ coach.phone|default:"—" }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">الراتب الأساسي (الثابت)</span>
+        <span class="value num">{{ fixed_salary }} ج.م</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">نسبة عمولة البرايفت</span>
+        <span class="value num">{{ coach.commission_percentage }} %</span>
+      </div>
+    </div>
+
+    <!-- Private Members & Commission Breakdown Table -->
+    <div class="section-title">
+      <span>📋 بيان متدربي التدريب الخاص (Private Add-ons)</span>
+      <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">
+        عدد المتدربين: {{ members_count }} لاعب
+      </span>
+    </div>
+
+    <table class="clean-table">
+      <thead>
+        <tr>
+          <th>م</th>
+          <th>كود العضو</th>
+          <th>اسم المتدرب</th>
+          <th>نوع الباقة الأساسية</th>
+          <th>قيمة إضافة البرايفت</th>
+          <th>نسبة الكابتن</th>
+          <th>عمولة الكابتن المستحقة</th>
+          <th>حالة الاشتراك</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if member_rows %}
+          {% for r in member_rows %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td style="font-family: monospace; font-weight: 700;">{{ r.member_id }}</td>
+            <td><strong>{{ r.name }}</strong></td>
+            <td>{{ r.plan_name }}</td>
+            <td class="num">{{ r.private_markup }} ج.م</td>
+            <td class="num">{{ r.comm_rate_pct }} %</td>
+            <td class="num" style="color: #166534; font-weight: 900;">{{ r.commission_amount }} ج.م</td>
+            <td>{{ r.status }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">
+              لا يوجد متدربي تدريب خاص مسندين للكابتن في هذه الفترة.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <!-- Financial Calculation Summary Box -->
+    <div class="summary-card">
+      <div class="summary-line">
+        <span>الراتب الشهري الأساسي الثابت:</span>
+        <strong class="num">+ {{ fixed_salary }} ج.م</strong>
+      </div>
+      <div class="summary-line">
+        <span>إجمالي عمولات التدريب الخاص ({{ members_count }} متدرب):</span>
+        <strong class="num" style="color: #166534;">+ {{ total_commission }} ج.م</strong>
+      </div>
+      {% if bonuses > 0 %}
+      <div class="summary-line">
+        <span>المكافآت والحوافز المعتمدة:</span>
+        <strong class="num" style="color: #166534;">+ {{ bonuses }} ج.م</strong>
+      </div>
+      {% endif %}
+      {% if advances > 0 %}
+      <div class="summary-line">
+        <span>السلف النقدية المسحوبة:</span>
+        <strong class="num" style="color: #dc2626;">- {{ advances }} ج.م</strong>
+      </div>
+      {% endif %}
+      {% if deductions > 0 %}
+      <div class="summary-line">
+        <span>الخصومات والجزاءات:</span>
+        <strong class="num" style="color: #dc2626;">- {{ deductions }} ج.م</strong>
+      </div>
+      {% endif %}
+
+      <div class="summary-line total-line">
+        <span class="title">صافي المبلغ المستحق للصرف للكابتن:</span>
+        <span class="amount num">{{ net_payable }} ج.م</span>
+      </div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="signatures-grid">
+      <div class="sig-box">
+        <div class="role-label">توقيع المدير المسؤول</div>
+        <div class="line"></div>
+        <div class="name">إدارة {{ profile.gym_name|default:"HULK GYM" }}</div>
+      </div>
+
+      <div class="sig-box">
+        <div class="role-label">توقيع واستلام الكابتن</div>
+        <div class="line"></div>
+        <div class="name">{{ coach.name }}</div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -70,6 +70,23 @@ class Member(models.Model):
     follow_up_date = models.DateField(null=True, blank=True, verbose_name="تاريخ المتابعة")
     notes = models.TextField(blank=True, verbose_name="ملاحظات")
     google_contact_synced_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ مزامنة جهات اتصال جوجل")
+
+    # Private Training Add-on (التدريب الخاص كإضافة للباقة)
+    has_private = models.BooleanField(default=False, db_index=True, verbose_name="تدريب خاص (Private)")
+    private_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), verbose_name="سعر إضافة التدريب الخاص")
+    assigned_coach = models.ForeignKey(
+        "payroll.Employee",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_members",
+        limit_choices_to={"role": "TRAINER"},
+        verbose_name="المدرب الخاص (الكابتن)",
+    )
+    # Manager Agreed Discount for Renewals
+    renewal_discount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), verbose_name="خصم التجديد المعتمد")
+    discount_enabled = models.BooleanField(default=False, verbose_name="تفعيل خصم التجديد تلقائياً")
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ التسجيل")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ التحديث")
 
@@ -256,6 +273,21 @@ class Subscription(models.Model):
     start_date = models.DateField(db_index=True, verbose_name="تاريخ البداية")
     end_date = models.DateField(db_index=True, verbose_name="تاريخ النهاية")
     plan_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="سعر الباقة")
+    
+    # Private Training Add-on
+    has_private = models.BooleanField(default=False, verbose_name="مشتمل على تدريب خاص")
+    private_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), verbose_name="قيمة التدريب الخاص الإضافي")
+    coach = models.ForeignKey(
+        "payroll.Employee",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="subscriptions_trained",
+        verbose_name="المدرب المسند إليه",
+    )
+    coach_commission_rate = models.DecimalField(max_digits=5, decimal_places=4, default=Decimal("0.5000"), verbose_name="نسبة عمولة المدرب")
+    coach_commission_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), verbose_name="قيمة عمولة المدرب")
+
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), verbose_name="الخصم")
     net_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="المستحق الصافي")
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="المدفوع")

@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from apps.accounts.decorators import manager_required
-from apps.core.models import GymProfile
+from apps.core.models import GymProfile, AuditLog, log_audit_event
 from apps.expenses.models import Expense, ExpenseCategory
 from apps.members.models import Member, Plan
 from apps.messaging.models import MessageType, WhatsAppMessage
@@ -784,3 +784,213 @@ def payroll_send_whatsapp_view(request, item_id):
 
     messages.success(request, f"تمت جدولة إرسال كشف الراتب للكابتن/الموظف {item.employee_name_snapshot} عبر الواتساب بنجاح!")
     return redirect("payroll:payroll_run_detail", period=item.payroll_run.period)
+
+
+@login_required
+def coach_detail_view(request, employee_id):
+    """
+    Dedicated Coach (Trainer) Profile View:
+    - Displays Coach details, monthly fixed salary, and commission percentage.
+    - Shows all private training members assigned to this coach.
+    - Allows adding/assigning players to this coach with custom private markup.
+    - Calculates this month's private commissions and total monthly dues.
+    """
+    coach = get_object_or_404(Employee, id=employee_id, role=EmployeeRole.TRAINER)
+    profile = GymProfile.get_solo()
+    today = timezone.localdate()
+    month_start = today.replace(day=1)
+
+    # Handle assigning / removing members
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "assign_member":
+            member_id = request.POST.get("member_id")
+            private_price_str = request.POST.get("private_price", "600.00")
+            private_price = Decimal(private_price_str or "600.00")
+            member = get_object_or_404(Member, id=member_id)
+
+            member.assigned_coach = coach
+            member.has_private = True
+            member.private_price = private_price
+            member.save()
+
+            log_audit_event(
+                user=request.user,
+                action="coach_member_assigned",
+                target_model="Member",
+                target_id=str(member.id),
+                details=f"تم إسناد اللاعب {member.name} للكابتن {coach.name} مع تفعيل باقة البرايفت بقيمة {private_price} ج",
+                amount=private_price,
+            )
+            messages.success(request, f"تمت إضافة المتدرب {member.name} إلى الكابتن {coach.name} بنجاح.")
+            return redirect("payroll:coach_detail", employee_id=coach.id)
+
+        elif action == "remove_member":
+            member_id = request.POST.get("member_id")
+            member = get_object_or_404(Member, id=member_id)
+            if member.assigned_coach == coach:
+                member.has_private = False
+                member.assigned_coach = None
+                member.save()
+
+                log_audit_event(
+                    user=request.user,
+                    action="coach_member_removed",
+                    target_model="Member",
+                    target_id=str(member.id),
+                    details=f"تم فك ارتباط اللاعب {member.name} من الكابتن {coach.name} وإلغاء البرايفت",
+                    amount=Decimal("0.00"),
+                )
+                messages.info(request, f"تم إخراج المتدرب {member.name} من قائمة الكابتن {coach.name}.")
+            return redirect("payroll:coach_detail", employee_id=coach.id)
+
+    # Fetch assigned members
+    assigned_members = Member.objects.filter(assigned_coach=coach).order_by("-has_private", "name")
+
+    # Enrich assigned members with commission share
+    coach_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+    enriched_members = []
+    total_private_income = Decimal("0.00")
+    total_coach_commission = Decimal("0.00")
+    active_private_count = 0
+
+    for m in assigned_members:
+        is_sub_active = bool(m.last_subscription_end and m.last_subscription_end >= today)
+        coach_share = (m.private_price * coach_comm_rate).quantize(Decimal("0.01")) if m.has_private else Decimal("0.00")
+        if m.has_private and is_sub_active:
+            total_private_income += m.private_price
+            total_coach_commission += coach_share
+            active_private_count += 1
+
+        enriched_members.append({
+            "member": m,
+            "has_private": m.has_private,
+            "private_price": m.private_price,
+            "coach_share": coach_share,
+            "is_active": is_sub_active,
+            "end_date": m.last_subscription_end,
+            "plan_type": m.last_subscription_type or "عام",
+        })
+
+    # Fetch month's salary adjustments / advances
+    month_adjustments = SalaryAdjustment.objects.filter(
+        employee=coach,
+        status=AdjustmentStatus.APPROVED,
+        effective_date__gte=month_start,
+        effective_date__lte=today,
+    )
+    month_bonuses = month_adjustments.filter(adjustment_type=AdjustmentType.BONUS).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+    month_deductions = month_adjustments.filter(adjustment_type__in=[AdjustmentType.DEDUCTION, AdjustmentType.PENALTY]).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+    month_advances = month_adjustments.filter(adjustment_type=AdjustmentType.ADVANCE).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+
+    # Estimated Net Monthly Due
+    net_monthly_due = coach.fixed_salary + total_coach_commission + month_bonuses - month_deductions - month_advances
+
+    # Available members to assign (not already assigned to this coach)
+    available_members = Member.objects.exclude(assigned_coach=coach).order_by("name")[:100]
+
+    context = {
+        "coach": coach,
+        "profile": profile,
+        "today": today,
+        "enriched_members": enriched_members,
+        "active_private_count": active_private_count,
+        "total_private_income": total_private_income,
+        "total_coach_commission": total_coach_commission,
+        "month_bonuses": month_bonuses,
+        "month_deductions": month_deductions,
+        "month_advances": month_advances,
+        "net_monthly_due": net_monthly_due,
+        "available_members": available_members,
+    }
+    return render(request, "payroll/coach_detail.html", context)
+
+
+@login_required
+def coach_salary_report_view(request, employee_id):
+    """
+    Printable, ultra-clean, unjammed, spacious Coach Salary & Commission Statement.
+    Optimized for clean A4 paper printing and executive clarity.
+    """
+    coach = get_object_or_404(Employee, id=employee_id, role=EmployeeRole.TRAINER)
+    profile = GymProfile.get_solo()
+    today = timezone.localdate()
+    month_start = today.replace(day=1)
+
+    period_str = request.GET.get("period", today.strftime("%Y-%m"))
+
+    # Calculate period dates
+    try:
+        y, m = map(int, period_str.split("-")[:2])
+        p_start = date(y, m, 1)
+        if m == 12:
+            p_end = date(y + 1, 1, 1) - timedelta(days=1)
+        else:
+            p_end = date(y, m + 1, 1) - timedelta(days=1)
+    except Exception:
+        p_start = month_start
+        p_end = today
+        period_str = today.strftime("%Y-%m")
+
+    # 1. Fetch Subscriptions or PT Records for this coach in this period
+    coach_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+
+    # Active assigned members with private
+    assigned_members = Member.objects.filter(assigned_coach=coach, has_private=True)
+    member_rows = []
+    total_private_volume = Decimal("0.00")
+    total_commission = Decimal("0.00")
+
+    for m in assigned_members:
+        comm_amount = (m.private_price * coach_comm_rate).quantize(Decimal("0.01"))
+        total_private_volume += m.private_price
+        total_commission += comm_amount
+        member_rows.append({
+            "member_id": m.member_id,
+            "name": m.name,
+            "phone": m.mobile or "—",
+            "plan_name": m.last_subscription_type or "اشتراك عام",
+            "private_markup": m.private_price,
+            "comm_rate_pct": coach.commission_percentage,
+            "commission_amount": comm_amount,
+            "status": "مشترك نشط" if (m.last_subscription_end and m.last_subscription_end >= today) else "منتهي",
+            "renewal_date": m.last_subscription_end,
+        })
+
+    # Adjustments in period
+    adjustments = SalaryAdjustment.objects.filter(
+        employee=coach,
+        status=AdjustmentStatus.APPROVED,
+        effective_date__gte=p_start,
+        effective_date__lte=p_end,
+    )
+    bonuses = adjustments.filter(adjustment_type=AdjustmentType.BONUS).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+    deductions = adjustments.filter(adjustment_type__in=[AdjustmentType.DEDUCTION, AdjustmentType.PENALTY]).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+    advances = adjustments.filter(adjustment_type=AdjustmentType.ADVANCE).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+
+    fixed_salary = coach.fixed_salary
+    gross_earnings = fixed_salary + total_commission + bonuses
+    total_cuts = deductions + advances
+    net_payable = gross_earnings - total_cuts
+
+    context = {
+        "coach": coach,
+        "profile": profile,
+        "today": today,
+        "period_str": period_str,
+        "p_start": p_start,
+        "p_end": p_end,
+        "member_rows": member_rows,
+        "members_count": len(member_rows),
+        "total_private_volume": total_private_volume,
+        "total_commission": total_commission,
+        "fixed_salary": fixed_salary,
+        "bonuses": bonuses,
+        "deductions": deductions,
+        "advances": advances,
+        "gross_earnings": gross_earnings,
+        "total_cuts": total_cuts,
+        "net_payable": net_payable,
+    }
+    return render(request, "payroll/coach_salary_report.html", context)
+
