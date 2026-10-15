@@ -182,15 +182,16 @@ def copy_web_app():
 
 
 def create_launchers():
-    log("Creating one-click standalone launchers in dist folder...")
+    log("Creating single one-click standalone launcher in dist folder...")
 
-    # Primary Launcher
-    start_bat = os.path.join(OUTPUT_DIR, "START_GYM.bat")
+    # Single Primary Launcher
+    start_bat = os.path.join(OUTPUT_DIR, "START_HULK_GYM.bat")
     with open(start_bat, "w", encoding="utf-8") as f:
         f.write(
             """@echo off
 chcp 65001 >nul
 title HULK GYM - Standalone Portable System
+color 0A
 
 cd /d "%~dp0"
 
@@ -213,10 +214,9 @@ echo [*] Starting HULK GYM server at http://127.0.0.1:8000 ...
 pause
 """
         )
-    copy_file_safe(start_bat, os.path.join(OUTPUT_DIR, "Run_Hulk_Gym.bat"))
 
     # Standalone Update Launcher
-    update_bat = os.path.join(OUTPUT_DIR, "UPDATE_GYM.bat")
+    update_bat = os.path.join(OUTPUT_DIR, "UPDATE_HULK_GYM.bat")
     with open(update_bat, "w", encoding="utf-8") as f:
         f.write(
             """@echo off
@@ -244,7 +244,6 @@ echo.
 pause
 """
         )
-    copy_file_safe(update_bat, os.path.join(OUTPUT_DIR, "UPDATE_HULK_GYM.bat"))
 
     # Readme for client
     readme = os.path.join(OUTPUT_DIR, "README_INSTRUCTIONS.txt")
