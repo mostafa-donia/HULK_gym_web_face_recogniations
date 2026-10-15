@@ -62,12 +62,20 @@ def enqueue_message(
 
 def dispatch_message_record(msg_obj: WhatsAppMessage, return_to_system: bool = False) -> bool:
     """
-    Attempts delivery of a single WhatsApp message using whatsapp_sender.
+    Attempts delivery of a single WhatsApp message using whatsapp_sender on WhatsApp Desktop.
     Includes attached file/image and optional link formatting.
     """
     try:
         from apps.messaging import whatsapp_sender
         
+        # Verify WhatsApp Desktop installation
+        installed, inst_msg, _ = whatsapp_sender.is_whatsapp_desktop_installed()
+        if not installed:
+            msg_obj.status = MessageStatus.FAILED
+            msg_obj.error_detail = inst_msg
+            msg_obj.save()
+            return False
+
         final_message = msg_obj.message
         if msg_obj.link and msg_obj.link not in final_message:
             final_message = f"{final_message}\n\n🔗 {msg_obj.link}"
@@ -98,6 +106,12 @@ def dispatch_message_record(msg_obj: WhatsAppMessage, return_to_system: bool = F
                 except Exception:
                     pass
 
+        # If attachment is an HTML invoice, resolve to companion PNG image for WhatsApp Desktop pasting
+        if image_path and image_path.lower().endswith(".html"):
+            png_cand = image_path[:-5] + ".png"
+            if os.path.exists(png_cand):
+                image_path = png_cand
+
         print(f"[dispatch_message_record] Sending msg id={msg_obj.id} to {msg_obj.mobile}, image_path={image_path}")
 
         success = whatsapp_sender.send_message(
@@ -115,7 +129,7 @@ def dispatch_message_record(msg_obj: WhatsAppMessage, return_to_system: bool = F
             return True
         else:
             msg_obj.status = MessageStatus.FAILED
-            msg_obj.error_detail = "WhatsApp sender returned unsuccessful (window not active or chat not found)."
+            msg_obj.error_detail = "WhatsApp Desktop sender returned unsuccessful (window not active or chat not found)."
             msg_obj.save()
             return False
     except Exception as exc:
@@ -135,6 +149,9 @@ def get_pending_summary() -> dict:
     - Finished / Expired subscription (expired)
     - Others / Custom (bulk, custom, etc.)
     """
+    from apps.messaging import whatsapp_sender
+    is_installed, inst_msg, _ = whatsapp_sender.is_whatsapp_desktop_installed()
+
     qs = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING)
     total = qs.count()
     receipt_count = qs.filter(msg_type=MessageType.RECEIPT).count()
@@ -146,6 +163,8 @@ def get_pending_summary() -> dict:
     return {
         "pending_count": total,
         "has_pending": total > 0,
+        "desktop_installed": is_installed,
+        "desktop_status": inst_msg,
         "breakdown": {
             "receipt": receipt_count,
             "reminder_1": reminder_1_count,
@@ -162,6 +181,19 @@ def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: s
     Focuses WhatsApp once at batch start and returns to the system once when batch finishes.
     """
     import time
+    from apps.messaging import whatsapp_sender
+
+    # Pre-check WhatsApp Desktop installation
+    is_installed, inst_msg, _ = whatsapp_sender.is_whatsapp_desktop_installed()
+    if not is_installed:
+        return {
+            "processed": 0,
+            "sent": 0,
+            "failed": 0,
+            "error": inst_msg,
+            "desktop_installed": False,
+        }
+
     qs = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING)
     if selected_ids:
         qs = qs.filter(id__in=selected_ids)
@@ -174,7 +206,6 @@ def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: s
 
     if pending:
         try:
-            from apps.messaging import whatsapp_sender
             whatsapp_sender.whatsupp_ready()
         except Exception as e:
             logger.warning("whatsupp_ready batch init error: %s", e)
@@ -191,6 +222,7 @@ def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: s
         "processed": len(pending),
         "sent": sent_count,
         "failed": failed_count,
+        "desktop_installed": True,
     }
 
 

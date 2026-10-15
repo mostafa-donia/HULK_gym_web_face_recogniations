@@ -1,11 +1,22 @@
-<div style="background: var(--success-bg); border: 1px solid var(--success); color: var(--success); padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
-  <span>✓ تم تسجيل الحضور الآن!</span>
-  {% if not is_active %}
-    <span style="color: var(--danger); font-weight: 800;">(تنبيه: الاشتراك منتهي!)</span>
-  {% elif days_left <= 3 %}
-    <span style="color: var(--warning);">(باقي {{ days_left }} يوم)</span>
-  {% endif %}
+{% if not access_allowed %}
+<div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger, #ef4444); color: #f87171; padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+  <span>⛔ غير مسموح بالدخول:</span>
+  <span>{{ deny_reason|default:"الاشتراك منتهي أو غير صالح للحضور الآن." }}</span>
   {% if debt > 0 %}
-    <span style="color: var(--warning);">(متبقي {{ debt }} ج.م)</span>
+    <span style="color: var(--warning, #f59e0b);">(متبقي {{ debt }} ج.م)</span>
   {% endif %}
 </div>
+{% else %}
+<div style="background: var(--success-bg, rgba(34, 197, 94, 0.15)); border: 1px solid var(--success, #22c55e); color: var(--success, #4ade80); padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+  <span>✓ تم تسجيل الحضور الآن!</span>
+  {% if days_left <= 3 %}
+    <span style="color: var(--warning, #f59e0b);">(باقي {{ days_left }} يوم)</span>
+  {% endif %}
+  {% if debt > 0 %}
+    <span style="color: var(--warning, #f59e0b);">(متبقي {{ debt }} ج.م)</span>
+  {% endif %}
+  {% if window_hours_left %}
+    <span style="color: #38bdf8; font-size: 0.82rem;">(صلاحية اليوم: {{ window_hours_left }} س)</span>
+  {% endif %}
+</div>
+{% endif %}

@@ -527,7 +527,11 @@
 
       if (m.is_active) {
         targetBox.className = "target-frame-box matched-active";
-        bannerDetails.innerHTML = `باقة: <strong>${m.plan}</strong> | ينتهي: <strong>${m.end_date}</strong> (باقي ${m.days_left} يوم)`;
+        let subDetails = `باقة: <strong>${m.plan}</strong> | ينتهي: <strong>${m.end_date}</strong> (باقي ${m.days_left} يوم)`;
+        if (m.window_hours_left) {
+          subDetails += ` | <span style="color: #38bdf8;">نافذة اليوم: ${m.window_hours_left} ساعة</span>`;
+        }
+        bannerDetails.innerHTML = subDetails;
         bannerStatusPill.innerHTML = `<span class="badge badge-active" style="font-size: 0.95rem; padding: 6px 14px;">✅ مسموح بالدخول</span>`;
 
         if (data.logged_new) {
@@ -535,8 +539,9 @@
         }
       } else {
         targetBox.className = "target-frame-box matched-expired";
-        bannerDetails.innerHTML = `<span style="color: var(--accent-red); font-weight: 700;">الاشتراك منتهي في ${m.end_date}!</span> يرجى التجديد بالاستقبال.`;
-        bannerStatusPill.innerHTML = `<span class="badge badge-expired" style="font-size: 0.95rem; padding: 6px 14px;">⛔ الاشتراك منتهي</span>`;
+        const denyMsg = m.deny_reason || `الاشتراك منتهي في ${m.end_date}! يرجى التجديد بالاستقبال.`;
+        bannerDetails.innerHTML = `<span style="color: var(--accent-red); font-weight: 700;">${denyMsg}</span>`;
+        bannerStatusPill.innerHTML = `<span class="badge badge-expired" style="font-size: 0.95rem; padding: 6px 14px;">⛔ غير مسموح بالدخول</span>`;
 
         if (data.logged_new) {
           updateRecentFeed(m);
@@ -631,7 +636,7 @@
       playSuccessChime();
 
     } else {
-      // 🔴 EXPIRED MEMBER: ACCESS DENIED
+      // 🔴 ACCESS DENIED (EXPIRED OR ALTERNATE-DAYS WINDOW / CONSECUTIVE BLOCK)
       durationMs = 4500;
       fsCard.style.background = 'radial-gradient(circle at center, #3c0609 0%, #1a0204 100%)';
       fsCard.style.border = '2px solid #ef4444';
@@ -643,22 +648,36 @@
       fsStatusBadge.style.border = '2px solid #ef4444';
       fsStatusBadge.style.color = '#f87171';
       fsStatusIcon.textContent = '🔴';
-      fsStatusTitle.textContent = 'غير مسموح بالدخول — الاشتراك منتهي!';
+      fsStatusTitle.textContent = m.deny_reason ? 'غير مسموح بالدخول — تنبيه الصالة!' : 'غير مسموح بالدخول — الاشتراك منتهي!';
 
       fsInfoBox.style.background = 'rgba(0, 0, 0, 0.55)';
       fsInfoBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
 
-      fsDateLabel.textContent = 'تاريخ انتهاء الاشتراك';
-      fsDateLabel.style.color = '#fca5a5';
-      fsDateValue.textContent = m.end_date || 'منتهي';
-      fsDateValue.style.color = '#ffffff';
+      if (m.deny_reason) {
+        fsDateLabel.textContent = 'سبب عدم السماح';
+        fsDateLabel.style.color = '#fca5a5';
+        fsDateValue.textContent = m.deny_reason;
+        fsDateValue.style.color = '#fca5a5';
 
-      fsDaysLabel.textContent = 'حالة العضوية';
-      fsDaysLabel.style.color = '#fca5a5';
-      fsDaysValue.textContent = `منتهي منذ ${m.expired_days || 1} يوم`;
-      fsDaysValue.style.color = '#f87171';
+        fsDaysLabel.textContent = 'نظام الباقة';
+        fsDaysLabel.style.color = '#fca5a5';
+        fsDaysValue.textContent = m.plan || 'يوم ويوم';
+        fsDaysValue.style.color = '#ffffff';
 
-      fsFooterMsg.innerHTML = '🛑 <span style="color: #fca5a5;">عفواً، لا يمكنك الدخول. يرجى التوجه لمكتب الاستقبال لتجديد الاشتراك.</span>';
+        fsFooterMsg.innerHTML = `🛑 <span style="color: #fca5a5;">${m.deny_reason}</span>`;
+      } else {
+        fsDateLabel.textContent = 'تاريخ انتهاء الاشتراك';
+        fsDateLabel.style.color = '#fca5a5';
+        fsDateValue.textContent = m.end_date || 'منتهي';
+        fsDateValue.style.color = '#ffffff';
+
+        fsDaysLabel.textContent = 'حالة العضوية';
+        fsDaysLabel.style.color = '#fca5a5';
+        fsDaysValue.textContent = `منتهي منذ ${m.expired_days || 1} يوم`;
+        fsDaysValue.style.color = '#f87171';
+
+        fsFooterMsg.innerHTML = '🛑 <span style="color: #fca5a5;">عفواً، لا يمكنك الدخول. يرجى التوجه لمكتب الاستقبال لتجديد الاشتراك.</span>';
+      }
 
       fsProgressBar.style.background = '#ef4444';
       playAlertChime();

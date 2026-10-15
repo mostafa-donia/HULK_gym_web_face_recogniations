@@ -1,9 +1,11 @@
 import logging
+from decimal import Decimal
 from pathlib import Path
 from typing import Optional
 
 from django.conf import settings
 from django.template.loader import render_to_string
+from PIL import Image, ImageDraw, ImageFont
 
 from apps.core.models import GymProfile
 from apps.messaging.models import WhatsAppMessage, MessageType, MessageStatus
@@ -47,10 +49,118 @@ def generate_invoice_html_file(payment: Payment, subscription=None) -> str:
     return f"invoices/{filename}"
 
 
+def generate_invoice_image_file(payment: Payment, subscription=None) -> str:
+    """
+    Renders an official graphical receipt image (PNG) matching the payment record.
+    Saves to media/invoices/invoice_{clean_invoice_no}.png and returns the relative path.
+    """
+    profile = GymProfile.get_solo()
+    member = payment.member
+
+    if subscription is None and member:
+        subscription = member.subscriptions.order_by("-created_at").first()
+
+    invoices_dir = Path(settings.MEDIA_ROOT) / "invoices"
+    invoices_dir.mkdir(parents=True, exist_ok=True)
+
+    clean_invoice_no = payment.invoice_no.replace("/", "_").replace("\\", "_")
+    png_filename = f"invoice_{clean_invoice_no}.png"
+    png_file_path = invoices_dir / png_filename
+
+    w, h = 640, 720
+    img = Image.new("RGB", (w, h), color=(15, 23, 42))
+    draw = ImageDraw.Draw(img)
+
+    # Card background
+    draw.rounded_rectangle([20, 20, w - 20, h - 20], radius=16, fill=(255, 255, 255), outline=(203, 213, 225), width=2)
+
+    # Header bar
+    draw.rounded_rectangle([20, 20, w - 20, 110], radius=16, fill=(15, 23, 42))
+    draw.rectangle([20, 90, w - 20, 110], fill=(15, 23, 42))
+
+    try:
+        font_title = ImageFont.truetype("arial.ttf", 26)
+        font_sub = ImageFont.truetype("arial.ttf", 16)
+        font_bold = ImageFont.truetype("arialbd.ttf", 18)
+        font_normal = ImageFont.truetype("arial.ttf", 17)
+        font_sm = ImageFont.truetype("arial.ttf", 14)
+    except Exception:
+        font_title = font_sub = font_bold = font_normal = font_sm = ImageFont.load_default()
+
+    gym_title = profile.gym_name or "HULK GYM"
+    draw.text((w // 2, 45), gym_title, fill=(132, 204, 22), font=font_title, anchor="mm")
+    draw.text((w // 2, 80), f"OFFICIAL PAYMENT RECEIPT | {payment.invoice_no}", fill=(203, 213, 225), font=font_sub, anchor="mm")
+
+    y = 135
+    date_str = payment.created_at.strftime("%Y-%m-%d %I:%M %p")
+    draw.rectangle([40, y, w - 40, y + 40], fill=(241, 245, 249))
+    draw.text((55, y + 12), f"Date: {date_str}", fill=(71, 85, 105), font=font_sm)
+    draw.text((w - 55, y + 12), f"Invoice: #{payment.invoice_no}", fill=(15, 23, 42), font=font_bold, anchor="ra")
+
+    y = 195
+    mem_name = member.name if member else "عميل كاش"
+    draw.text((55, y), "Member Name:", fill=(100, 116, 139), font=font_normal)
+    draw.text((w - 55, y), mem_name, fill=(15, 23, 42), font=font_bold, anchor="ra")
+
+    y += 35
+    mem_code = member.member_id if member else "-"
+    mem_mobile = member.mobile if member else "-"
+    draw.text((55, y), "Member ID / Mobile:", fill=(100, 116, 139), font=font_normal)
+    draw.text((w - 55, y), f"{mem_code} | {mem_mobile}", fill=(15, 23, 42), font=font_normal, anchor="ra")
+
+    y += 40
+    draw.line([(40, y), (w - 40, y)], fill=(226, 232, 240), width=1)
+
+    y += 20
+    plan_name = subscription.plan_name if subscription else (payment.get_operation_type_display())
+    draw.text((55, y), "Subscription Plan:", fill=(100, 116, 139), font=font_normal)
+    draw.text((w - 55, y), plan_name, fill=(2, 132, 199), font=font_bold, anchor="ra")
+
+    if subscription:
+        y += 35
+        sub_period = f"{subscription.start_date.strftime('%Y-%m-%d')} to {subscription.end_date.strftime('%Y-%m-%d')}"
+        draw.text((55, y), "Validity Period:", fill=(100, 116, 139), font=font_normal)
+        draw.text((w - 55, y), sub_period, fill=(15, 23, 42), font=font_normal, anchor="ra")
+
+    y += 40
+    draw.line([(40, y), (w - 40, y)], fill=(226, 232, 240), width=1)
+
+    y += 20
+    draw.rounded_rectangle([40, y, w - 40, y + 130], radius=10, fill=(248, 250, 252), outline=(226, 232, 240), width=1)
+
+    curr = profile.currency or "EGP"
+    fy = y + 15
+    draw.text((60, fy), "Net Amount:", fill=(71, 85, 105), font=font_normal)
+    draw.text((w - 60, fy), f"{payment.amount} {curr}", fill=(15, 23, 42), font=font_bold, anchor="ra")
+
+    fy += 35
+    draw.text((60, fy), "Paid Amount:", fill=(22, 163, 74), font=font_bold)
+    draw.text((w - 60, fy), f"{payment.amount} {curr}", fill=(22, 163, 74), font=font_bold, anchor="ra")
+
+    fy += 35
+    rem = member.current_remaining if member else Decimal("0.00")
+    draw.text((60, fy), "Remaining Debt:", fill=(220, 38, 38) if rem > 0 else (71, 85, 105), font=font_normal)
+    draw.text((w - 60, fy), f"{rem} {curr}", fill=(220, 38, 38) if rem > 0 else (71, 85, 105), font=font_bold, anchor="ra")
+
+    y += 150
+    if rem <= 0:
+        draw.rounded_rectangle([w // 2 - 110, y, w // 2 + 110, y + 38], radius=8, fill=(220, 252, 231), outline=(34, 197, 94), width=1)
+        draw.text((w // 2, y + 19), "PAID IN FULL / خالص السداد", fill=(21, 128, 61), font=font_bold, anchor="mm")
+    else:
+        draw.rounded_rectangle([w // 2 - 110, y, w // 2 + 110, y + 38], radius=8, fill=(254, 242, 242), outline=(239, 68, 68), width=1)
+        draw.text((w // 2, y + 19), f"DEBT: {rem} {curr}", fill=(185, 28, 28), font=font_bold, anchor="mm")
+
+    draw.text((w // 2, h - 50), f"Thank you for choosing {gym_title}!", fill=(148, 163, 184), font=font_sm, anchor="mm")
+
+    img.save(str(png_file_path), "PNG")
+    logger.info("Generated standalone PNG invoice at: %s", png_file_path)
+    return f"invoices/{png_filename}"
+
+
 def queue_payment_receipt_whatsapp(payment: Payment, subscription=None) -> Optional[WhatsAppMessage]:
     """
-    Generates the HTML invoice document, formats receipt caption text,
-    and queues a WhatsAppMessage with the HTML file attached.
+    Generates the HTML invoice document and PNG receipt image, formats receipt caption text,
+    and queues a WhatsAppMessage with the receipt PNG image attached for WhatsApp Desktop delivery.
     """
     member = payment.member
     if not member or not member.mobile:
@@ -60,12 +170,13 @@ def queue_payment_receipt_whatsapp(payment: Payment, subscription=None) -> Optio
     if not profile.whatsapp_enabled:
         return None
 
-    # 1. Generate standalone lightweight HTML invoice file
+    # 1. Generate standalone HTML and PNG invoice files
+    rel_invoice_path = None
     try:
-        rel_invoice_path = generate_invoice_html_file(payment, subscription)
+        generate_invoice_html_file(payment, subscription)
+        rel_invoice_path = generate_invoice_image_file(payment, subscription)
     except Exception as exc:
-        logger.exception("Failed to generate HTML invoice file: %s", exc)
-        rel_invoice_path = None
+        logger.exception("Failed to generate invoice files: %s", exc)
 
     # 2. Build receipt text
     op_name = payment.get_operation_type_display()

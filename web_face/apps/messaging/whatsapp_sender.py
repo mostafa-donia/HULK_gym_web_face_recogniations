@@ -103,6 +103,10 @@ def copy_file(file_path: str) -> bool:
         return False
 
     abs_path = os.path.abspath(str(file_path))
+    stem, ext = os.path.splitext(abs_path)
+    if ext.lower() in [".html", ".htm"] and os.path.exists(stem + ".png"):
+        abs_path = stem + ".png"
+
     if not os.path.exists(abs_path):
         print(f"[copy_file] File not found: {abs_path}")
         return False
@@ -175,6 +179,79 @@ def copy_file(file_path: str) -> bool:
         return False
 
 
+def is_whatsapp_desktop_installed() -> tuple:
+    """
+    Checks if WhatsApp Desktop is installed on the Windows system.
+    Supports:
+    1. Microsoft Store WhatsApp Desktop (UWP / WindowsApps)
+    2. Registry protocol (whatsapp://)
+    3. Standalone executable paths
+    4. Currently running WhatsApp desktop processes
+    Returns: (is_installed: bool, message: str, details: dict)
+    """
+    details = {
+        "store_app": False,
+        "win32_exe": False,
+        "protocol_registered": False,
+        "running_process": False,
+    }
+
+    # 1. Check running processes
+    try:
+        import psutil
+        for p in psutil.process_iter(["name"]):
+            pname = (p.info.get("name") or "").lower()
+            if "whatsapp" in pname:
+                details["running_process"] = True
+                break
+    except Exception:
+        pass
+
+    # 2. Check Registry for whatsapp:// protocol
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, "whatsapp") as key:
+            winreg.QueryValueEx(key, "URL Protocol")
+            details["protocol_registered"] = True
+    except Exception:
+        pass
+
+    # 3. Check App execution alias and Win32 executable locations
+    local_app_data = os.environ.get("LOCALAPPDATA", "")
+    prog_files = os.environ.get("PROGRAMFILES", "C:\\Program Files")
+    prog_files_x86 = os.environ.get("PROGRAMFILES(X86)", "C:\\Program Files (x86)")
+    app_data = os.environ.get("APPDATA", "")
+
+    candidates = [
+        os.path.join(local_app_data, "Microsoft", "WindowsApps", "WhatsApp.exe"),
+        os.path.join(local_app_data, "WhatsApp", "WhatsApp.exe"),
+        os.path.join(prog_files, "WhatsApp", "WhatsApp.exe"),
+        os.path.join(prog_files_x86, "WhatsApp", "WhatsApp.exe"),
+        os.path.join(app_data, "WhatsApp", "WhatsApp.exe"),
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            details["win32_exe"] = True
+            break
+
+    # 4. Check WindowsApps directory patterns
+    try:
+        import glob
+        matches = glob.glob(r"C:\Program Files\WindowsApps\*WhatsApp*")
+        if matches:
+            details["store_app"] = True
+    except Exception:
+        pass
+
+    installed = details["protocol_registered"] or details["running_process"] or details["store_app"] or details["win32_exe"]
+    if installed:
+        msg = "تطبيق واتساب للكمبيوتر (WhatsApp Desktop) مثبت وجاهز للاستخدام."
+    else:
+        msg = "تطبيق واتساب للكمبيوتر (WhatsApp Desktop) غير مثبت على هذا الجهاز. يرجى تثبيته من Microsoft Store."
+
+    return installed, msg, details
+
+
 def copy_image_to_clipboard(image_path):
     """Backward compatibility alias for copy_file."""
     return copy_file(image_path)
@@ -182,99 +259,75 @@ def copy_image_to_clipboard(image_path):
 
 def whatsupp_ready() -> bool:
     """
-    Ensures WhatsApp Web window/tab is active, restored, and focused in the foreground.
-    Does NOT minimize the browser or trigger conflicting OS window toggling.
+    Ensures WhatsApp Desktop (native Windows application) is installed, running, restored,
+    and active in the foreground.
+    Strictly works on WhatsApp Desktop ONLY (no Chrome or WhatsApp Web).
     """
     if "test" in sys.argv:
         return True
 
-    print("[whatsupp_ready] Checking Chrome and WhatsApp windows...")
+    installed, msg, _ = is_whatsapp_desktop_installed()
+    if not installed:
+        print(f"[whatsupp_ready] ERROR: {msg}")
+        return False
 
-    # 1. Check for standalone/app window with WhatsApp in title
+    print("[whatsupp_ready] Checking for WhatsApp Desktop window...")
+
+    def find_whatsapp_window():
+        try:
+            from pygetwindow import getAllWindows
+            all_win = getAllWindows()
+        except Exception:
+            all_win = []
+
+        matching = []
+        for w in all_win:
+            title = getattr(w, "title", "") or ""
+            # Must contain WhatsApp or واتساب, and NOT belong to a browser
+            if ("WhatsApp" in title or "واتساب" in title) and not any(
+                b in title for b in ["Chrome", "Edge", "Firefox", "Brave", "Opera"]
+            ):
+                matching.append(w)
+        return matching
+
+    whatsapp_windows = find_whatsapp_window()
+
+    # If not running / not opened, launch WhatsApp Desktop via whatsapp: protocol
+    if not whatsapp_windows:
+        print("[whatsupp_ready] WhatsApp Desktop is not running. Launching via 'start whatsapp:' ...")
+        Popen("start whatsapp:", shell=True)
+        # Wait up to 15 seconds for WhatsApp window to appear
+        for _ in range(30):
+            sleep(0.5)
+            whatsapp_windows = find_whatsapp_window()
+            if whatsapp_windows:
+                break
+
+    if not whatsapp_windows:
+        print("[whatsupp_ready] Could not find or open WhatsApp Desktop window.")
+        return False
+
+    target = whatsapp_windows[0]
+    hwnd = getattr(target, "_hWnd", None)
+
+    # Restore if minimized and bring to foreground reliably via Win32 API
     try:
-        direct_whatsapp = [
-            w for w in getAllWindows()
-            if ("WhatsApp" in getattr(w, "title", "") or "واتساب" in getattr(w, "title", ""))
-            and getattr(w, "visible", True) and getattr(w, "width", 0) > 200
-        ]
-        if direct_whatsapp:
-            target = direct_whatsapp[0]
+        if hwnd:
+            user32 = ctypes.windll.user32
+            if user32.IsIconic(hwnd):
+                user32.ShowWindow(hwnd, 9)  # SW_RESTORE = 9
+            else:
+                user32.ShowWindow(hwnd, 5)  # SW_SHOW = 5
+            user32.SetForegroundWindow(hwnd)
+        else:
             if getattr(target, "isMinimized", False):
                 target.restore()
             target.activate()
-            sleep(0.8)
-            print(f"[whatsupp_ready] Focused direct WhatsApp window: {target.title}")
-            return True
     except Exception as e:
-        print(f"[whatsupp_ready] Error checking direct WhatsApp: {e}")
+        print(f"[whatsupp_ready] Focus warning: {e}")
 
-    # 2. Check for Chrome/Edge/Browser windows
-    try:
-        all_windows = getAllWindows()
-    except Exception:
-        all_windows = []
-
-    chrome_windows = [
-        w for w in all_windows
-        if ("Chrome" in getattr(w, "title", "") or "Edge" in getattr(w, "title", "") or "Brave" in getattr(w, "title", ""))
-        and getattr(w, "visible", True) and getattr(w, "width", 0) > 200
-    ]
-
-    if not chrome_windows:
-        chrome_windows = [w for w in all_windows if "Chrome" in getattr(w, "title", "")]
-
-    if not chrome_windows:
-        print("[whatsupp_ready] No Chrome window found. Launching WhatsApp Web...")
-        Popen("start chrome https://web.whatsapp.com", shell=True)
-        for _ in range(30):
-            sleep(0.5)
-            try:
-                active_win = getActiveWindow()
-                title = getattr(active_win, "title", "") or ""
-                if "WhatsApp" in title or "واتساب" in title:
-                    break
-            except Exception:
-                pass
-    else:
-        chrome = chrome_windows[0]
-        if getattr(chrome, "isMinimized", False):
-            chrome.restore()
-        chrome.activate()
-        sleep(0.8)
-
-    # 3. Cycle tabs to ensure WhatsApp tab is active
-    whats_tab_found = False
-    for _ in range(25):
-        try:
-            active_win = getActiveWindow()
-            active_title = getattr(active_win, "title", "") or ""
-            print(f"[whatsupp_ready] Active window title: {active_title}")
-            if "WhatsApp" in active_title or "واتساب" in active_title:
-                print("[whatsupp_ready] Switched to WhatsApp tab.")
-                whats_tab_found = True
-                break
-        except Exception:
-            pass
-        hotkey("ctrl", "tab")
-        sleep(0.2)
-
-    if whats_tab_found:
-        print("[whatsupp_ready] WhatsApp tab is active.")
-        return True
-
-    # 4. If WhatsApp tab not open inside Chrome, launch it
-    print("[whatsupp_ready] WhatsApp tab not found. Opening new one in Chrome...")
-    Popen("start chrome https://web.whatsapp.com", shell=True)
-    for _ in range(30):
-        sleep(0.5)
-        try:
-            active_win = getActiveWindow()
-            title = getattr(active_win, "title", "") or ""
-            if "WhatsApp" in title or "واتساب" in title:
-                break
-        except Exception:
-            pass
-
+    sleep(0.8)
+    print(f"[whatsupp_ready] WhatsApp Desktop is focused: {getattr(target, 'title', 'WhatsApp')}")
     return True
 
 
@@ -319,7 +372,7 @@ def send_message(
 ) -> bool:
     """
     Sends a WhatsApp message and/or file attachment (invoice, report, image) to the specified phone.
-    Uses proven reliable search coordinates, file pasting, and search validation.
+    Works strictly on WhatsApp Desktop.
     """
     global sent, unsent
     if "test" in sys.argv:
@@ -340,34 +393,58 @@ def send_message(
             pass
 
     phone = str(phone).strip()
-    print(f"[send_message] Sending to: {phone}")
+    print(f"[send_message] Sending to: {phone} via WhatsApp Desktop")
 
-    # 1. Focus WhatsApp and set keyboard layout
-    whatsupp_ready()
+    # 1. Focus WhatsApp Desktop and switch keyboard layout
+    if not whatsupp_ready():
+        print(f"[send_message] WhatsApp Desktop could not be focused for {phone}")
+        return False
+
     set_keyboard_layout_to_english()
-    random_delay(0.2, 0.5)
+    random_delay(0.2, 0.4)
 
-    # 2. Click search box and search for contact
-    human_move_to(x_search, y_search)
-    pyautogui.click()
-    random_delay(0.15, 0.3)
+    # 2. Focus search in WhatsApp Desktop (Ctrl+F is native search in WhatsApp Desktop)
+    hotkey("ctrl", "f")
+    random_delay(0.2, 0.3)
 
+    if x_search and y_search:
+        try:
+            human_move_to(x_search, y_search)
+            pyautogui.click()
+            random_delay(0.15, 0.25)
+        except Exception:
+            pass
+
+    # Clear previous search content
     hotkey("ctrl", "a")
-    write(" ")
-    write(phone)
-    random_delay(0.8, 1.4)
+    press("backspace")
+    random_delay(0.1, 0.2)
+
+    # Paste phone number to avoid keyboard layout discrepancies
+    copy(phone)
+    hotkey("ctrl", "v")
+    random_delay(1.2, 1.8)
     press("enter")
-    random_delay(1.5, 2.5)
+    random_delay(1.8, 2.8)
 
     # 3. Paste file / invoice attachment if present
-    has_image = bool(image and isinstance(image, str) and os.path.exists(image))
-    if has_image:
-        print(f"[send_message] Attaching file/invoice: {image}")
-        if copy_file(image):
-            random_delay(0.3, 0.6)
+    # Check if image path exists (or if .html has a matching .png)
+    target_img = None
+    if image and isinstance(image, str):
+        if os.path.exists(image):
+            target_img = image
+        else:
+            stem, ext = os.path.splitext(image)
+            if ext.lower() == ".html" and os.path.exists(stem + ".png"):
+                target_img = stem + ".png"
+
+    if target_img:
+        print(f"[send_message] Attaching file/invoice image: {target_img}")
+        if copy_file(target_img):
+            random_delay(0.4, 0.7)
             hotkey("ctrl", "v")
-            # Wait for WhatsApp attachment preview modal (5 to 8s as proven)
-            random_delay(5.0, 8.0)
+            # Wait for WhatsApp Desktop attachment preview modal to appear
+            random_delay(2.5, 3.8)
             if message:
                 copy(message)
                 random_delay(0.3, 0.6)
@@ -393,23 +470,15 @@ def send_message(
             press("enter")
             random_delay(1.2, 2.0)
 
-    # 4. Verify chat opened by checking if search box still holds phone number
-    human_move_to(x_search, y_search)
-    pyautogui.click()
-    hotkey("ctrl", "a")
-    hotkey("ctrl", "c")
-    random_delay(0.2, 0.4)
-    search = paste()
-    x = len(phone) + 1
-    if search and search[0:x] == " " + phone:
-        print(f"[send_message] Phone {phone} not found in WhatsApp (search box still holds number)")
-        press("delete")
-        if return_to_system:
-            return_to_system_tab()
-        return False
-
-    press("delete")
-    sleep(0.2)
+    # 4. Clean search bar without destructive coordinate clicks
+    try:
+        hotkey("ctrl", "f")
+        random_delay(0.15, 0.25)
+        hotkey("ctrl", "a")
+        press("backspace")
+        press("esc")
+    except Exception:
+        pass
 
     if return_to_system:
         return_to_system_tab()

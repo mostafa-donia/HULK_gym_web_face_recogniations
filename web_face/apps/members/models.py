@@ -1,7 +1,8 @@
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 
 class Plan(models.Model):
@@ -113,6 +114,115 @@ class Member(models.Model):
             if save:
                 self.save(update_fields=["current_status", "updated_at"])
         return self.current_status
+
+    def is_alternate_days_subscription(self) -> bool:
+        """
+        Checks whether the member's current subscription follows 'day on day off' (يوم ويوم).
+        """
+        target_keywords = ["يوم ويوم", "يوم بعد يوم", "day on day off", "alternate"]
+        if self.last_subscription_type:
+            name_lower = self.last_subscription_type.lower()
+            if any(kw in name_lower for kw in target_keywords):
+                return True
+
+        latest_sub = self.subscriptions.order_by("-created_at").first()
+        if latest_sub:
+            if latest_sub.plan_name:
+                if any(kw in latest_sub.plan_name.lower() for kw in target_keywords):
+                    return True
+            if latest_sub.plan and latest_sub.plan.frequency:
+                if any(kw in latest_sub.plan.frequency.lower() for kw in target_keywords):
+                    return True
+        return False
+
+    def check_access_eligibility(self, current_time=None) -> dict:
+        """
+        Evaluates whether the member is allowed to enter right now.
+        Enforces:
+        1. Active subscription check (not expired).
+        2. For 'day on day off' (يوم ويوم) plans:
+           - Rule A: Cannot attend 2 days in a row. Blocked if member attended yesterday.
+           - Rule B: Daily workout window is 4 hours from their first entry today.
+                     If 4 hours have elapsed since the first check-in today, entry is denied for the rest of today.
+        """
+        if current_time is None:
+            current_time = timezone.now()
+
+        # 1. Base active check
+        if not self.is_active:
+            return {
+                "allowed": False,
+                "reason_code": "expired",
+                "reason": "الاشتراك منتهي. يرجى التجديد بمكتب الاستقبال.",
+                "window_hours_left": None,
+                "first_entry_time": None,
+            }
+
+        # If not day-on-day-off subscription, normal entry allowed
+        if not self.is_alternate_days_subscription():
+            return {
+                "allowed": True,
+                "reason_code": "active",
+                "reason": "مسموح بالدخول",
+                "window_hours_left": None,
+                "first_entry_time": None,
+            }
+
+        # 2. Alternate days rules ('يوم ويوم')
+        today = timezone.localdate(current_time)
+        yesterday = today - timedelta(days=1)
+
+        # Rule A: Cannot attend 2 days in a row (check if member attended yesterday, excluding denied events)
+        yesterday_attended = self.check_ins.filter(
+            checked_in_at__date=yesterday
+        ).exclude(status_snapshot__startswith="denied").exists()
+
+        if yesterday_attended:
+            return {
+                "allowed": False,
+                "reason_code": "consecutive_day_blocked",
+                "reason": "عفواً، باقتك (يوم ويوم) وغير مسموح بالدخول يومين متتاليين (سجلت حضوراً بالأمس).",
+                "window_hours_left": None,
+                "first_entry_time": None,
+            }
+
+        # Rule B: 4-hour window from first entry today
+        today_checkins = self.check_ins.filter(
+            checked_in_at__date=today
+        ).exclude(status_snapshot__startswith="denied").order_by("checked_in_at")
+
+        if today_checkins.exists():
+            first_entry = today_checkins.first()
+            elapsed = current_time - first_entry.checked_in_at
+            max_window = timedelta(hours=4)
+            if elapsed > max_window:
+                first_entry_local = timezone.localtime(first_entry.checked_in_at).strftime("%I:%M %p")
+                return {
+                    "allowed": False,
+                    "reason_code": "daily_window_expired",
+                    "reason": f"عفواً، انتهت نافذة التمرين اليومية (4 ساعات من أول دخول الساعة {first_entry_local}).",
+                    "window_hours_left": 0.0,
+                    "first_entry_time": first_entry.checked_in_at,
+                }
+            else:
+                remaining_seconds = (max_window - elapsed).total_seconds()
+                remaining_hours = round(max(0.0, remaining_seconds / 3600.0), 1)
+                return {
+                    "allowed": True,
+                    "reason_code": "active_within_window",
+                    "reason": f"مسموح بالدخول (متبقي من نافذة تمرينك اليوم {remaining_hours} ساعة)",
+                    "window_hours_left": remaining_hours,
+                    "first_entry_time": first_entry.checked_in_at,
+                }
+
+        # First entry of the day
+        return {
+            "allowed": True,
+            "reason_code": "first_entry_today",
+            "reason": "مسموح بالدخول (أول دخول اليوم — نافذة التمرين 4 ساعات)",
+            "window_hours_left": 4.0,
+            "first_entry_time": None,
+        }
 
 
 class Subscription(models.Model):

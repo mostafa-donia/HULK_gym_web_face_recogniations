@@ -489,7 +489,9 @@ class FaceEngine:
                     member = Member.objects.filter(id=member_id).first()
                     if member:
                         member.refresh_status()
-                        is_active = member.is_active
+                        eligibility = member.check_access_eligibility()
+                        access_allowed = eligibility["allowed"]
+                        is_active = access_allowed
 
                         color = (34, 197, 94) if is_active else (239, 68, 68)
                         cv2.rectangle(annotated, (x, y), (x + w, y + h), color, 2)
@@ -513,7 +515,7 @@ class FaceEngine:
                             checked_in_at__gte=cutoff
                         ).first()
 
-                        if not recent_checkin:
+                        if access_allowed and not recent_checkin:
                             CheckInEvent.objects.create(
                                 member=member,
                                 method="face",
@@ -523,23 +525,26 @@ class FaceEngine:
                                 debt_snapshot=member.current_remaining,
                             )
 
-                        if is_active and profile.gate_relay_enabled:
+                        gate_opened = bool(access_allowed and profile.gate_relay_enabled)
+                        if gate_opened:
                             self.trigger_gate_relay(port=profile.gate_relay_port or "COM3")
 
                         today = timezone.localdate()
-                        expired_days = (today - member.last_subscription_end).days if (member.last_subscription_end and not is_active) else 0
+                        expired_days = (today - member.last_subscription_end).days if (member.last_subscription_end and not member.is_active) else 0
                         end_date_str = member.last_subscription_end.strftime("%d/%m/%Y") if member.last_subscription_end else "غير محدد"
 
                         event_data = {
                             "id": str(now_ts),
                             "timestamp": now_ts,
                             "score": round(match_score * 100, 1),
-                            "gate_opened": is_active and profile.gate_relay_enabled,
+                            "gate_opened": gate_opened,
+                            "access_allowed": access_allowed,
+                            "deny_reason": eligibility["reason"] if not access_allowed else None,
                             "member": {
                                 "id": member.id,
                                 "name": member.name,
                                 "member_id": member.member_id,
-                                "is_active": is_active,
+                                "is_active": access_allowed,
                                 "days_left": member.days_left,
                                 "end_date": end_date_str,
                                 "expired_days": expired_days,
@@ -547,6 +552,8 @@ class FaceEngine:
                                 "remaining": str(member.current_remaining),
                                 "plan": member.last_subscription_type or "باقة أساسية",
                                 "photo_url": member.face_photo.url if member.face_photo else None,
+                                "deny_reason": eligibility["reason"] if not access_allowed else None,
+                                "window_hours_left": eligibility.get("window_hours_left"),
                             }
                         }
 

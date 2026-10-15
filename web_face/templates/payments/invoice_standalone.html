@@ -249,7 +249,7 @@
     {% endif %}
 
     <div class="footer-note">
-      <p>المحصل: <strong>{{ payment.created_by.first_name|default:payment.created_by.username|default:"كاشير الصالة" }}</strong></p>
+      <p>المحصل: <strong>{% if payment.created_by %}{{ payment.created_by.first_name|default:payment.created_by.username }}{% else %}كاشير الصالة{% endif %}</strong></p>
       <p style="margin-top: 5px;">شكراً لاختيارك {{ profile.gym_name|default:"HULK GYM" }} 💪 نتمنى لك فورمة وتمرين ممتع!</p>
     </div>
 

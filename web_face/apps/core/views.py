@@ -111,15 +111,35 @@ def quick_search_view(request):
 
 @login_required
 def quick_checkin_view(request, member_id):
-    """Logs member attendance and returns quick feedback."""
+    """Logs member attendance and returns quick feedback enforcing access rules."""
     member = get_object_or_404(Member, id=member_id)
-    today = timezone.localdate()
-    is_active = bool(member.last_subscription_end and member.last_subscription_end >= today)
-    days_left = max(0, (member.last_subscription_end - today).days) if is_active else 0
+    member.refresh_status()
+
+    eligibility = member.check_access_eligibility()
+    access_allowed = eligibility["allowed"]
+    days_left = member.days_left
+
+    if not access_allowed:
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "core/partials/checkin_response.html",
+                {
+                    "member": member,
+                    "is_active": False,
+                    "access_allowed": False,
+                    "deny_reason": eligibility["reason"],
+                    "days_left": days_left,
+                    "debt": member.current_remaining,
+                },
+            )
+        messages.error(request, f"تم رفض دخول العضو {member.name}: {eligibility['reason']}")
+        return redirect("core:dashboard")
 
     CheckInEvent.objects.create(
         member=member,
-        status_snapshot="active" if is_active else "expired",
+        method="manual",
+        status_snapshot="active",
         days_left_snapshot=days_left,
         debt_snapshot=member.current_remaining,
     )
@@ -130,9 +150,11 @@ def quick_checkin_view(request, member_id):
             "core/partials/checkin_response.html",
             {
                 "member": member,
-                "is_active": is_active,
+                "is_active": True,
+                "access_allowed": True,
                 "days_left": days_left,
                 "debt": member.current_remaining,
+                "window_hours_left": eligibility.get("window_hours_left"),
             },
         )
 

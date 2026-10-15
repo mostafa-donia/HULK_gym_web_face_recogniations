@@ -71,6 +71,8 @@ def whatsapp_queue_view(request):
         "type_choices": MessageType.choices,
         "gym_profile": profile,
         "pending_summary": pending_summary,
+        "whatsapp_desktop_installed": pending_summary.get("desktop_installed", True),
+        "whatsapp_desktop_status": pending_summary.get("desktop_status", ""),
         "open_send_pending": request.GET.get("open_send_pending") == "1",
     }
     return render(request, "messaging/whatsapp_queue.html", context)
@@ -429,10 +431,19 @@ def whatsapp_dispatch_batch_api(request):
     res = dispatch_all_pending(limit=limit, selected_ids=selected_ids if selected_ids else None, msg_type=msg_type)
     summary = get_pending_summary()
 
+    if res.get("desktop_installed") is False:
+        return JsonResponse({
+            "success": False,
+            "error": res.get("error", "تطبيق واتساب للكمبيوتر غير مثبت على هذا الجهاز."),
+            "desktop_installed": False,
+            "summary": summary,
+        }, status=400)
+
     return JsonResponse({
         "success": True,
         "processed": res["processed"],
         "sent": res["sent"],
         "failed": res["failed"],
+        "desktop_installed": True,
         "summary": summary,
     })

@@ -78,13 +78,17 @@ def api_face_verify(request):
     # Update active/expired status against today
     member.refresh_status()
 
+    # Check access eligibility (active status + day-on-day-off rules)
+    eligibility = member.check_access_eligibility()
+    access_allowed = eligibility["allowed"]
+
     # Debounce check (prevent duplicate logs within debounce window)
     debounce_sec = profile.face_debounce_seconds or 60
     cutoff = timezone.now() - timedelta(seconds=debounce_sec)
     recent_checkin = CheckInEvent.objects.filter(member=member, checked_in_at__gte=cutoff).first()
 
     logged_new = False
-    if not recent_checkin:
+    if access_allowed and not recent_checkin:
         CheckInEvent.objects.create(
             member=member,
             method="face",
@@ -96,7 +100,7 @@ def api_face_verify(request):
         logged_new = True
 
         # Trigger physical turnstile / magnetic lock gate relay
-        if member.is_active and profile.gate_relay_enabled:
+        if profile.gate_relay_enabled:
             engine.trigger_gate_relay(port=profile.gate_relay_port or "COM3")
 
     today = timezone.localdate()
@@ -106,14 +110,16 @@ def api_face_verify(request):
     return JsonResponse({
         "success": True,
         "matched": True,
+        "access_allowed": access_allowed,
+        "deny_reason": eligibility["reason"] if not access_allowed else None,
         "logged_new": logged_new,
-        "debounced": not logged_new,
+        "debounced": not logged_new and access_allowed,
         "score": round(score * 100, 1),
         "member": {
             "id": member.id,
             "name": member.name,
             "member_id": member.member_id,
-            "is_active": member.is_active,
+            "is_active": access_allowed,
             "days_left": member.days_left,
             "end_date": end_date_str,
             "expired_days": expired_days,
@@ -121,8 +127,10 @@ def api_face_verify(request):
             "remaining": str(member.current_remaining),
             "plan": member.last_subscription_type or "باقة أساسية",
             "photo_url": member.face_photo.url if member.face_photo else None,
+            "deny_reason": eligibility["reason"] if not access_allowed else None,
+            "window_hours_left": eligibility.get("window_hours_left"),
         },
-        "gate_opened": member.is_active and profile.gate_relay_enabled,
+        "gate_opened": bool(access_allowed and profile.gate_relay_enabled and logged_new),
     })
 
 
