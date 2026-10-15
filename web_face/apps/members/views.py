@@ -441,53 +441,69 @@ def member_edit_view(request, member_id):
 
 @login_required
 def member_quick_private_update_view(request, member_id):
-    """Quick modal/card update from Member Detail page for Private Add-on and Renewal Discount."""
+    """Quick modal/card update from Member Detail page for Private Add-on and/or Renewal Discount independently."""
     member = get_object_or_404(Member, id=member_id)
     if request.method == "POST":
-        old_has_private = member.has_private
-        old_private_price = member.private_price
-        old_coach = member.assigned_coach
-        old_discount_enabled = member.discount_enabled
-        old_renewal_discount = member.renewal_discount
+        update_target = request.POST.get("update_target", "all")
 
-        new_has_private = request.POST.get("has_private") in ["1", "on", "true"]
-        new_private_price = Decimal(request.POST.get("private_price", str(member.private_price or "600.00")) or "600.00")
-        coach_id = request.POST.get("assigned_coach_id")
-        new_coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first() if coach_id else None
-        new_discount_enabled = request.POST.get("discount_enabled") in ["1", "on", "true"]
-        new_renewal_discount = Decimal(request.POST.get("renewal_discount", str(member.renewal_discount or "0.00")) or "0.00")
+        # 1. Update Private Training if targeted or present
+        if update_target in ["all", "private"]:
+            old_has_private = member.has_private
+            old_private_price = member.private_price
+            old_coach = member.assigned_coach
 
-        member.has_private = new_has_private
-        member.private_price = new_private_price
-        member.assigned_coach = new_coach
-        member.discount_enabled = new_discount_enabled
-        member.renewal_discount = new_renewal_discount
+            new_has_private = request.POST.get("has_private") in ["1", "on", "true"]
+            new_private_price = Decimal(request.POST.get("private_price", str(member.private_price or "600.00")) or "600.00")
+            coach_id = request.POST.get("assigned_coach_id")
+            new_coach = Employee.objects.filter(id=coach_id, role=EmployeeRole.TRAINER).first() if coach_id else None
+
+            member.has_private = new_has_private
+            member.private_price = new_private_price if new_has_private else Decimal("0.00")
+            member.assigned_coach = new_coach if new_has_private else None
+
+            if old_has_private != new_has_private or old_private_price != new_private_price or old_coach != new_coach:
+                status_desc = "تفعيل" if new_has_private else "إلغاء تفعيل"
+                coach_str = new_coach.name if new_coach else "بدون كابتن"
+                log_audit_event(
+                    user=request.user,
+                    action="private_status_changed",
+                    target_model="Member",
+                    target_id=str(member.id),
+                    details=f"تم {status_desc} التدريب الخاص للاعب {member.name}. السعر: {new_private_price} ج، الكابتن: {coach_str}",
+                    amount=new_private_price if new_has_private else Decimal("0.00"),
+                )
+
+        # 2. Update Renewal Discount if targeted or present (Standalone for any plan: normal or private)
+        if update_target in ["all", "discount"]:
+            old_discount_enabled = member.discount_enabled
+            old_renewal_discount = member.renewal_discount
+
+            new_discount_enabled = request.POST.get("discount_enabled") in ["1", "on", "true"]
+            new_renewal_discount = Decimal(request.POST.get("renewal_discount", str(member.renewal_discount or "0.00")) or "0.00")
+
+            member.discount_enabled = new_discount_enabled
+            member.renewal_discount = new_renewal_discount if new_discount_enabled else Decimal("0.00")
+
+            if old_discount_enabled != new_discount_enabled or old_renewal_discount != new_renewal_discount:
+                status_desc = "تفعيل" if new_discount_enabled else "إلغاء"
+                log_audit_event(
+                    user=request.user,
+                    action="discount_preset_changed",
+                    target_model="Member",
+                    target_id=str(member.id),
+                    details=f"تم {status_desc} خصم التجديد للاعب {member.name} (للباقات العادية أو البرايفت). القيمة: {new_renewal_discount} ج (سابقاً: {old_renewal_discount} ج)",
+                    amount=new_renewal_discount,
+                )
+
         member.save()
 
-        if old_has_private != new_has_private or old_private_price != new_private_price or old_coach != new_coach:
-            status_desc = "تفعيل" if new_has_private else "إلغاء تفعيل"
-            coach_str = new_coach.name if new_coach else "بدون كابتن"
-            log_audit_event(
-                user=request.user,
-                action="private_status_changed",
-                target_model="Member",
-                target_id=str(member.id),
-                details=f"تم {status_desc} التدريب الخاص للاعب {member.name}. السعر: {new_private_price} ج، الكابتن: {coach_str}",
-                amount=new_private_price if new_has_private else Decimal("0.00"),
-            )
+        if update_target == "private":
+            messages.success(request, f"تم تحديث باقة التدريب الخاص (Private) للاعب {member.name} بنجاح.")
+        elif update_target == "discount":
+            messages.success(request, f"تم تحديث سياسة خصم التجديد للاعب {member.name} بنجاح.")
+        else:
+            messages.success(request, f"تم تحديث بيانات التدريب الخاص وسياسة الخصم للاعب {member.name} بنجاح.")
 
-        if old_discount_enabled != new_discount_enabled or old_renewal_discount != new_renewal_discount:
-            status_desc = "تفعيل" if new_discount_enabled else "إلغاء"
-            log_audit_event(
-                user=request.user,
-                action="discount_preset_changed",
-                target_model="Member",
-                target_id=str(member.id),
-                details=f"تم {status_desc} خصم التجديد للاعب {member.name}. القيمة: {new_renewal_discount} ج (سابقاً: {old_renewal_discount} ج)",
-                amount=new_renewal_discount,
-            )
-
-        messages.success(request, f"تم تحديث بيانات التدريب الخاص والخصم للاعب {member.name} بنجاح.")
     return redirect("members:member_detail", member_id=member.id)
 
 

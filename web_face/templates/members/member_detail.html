@@ -174,80 +174,118 @@
 
   </div>
 
-  <!-- Private Training Add-on & Renewal Discount Status Card -->
-  <div class="card" style="margin-bottom: 24px; padding: 20px 24px; background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.25); border-radius: 12px; box-shadow: var(--shadow-sm);">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 14px;">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 1.4rem;">🏋️‍♂️</span>
-        <div>
-          <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0;">
-            باقة التدريب الخاص (Private Add-on) وسياسة الخصم
-          </h3>
-          <span style="color: var(--text-muted); font-size: 0.84rem;">
-            إعدادات البرايفت المضافة والمدرب المسؤول وخصومات التجديد المعتمدة للاعب
+  <!-- Two Distinct Cards: 1. Private Coaching Add-on  2. Approved Renewal Discount (Independent of Private) -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-bottom: 24px;">
+    
+    <!-- Card 1: VIP Private Coaching Add-on -->
+    <div class="card" style="padding: 20px 22px; background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.25); border-radius: 12px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.3rem;">🏋️‍♂️</span>
+            <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 800; margin: 0;">
+              باقة التدريب الخاص (Private Add-on)
+            </h3>
+          </div>
+          <button type="button" onclick="openQuickPrivateModal()" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-weight: 800; font-size: 0.85rem;">
+            ✏️ تعديل البرايفت
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <!-- Status -->
+          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px;">
+            <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; display: block;">الحالة</span>
+            <div style="margin-top: 4px;">
+              {% if member.has_private %}
+                <span class="badge badge-active" style="font-size: 0.85rem;">🟢 مفعّل VIP</span>
+              {% else %}
+                <span class="badge badge-neutral" style="font-size: 0.85rem; color: var(--text-muted);">⚪ غير مشترك</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Price Markup -->
+          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px;">
+            <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; display: block;">سعر الإضافة</span>
+            <div style="color: #A8F14B; font-size: 1.15rem; font-weight: 900; margin-top: 2px;">
+              {{ member.private_price }} <small style="font-size: 0.75rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coach -->
+        <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px;">
+          <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; display: block;">الكابتن المسند (المدرب)</span>
+          <div style="margin-top: 3px;">
+            {% if member.assigned_coach %}
+              <a href="{% url 'payroll:coach_detail' member.assigned_coach.id %}" style="color: #4DB3FF; font-weight: 800; font-size: 0.98rem; text-decoration: none;">
+                {{ member.assigned_coach.name }}
+              </a>
+              <span style="color: var(--text-muted); font-size: 0.75rem; margin-right: 6px;">
+                (نسبة عمولته: {{ member.assigned_coach.commission_percentage }}%)
+              </span>
+            {% else %}
+              <span style="color: var(--text-dim); font-size: 0.9rem;">غير محدد</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <small style="color: var(--text-dim); font-size: 0.75rem; display: block; margin-top: 10px;">إضافة مدفوعة تضاف فوق سعر الاشتراك الأساسي شهرياً.</small>
+    </div>
+
+    <!-- Card 2: Standalone Approved Renewal Discount (Universal: Normal & Private Plans) -->
+    <div class="card" style="padding: 20px 22px; background: var(--bg-card); border: 1px solid rgba(255, 179, 0, 0.3); border-radius: 12px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.3rem;">🏷️</span>
+            <div>
+              <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 800; margin: 0;">
+                سياسة الخصم المعتمد (لأي باقة)
+              </h3>
+            </div>
+          </div>
+          <button type="button" onclick="openQuickDiscountModal()" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-weight: 800; font-size: 0.85rem; border-color: #FFB300; color: #FFB300;">
+            ✏️ تعديل الخصم
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <!-- Discount Status -->
+          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px;">
+            <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; display: block;">حالة الخصم</span>
+            <div style="margin-top: 4px;">
+              {% if member.discount_enabled and member.renewal_discount > 0 %}
+                <span class="badge" style="background: rgba(255, 179, 0, 0.18); color: #FFB300; font-size: 0.85rem; font-weight: 800;">✓ مفعّل للتجديد</span>
+              {% else %}
+                <span class="badge badge-neutral" style="font-size: 0.85rem; color: var(--text-muted);">بدون خصم (0 ج)</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Discount Amount -->
+          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px;">
+            <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; display: block;">قيمة الخصم المعتمد</span>
+            <div style="color: #FFB300; font-size: 1.25rem; font-weight: 900; margin-top: 2px;">
+              {{ member.renewal_discount|default:"0.00" }} <small style="font-size: 0.75rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Universal Coverage Note -->
+        <div style="background: rgba(255, 179, 0, 0.05); border: 1px dashed rgba(255, 179, 0, 0.25); border-radius: 8px; padding: 10px 12px;">
+          <span style="color: #FFB300; font-size: 0.82rem; font-weight: 700; display: block;">
+            💡 الخصم غير مقيد بالبرايفت إطلاقاً:
+          </span>
+          <span style="color: var(--text-muted); font-size: 0.78rem; line-height: 1.4; display: block; margin-top: 2px;">
+            يطبق تلقائياً عند تجديد اللاعب سواء اختار باقة عادية (كل يوم أو يوم ويوم) أو باقة مضافاً إليها تدريب خاص.
           </span>
         </div>
       </div>
-
-      <button type="button" onclick="openQuickPrivateModal()" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; font-weight: 800;">
-        ✏️ تعديل البرايفت والخصم
-      </button>
+      <small style="color: var(--text-dim); font-size: 0.75rem; display: block; margin-top: 10px;">محمي بسجل تدقيق المدير ويطبق في التجديدات.</small>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-      <!-- Private Status -->
-      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px;">
-        <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">حالة التدريب الخاص (Private)</span>
-        <div style="margin-top: 6px;">
-          {% if member.has_private %}
-            <span class="badge badge-active" style="font-size: 0.9rem;">🟢 مفعّل (تدريب خاص VIP)</span>
-          {% else %}
-            <span class="badge badge-neutral" style="font-size: 0.9rem; color: var(--text-muted);">⚪ غير مشترك في البرايفت</span>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Coach Assigned -->
-      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px;">
-        <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">الكابتن المسند (المدرب)</span>
-        <div style="margin-top: 6px;">
-          {% if member.assigned_coach %}
-            <a href="{% url 'payroll:coach_detail' member.assigned_coach.id %}" style="color: #4DB3FF; font-weight: 800; font-size: 1.05rem; text-decoration: none;">
-              {{ member.assigned_coach.name }}
-            </a>
-            <span style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 2px;">
-              (عمولة الكابتن: {{ member.assigned_coach.commission_percentage }}%)
-            </span>
-          {% else %}
-            <span style="color: var(--text-dim); font-size: 0.95rem;">غير محدد</span>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Private Price Markup -->
-      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px;">
-        <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">سعر إضافة البرايفت</span>
-        <div style="color: #A8F14B; font-size: 1.25rem; font-weight: 900; margin-top: 4px;">
-          {{ member.private_price }} <small style="font-size: 0.85rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
-        </div>
-        <span style="color: var(--text-dim); font-size: 0.78rem;">تضاف فوق باقة الاشتراك الأساسية</span>
-      </div>
-
-      <!-- Renewal Discount Policy -->
-      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px;">
-        <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">خصم التجديد المعتمد من الإدارة</span>
-        <div style="margin-top: 6px;">
-          {% if member.discount_enabled and member.renewal_discount > 0 %}
-            <span style="color: #FFB300; font-size: 1.25rem; font-weight: 900;">
-              {{ member.renewal_discount }} <small style="font-size: 0.85rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
-            </span>
-            <span class="badge" style="background: rgba(255, 179, 0, 0.15); color: #FFB300; font-size: 0.75rem; margin-right: 6px;">مفعّل للتجديد فقط</span>
-          {% else %}
-            <span style="color: var(--text-dim); font-size: 0.95rem;">بدون خصم (0 ج.م)</span>
-          {% endif %}
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Table 1: Full-Width Subscription History Table -->
@@ -995,25 +1033,26 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 350);
   }
 });
-<!-- Quick Private & Discount Modal -->
+<!-- Dedicated Modal 1: VIP Private Coaching Settings -->
 <div id="quickPrivateModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 16px;">
-  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; max-width: 520px; width: 100%; padding: 22px; text-align: right; box-shadow: var(--shadow-md);">
+  <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.35); border-radius: 14px; max-width: 500px; width: 100%; padding: 22px; text-align: right; box-shadow: var(--shadow-md);">
     
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
-      <h3 style="color: var(--text-main); font-size: 1.2rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
-        🏋️‍♂️ تعديل إعدادات البرايفت والخصم: {{ member.name }}
+      <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+        🏋️‍♂️ تعديل باقة التدريب الخاص (Private Add-on): {{ member.name }}
       </h3>
       <button type="button" onclick="closeQuickPrivateModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">&times;</button>
     </div>
 
     <form method="POST" action="{% url 'members:member_quick_private' member.id %}">
       {% csrf_token %}
+      <input type="hidden" name="update_target" value="private">
 
       <!-- Private Toggle -->
       <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 12px 14px; border-radius: 8px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
         <input type="checkbox" id="modal_has_private" name="has_private" value="1" {% if member.has_private %}checked{% endif %} onchange="toggleModalPrivate()" style="width: 20px; height: 20px; accent-color: #A8F14B; cursor: pointer;">
         <label for="modal_has_private" style="color: var(--text-main); font-weight: 800; font-size: 0.95rem; cursor: pointer; margin: 0;">
-          تفعيل التدريب الخاص (Private Add-on)
+          تفعيل التدريب الخاص (Private Add-on VIP)
         </label>
       </div>
 
@@ -1033,32 +1072,62 @@ window.addEventListener('DOMContentLoaded', () => {
         <div class="form-group" style="margin-bottom: 12px;">
           <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">سعر إضافة البرايفت (ج.م) *</label>
           <input type="number" step="0.01" min="0" name="private_price" value="{% if member.private_price %}{{ member.private_price }}{% else %}600.00{% endif %}" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: #A8F14B; font-weight: 800; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
-          <small style="color: var(--text-muted); font-size: 0.78rem;">تضاف فوق باقة الاشتراك الأساسية شهرياً</small>
-        </div>
-      </div>
-
-      <!-- Renewal Discount Policy -->
-      <div style="border-top: 1px dashed var(--border-color); padding-top: 14px; margin-top: 10px; margin-bottom: 16px;">
-        <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 12px 14px; border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
-          <input type="checkbox" id="modal_discount_enabled" name="discount_enabled" value="1" {% if member.discount_enabled %}checked{% endif %} onchange="toggleModalDiscount()" style="width: 20px; height: 20px; accent-color: #FFB300; cursor: pointer;">
-          <label for="modal_discount_enabled" style="color: var(--text-main); font-weight: 800; font-size: 0.95rem; cursor: pointer; margin: 0;">
-            اعتماد خصم تجديد خاص من الإدارة (للتجديد فقط)
-          </label>
-        </div>
-
-        <div id="modal_discount_box" style="display: {% if member.discount_enabled %}block{% else %}none{% endif %};">
-          <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">قيمة الخصم المعتمد عند التجديد (ج.م)</label>
-          <input type="number" step="0.01" min="0" name="renewal_discount" value="{% if member.renewal_discount %}{{ member.renewal_discount }}{% else %}0.00{% endif %}" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: #FFB300; font-weight: 800; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
-          <small style="color: var(--text-muted); font-size: 0.78rem;">يُسجل في تقرير الإدارة اليومي وتطبيقه مقصور على التجديد.</small>
+          <small style="color: var(--text-muted); font-size: 0.78rem;">تضاف فوق باقة الاشتراك الأساسية شهرياً مع الكابتن المختار.</small>
         </div>
       </div>
 
       <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
         <button type="button" onclick="closeQuickPrivateModal()" class="btn btn-secondary" style="padding: 8px 18px;">إلغاء</button>
-        <button type="submit" class="btn btn-primary" style="padding: 8px 24px; font-weight: 800;">💾 حفظ التعديل</button>
+        <button type="submit" class="btn btn-primary" style="padding: 8px 24px; font-weight: 800;">💾 حفظ إعدادات البرايفت</button>
       </div>
     </form>
+  </div>
+</div>
 
+<!-- Dedicated Modal 2: Standalone Approved Renewal Discount Settings -->
+<div id="quickDiscountModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 16px;">
+  <div style="background: var(--bg-card); border: 1px solid rgba(255, 179, 0, 0.4); border-radius: 14px; max-width: 500px; width: 100%; padding: 22px; text-align: right; box-shadow: var(--shadow-md);">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+      <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+        🏷️ سياسة الخصم المعتمد للتجديد: {{ member.name }}
+      </h3>
+      <button type="button" onclick="closeQuickDiscountModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <!-- Explanatory Banner -->
+    <div style="background: rgba(255, 179, 0, 0.08); border: 1px dashed rgba(255, 179, 0, 0.35); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+      <strong style="color: #FFB300; font-size: 0.88rem; display: block; margin-bottom: 3px;">
+        💡 الخصم غير مقيد بالبرايفت إطلاقاً:
+      </strong>
+      <span style="color: var(--text-muted); font-size: 0.82rem; line-height: 1.4; display: block;">
+        هذا الخصم معتمد من الإدارة لهذا العضو ويطبق تلقائياً عند تجديد اشتراكه سواء اختار باقة عادية (كل يوم أو يوم ويوم) أو باقة برايفت.
+      </span>
+    </div>
+
+    <form method="POST" action="{% url 'members:member_quick_private' member.id %}">
+      {% csrf_token %}
+      <input type="hidden" name="update_target" value="discount">
+
+      <!-- Discount Toggle -->
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 12px 14px; border-radius: 8px; margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
+        <input type="checkbox" id="modal_discount_enabled" name="discount_enabled" value="1" {% if member.discount_enabled %}checked{% endif %} onchange="toggleModalDiscount()" style="width: 20px; height: 20px; accent-color: #FFB300; cursor: pointer;">
+        <label for="modal_discount_enabled" style="color: var(--text-main); font-weight: 800; font-size: 0.95rem; cursor: pointer; margin: 0;">
+          اعتماد خصم تجديد خاص من الإدارة (للتجديد)
+        </label>
+      </div>
+
+      <div id="modal_discount_box" style="display: {% if member.discount_enabled %}block{% else %}none{% endif %}; margin-bottom: 16px;">
+        <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">مبلغ الخصم المعتمد عند التجديد (ج.م) *</label>
+        <input type="number" step="0.01" min="0" name="renewal_discount" value="{% if member.renewal_discount %}{{ member.renewal_discount }}{% else %}0.00{% endif %}" class="form-control" style="background: var(--bg-input); border: 1px solid #FFB300; color: #FFB300; font-weight: 800; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+        <small style="color: var(--text-muted); font-size: 0.78rem;">يُسجل في تقرير الإدارة اليومي ضمن الإيراد المفقود بسبب الخصومات.</small>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+        <button type="button" onclick="closeQuickDiscountModal()" class="btn btn-secondary" style="padding: 8px 18px;">إلغاء</button>
+        <button type="submit" class="btn btn-primary" style="padding: 8px 24px; font-weight: 800; background: #FFB300; border-color: #FFB300; color: #000000;">💾 حفظ سياسة الخصم</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -1075,6 +1144,15 @@ function toggleModalPrivate() {
   const chk = document.getElementById('modal_has_private');
   const box = document.getElementById('modal_private_box');
   if (box) box.style.display = chk.checked ? 'block' : 'none';
+}
+
+function openQuickDiscountModal() {
+  const m = document.getElementById('quickDiscountModal');
+  if (m) m.style.display = 'flex';
+}
+function closeQuickDiscountModal() {
+  const m = document.getElementById('quickDiscountModal');
+  if (m) m.style.display = 'none';
 }
 function toggleModalDiscount() {
   const chk = document.getElementById('modal_discount_enabled');

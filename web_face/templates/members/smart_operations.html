@@ -108,9 +108,9 @@
         </div>
       </div>
 
-      <!-- Row 3: بداية الاشتراك والمدفوع وأيام السماح -->
-      <div class="grid-3" style="gap: 16px;">
-        <!-- بداية الاشتراك (Editable to past/old date or future date) -->
+      <!-- Row 3: بداية الاشتراك، الخصم المعتمد، المدفوع، وأيام السماح (متاح لجميع الباقات العادية أو البرايفت) -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+        <!-- بداية الاشتراك -->
         <div>
           <label id="label-start-date" style="display: block; color: var(--text-muted); font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
             بداية الاشتراك
@@ -127,6 +127,26 @@
           <small style="color: #657786; font-size: 0.78rem;">يمكنك اختيار أي تاريخ قديم أو حالي</small>
         </div>
 
+        <!-- الخصم المعتمد (غير مقيد بالبرايفت - متاح لأي اشتراك عادي أو خاص) -->
+        <div>
+          <label style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
+            <span>الخصم الممنوح (ج.م)</span>
+            <span style="color: #FFB300; font-size: 0.75rem; font-weight: 800;">(لأي باقة عادية أو برايفت)</span>
+          </label>
+          <input 
+            type="number" 
+            step="0.5" 
+            min="0" 
+            id="smart_discount" 
+            name="discount" 
+            value="0.00" 
+            oninput="updateLiveCalculation()" 
+            class="form-control"
+            style="background: var(--bg-card); border: 1px solid #FFB300; height: 50px; font-size: 1.15rem; font-weight: 800; color: #FFB300; text-align: center;"
+          >
+          <small style="color: #657786; font-size: 0.78rem;">يخصم من إجمالي الاشتراك ويُسجل للمدير</small>
+        </div>
+
         <!-- المدفوع -->
         <div>
           <label style="display: block; color: var(--text-muted); font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
@@ -141,16 +161,17 @@
             value="50.00" 
             required 
             class="form-control"
-            style="background: var(--bg-card); border: 1px solid var(--border-color); height: 50px; font-size: 1.15rem; font-weight: 800; color: #A8F14B;"
+            style="background: var(--bg-card); border: 1px solid var(--border-color); height: 50px; font-size: 1.15rem; font-weight: 800; color: #A8F14B; text-align: center;"
           >
+          <small style="color: #657786; font-size: 0.78rem;">المبلغ المحصل الآن بالخزينة</small>
         </div>
 
         <!-- أيام السماح (Grace days when payment is not full) -->
         <div>
           <label style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
             <span>أيام السماح</span>
-            <span id="allowance-hint" style="color: #FF9F00; font-size: 0.78rem; font-weight: 800; display: none;">(إلزامي: 1 إلى 10 أيام)</span>
-            <span id="allowance-full-badge" style="color: #22c55e; font-size: 0.78rem; font-weight: 800; display: none;">✓ خالص السداد (مغلق)</span>
+            <span id="allowance-hint" style="color: #FF9F00; font-size: 0.78rem; font-weight: 800; display: none;">(إلزامي: 1 إلى 10)</span>
+            <span id="allowance-full-badge" style="color: #22c55e; font-size: 0.78rem; font-weight: 800; display: none;">✓ خالص</span>
           </label>
           <input 
             type="number" 
@@ -162,36 +183,41 @@
             class="form-control"
             style="background: var(--bg-card); border: 1px solid var(--border-color); height: 50px; font-size: 1.15rem; font-weight: 800; text-align: center;"
           >
-          <small id="allowance-subtext" style="color: #657786; font-size: 0.78rem;">مهلة السداد للدخول عند وجود متبقي (من 1 إلى 10 أيام كحد أقصى)</small>
+          <small id="allowance-subtext" style="color: #657786; font-size: 0.78rem;">مهلة السداد (1 إلى 10 أيام)</small>
         </div>
       </div>
 
-      <!-- Row 3.5: Private Training Add-on & Discount Row -->
-      <div id="smart-private-box" style="background: rgba(168, 241, 75, 0.05); border: 1px solid rgba(168, 241, 75, 0.25); border-radius: 10px; padding: 12px 16px; margin-top: 14px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
+      <!-- Option to save/lock this discount for future renewals -->
+      <div style="margin-top: 8px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+        <input type="checkbox" id="smart_save_discount" name="save_discount_for_renewal" value="1" style="width: 17px; height: 17px; accent-color: #FFB300; cursor: pointer;">
+        <label for="smart_save_discount" style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; cursor: pointer; margin: 0;">
+          حفظ وتثبيت هذا الخصم في ملف العضو لتجديداته القادمة تلقائياً (سواء اشترك باقة عادية أو برايفت)
+        </label>
+      </div>
+
+      <!-- Row 3.5: Standalone VIP Private Coaching Add-on (Optional) -->
+      <div id="smart-private-box" style="background: rgba(168, 241, 75, 0.04); border: 1px solid rgba(168, 241, 75, 0.22); border-radius: 10px; padding: 14px 18px; margin-top: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
           <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-weight: 800; color: #A8F14B; font-size: 0.95rem;">
-            <input type="checkbox" id="smart_has_private" name="has_private" value="1" onchange="toggleSmartPrivate()">
-            🏋️‍♂️ إضافة باقة التدريب الخاص (Private Add-on)
+            <input type="checkbox" id="smart_has_private" name="has_private" value="1" onchange="toggleSmartPrivate()" style="width: 18px; height: 18px; accent-color: #A8F14B; cursor: pointer;">
+            🏋️‍♂️ إضافة باقة التدريب الخاص (Private Add-on VIP - اختياري)
           </label>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <label style="color: var(--text-muted); font-size: 0.88rem; font-weight: 700;">الخصم ج.م:</label>
-            <input type="number" step="0.5" min="0" id="smart_discount" name="discount" value="0.00" oninput="updateLiveCalculation()" style="background: var(--bg-card); border: 1px solid var(--border-color); color: #FFB300; font-weight: 800; width: 90px; height: 36px; border-radius: 6px; padding: 0 8px; text-align: center;">
-          </div>
+          <span style="color: var(--text-muted); font-size: 0.82rem;">إضافة تدريب خاص فوق باقة الاشتراك الأساسية مع كابتن</span>
         </div>
 
-        <div id="smart_private_fields" style="display: none; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
+        <div id="smart_private_fields" style="display: none; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 12px; border-top: 1px dashed rgba(168, 241, 75, 0.2); padding-top: 12px;">
           <div>
-            <label style="display: block; color: var(--text-muted); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px;">الكابتن المسند *</label>
-            <select name="coach_id" id="smart_coach_select" class="form-control" style="background: var(--bg-card); border: 1px solid var(--border-color); height: 40px; font-size: 0.9rem;">
+            <label style="display: block; color: var(--text-muted); font-size: 0.84rem; font-weight: 700; margin-bottom: 5px;">الكابتن المسند (المدرب المسؤول) *</label>
+            <select name="coach_id" id="smart_coach_select" class="form-control" style="background: var(--bg-card); border: 1px solid var(--border-color); height: 42px; font-size: 0.95rem;">
               <option value="">-- اختر الكابتن --</option>
               {% for coach in coaches %}
-                <option value="{{ coach.id }}">{{ coach.name }} ({{ coach.commission_percentage }}%)</option>
+                <option value="{{ coach.id }}">{{ coach.name }} (عمولته: {{ coach.commission_percentage }}%)</option>
               {% endfor %}
             </select>
           </div>
           <div>
-            <label style="display: block; color: var(--text-muted); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px;">سعر إضافة البرايفت (ج.م) *</label>
-            <input type="number" step="0.01" min="0" id="smart_private_price" name="private_price" value="600.00" oninput="updateLiveCalculation()" class="form-control" style="background: var(--bg-card); border: 1px solid var(--border-color); color: #A8F14B; font-weight: 800; height: 40px; font-size: 0.95rem;">
+            <label style="display: block; color: var(--text-muted); font-size: 0.84rem; font-weight: 700; margin-bottom: 5px;">سعر إضافة البرايفت (ج.م) *</label>
+            <input type="number" step="0.01" min="0" id="smart_private_price" name="private_price" value="600.00" oninput="updateLiveCalculation()" class="form-control" style="background: var(--bg-card); border: 1px solid var(--border-color); color: #A8F14B; font-weight: 800; height: 42px; font-size: 1.05rem;">
           </div>
         </div>
       </div>

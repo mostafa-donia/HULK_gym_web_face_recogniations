@@ -57,10 +57,10 @@
         <textarea name="notes" class="form-control" rows="2" placeholder="ملاحظات صحية، كابتن متابع، تدريب خاص..." style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; padding: 10px; width: 100%;">{% if is_edit %}{{ member.notes }}{% endif %}</textarea>
       </div>
 
-      <!-- Section 1.5: Private Training Add-on & Renewal Discount Policy -->
-      <div style="background: rgba(168, 241, 75, 0.05); border: 1px solid rgba(168, 241, 75, 0.25); border-radius: 10px; padding: 18px; margin-bottom: 20px;">
+      <!-- Section 1.5: Standalone VIP Private Coaching Add-on -->
+      <div style="background: rgba(168, 241, 75, 0.04); border: 1px solid rgba(168, 241, 75, 0.25); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
         <h3 style="color: #A8F14B; font-size: 1.05rem; font-weight: 800; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-          🏋️‍♂️ إعدادات التدريب الخاص (Private Add-on) وسياسة الخصم
+          🏋️‍♂️ إعدادات التدريب الخاص (Private Add-on VIP - اختياري)
         </h3>
 
         <!-- Private Toggle & Settings -->
@@ -71,42 +71,48 @@
           </label>
         </div>
 
-        <div id="private_fields_container" style="display: {% if member.has_private %}grid{% else %}none{% endif %}; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+        <div id="private_fields_container" style="display: {% if member.has_private %}grid{% else %}none{% endif %}; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
           <div class="form-group">
-            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">الكابتن المسند (المدرب) *</label>
+            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">الكابتن المسند (المدرب المسؤول) *</label>
             <select name="assigned_coach_id" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
               <option value="">-- اختر الكابتن المسؤول --</option>
               {% for coach in coaches %}
                 <option value="{{ coach.id }}" {% if member.assigned_coach_id == coach.id %}selected{% endif %}>
-                  {{ coach.name }} (نسبته: {{ coach.commission_percentage }}%)
+                  {{ coach.name }} (نسبة عمولته: {{ coach.commission_percentage }}%)
                 </option>
               {% endfor %}
             </select>
           </div>
 
           <div class="form-group">
-            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">قيمة إضافة البرايفت (ج.م) *</label>
+            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">سعر إضافة البرايفت (ج.م) *</label>
             <input type="number" step="0.01" name="private_price" value="{% if member.private_price %}{{ member.private_price }}{% else %}600.00{% endif %}" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: #A8F14B; font-weight: 800; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
-            <small style="color: var(--text-muted); font-size: 0.78rem;">تضاف فوق باقة الاشتراك الأساسية شهرياً</small>
+            <small style="color: var(--text-muted); font-size: 0.78rem;">تضاف فوق باقة الاشتراك الأساسية شهرياً مع الكابتن المختار.</small>
           </div>
         </div>
+      </div>
 
-        <!-- Renewal Discount Policy -->
-        <div style="border-top: 1px dashed var(--border-color); padding-top: 14px; margin-top: 10px;">
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; background: var(--bg-card); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
-            <input type="checkbox" id="discount_enabled_chk" name="discount_enabled" value="1" {% if member.discount_enabled %}checked{% endif %} onchange="toggleDiscountInputs()" style="width: 20px; height: 20px; accent-color: #FFB300; cursor: pointer;">
-            <label for="discount_enabled_chk" style="color: var(--text-main); font-weight: 800; font-size: 0.95rem; cursor: pointer; margin: 0;">
-              اعتماد خصم تجديد خاص من الإدارة (للتجديد فقط)
-            </label>
-          </div>
+      <!-- Section 1.6: Standalone Approved Renewal Discount Policy (Universal for any plan) -->
+      <div style="background: rgba(255, 179, 0, 0.04); border: 1px solid rgba(255, 179, 0, 0.3); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+        <h3 style="color: #FFB300; font-size: 1.05rem; font-weight: 800; margin-top: 0; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+          🏷️ سياسة الخصم المعتمد للاعب (للتجديد - لأي باقة عادية أو برايفت)
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 0; margin-bottom: 12px;">
+          الخصم غير مرتبط بالبرايفت إطلاقاً؛ يطبق تلقائياً عند تجديد اشتراك اللاعب سواء اختار باقة عادية (كل يوم أو يوم ويوم) أو باقة برايفت.
+        </p>
 
-          <div id="discount_fields_container" style="display: {% if member.discount_enabled %}block{% else %}none{% endif %}; max-width: 320px;">
-            <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">مبلغ الخصم المعتمد عند التجديد (ج.م)</label>
-            <input type="number" step="0.01" min="0" name="renewal_discount" value="{% if member.renewal_discount %}{{ member.renewal_discount }}{% else %}0.00{% endif %}" class="form-control" style="background: var(--bg-input); border: 1px solid var(--border-color); color: #FFB300; font-weight: 800; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
-            <small style="color: var(--text-muted); font-size: 0.78rem;">يطبق هذا الخصم فقط عند التجديد، بينما الاشتراك الجديد يبدأ دائماً بخصم 0.</small>
-          </div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; background: var(--bg-card); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <input type="checkbox" id="discount_enabled_chk" name="discount_enabled" value="1" {% if member.discount_enabled %}checked{% endif %} onchange="toggleDiscountInputs()" style="width: 20px; height: 20px; accent-color: #FFB300; cursor: pointer;">
+          <label for="discount_enabled_chk" style="color: var(--text-main); font-weight: 800; font-size: 0.95rem; cursor: pointer; margin: 0;">
+            اعتماد خصم تجديد خاص من الإدارة لهذا اللاعب
+          </label>
         </div>
 
+        <div id="discount_fields_container" style="display: {% if member.discount_enabled %}block{% else %}none{% endif %}; max-width: 320px;">
+          <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 6px; display: block;">مبلغ الخصم المعتمد عند التجديد (ج.م) *</label>
+          <input type="number" step="0.01" min="0" name="renewal_discount" value="{% if member.renewal_discount %}{{ member.renewal_discount }}{% else %}0.00{% endif %}" class="form-control" style="background: var(--bg-input); border: 1px solid #FFB300; color: #FFB300; font-weight: 800; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+          <small style="color: var(--text-muted); font-size: 0.78rem;">يطبق هذا الخصم فقط عند التجديد، بينما الاشتراك الجديد يبدأ دائماً بخصم 0 إلا بتحديد يدوي.</small>
+        </div>
       </div>
 
       <script>
