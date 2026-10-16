@@ -287,6 +287,12 @@ def queue_payment_receipt_whatsapp(payment: Payment, subscription=None) -> Optio
     clean_invoice_no = payment.invoice_no.replace("/", "_").replace("\\", "_")
     dedup_key = f"receipt:{member.mobile}:{clean_invoice_no}"
 
+    from django.utils import timezone
+    from apps.messaging.services import get_first_time_send_after
+
+    send_after = get_first_time_send_after(member.mobile, member=member)
+    initial_status = MessageStatus.SCHEDULED if (send_after and send_after > timezone.now()) else MessageStatus.PENDING
+
     msg_obj, created = WhatsAppMessage.objects.get_or_create(
         dedup_key=dedup_key,
         defaults={
@@ -296,7 +302,8 @@ def queue_payment_receipt_whatsapp(payment: Payment, subscription=None) -> Optio
             "recipient_name": member.name,
             "recipient_type": "member",
             "attachment": rel_invoice_path or "",
-            "status": MessageStatus.PENDING,
+            "status": initial_status,
+            "send_after": send_after,
         },
     )
 

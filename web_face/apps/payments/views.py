@@ -174,13 +174,29 @@ def send_receipt_whatsapp_now_view(request, payment_id):
         messages.error(request, "تعذر إرسال الفاتورة: لا يوجد رقم هاتف مسجل للعضو أو أن خدمة الواتساب معطلة.")
         return redirect("payments:payment_detail", payment_id=payment.id)
 
-    from apps.messaging.services import dispatch_message_record
+    from apps.messaging.models import MessageStatus
+    from apps.messaging.services import dispatch_message_record, promote_due_scheduled_messages
+
+    promote_due_scheduled_messages()
+    msg_obj.refresh_from_db()
+
+    if msg_obj.status == MessageStatus.SCHEDULED and msg_obj.send_after and msg_obj.send_after > timezone.now() and request.GET.get("force") != "1":
+        rem_mins = max(1, int((msg_obj.send_after - timezone.now()).total_seconds() // 60) + 1)
+        local_time = timezone.localtime(msg_obj.send_after).strftime("%I:%M %p")
+        messages.info(
+            request,
+            f"⏳ هذا رقم هاتف عضو جديد يتم مزامنته الآن مع جهات اتصال Google Contacts. "
+            f"تمت جدولة إرسال الفاتورة تلقائياً بعد {rem_mins} دقيقة (الساعة {local_time}) لضمان ظهور الاسم في الواتساب."
+        )
+        return redirect("payments:payment_detail", payment_id=payment.id)
+
     dispatched = dispatch_message_record(msg_obj, return_to_system=True)
 
     if dispatched:
         messages.success(request, f"✓ تم إرسال الفاتورة الرسمية بنجاح إلى هاتف {payment.member.name} عبر الواتساب!")
     else:
-        messages.warning(request, f"تمت إضافة الفاتورة لطابور رسائل الواتساب (يرجى التأكد من تشغيل نافذة WhatsApp Web).")
+        messages.warning(request, f"تمت إضافة الفاتورة لطابور رسائل الواتساب (يرجى التأكد من تشغيل نافذة WhatsApp Desktop).")
 
     return redirect("payments:payment_detail", payment_id=payment.id)
+
 

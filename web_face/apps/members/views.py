@@ -325,10 +325,15 @@ def member_edit_view(request, member_id):
     coaches = Employee.objects.filter(role=EmployeeRole.TRAINER, status=EmployeeStatus.ACTIVE).order_by("name")
 
     if request.method == "POST":
+        old_mobile = (member.mobile or "").strip()
         member.name = request.POST.get("name", member.name).strip()
         member.mobile = request.POST.get("mobile", member.mobile).strip()
         member.gender = request.POST.get("gender", member.gender)
         member.notes = request.POST.get("notes", member.notes).strip()
+
+        mobile_changed = bool(member.mobile and member.mobile != old_mobile)
+        if mobile_changed:
+            member.google_contact_synced_at = None
 
         # Track sensitive changes for audit
         old_has_private = member.has_private
@@ -436,6 +441,12 @@ def member_edit_view(request, member_id):
 
         member.refresh_status()
         member.save()
+        if mobile_changed or (member.mobile and not member.google_contact_synced_at):
+            try:
+                from apps.core.google_contacts import trigger_async_member_google_sync
+                trigger_async_member_google_sync(member)
+            except Exception:
+                pass
         messages.success(request, f"تم تحديث بيانات العضو {member.name} وتصحيح الاشتراك بنجاح.")
         return redirect("members:member_detail", member_id=member.id)
 
@@ -944,10 +955,20 @@ def smart_operations_view(request):
                         assigned_coach=coach if has_private else None,
                     )
                     actual_op_type = "new_subscription"
+                    if mobile:
+                        try:
+                            from apps.core.google_contacts import trigger_async_member_google_sync
+                            trigger_async_member_google_sync(member)
+                        except Exception:
+                            pass
                 else:
                     # Renewal
+                    old_mobile = (member.mobile or "").strip()
                     if name:
                         member.name = name
+                    if mobile and mobile != old_mobile:
+                        member.mobile = mobile
+                        member.google_contact_synced_at = None
                     if gender:
                         member.gender = gender
                     member.last_subscription_start = start_date
@@ -969,6 +990,12 @@ def smart_operations_view(request):
                     elif member.current_remaining <= Decimal("0.00"):
                         member.follow_up_date = None
                     member.save()
+                    if member.mobile and (member.mobile != old_mobile or not member.google_contact_synced_at):
+                        try:
+                            from apps.core.google_contacts import trigger_async_member_google_sync
+                            trigger_async_member_google_sync(member)
+                        except Exception:
+                            pass
                     actual_op_type = "renewal"
 
                 member.refresh_status()

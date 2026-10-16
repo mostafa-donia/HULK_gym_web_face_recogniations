@@ -204,6 +204,189 @@
 
   </div>
 
+  <!-- Row 1.5: Google Contacts & Gmail Credentials (Multi-Business / White-Label Setup) -->
+  <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <div>
+        <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+          📱 مزامنة جهات اتصال Google Contacts وإعدادات حساب Gmail (لكل جيم / بيزنس)
+        </h3>
+        <span style="color: var(--text-muted); font-size: 0.82rem;">
+          عند إضافة رقم عضو جديد يتم رفعه تلقائياً لجهات اتصال جوجل وتُجدول أول رسالة واتساب له بعد <strong>15 دقيقة</strong> لضمان ظهور اسمه على الهاتف والواتساب. يمكنك هنا تغيير حساب Gmail أو بيانات الربط لأي بيزنس جديد بسهولة.
+        </span>
+      </div>
+
+      <div>
+        {% if google_status.connected %}
+          <span style="background: rgba(126,211,33,0.15); border: 1px solid #7ED321; color: #7ED321; font-weight: 800; font-size: 0.84rem; padding: 6px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
+            ● متصل بـ Google People API
+          </span>
+        {% else %}
+          <span style="background: rgba(255,92,103,0.15); border: 1px solid #FF5C67; color: #FF5C67; font-weight: 800; font-size: 0.84rem; padding: 6px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
+            ● {{ google_status.message|default:"غير متصل بـ Google" }}
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Metric Badges -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px;">
+      <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
+        <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 600; display: block;">جهات اتصال حساب Gmail</span>
+        <strong style="color: #4DB3FF; font-size: 1.2rem; font-weight: 800; display: block;">{{ google_status.remote_contacts_count|default:"0" }}</strong>
+      </div>
+      <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
+        <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 600; display: block;">إجمالي الأعضاء بأرقام</span>
+        <strong style="color: #FFFFFF; font-size: 1.2rem; font-weight: 800; display: block;">{{ google_status.total_members }}</strong>
+      </div>
+      <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
+        <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 600; display: block;">تمت مزامنتهم</span>
+        <strong style="color: #7ED321; font-size: 1.2rem; font-weight: 800; display: block;">{{ google_status.synced_members }}</strong>
+      </div>
+      <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 12px;">
+        <span style="color: var(--text-muted); font-size: 0.78rem; font-weight: 600; display: block;">بانتظار المزامنة</span>
+        <strong style="color: #FFB300; font-size: 1.2rem; font-weight: 800; display: block;">{{ google_status.pending_members }}</strong>
+      </div>
+    </div>
+
+    <!-- Primary Actions: Sync, Connect New Gmail (OAuth), Disconnect -->
+    <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; justify-content: space-between; background: var(--bg-input); border: 1px solid #162A3B; border-radius: 10px; padding: 12px 14px;">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+        <form method="post" action="{% url 'core:settings' %}" style="margin: 0;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="sync_google_contacts">
+          <button type="submit" class="btn btn-primary" style="background: #0E291C; border: 1px solid #1C5A35; color: #7ED321; font-weight: 800; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">
+            🔄 مزامنة الأعضاء الجدد ({{ google_status.pending_members }})
+          </button>
+        </form>
+
+        <form method="post" action="{% url 'core:settings' %}" onsubmit="return confirm('تشغيل المزامنة الإجبارية لكافة الأعضاء إلى حساب Gmail الحالي؟');" style="margin: 0;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="force_sync_google_contacts">
+          <button type="submit" class="btn btn-secondary" style="background: #142433; border: 1px solid #234563; color: #4DB3FF; font-weight: 700; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">
+            ⚡ مزامنة إجبارية للكل
+          </button>
+        </form>
+      </div>
+
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+        <form method="post" action="{% url 'core:settings' %}" style="margin: 0; display: inline-flex; align-items: center; gap: 8px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="authorize_new_gmail">
+          <label style="color: var(--text-muted); font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" title="عند التحديد سيتم تصفير حالة المزامنة للأعضاء ليتم رفعهم بالكامل للحساب الجديد">
+            <input type="checkbox" name="reset_members_sync" value="1" checked style="accent-color: #38bdf8;">
+            تصفير مزامنة الأعضاء للحساب الجديد
+          </label>
+          <button type="submit" class="btn" style="background: #0284c7; border: none; color: #fff; font-weight: 800; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">
+            🔗 ربط / تغيير حساب Gmail عبر المتصفح (OAuth)
+          </button>
+        </form>
+
+        {% if google_status.has_token %}
+        <form method="post" action="{% url 'core:settings' %}" onsubmit="return confirm('هل تريد فصل حساب Gmail الحالي وحذف ملف token.json؟');" style="margin: 0;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="disconnect_google_account">
+          <input type="hidden" name="reset_members_sync" value="1">
+          <button type="submit" class="btn" style="background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.35); color: #f87171; font-weight: 700; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.82rem;">
+            🔌 فصل الحساب الحالي
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Expandable Credentials & Token Management for Another Business / Gmail -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;" class="settings-grid">
+      
+      <!-- Box 1: Edit Client ID / Client Secret / Project ID directly -->
+      <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 10px; padding: 14px;">
+        <h4 style="color: #38bdf8; font-size: 0.92rem; font-weight: 800; margin: 0 0 6px 0;">
+          🔑 1. تعديل مفاتيح الربط (Client ID & Client Secret)
+        </h4>
+        <p style="color: var(--text-muted); font-size: 0.78rem; margin: 0 0 12px 0;">
+          عند إعداد النظام لبيزنس جديد، ضع بيانات OAuth Client من Google Cloud Console هنا ليتم توليد <code>credentials.json</code> تلقائياً.
+        </p>
+
+        <form method="post" action="{% url 'core:settings' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save_google_client_fields">
+
+          <div style="margin-bottom: 8px;">
+            <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 3px;">Google Client ID *</label>
+            <input type="text" name="google_client_id" value="{{ google_status.client_id }}" placeholder="xxxx.apps.googleusercontent.com" required style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 36px; border-radius: 6px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace; font-size: 0.8rem;">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 8px; margin-bottom: 10px;">
+            <div>
+              <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 3px;">Client Secret *</label>
+              <input type="text" name="google_client_secret" value="{{ google_status.client_secret }}" placeholder="GOCSPX-..." required style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 36px; border-radius: 6px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace; font-size: 0.8rem;">
+            </div>
+            <div>
+              <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 3px;">Project ID (اختياري)</label>
+              <input type="text" name="google_project_id" value="{{ google_status.project_id }}" placeholder="gym-contacts-sync" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 36px; border-radius: 6px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace; font-size: 0.8rem;">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="background: #1C3347; border: 1px solid #38bdf8; color: #38bdf8; font-weight: 800; font-size: 0.82rem; padding: 7px 14px; border-radius: 6px; width: 100%; cursor: pointer;">
+            💾 حفظ مفاتيح Client ID & Secret
+          </button>
+        </form>
+      </div>
+
+      <!-- Box 2: Upload or Paste JSON Files (credentials.json & token.json) -->
+      <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <h4 style="color: #A8F14B; font-size: 0.92rem; font-weight: 800; margin: 0 0 6px 0;">
+            📂 2. رفع أو تعديل ملفات <code>credentials.json</code> و <code>token.json</code>
+          </h4>
+          <p style="color: var(--text-muted); font-size: 0.78rem; margin: 0 0 10px 0;">
+            ارفع ملفات JSON الجاهزة للبيزنس الجديد أو عدل محتواها النصي مباشرة.
+          </p>
+
+          <form method="post" action="{% url 'core:settings' %}" enctype="multipart/form-data" style="margin-bottom: 10px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="upload_google_files">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+              <div>
+                <label style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 2px;">ملف credentials.json {% if google_status.has_credentials %}<span style="color:#4ade80;">(موجود ✓)</span>{% endif %}:</label>
+                <input type="file" name="credentials_file" accept=".json" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.74rem; padding: 4px; border-radius: 6px; width: 100%;">
+              </div>
+              <div>
+                <label style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 2px;">ملف token.json {% if google_status.has_token %}<span style="color:#4ade80;">(موجود ✓)</span>{% endif %}:</label>
+                <input type="file" name="token_file" accept=".json" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.74rem; padding: 4px; border-radius: 6px; width: 100%;">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-secondary" style="background: #173322; border: 1px solid #7ED321; color: #7ED321; font-weight: 800; font-size: 0.82rem; padding: 7px 14px; border-radius: 6px; width: 100%; cursor: pointer;">
+              📤 رفع وحفظ الملفات المحددة
+            </button>
+          </form>
+        </div>
+
+        <details style="background: rgba(15, 23, 42, 0.5); border: 1px dashed #1e3a52; border-radius: 8px; padding: 8px 10px;">
+          <summary style="color: #93c5fd; font-weight: 700; font-size: 0.8rem; cursor: pointer;">
+            📝 عرض / لصق محتوى JSON النصي مباشرة (credentials.json & token.json)
+          </summary>
+          <form method="post" action="{% url 'core:settings' %}" style="margin-top: 8px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_google_raw_json">
+            <div style="margin-bottom: 6px;">
+              <label style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; display: block;">محتوى credentials.json:</label>
+              <textarea name="raw_credentials_json" rows="3" style="width: 100%; background: #060d15; border: 1px solid #1E374D; color: #cbd5e1; font-family: monospace; font-size: 0.74rem; border-radius: 6px; padding: 6px; direction: ltr;">{{ google_status.raw_credentials_json }}</textarea>
+            </div>
+            <div style="margin-bottom: 8px;">
+              <label style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; display: block;">محتوى token.json (يُترك فارغاً إذا كنت ستسجل الدخول بالمتصفح):</label>
+              <textarea name="raw_token_json" rows="3" style="width: 100%; background: #060d15; border: 1px solid #1E374D; color: #cbd5e1; font-family: monospace; font-size: 0.74rem; border-radius: 6px; padding: 6px; direction: ltr;">{{ google_status.raw_token_json }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-secondary" style="background: #1e293b; border: 1px solid #3b82f6; color: #93c5fd; font-weight: 800; font-size: 0.78rem; padding: 6px 12px; border-radius: 6px; width: 100%; cursor: pointer;">
+              حفظ النصوص البرمجية (Raw JSON)
+            </button>
+          </form>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Row 2: Security & Password Management -->
   <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
     <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px;">

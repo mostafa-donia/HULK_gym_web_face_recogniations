@@ -19,6 +19,7 @@ from apps.messaging.services import (
     filter_members_for_bulk,
     prepare_bulk_campaign,
     get_pending_summary,
+    promote_due_scheduled_messages,
 )
 
 
@@ -29,6 +30,7 @@ def whatsapp_queue_view(request):
     Search, filters, reminder generator, bulk campaign modal trigger,
     managerial report, and multi-select batch actions.
     """
+    promote_due_scheduled_messages()
     search_q = request.GET.get("q", "").strip()
     status_filter = request.GET.get("status", "all")
     type_filter = request.GET.get("msg_type", "all")
@@ -50,6 +52,7 @@ def whatsapp_queue_view(request):
         qs = qs.filter(msg_type=type_filter)
 
     total_pending = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING).count()
+    total_scheduled = WhatsAppMessage.objects.filter(status=MessageStatus.SCHEDULED).count()
     total_sent = WhatsAppMessage.objects.filter(status=MessageStatus.SENT).count()
     total_failed = WhatsAppMessage.objects.filter(status=MessageStatus.FAILED).count()
     total_count = WhatsAppMessage.objects.count()
@@ -64,6 +67,7 @@ def whatsapp_queue_view(request):
         "status_filter": status_filter,
         "type_filter": type_filter,
         "total_pending": total_pending,
+        "total_scheduled": total_scheduled,
         "total_sent": total_sent,
         "total_failed": total_failed,
         "total_count": total_count,
@@ -324,12 +328,13 @@ def whatsapp_batch_action_view(request):
 
 @login_required
 def whatsapp_retry_view(request, message_id):
-    """Resets a single message to pending."""
+    """Resets a single message to pending (or promotes scheduled message immediately)."""
     msg_obj = get_object_or_404(WhatsAppMessage, id=message_id)
     msg_obj.status = MessageStatus.PENDING
+    msg_obj.send_after = None
     msg_obj.error_detail = ""
     msg_obj.save()
-    messages.success(request, f"تمت إعادة تعيين الرسالة للمستلم {msg_obj.recipient_name or msg_obj.mobile} للإرسال مجدداً.")
+    messages.success(request, f"تمت إعادة تعيين الرسالة للمستلم {msg_obj.recipient_name or msg_obj.mobile} كجاهزة للإرسال الفوري.")
     return redirect("messaging:whatsapp_queue")
 
 
@@ -399,6 +404,7 @@ def whatsapp_pending_messages_api(request):
     """
     Returns pending messages for the send pending modal with filtering by routine type.
     """
+    promote_due_scheduled_messages()
     msg_type = request.GET.get("msg_type", "all").strip()
     search = request.GET.get("q", "").strip()
 

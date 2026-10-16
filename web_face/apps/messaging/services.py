@@ -15,6 +15,73 @@ from apps.messaging.models import WhatsAppMessage, MessageStatus, MessageType
 logger = logging.getLogger(__name__)
 
 
+NEW_MEMBER_SYNC_DELAY_MINUTES = 15
+
+
+def promote_due_scheduled_messages() -> int:
+    """
+    Promotes any SCHEDULED messages whose 15-minute Google Contacts sync delay
+    has elapsed (send_after <= now) to PENDING so they are ready for dispatch.
+    """
+    now = timezone.now()
+    return WhatsAppMessage.objects.filter(
+        status=MessageStatus.SCHEDULED,
+    ).filter(
+        Q(send_after__lte=now) | Q(send_after__isnull=True)
+    ).update(status=MessageStatus.PENDING)
+
+
+def get_first_time_send_after(mobile: str, member: Member = None):
+    """
+    If a new member's phone number was recently added (or not yet synced to Google Contacts)
+    and no WhatsApp message has ever been SENT to this number before, schedules the first
+    message(s) for 15 minutes after the contact addition/sync so Google Contacts syncs to WhatsApp.
+    """
+    if not mobile:
+        return None
+
+    table = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+    cleaned_mobile = "".join(filter(str.isdigit, str(mobile).translate(table)))
+    if not cleaned_mobile:
+        return None
+
+    # If any message was already sent to this phone number before, no delay needed
+    already_sent = WhatsAppMessage.objects.filter(
+        Q(mobile=mobile) | Q(mobile=cleaned_mobile),
+        status=MessageStatus.SENT,
+    ).exists()
+    if already_sent:
+        return None
+
+    if member is None:
+        member = Member.objects.filter(
+            Q(mobile=mobile) | Q(mobile=cleaned_mobile)
+        ).order_by("-created_at").first()
+
+    if not member:
+        return None
+
+    now = timezone.now()
+
+    # If member is not yet synced to Google Contacts, trigger sync now and schedule 15 min later
+    if member.google_contact_synced_at is None:
+        try:
+            from apps.core.google_contacts import trigger_async_member_google_sync
+            trigger_async_member_google_sync(member)
+        except Exception:
+            pass
+        return now + timedelta(minutes=NEW_MEMBER_SYNC_DELAY_MINUTES)
+
+    # Otherwise check if member was created or synced within the last 15 minutes
+    timestamps = [t for t in [member.google_contact_synced_at, member.created_at] if t is not None]
+    ref_time = max(timestamps) if timestamps else now
+    target_time = ref_time + timedelta(minutes=NEW_MEMBER_SYNC_DELAY_MINUTES)
+    if target_time > now:
+        return target_time
+
+    return None
+
+
 def enqueue_message(
     mobile: str,
     message: str,
@@ -24,9 +91,11 @@ def enqueue_message(
     dedup_key: str = None,
     link: str = "",
     attachment = None,
+    member: Member = None,
 ) -> WhatsAppMessage:
     """
     Enqueues a message for WhatsApp delivery with deduplication, optional link and file attachment.
+    Automatically schedules first-time messages to newly added member phone numbers 15 minutes later.
     """
     if not mobile or not message:
         return None
@@ -44,13 +113,21 @@ def enqueue_message(
     if existing:
         return existing
 
+    send_after = None
+    initial_status = MessageStatus.PENDING
+    if recipient_type == "member":
+        send_after = get_first_time_send_after(cleaned_mobile, member=member)
+        if send_after and send_after > timezone.now():
+            initial_status = MessageStatus.SCHEDULED
+
     msg_obj = WhatsAppMessage(
         mobile=cleaned_mobile,
         message=message.strip(),
         msg_type=msg_type,
         recipient_name=recipient_name.strip(),
         recipient_type=recipient_type,
-        status=MessageStatus.PENDING,
+        status=initial_status,
+        send_after=send_after,
         dedup_key=dedup_key,
         link=link.strip() if link else "",
     )
@@ -165,11 +242,13 @@ def get_pending_summary() -> dict:
     - Finished / Expired subscription (expired)
     - Others / Custom (bulk, custom, etc.)
     """
+    promote_due_scheduled_messages()
     from apps.messaging import whatsapp_sender
     is_installed, inst_msg, _ = whatsapp_sender.is_whatsapp_desktop_installed()
 
     qs = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING)
     total = qs.count()
+    scheduled_count = WhatsAppMessage.objects.filter(status=MessageStatus.SCHEDULED).count()
     receipt_count = qs.filter(msg_type=MessageType.RECEIPT).count()
     reminder_1_count = qs.filter(msg_type=MessageType.REMINDER_1).count()
     reminder_3_count = qs.filter(msg_type=MessageType.REMINDER_3).count()
@@ -178,6 +257,7 @@ def get_pending_summary() -> dict:
 
     return {
         "pending_count": total,
+        "scheduled_count": scheduled_count,
         "has_pending": total > 0,
         "desktop_installed": is_installed,
         "desktop_status": inst_msg,
@@ -199,6 +279,8 @@ def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: s
     import time
     from apps.messaging import whatsapp_sender
 
+    promote_due_scheduled_messages()
+
     # Pre-check WhatsApp Desktop installation
     is_installed, inst_msg, _ = whatsapp_sender.is_whatsapp_desktop_installed()
     if not is_installed:
@@ -210,9 +292,13 @@ def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: s
             "desktop_installed": False,
         }
 
-    qs = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING)
     if selected_ids:
-        qs = qs.filter(id__in=selected_ids)
+        qs = WhatsAppMessage.objects.filter(
+            id__in=selected_ids,
+            status__in=[MessageStatus.PENDING, MessageStatus.SCHEDULED],
+        )
+    else:
+        qs = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING)
     if msg_type and msg_type != "all":
         qs = qs.filter(msg_type=msg_type)
 

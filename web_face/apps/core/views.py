@@ -913,6 +913,11 @@ from django.contrib.auth import update_session_auth_hash
 from apps.core.google_contacts import (
     check_google_contacts_status,
     sync_all_google_contacts,
+    save_google_credentials_from_fields,
+    save_google_raw_json,
+    authorize_new_gmail_interactive,
+    disconnect_google_account,
+    _mirror_google_files_to_dist,
 )
 
 
@@ -1075,12 +1080,61 @@ def settings_view(request):
             token_file = request.FILES.get("token_file")
             target_data_dir = Path(settings.BASE_DIR) / "data"
             target_data_dir.mkdir(parents=True, exist_ok=True)
+            cred_path = target_data_dir / "credentials.json"
+            token_path = target_data_dir / "token.json"
             if cred_file:
-                (target_data_dir / "credentials.json").write_bytes(cred_file.read())
-                messages.success(request, "تم حفظ وتحديث ملف credentials.json بنجاح.")
+                cred_path.write_bytes(cred_file.read())
+                messages.success(request, "✓ تم حفظ وتحديث ملف credentials.json بنجاح.")
             if token_file:
-                (target_data_dir / "token.json").write_bytes(token_file.read())
-                messages.success(request, "تم حفظ وتحديث ملف token.json بنجاح.")
+                token_path.write_bytes(token_file.read())
+                messages.success(request, "✓ تم حفظ وتحديث ملف token.json بنجاح.")
+            _mirror_google_files_to_dist(cred_path if cred_file else None, token_path if token_file else None)
+            return redirect("core:settings")
+
+        elif action == "save_google_client_fields":
+            client_id = request.POST.get("google_client_id", "").strip()
+            client_secret = request.POST.get("google_client_secret", "").strip()
+            project_id = request.POST.get("google_project_id", "").strip()
+            ok, msg = save_google_credentials_from_fields(client_id, client_secret, project_id)
+            if ok:
+                messages.success(request, f"✓ {msg}")
+            else:
+                messages.error(request, f"❌ {msg}")
+            return redirect("core:settings")
+
+        elif action == "save_google_raw_json":
+            raw_cred = request.POST.get("raw_credentials_json", "").strip()
+            raw_tok = request.POST.get("raw_token_json", "").strip()
+            ok, msg = save_google_raw_json(raw_cred, raw_tok)
+            if ok:
+                messages.success(request, f"✓ {msg}")
+            else:
+                messages.error(request, f"❌ {msg}")
+            return redirect("core:settings")
+
+        elif action == "authorize_new_gmail":
+            # Optional inline client_id / client_secret save before launching OAuth flow
+            client_id = request.POST.get("google_client_id", "").strip()
+            client_secret = request.POST.get("google_client_secret", "").strip()
+            project_id = request.POST.get("google_project_id", "").strip()
+            if client_id and client_secret:
+                save_google_credentials_from_fields(client_id, client_secret, project_id)
+
+            reset_sync = request.POST.get("reset_members_sync") in ["1", "on", "true"]
+            ok, msg = authorize_new_gmail_interactive(reset_members_sync=reset_sync)
+            if ok:
+                messages.success(request, f"✓ {msg}")
+            else:
+                messages.error(request, f"❌ {msg}")
+            return redirect("core:settings")
+
+        elif action == "disconnect_google_account":
+            reset_sync = request.POST.get("reset_members_sync") in ["1", "on", "true"]
+            ok, msg = disconnect_google_account(reset_members_sync=reset_sync)
+            if ok:
+                messages.info(request, f"🔓 {msg}")
+            else:
+                messages.error(request, f"❌ {msg}")
             return redirect("core:settings")
 
         elif action == "add_plan":
