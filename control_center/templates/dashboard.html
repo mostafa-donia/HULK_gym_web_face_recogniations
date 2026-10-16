@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HULK GYM — Developer Command & Control Center</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #06090e;
+            color: #f1f5f9;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card:hover {
+            border-color: rgba(132, 204, 22, 0.25);
+        }
+        .code-font {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-16">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-950/80 sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-11 h-11 rounded-xl bg-lime-500/10 border border-lime-500/30 flex items-center justify-center text-lime-400 text-xl font-black shadow-lg shadow-lime-500/10">
+                    <i class="fa fa-shield-halved"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-black tracking-wide text-white">HULK GYM</h1>
+                        <span class="bg-lime-500/20 text-lime-300 text-[10px] font-black px-2 py-0.5 rounded-full border border-lime-500/30">MASTER CONTROL</span>
+                    </div>
+                    <p class="text-xs text-slate-400">مركز التحكم المركزي وإدارة تراخيص وباقات العملاء</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="openAddClientModal()" class="bg-lime-500 hover:bg-lime-400 text-slate-950 font-black text-sm px-4 py-2.5 rounded-xl shadow-lg shadow-lime-500/20 transition flex items-center gap-2">
+                    <i class="fa fa-plus-circle"></i>
+                    <span>إضافة عميل / ترخيص جديد</span>
+                </button>
+
+                <button onclick="openExportModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5" title="تصدير ملف JSON لرفعه على السيرفر السحابي أو GitHub Gist">
+                    <i class="fa fa-cloud-arrow-up text-sky-400"></i>
+                    <span>تصدير سحابي (Gist)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+
+        <!-- Top Live Sync Status Bar -->
+        <div class="glass-card rounded-2xl p-4 px-6 flex flex-wrap items-center justify-between gap-4 border-l-4 border-l-lime-500">
+            <div class="flex items-center gap-3">
+                <span class="relative flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-lime-500"></span>
+                </span>
+                <div>
+                    <span class="text-xs font-bold text-slate-400">سيرفر المزامنة الحية يعمل بنشاط:</span>
+                    <span id="syncUrlText" class="code-font text-xs font-bold text-lime-400 mr-2">http://127.0.0.1:9000/api/license/sync/</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs">
+                <button onclick="copySyncUrl()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1">
+                    <i class="fa fa-copy"></i>
+                    <span id="copySyncBtnText">نسخ رابط المزامنة للعملاء</span>
+                </button>
+                <button onclick="refreshClients()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg border border-slate-700 transition" title="تحديث القائمة">
+                    <i class="fa fa-rotate"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Metric Stat Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="glass-card rounded-2xl p-5 border-t-2 border-t-slate-500">
+                <span class="text-xs font-bold text-slate-400 block mb-1">إجمالي العملاء</span>
+                <span id="statTotal" class="text-3xl font-black text-white">0</span>
+                <span class="text-[11px] text-slate-500 block mt-1">المسجلين في النظام</span>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border-t-2 border-t-emerald-500">
+                <span class="text-xs font-bold text-slate-400 block mb-1">تراخيص نشطة</span>
+                <span id="statActive" class="text-3xl font-black text-emerald-400">0</span>
+                <span class="text-[11px] text-emerald-500/80 block mt-1">مشتركون ومسددون ✓</span>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border-t-2 border-t-amber-500">
+                <span class="text-xs font-bold text-slate-400 block mb-1">فترات تجريبية (Demo)</span>
+                <span id="statDemo" class="text-3xl font-black text-amber-400">0</span>
+                <span class="text-[11px] text-amber-500/80 block mt-1">فترة 7 أيام مجانية</span>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border-t-2 border-t-rose-500">
+                <span class="text-xs font-bold text-slate-400 block mb-1">معلق / متوقف</span>
+                <span id="statSuspended" class="text-3xl font-black text-rose-400">0</span>
+                <span class="text-[11px] text-rose-500/80 block mt-1">تم إيقافهم لعدم السداد</span>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border-t-2 border-t-sky-500 col-span-2 md:col-span-1">
+                <span class="text-xs font-bold text-slate-400 block mb-1">ينتهي خلال 7 أيام</span>
+                <span id="statExpiring" class="text-3xl font-black text-sky-400">0</span>
+                <span class="text-[11px] text-sky-500/80 block mt-1">يحتاجون تذكير للتجديد</span>
+            </div>
+        </div>
+
+        <!-- Filter & Search Controls -->
+        <div class="glass-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3 flex-1 min-w-[280px]">
+                <div class="relative w-full max-w-md">
+                    <i class="fa fa-search absolute right-3.5 top-3.5 text-slate-500 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="filterClients()" placeholder="بحث بالاسم، رقم الموبايل، أو كود الجهاز HWID..."
+                           class="w-full bg-slate-900 border border-slate-700 rounded-xl pr-10 pl-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-lime-500 transition">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="setStatusFilter('all')" class="filter-btn active text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 transition" data-filter="all">الكل</button>
+                <button onclick="setStatusFilter('active')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="active">النشطة</button>
+                <button onclick="setStatusFilter('demo')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="demo">التجريبية</button>
+                <button onclick="setStatusFilter('suspended')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="suspended">المعلقة</button>
+                <button onclick="setStatusFilter('expired')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="expired">المنتهية</button>
+            </div>
+        </div>
+
+        <!-- Clients Cards / Table Grid -->
+        <div id="clientsContainer" class="space-y-4">
+            <!-- Dynamic Client Cards Injected Here -->
+            <div class="text-center py-12 text-slate-500">
+                <i class="fa fa-circle-notch fa-spin text-2xl text-lime-400 mb-2"></i>
+                <p>جاري تحميل بيانات العملاء والتراخيص...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Add New Client -->
+    <div id="addClientModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-lime-500/20 text-lime-400 flex items-center justify-center text-lg font-black">
+                        <i class="fa fa-user-plus"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-white">إضافة عميل / ترخيص جديد</h3>
+                        <p class="text-xs text-slate-400">ربط جيم جديد ببصمة جهازه وإصدار الترخيص</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('addClientModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times text-lg"></i></button>
+            </div>
+
+            <form id="addClientForm" onsubmit="submitAddClient(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">اسم العميل أو اسم الجيم *</label>
+                    <input type="text" id="addName" required placeholder="مثال: كابتن أحمد - جيم الأبطال"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-lime-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">رقم الواتساب / الهاتف</label>
+                    <input type="text" id="addPhone" placeholder="010XXXXXXXX"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-lime-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">كود الجهاز الخاص بالعميل (Machine HWID) *</label>
+                    <div class="relative">
+                        <input type="text" id="addHwid" required placeholder="HWID-XXXX-XXXX-XXXX-XXXX" dir="ltr"
+                               class="code-font w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-lime-400 placeholder-slate-600 focus:outline-none focus:border-lime-500 uppercase">
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1">* العميل ينسخ هذا الكود من شاشة القفل أو الإعدادات ويبعته لك على واتساب.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">مدة الاشتراك المصرح بها:</label>
+                    <select id="addDuration" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-lime-500">
+                        <option value="30" selected>شهر كامل (30 يوم - SaaS Monthly)</option>
+                        <option value="90">3 أشهر (90 يوم - SaaS Quarterly)</option>
+                        <option value="365">سنة كاملة (365 يوم - SaaS Yearly)</option>
+                        <option value="7">تجريبي (7 أيام - Free Demo)</option>
+                        <option value="lifetime">شراء مدى الحياة (Lifetime License)</option>
+                    </select>
+                </div>
+
+                <!-- Features Checklist -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-2">الميزات المسموحة في باقته:</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="ftFace" checked class="accent-lime-500">
+                            <span>بصمة الوجه والكاميرا</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="ftWhatsApp" checked class="accent-lime-500">
+                            <span>رسائل الواتساب الذكية</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="ftTelegram" checked class="accent-lime-500">
+                            <span>بوت التليجرام التفاعلي</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="ftBar" checked class="accent-lime-500">
+                            <span>مخزون ومبيعات البار</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 cursor-pointer col-span-2">
+                            <input type="checkbox" id="ftPayroll" checked class="accent-lime-500">
+                            <span>إدارة المدربين ومسيرات الرواتب والبرايفت</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="addSubmitBtn" class="w-full bg-lime-500 hover:bg-lime-400 text-slate-950 font-black py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-lime-500/20">
+                        <i class="fa fa-check"></i>
+                        <span>حفظ وإصدار الترخيص فوراً</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Show Token -->
+    <div id="showTokenModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-lime-500/20 text-lime-400 flex items-center justify-center text-lg font-black">
+                        <i class="fa fa-key"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-white">كود الترخيص المشفر (Offline Token)</h3>
+                        <p id="tokenClientSubtitle" class="text-xs text-slate-400">خاص بالعميل</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('showTokenModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times text-lg"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+                    <label class="block text-xs font-bold text-slate-400 mb-1">مفتاح التفعيل المشفر:</label>
+                    <textarea id="tokenTextarea" readonly rows="4" dir="ltr"
+                              class="code-font w-full bg-slate-900 border border-slate-700 text-lime-400 p-3 rounded-lg text-xs resize-none focus:outline-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="copyGeneratedToken()" id="copyTokenBtn" class="bg-lime-500 hover:bg-lime-400 text-slate-950 font-black py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa fa-copy"></i>
+                        <span id="copyTokenBtnText">نسخ الكود</span>
+                    </button>
+                    <a id="tokenWhatsAppLink" href="#" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-brands fa-whatsapp text-base"></i>
+                        <span>إرسال واتساب للعميل</span>
+                    </a>
+                </div>
+                <p class="text-[11px] text-slate-500 text-center leading-relaxed">
+                    * هذا الكود مشفر وموقع رقمياً (HMAC-SHA256) ومربوط فقط بجهاز هذا العميل. يعمل أوفلاين 100% ولا يمكن لأي جهاز آخر استخدامه.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Gist / Cloud Export -->
+    <div id="exportModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg font-black">
+                        <i class="fa fa-cloud-arrow-up"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-white">تصدير مركز التحكم السحابي (Cloud Sync)</h3>
+                        <p class="text-xs text-slate-400">لرفع بيانات التراخيص على GitHub Gist أو أي سيرفر للتحكم عن بعد</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('exportModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times text-lg"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    يمكنك نسخ هذا المحتوى ووضعه في <strong>GitHub Secret Gist</strong> والحصول على الرابط المباشر (Raw URL) لتضعه في إعدادات برامج العملاء، مما يتيح لك التحكم فيهم من موبايلك في أي وقت!
+                </p>
+                <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                    <textarea id="exportJsonTextarea" readonly rows="8" dir="ltr"
+                              class="code-font w-full bg-slate-900 border border-slate-700 text-sky-300 p-3 rounded-lg text-xs resize-none focus:outline-none"></textarea>
+                </div>
+                <button onclick="copyExportJson()" class="w-full bg-sky-500 hover:bg-sky-400 text-slate-950 font-black py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fa fa-copy"></i>
+                    <span id="copyExportBtnText">نسخ JSON للحافظة</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        let allClients = [];
+        let currentFilter = 'all';
+
+        async function fetchClients() {
+            try {
+                const res = await fetch('/api/clients/');
+                const data = await res.json();
+                if (data.success) {
+                    allClients = data.clients || [];
+                    updateStats(data.stats);
+                    renderClients();
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('clientsContainer').innerHTML = `
+                    <div class="text-center py-12 text-rose-400">
+                        <i class="fa fa-exclamation-triangle text-3xl mb-2"></i>
+                        <p>تعذر الاتصال بمركز التحكم. تأكد من تشغيل السيرفر.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById('statTotal').innerText = stats.total || 0;
+            document.getElementById('statActive').innerText = stats.active || 0;
+            document.getElementById('statDemo').innerText = stats.demo || 0;
+            document.getElementById('statSuspended').innerText = stats.suspended || 0;
+            document.getElementById('statExpiring').innerText = stats.expiring_soon || 0;
+        }
+
+        function renderClients() {
+            const container = document.getElementById('clientsContainer');
+            const search = document.getElementById('searchInput').value.trim().toLowerCase();
+
+            const filtered = allClients.filter(c => {
+                // Filter by status
+                if (currentFilter !== 'all' && c.status !== currentFilter) {
+                    return false;
+                }
+                // Filter by search query
+                if (search) {
+                    const matchName = (c.name || '').toLowerCase().includes(search);
+                    const matchHwid = (c.hwid || '').toLowerCase().includes(search);
+                    const matchPhone = (c.phone || '').toLowerCase().includes(search);
+                    return matchName || matchHwid || matchPhone;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-card rounded-2xl p-12 text-center text-slate-500">
+                        <i class="fa fa-users-slash text-3xl mb-3 text-slate-600"></i>
+                        <p class="text-sm font-bold">لا يوجد عملاء يطابقون خيارات البحث.</p>
+                        <button onclick="openAddClientModal()" class="mt-4 text-xs bg-lime-500/10 text-lime-400 border border-lime-500/30 px-3 py-1.5 rounded-lg hover:bg-lime-500/20 transition">
+                            + إضافة أول عميل الآن
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(c => renderClientCard(c)).join('');
+        }
+
+        function renderClientCard(c) {
+            const isSuspended = c.status === 'suspended';
+            const isDemo = c.status === 'demo';
+            const isExpired = c.is_expired || c.status === 'expired';
+            const isActive = c.status === 'active' && !isExpired;
+
+            let badgeHtml = '';
+            if (isSuspended) {
+                badgeHtml = '<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-black px-2.5 py-1 rounded-full"><i class="fa fa-lock ml-1"></i> معلق / متوقف</span>';
+            } else if (isDemo) {
+                badgeHtml = `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-black px-2.5 py-1 rounded-full"><i class="fa fa-clock ml-1"></i> تجريبي (${c.remaining_days ?? 0} يوم متبقي)</span>`;
+            } else if (isExpired) {
+                badgeHtml = '<span class="bg-slate-700 text-slate-400 border border-slate-600 text-xs font-black px-2.5 py-1 rounded-full"><i class="fa fa-hourglass-end ml-1"></i> منتهي الصلاحية</span>';
+            } else {
+                badgeHtml = `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-black px-2.5 py-1 rounded-full"><i class="fa fa-circle-check ml-1"></i> نشط (${c.remaining_days ?? 'مدى الحياة'} يوم متبقي)</span>`;
+            }
+
+            const features = c.features || {};
+
+            return `
+                <div class="glass-card rounded-2xl p-5 border transition-all ${isSuspended ? 'border-rose-500/30 bg-rose-950/10' : 'border-slate-800'}">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        
+                        <!-- Client Info -->
+                        <div class="space-y-1.5 flex-1 min-w-[260px]">
+                            <div class="flex items-center gap-3">
+                                <h3 class="text-base font-black text-white">${c.name}</h3>
+                                ${badgeHtml}
+                                <span class="text-xs text-slate-500 font-bold bg-slate-900 px-2 py-0.5 rounded border border-slate-800">${c.license_type}</span>
+                            </div>
+                            
+                            <div class="flex items-center gap-4 text-xs text-slate-400 flex-wrap">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-slate-500">كود الجهاز:</span>
+                                    <span class="code-font font-bold text-lime-400">${c.hwid}</span>
+                                    <button onclick="copyText('${c.hwid}', this)" class="text-[10px] text-slate-400 hover:text-white ml-1" title="نسخ HWID"><i class="fa fa-copy"></i></button>
+                                </div>
+                                ${c.phone ? `
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fa fa-phone text-slate-500"></i>
+                                        <a href="https://wa.me/2${c.phone}" target="_blank" class="text-emerald-400 hover:underline font-mono">${c.phone}</a>
+                                    </div>
+                                ` : ''}
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-slate-500">ينتهي في:</span>
+                                    <span class="font-bold text-slate-300 font-mono">${c.valid_until ? c.valid_until.split('T')[0] : 'مدى الحياة'}</span>
+                                </div>
+                            </div>
+
+                            <!-- Features List -->
+                            <div class="flex items-center gap-1.5 pt-1 text-[11px] flex-wrap">
+                                <span class="text-slate-500 text-[10px]">الميزات:</span>
+                                ${features.face_recognition ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">الوجه ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">الوجه</span>'}
+                                ${features.whatsapp ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">واتساب ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">واتساب</span>'}
+                                ${features.telegram ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">تليجرام ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">تليجرام</span>'}
+                                ${features.bar ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">البار ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">البار</span>'}
+                                ${features.payroll ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">المدربين والرواتب ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">المدربين</span>'}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <!-- Generate Token Button -->
+                            <button onclick="openTokenModal('${c.hwid}', '${c.name}', '${c.phone}')" class="bg-lime-500/10 hover:bg-lime-500/20 text-lime-400 border border-lime-500/30 text-xs font-black px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                                <i class="fa fa-key"></i>
+                                <span>كود التفعيل</span>
+                            </button>
+
+                            <!-- Quick Extend Dropdown / Button -->
+                            <div class="relative inline-block text-left">
+                                <button onclick="quickExtend('${c.hwid}', 30)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1" title="تمديد شهر كامل">
+                                    <i class="fa fa-calendar-plus text-sky-400"></i>
+                                    <span>+ شهر</span>
+                                </button>
+                            </div>
+
+                            <button onclick="quickExtend('${c.hwid}', 365)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold px-2.5 py-2 rounded-xl transition" title="تمديد سنة كاملة">
+                                <span>+ سنة</span>
+                            </button>
+
+                            <!-- Toggle Suspend / Resume -->
+                            <button onclick="toggleSuspend('${c.hwid}')" class="${isSuspended ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/60'} text-xs font-black px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                                <i class="fa ${isSuspended ? 'fa-play' : 'fa-pause'}"></i>
+                                <span>${isSuspended ? 'تفعيل' : 'إيقاف'}</span>
+                            </button>
+
+                            <!-- Delete Button -->
+                            <button onclick="deleteClient('${c.hwid}', '${c.name}')" class="text-slate-500 hover:text-rose-400 p-2 text-xs rounded-lg transition" title="حذف العميل">
+                                <i class="fa fa-trash-can"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+        }
+
+        // Modal Helpers
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function openAddClientModal() { openModal('addClientModal'); }
+
+        async function submitAddClient(e) {
+            e.preventDefault();
+            const btn = document.getElementById('addSubmitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> جاري الحفظ...';
+
+            const payload = {
+                name: document.getElementById('addName').value.trim(),
+                phone: document.getElementById('addPhone').value.trim(),
+                hwid: document.getElementById('addHwid').value.trim(),
+                duration: document.getElementById('addDuration').value,
+                features: {
+                    face_recognition: document.getElementById('ftFace').checked,
+                    whatsapp: document.getElementById('ftWhatsApp').checked,
+                    telegram: document.getElementById('ftTelegram').checked,
+                    bar: document.getElementById('ftBar').checked,
+                    payroll: document.getElementById('ftPayroll').checked,
+                }
+            };
+
+            try {
+                const res = await fetch('/api/clients/add/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeModal('addClientModal');
+                    document.getElementById('addClientForm').reset();
+                    await fetchClients();
+                    if (data.token) {
+                        openTokenModal(payload.hwid, payload.name, payload.phone, data.token);
+                    }
+                } else {
+                    alert('خطأ: ' + data.message);
+                }
+            } catch (err) {
+                alert('فشل الاتصال بالخادم.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-check"></i> <span>حفظ وإصدار الترخيص فوراً</span>';
+            }
+        }
+
+        async function quickExtend(hwid, days) {
+            if (!confirm(`هل أنت متأكد من تمديد الاشتراك بمقدار ${days} يوم؟`)) return;
+            try {
+                const res = await fetch(`/api/clients/${encodeURIComponent(hwid)}/extend/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ days })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await fetchClients();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('تعذر تمديد الاشتراك.');
+            }
+        }
+
+        async function toggleSuspend(hwid) {
+            try {
+                const res = await fetch(`/api/clients/${encodeURIComponent(hwid)}/toggle-status/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await fetchClients();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('تعذر تغيير حالة العميل.');
+            }
+        }
+
+        async function deleteClient(hwid, name) {
+            if (!confirm(`هل أنت متأكد تماماً من حذف العميل "${name}" من مركز التحكم؟`)) return;
+            try {
+                const res = await fetch(`/api/clients/${encodeURIComponent(hwid)}/delete/`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await fetchClients();
+                }
+            } catch (err) {
+                alert('فشل حذف العميل.');
+            }
+        }
+
+        async function openTokenModal(hwid, name, phone, existingToken) {
+            document.getElementById('tokenClientSubtitle').innerText = `${name} (${hwid})`;
+            if (existingToken) {
+                document.getElementById('tokenTextarea').value = existingToken;
+                setupWhatsAppLink(phone, name, existingToken);
+                openModal('showTokenModal');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/clients/${encodeURIComponent(hwid)}/token/`);
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('tokenTextarea').value = data.token;
+                    setupWhatsAppLink(phone, name, data.token);
+                    openModal('showTokenModal');
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('تعذر توليد كود الترخيص.');
+            }
+        }
+
+        function setupWhatsAppLink(phone, name, token) {
+            const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+            const msg = `مرحباً كابتن ${name}،\nتم تفعيل/تجديد ترخيص برنامج HULK GYM الخاص بصالتكم بنجاح! 💪\nكود التفعيل الخاص بكم هو:\n\n${token}\n\nيرجى نسخه ولصقه في شاشة التفعيل أو في صفحة الإعدادات لتفعيل البرنامج أوفلاين فوراً.`;
+            const waUrl = `https://wa.me/2${cleanPhone}?text=${encodeURIComponent(msg)}`;
+            document.getElementById('tokenWhatsAppLink').href = waUrl;
+        }
+
+        function copyGeneratedToken() {
+            const token = document.getElementById('tokenTextarea').value;
+            navigator.clipboard.writeText(token).then(() => {
+                const btnText = document.getElementById('copyTokenBtnText');
+                btnText.innerText = 'تم النسخ ✓';
+                setTimeout(() => { btnText.innerText = 'نسخ الكود'; }, 2000);
+            });
+        }
+
+        function copyText(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i class="fa fa-check text-lime-400"></i>';
+                setTimeout(() => { btn.innerHTML = orig; }, 1500);
+            });
+        }
+
+        function copySyncUrl() {
+            const url = document.getElementById('syncUrlText').innerText;
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = document.getElementById('copySyncBtnText');
+                btn.innerText = 'تم النسخ بنجاح ✓';
+                setTimeout(() => { btn.innerText = 'نسخ رابط المزامنة للعملاء'; }, 2000);
+            });
+        }
+
+        async function openExportModal() {
+            try {
+                const res = await fetch('/api/clients.json');
+                const data = await res.json();
+                document.getElementById('exportJsonTextarea').value = JSON.stringify(data, null, 2);
+                openModal('exportModal');
+            } catch (err) {
+                alert('تعذر تجهيز ملف التصدير.');
+            }
+        }
+
+        function copyExportJson() {
+            const text = document.getElementById('exportJsonTextarea').value;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copyExportBtnText');
+                btn.innerText = 'تم النسخ للحافظة ✓';
+                setTimeout(() => { btn.innerText = 'نسخ JSON للحافظة'; }, 2000);
+            });
+        }
+
+        function setStatusFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.getAttribute('data-filter') === filter) {
+                    btn.className = 'filter-btn active text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 transition';
+                } else {
+                    btn.className = 'filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition';
+                }
+            });
+            renderClients();
+        }
+
+        function filterClients() { renderClients(); }
+        function refreshClients() { fetchClients(); }
+
+        // Initial Load
+        fetchClients();
+    </script>
+</body>
+</html>

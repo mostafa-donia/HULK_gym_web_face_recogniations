@@ -1,0 +1,24 @@
+{
+  "clients": {
+    "HWID-A1B2-C3D4-E5F6": {
+      "name": "كابتن محمود - جيم تايجر",
+      "phone": "01012345678",
+      "status": "active",
+      "license_type": "monthly",
+      "valid_until": "2026-11-15T22:30:08.290828+00:00",
+      "features": {
+        "face_recognition": true,
+        "whatsapp": true,
+        "telegram": true,
+        "bar": true,
+        "payroll": true
+      },
+      "developer_message": "شكراً لاشتراككم في نظام HULK GYM.",
+      "created_at": "2026-10-16T22:30:08.290828+00:00",
+      "last_seen": "2026-10-16T22:30:21.947033+00:00"
+    }
+  },
+  "default_demo_days": 7,
+  "system_announcement": "",
+  "last_updated": "2026-10-16T22:30:21.947033+00:00"
+}
