@@ -5,270 +5,264 @@
 {% block content %}
 <div class="whatsapp-dashboard" style="max-width: 100%; padding: 0 0.5rem;">
 
-  <!-- Page Header -->
-  <div style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-    <div>
-      <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0; color: var(--text-main); display: flex; align-items: center; gap: 10px;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" style="vertical-align: middle;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> واتساب
-      </h1>
-      <p style="color: var(--text-muted); margin: 0.35rem 0 0; font-size: 0.95rem;">
-        إيصالات الدفع وتذكيرات الاشتراك والرسائل الجماعية عبر تطبيق WhatsApp Desktop للكمبيوتر
-      </p>
+  <!-- Top Header + Main Primary Actions in One Clean Bar -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.1rem 1.35rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    
+    <!-- Title & Status -->
+    <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+      <div style="width: 46px; height: 46px; border-radius: 12px; background: rgba(34, 197, 94, 0.14); border: 1px solid rgba(34, 197, 94, 0.35); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      </div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <h1 style="font-size: 1.45rem; font-weight: 800; margin: 0; color: var(--text-main);">إدارة رسائل واتساب</h1>
+          {% if whatsapp_desktop_installed %}
+            <span style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.35); color: #4ade80; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;">
+              ● متصل بتطبيق الكمبيوتر
+            </span>
+          {% else %}
+            <span style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;">
+              ● تطبيق واتساب غير مثبت
+            </span>
+          {% endif %}
+        </div>
+        <p style="color: var(--text-muted); margin: 0.2rem 0 0; font-size: 0.85rem;">
+          إرسال الفواتير المصورة، التذكيرات، وتقرير المدير بضغطة واحدة
+        </p>
+      </div>
     </div>
-    <div>
-      {% if whatsapp_desktop_installed %}
-        <span style="background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #4ade80; padding: 6px 14px; border-radius: 8px; font-size: 0.88rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
-          تطبيق WhatsApp Desktop مثبت ومفعل
-        </span>
-      {% else %}
-        <span style="background: rgba(239, 68, 68, 0.18); border: 1px solid #ef4444; color: #fca5a5; padding: 6px 14px; border-radius: 8px; font-size: 0.88rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
-          WhatsApp Desktop غير مثبت
-        </span>
-      {% endif %}
+
+    <!-- Main Action Buttons (Clean, Grouped) -->
+    <div style="display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;">
+      <button type="button" onclick="openSendPendingModal()" class="btn" style="background: #22c55e; color: #052e16; font-weight: 800; border: none; padding: 0.55rem 1.15rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; box-shadow: 0 4px 14px rgba(34, 197, 94, 0.25);">
+        🚀 إرسال المعلق ({{ total_pending }})
+      </button>
+
+      <button type="button" onclick="openBulkSendModal()" class="btn" style="background: rgba(2, 132, 199, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); font-weight: 700; padding: 0.52rem 1rem; border-radius: 10px; font-size: 0.86rem;">
+        📢 إرسال جماعي
+      </button>
+
+      <button type="button" onclick="openManagerReportModal()" class="btn" style="background: rgba(132, 204, 22, 0.16); color: #a3e635; border: 1px solid rgba(163, 230, 53, 0.35); font-weight: 700; padding: 0.52rem 1rem; border-radius: 10px; font-size: 0.86rem;">
+        📊 تقرير المدير
+      </button>
+
+      <a href="{% url 'messaging:whatsapp_prepare_reminders' %}" class="btn btn-secondary" style="font-weight: 700; padding: 0.52rem 0.95rem; border-radius: 10px; font-size: 0.85rem;">
+        🔔 تجهيز التذكيرات
+      </a>
+
+      <a href="{% url 'messaging:whatsapp_compose' %}" class="btn btn-secondary" style="font-weight: 700; padding: 0.52rem 0.95rem; border-radius: 10px; font-size: 0.85rem;">
+        ✉️ رسالة فردية
+      </a>
     </div>
   </div>
 
   {% if not whatsapp_desktop_installed %}
-    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 12px 18px; border-radius: 10px; font-size: 0.92rem; font-weight: 600; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 10px;">
-      
-      <div>
-        <strong>تنبيه هام:</strong> {{ whatsapp_desktop_status|default:"تطبيق واتساب للكمبيوتر (WhatsApp Desktop) غير مثبت على هذا الجهاز." }}
-        يرجى فتح متجر مايكروسوفت (Microsoft Store) والبحث عن <strong>WhatsApp</strong> وتثبيته حتى يتمكن النظام من إرسال الرسائل والإيصالات تلقائياً.
-      </div>
+    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 12px 18px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem;">
+      <strong>تنبيه هام:</strong> {{ whatsapp_desktop_status|default:"تطبيق واتساب للكمبيوتر (WhatsApp Desktop) غير مثبت على هذا الجهاز." }}
+      يرجى تثبيته من متجر مايكروسوفت (Microsoft Store) ليتم الإرسال تلقائياً.
     </div>
   {% endif %}
 
-  <!-- Search & Filter Controls -->
-  <form method="GET" action="{% url 'messaging:whatsapp_queue' %}" style="margin-bottom: 1rem;">
-    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; background: var(--bg-surface-subtle); padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
+  <!-- Quick Status Filter Tabs + Search + Batch Actions in One Unified Card -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 0.85rem 1.1rem; margin-bottom: 1rem;">
+    
+    <!-- Row 1: Quick Status Tabs + Search Form -->
+    <form method="GET" action="{% url 'messaging:whatsapp_queue' %}" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
       
-      <!-- Search Input -->
-      <div style="flex: 1; min-width: 260px;">
+      <!-- Clickable Status Pills -->
+      <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+        <a href="?status=all{% if type_filter != 'all' %}&msg_type={{ type_filter }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" 
+           style="text-decoration: none; padding: 6px 13px; border-radius: 8px; font-size: 0.84rem; font-weight: 700; transition: 0.15s; {% if status_filter == 'all' %}background: var(--primary-color, #84cc16); color: #000;{% else %}background: rgba(255,255,255,0.05); color: var(--text-muted);{% endif %}">
+          الكل ({{ total_count }})
+        </a>
+        <a href="?status=pending{% if type_filter != 'all' %}&msg_type={{ type_filter }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" 
+           style="text-decoration: none; padding: 6px 13px; border-radius: 8px; font-size: 0.84rem; font-weight: 700; transition: 0.15s; {% if status_filter == 'pending' %}background: #f59e0b; color: #000;{% else %}background: rgba(245, 158, 11, 0.1); color: #fbbf24;{% endif %}">
+          المعلق ({{ total_pending }})
+        </a>
+        <a href="?status=sent{% if type_filter != 'all' %}&msg_type={{ type_filter }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" 
+           style="text-decoration: none; padding: 6px 13px; border-radius: 8px; font-size: 0.84rem; font-weight: 700; transition: 0.15s; {% if status_filter == 'sent' %}background: #22c55e; color: #000;{% else %}background: rgba(34, 197, 94, 0.1); color: #4ade80;{% endif %}">
+          تم الإرسال ({{ total_sent }})
+        </a>
+        <a href="?status=failed{% if type_filter != 'all' %}&msg_type={{ type_filter }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" 
+           style="text-decoration: none; padding: 6px 13px; border-radius: 8px; font-size: 0.84rem; font-weight: 700; transition: 0.15s; {% if status_filter == 'failed' %}background: #ef4444; color: #fff;{% else %}background: rgba(239, 68, 68, 0.1); color: #f87171;{% endif %}">
+          فشل ({{ total_failed }})
+        </a>
+      </div>
+
+      <!-- Search + Type Dropdown -->
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 280px; max-width: 620px; justify-content: flex-end;">
+        <input type="hidden" name="status" value="{{ status_filter }}">
         <input 
           type="text" 
           name="q" 
           value="{{ search_q }}" 
-          placeholder="ابحث بالاسم أو الموبايل أو النوع أو الحالة..." 
+          placeholder="ابحث بالاسم أو رقم الموبايل..." 
           class="form-control"
-          style="background: var(--bg-input); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); padding: 0.55rem 1rem; border-radius: 8px; width: 100%;"
+          style="background: var(--bg-input); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); padding: 0.45rem 0.85rem; border-radius: 8px; flex: 1; font-size: 0.86rem;"
         >
-      </div>
-
-      <!-- Type Filter -->
-      <div style="min-width: 170px;">
-        <select name="msg_type" onchange="this.form.submit()" class="form-control" style="background: var(--bg-input); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); padding: 0.55rem 0.75rem; border-radius: 8px; width: 100%;">
-          <option value="all" {% if type_filter == 'all' %}selected{% endif %}>جميع الأنواع</option>
+        <select name="msg_type" onchange="this.form.submit()" class="form-control" style="background: var(--bg-input); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); padding: 0.45rem 0.65rem; border-radius: 8px; width: 155px; font-size: 0.85rem;">
+          <option value="all" {% if type_filter == 'all' %}selected{% endif %}>كل الأنواع</option>
           {% for code, label in type_choices %}
             <option value="{{ code }}" {% if type_filter == code %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
         </select>
+        <button type="submit" class="btn btn-secondary" style="padding: 0.45rem 0.9rem; border-radius: 8px; font-size: 0.85rem;">بحث</button>
+        {% if search_q or status_filter != 'all' or type_filter != 'all' %}
+          <a href="{% url 'messaging:whatsapp_queue' %}" class="btn btn-secondary" style="color: #f87171; padding: 0.45rem 0.75rem; border-radius: 8px; font-size: 0.84rem;" title="إلغاء الفلتر">✕</a>
+        {% endif %}
       </div>
+    </form>
+  </div>
 
-      <!-- Status Filter Dropdown / Tabs -->
-      <div style="min-width: 150px;">
-        <select name="status" onchange="this.form.submit()" class="form-control" style="background: var(--bg-input); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); padding: 0.55rem 0.75rem; border-radius: 8px; width: 100%;">
-          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>الكل ({{ total_count }})</option>
-          <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>المعلق ({{ total_pending }})</option>
-          <option value="sent" {% if status_filter == 'sent' %}selected{% endif %}>تم الإرسال ({{ total_sent }})</option>
-          <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>فشل الإرسال ({{ total_failed }})</option>
-        </select>
-      </div>
+  <!-- Batch Form & Messages Table -->
+  <form id="batchActionForm" method="POST" action="{% url 'messaging:whatsapp_batch_action' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" id="batchActionInput" value="">
 
-      <button type="submit" class="btn btn-secondary" style="padding: 0.55rem 1.25rem;">
-        بحث
-      </button>
-
-      {% if search_q or status_filter != 'all' or type_filter != 'all' %}
-        <a href="{% url 'messaging:whatsapp_queue' %}" class="btn btn-secondary" style="color: #f87171;">
-          إلغاء الفلتر
-        </a>
-      {% endif %}
-    </div>
-  </form>
-
-  <!-- Action Bars (Exact Desktop Logic & UI Layout) -->
-  <div style="display: flex; flex-direction: column; gap: 0.65rem; margin-bottom: 1.25rem;">
-    
-    <!-- 1. تجهيز الرسائل Group -->
-    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: var(--bg-surface-subtle); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid var(--border-color);">
-      <span style="font-weight: 700; color: var(--text-muted); min-width: 95px; font-size: 0.88rem;">تجهيز الرسائل:</span>
+    <!-- Compact Table Action Header Bar -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; overflow: hidden;">
       
-      <button type="button" class="btn" style="background: #84cc16; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.1rem; border-radius: 6px; cursor: pointer;" onclick="openManagerReportModal();">
-        تقرير المدير
-      </button>
-
-      <!-- BULK SEND BUTTON (Replaces old limited button) -->
-      <button type="button" class="btn btn-primary" onclick="openBulkSendModal()" style="font-weight: 800; padding: 0.4rem 1.2rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border: 1px solid #38bdf8;">
-        إرسال جماعي مخصص
-      </button>
-
-      <a href="{% url 'messaging:whatsapp_prepare_reminders' %}" class="btn btn-secondary" style="font-weight: 700; padding: 0.4rem 1rem; border-radius: 6px;">
-        تجهيز التذكيرات
-      </a>
-
-      <a href="{% url 'messaging:whatsapp_compose' %}" class="btn btn-secondary" style="font-weight: 700; padding: 0.4rem 1rem; border-radius: 6px; margin-right: auto;">
-        رسالة فردية
-      </a>
-    </div>
-
-    <!-- 2. إرسال Group -->
-    <form id="batchActionForm" method="POST" action="{% url 'messaging:whatsapp_batch_action' %}">
-      {% csrf_token %}
-      <input type="hidden" name="action" id="batchActionInput" value="">
-      
-      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: var(--bg-surface-subtle); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 0.65rem;">
-        <span style="font-weight: 700; color: var(--text-muted); min-width: 95px; font-size: 0.88rem;">إرسال:</span>
-        
-        <button type="button" onclick="openSendPendingModal()" class="btn" style="background: #22c55e; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.2rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
-          إرسال غير المرسل / المعلق
-        </button>
-
-        <button type="button" onclick="submitBatchAction('resend_selected')" class="btn btn-secondary" style="font-weight: 700; padding: 0.4rem 1rem; border-radius: 6px;">
-          إعادة إرسال المحدد
-        </button>
-
-        <button type="button" onclick="submitBatchAction('resend_failed_to_pending')" class="btn btn-secondary" style="font-weight: 700; padding: 0.4rem 1rem; border-radius: 6px;">
-          إعادة الفاشل للمعلق
-        </button>
-
-        <button type="button" onclick="submitBatchAction('force_resend_selected')" class="btn" style="background: #f59e0b; color: #000; font-weight: 800; border: none; padding: 0.4rem 1.1rem; border-radius: 6px;">
-          إرسال قسري
-        </button>
-      </div>
-
-      <!-- 3. حذف Group -->
-      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; background: var(--bg-surface-subtle); padding: 0.55rem 1rem; border-radius: 10px; border: 1px solid var(--border-color);">
-        <span style="font-weight: 700; color: var(--text-muted); min-width: 95px; font-size: 0.88rem;">حذف:</span>
-        
-        <button type="button" onclick="if(confirm('هل تريد بالتأكيد حذف الرسائل المحددة؟')) submitBatchAction('delete_selected')" class="btn" style="background: #ef4444; color: #fff; font-weight: 700; border: none; padding: 0.4rem 1.1rem; border-radius: 6px;">
-          حذف المحدد
-        </button>
-
-        <!-- Delete Dropdown Menu -->
-        <div style="position: relative; display: inline-block;">
-          <button type="button" class="btn btn-secondary dropdown-toggle" onclick="toggleDeleteMenu(event)" style="font-weight: 700; padding: 0.4rem 1.1rem; border-radius: 6px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;">
-            حذف متقدم ▼
-          </button>
+      <div style="padding: 0.7rem 1rem; background: var(--bg-surface-subtle); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <span style="font-size: 0.83rem; color: var(--text-muted); font-weight: 700; margin-left: 4px;">إجراءات المحدد:</span>
           
-          <div id="deleteMenuDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: var(--bg-surface-elevated); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 999; min-width: 180px; overflow: hidden;">
-            <a href="javascript:void(0)" onclick="if(confirm('حذف جميع الرسائل التي تم إرسالها بنجاح؟')) submitBatchAction('delete_sent')" style="display: block; padding: 8px 16px; color: #cbd5e1; text-decoration: none; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='none'">
-              حذف المرسلة
-            </a>
-            <a href="javascript:void(0)" onclick="if(confirm('حذف جميع الرسائل الفاشلة؟')) submitBatchAction('delete_failed')" style="display: block; padding: 8px 16px; color: #cbd5e1; text-decoration: none; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='none'">
-              حذف الفاشلة
-            </a>
-            <a href="javascript:void(0)" onclick="if(confirm('تحذير: هل تريد تفريغ وحذف كامل طابور الواتساب؟')) submitBatchAction('delete_all')" style="display: block; padding: 8px 16px; color: #ef4444; font-weight: 700; text-decoration: none; font-size: 0.85rem;" onmouseover="this.style.background='rgba(239, 68, 68, 0.15)'" onmouseout="this.style.background='none'">
-              حذف الكل
-            </a>
+          <button type="button" onclick="submitBatchAction('resend_selected')" class="btn btn-secondary" style="font-weight: 700; padding: 0.32rem 0.8rem; border-radius: 7px; font-size: 0.8rem;">
+            🔄 إعادة إرسال المحدد
+          </button>
+
+          <button type="button" onclick="submitBatchAction('force_resend_selected')" class="btn" style="background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); font-weight: 700; padding: 0.32rem 0.8rem; border-radius: 7px; font-size: 0.8rem;">
+            ⚡ إرسال قسري للمحدد
+          </button>
+
+          <button type="button" onclick="submitBatchAction('resend_failed_to_pending')" class="btn btn-secondary" style="font-weight: 700; padding: 0.32rem 0.8rem; border-radius: 7px; font-size: 0.8rem;">
+            إعادة الفاشل للمعلق
+          </button>
+
+          <button type="button" onclick="if(confirm('هل تريد بالتأكيد حذف الرسائل المحددة؟')) submitBatchAction('delete_selected')" class="btn" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 700; padding: 0.32rem 0.8rem; border-radius: 7px; font-size: 0.8rem;">
+            🗑️ حذف المحدد
+          </button>
+
+          <!-- Delete Dropdown Menu -->
+          <div style="position: relative; display: inline-block;">
+            <button type="button" class="btn btn-secondary dropdown-toggle" onclick="toggleDeleteMenu(event)" style="font-weight: 700; padding: 0.32rem 0.75rem; border-radius: 7px; font-size: 0.8rem; color: var(--text-muted);">
+              تنظيف الطابور ▼
+            </button>
+            <div id="deleteMenuDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 5px; background: var(--bg-surface-elevated); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 999; min-width: 175px; overflow: hidden;">
+              <a href="javascript:void(0)" onclick="if(confirm('حذف جميع الرسائل التي تم إرسالها بنجاح؟')) submitBatchAction('delete_sent')" style="display: block; padding: 8px 14px; color: #cbd5e1; text-decoration: none; font-size: 0.83rem; border-bottom: 1px solid rgba(255,255,255,0.06);" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='none'">
+                حذف الرسائل المرسلة
+              </a>
+              <a href="javascript:void(0)" onclick="if(confirm('حذف جميع الرسائل الفاشلة؟')) submitBatchAction('delete_failed')" style="display: block; padding: 8px 14px; color: #cbd5e1; text-decoration: none; font-size: 0.83rem; border-bottom: 1px solid rgba(255,255,255,0.06);" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='none'">
+                حذف الرسائل الفاشلة
+              </a>
+              <a href="javascript:void(0)" onclick="if(confirm('تحذير: هل تريد تفريغ وحذف كامل طابور الواتساب؟')) submitBatchAction('delete_all')" style="display: block; padding: 8px 14px; color: #ef4444; font-weight: 700; text-decoration: none; font-size: 0.83rem;" onmouseover="this.style.background='rgba(239, 68, 68, 0.15)'" onmouseout="this.style.background='none'">
+                تفريغ الطابور بالكامل
+              </a>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Messages Counter Bar -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin: 1rem 0 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
-        <div>
-          <span style="color: var(--text-main); font-weight: 700;">{{ displayed_count }}</span> رسالة معروضة | المعلق: <span style="color: #f59e0b; font-weight: 700;">{{ total_pending }}</span>
-        </div>
-        <div style="font-size: 0.82rem;">
-          يمكنك تحديد عدة رسائل والضغط على أي زر في شريط الإرسال أو الحذف.
+        <div style="font-size: 0.82rem; color: var(--text-muted);">
+          المعروض: <strong style="color: var(--text-main);">{{ displayed_count }}</strong> رسالة
         </div>
       </div>
 
-      <!-- Messages Table -->
-      <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: var(--bg-card);">
-        <table class="dark-table" style="width: 100%; font-size: 0.88rem; border-collapse: collapse;">
+      <!-- Clean, Streamlined Table -->
+      <div class="table-responsive">
+        <table class="dark-table" style="width: 100%; font-size: 0.87rem; border-collapse: collapse;">
           <thead>
-            <tr style="background: var(--bg-surface-subtle); border-bottom: 2px solid var(--border-color);">
-              <th style="width: 38px; text-align: center; padding: 10px;">
+            <tr style="background: rgba(15, 23, 42, 0.45); border-bottom: 1px solid var(--border-color);">
+              <th style="width: 40px; text-align: center; padding: 11px 8px;">
                 <input type="checkbox" id="selectAllCheckbox" onclick="toggleSelectAll(this)" style="cursor: pointer; width: 16px; height: 16px;">
               </th>
               <th style="width: 105px;">الحالة</th>
-              <th style="width: 140px;">النوع</th>
-              <th>الاسم</th>
-              <th style="width: 130px;">الموبايل</th>
-              <th style="width: 95px;">فئة العضو</th>
-              <th style="width: 90px; text-align: center;">المرفق</th>
+              <th style="width: 210px;">المستلم والموبايل</th>
+              <th style="width: 165px;">النوع والمرفق</th>
               <th>الرسالة</th>
-              <th style="width: 135px;">تاريخ الإنشاء</th>
-              <th style="width: 135px;">وقت الإرسال</th>
+              <th style="width: 145px;">التوقيت</th>
               <th style="width: 85px; text-align: center;">إجراءات</th>
             </tr>
           </thead>
           <tbody>
             {% for msg in messages_list %}
             <tr style="border-bottom: 1px solid var(--border-subtle); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
-              <td style="text-align: center; padding: 10px;">
+              <td style="text-align: center; padding: 10px 8px;">
                 <input type="checkbox" name="selected_ids" value="{{ msg.id }}" class="msg-row-checkbox" style="cursor: pointer; width: 16px; height: 16px;">
               </td>
               <td>
                 {% if msg.status == 'sent' %}
-                  <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); font-weight: 700;">تم الإرسال</span>
+                  <span class="badge" style="background: rgba(34, 197, 94, 0.14); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); font-weight: 700;">تم الإرسال</span>
                 {% elif msg.status == 'pending' %}
-                  <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 700;">معلق</span>
+                  <span class="badge" style="background: rgba(245, 158, 11, 0.14); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 700;">معلق</span>
                 {% else %}
-                  <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 700;">فشل</span>
+                  <span class="badge" style="background: rgba(239, 68, 68, 0.14); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 700;">فشل</span>
                 {% endif %}
               </td>
               <td>
-                <span class="badge" style="background: rgba(255,255,255,0.07); color: var(--text-secondary); font-size: 0.8rem;">
-                  {{ msg.get_msg_type_display }}
-                </span>
-              </td>
-              <td><strong>{{ msg.recipient_name|default:"غير محدد" }}</strong></td>
-              <td dir="ltr" style="text-align: right; font-family: monospace; font-weight: 600; color: #38bdf8;">
-                {{ msg.mobile }}
+                <div style="font-weight: 700; color: var(--text-main);">{{ msg.recipient_name|default:"غير محدد" }}</div>
+                <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                  <span dir="ltr" style="font-family: monospace; font-weight: 600; color: #38bdf8; font-size: 0.82rem;">{{ msg.mobile }}</span>
+                  <span style="font-size: 0.74rem; color: var(--text-muted);">• {{ msg.get_recipient_type_display }}</span>
+                </div>
               </td>
               <td>
-                <span style="font-size: 0.8rem; color: var(--text-muted);">{{ msg.get_recipient_type_display }}</span>
+                <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 5px;">
+                  <span class="badge" style="background: rgba(255,255,255,0.07); color: var(--text-secondary); font-size: 0.78rem;">
+                    {{ msg.get_msg_type_display }}
+                  </span>
+                  {% if msg.attachment %}
+                    <a href="{{ msg.attachment.url }}" target="_blank" style="color: #38bdf8; text-decoration: none; font-size: 0.76rem; font-weight: 700; background: rgba(56, 189, 248, 0.12); padding: 2px 8px; border-radius: 5px; border: 1px solid rgba(56, 189, 248, 0.25);">
+                      🖼️ عرض الصورة المرفقة
+                    </a>
+                  {% elif msg.link %}
+                    <a href="{{ msg.link }}" target="_blank" style="color: #a78bfa; text-decoration: none; font-size: 0.76rem; font-weight: 700;">
+                      🔗 رابط مرفق
+                    </a>
+                  {% endif %}
+                </div>
               </td>
-              <td style="text-align: center;">
-                {% if msg.attachment %}
-                  <a href="{{ msg.attachment.url }}" target="_blank" title="عرض الصورة أو الملف المرفق" style="color: #38bdf8; text-decoration: none; font-size: 1.1rem;">
-                    
-                  </a>
-                {% elif msg.link %}
-                  <a href="{{ msg.link }}" target="_blank" title="{{ msg.link }}" style="color: #a78bfa; text-decoration: none; font-size: 1.1rem;">
-                    
-                  </a>
-                {% else %}
-                  <span style="color: rgba(255,255,255,0.2);">-</span>
-                {% endif %}
-              </td>
-              <td style="max-width: 320px; white-space: pre-wrap; font-size: 0.82rem; color: #cbd5e1; line-height: 1.4;">
-                {{ msg.message|truncatechars:150 }}
+              <td style="max-width: 380px; font-size: 0.82rem; color: #cbd5e1; line-height: 1.45;">
+                <div style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="{{ msg.message }}">
+                  {{ msg.message }}
+                </div>
                 {% if msg.error_detail %}
                   <div style="color: #f87171; font-size: 0.75rem; margin-top: 3px;">
-                    خطأ: {{ msg.error_detail }}
+                    ⚠️ {{ msg.error_detail }}
                   </div>
                 {% endif %}
               </td>
-              <td style="font-size: 0.8rem; color: var(--text-muted);">{{ msg.created_at|date:"Y-m-d H:i" }}</td>
-              <td style="font-size: 0.8rem; color: var(--text-muted);">
-                {% if msg.sent_at %}{{ msg.sent_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}
+              <td style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;">
+                <div>إنشاء: {{ msg.created_at|date:"Y-m-d H:i" }}</div>
+                {% if msg.sent_at %}
+                  <div style="color: #4ade80;">إرسال: {{ msg.sent_at|date:"Y-m-d H:i" }}</div>
+                {% endif %}
               </td>
               <td style="text-align: center;">
                 <div style="display: flex; gap: 4px; justify-content: center;">
                   {% if msg.status != 'sent' %}
-                  <a href="{% url 'messaging:whatsapp_retry' msg.id %}" class="btn btn-secondary btn-sm" style="padding: 2px 7px;" title="إعادة تعيين لمعلق"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg></a>
+                  <a href="{% url 'messaging:whatsapp_retry' msg.id %}" class="btn btn-secondary btn-sm" style="padding: 4px 8px;" title="إعادة تعيين لمعلق">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                  </a>
                   {% endif %}
-                  <a href="{% url 'messaging:whatsapp_delete' msg.id %}" class="btn btn-secondary btn-sm" style="padding: 2px 7px; color: #ef4444;" onclick="return confirm('حذف هذه الرسالة من الطابور؟');" title="حذف"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></a>
+                  <a href="{% url 'messaging:whatsapp_delete' msg.id %}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; color: #ef4444;" onclick="return confirm('حذف هذه الرسالة من الطابور؟');" title="حذف">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </a>
                 </div>
               </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="11" style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
-                <div style="font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--text-muted);"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
-                <div style="font-size: 1.1rem; color: #fff; font-weight: 700;">لا توجد رسائل مطابقة لخيارات الفلترة الحالية</div>
-                <p style="font-size: 0.85rem; margin-top: 0.3rem;">يمكنك تجهيز تذكيرات جديدة، كتابة رسالة مخصصة، أو إرسال حملة جماعية.</p>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 3rem 1rem;">
+                <div style="margin-bottom: 0.5rem; color: var(--text-muted);"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
+                <div style="font-size: 1.05rem; color: #fff; font-weight: 700;">لا توجد رسائل مطابقة حالياً</div>
+                <p style="font-size: 0.84rem; margin-top: 0.25rem;">يمكنك تجهيز تذكيرات جديدة، كتابة رسالة فردية، أو إرسال حملة جماعية من الأزرار بالأعلى.</p>
               </td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-    </form>
-  </div>
+    </div>
+  </form>
 </div>
 
 <!-- ==================================================================== -->
