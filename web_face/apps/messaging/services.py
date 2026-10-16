@@ -228,9 +228,8 @@ def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: s
         except Exception as e:
             logger.warning("whatsupp_ready batch init error: %s", e)
 
-    for idx, msg in enumerate(pending):
-        is_last = (idx == len(pending) - 1)
-        if dispatch_message_record(msg, return_to_system=is_last):
+    for msg in pending:
+        if dispatch_message_record(msg, return_to_system=False):
             sent_count += 1
         else:
             failed_count += 1

@@ -289,28 +289,154 @@ def is_whatsapp_desktop_installed() -> tuple:
     return installed, msg, details
 
 
+def is_whatsapp_desktop_window(hwnd) -> bool:
+    """Checks if the given HWND is the native WhatsApp Desktop app (not a web browser)."""
+    if not hwnd:
+        return False
+    try:
+        import win32gui
+        cls_name = (win32gui.GetClassName(hwnd) or "")
+        title = (win32gui.GetWindowText(hwnd) or "").strip().lower()
+        if cls_name == "WinUIDesktopWin32WindowClass":
+            return True
+        if title in ("whatsapp", "واتساب"):
+            return True
+        if ("whatsapp" in title or "واتساب" in title) and not any(
+            b in title for b in ["google chrome", "chrome", "edge", "firefox", "brave", "opera", "hulk", "gym", "cina"]
+        ):
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def find_system_browser_hwnd():
+    """Finds the existing browser window running the gym system without opening any new tabs."""
+    try:
+        import win32gui
+        tier1 = []  # Browser window with Gym System title
+        tier2 = []  # Any Google Chrome / Edge / Brave / Firefox window
+
+        def enum_cb(h, _):
+            if win32gui.IsWindowVisible(h) and not is_whatsapp_desktop_window(h):
+                t = (win32gui.GetWindowText(h) or "").lower()
+                if not t:
+                    return True
+                is_browser = any(b in t for b in ["google chrome", "microsoft​ edge", "edge", "firefox", "brave", "opera"])
+                is_gym = any(k in t for k in ["hulk", "gym", "cina", "127.0.0.1", "localhost", "الرئيسية", "لوحة", "إيصالات", "تذكيرات"])
+                if is_browser and is_gym:
+                    tier1.append(h)
+                elif is_gym and "chrome" in (win32gui.GetClassName(h) or "").lower():
+                    tier1.append(h)
+                elif is_browser:
+                    tier2.append(h)
+            return True
+
+        win32gui.EnumWindows(enum_cb, None)
+        if tier1:
+            return tier1[0]
+        if tier2:
+            return tier2[0]
+    except Exception as e:
+        print(f"[find_system_browser_hwnd] Warning: {e}")
+    return None
+
+
+def force_activate_window(hwnd, maximize: bool = False) -> bool:
+    """
+    Reliably brings the specified HWND to the foreground on Windows,
+    bypassing ForegroundLockTimeout restrictions by attaching thread input
+    from the current thread and foreground thread.
+    If maximize=True, guarantees the window is maximized to full screen (SW_MAXIMIZE = 3).
+    """
+    if not hwnd:
+        return False
+    try:
+        ensure_desktop_attached()
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+        import win32gui
+
+        if not win32gui.IsWindow(hwnd):
+            return False
+
+        fore_hwnd = user32.GetForegroundWindow()
+        fore_thread = user32.GetWindowThreadProcessId(fore_hwnd, None) if fore_hwnd else 0
+        cur_thread = kernel32.GetCurrentThreadId()
+        target_thread = user32.GetWindowThreadProcessId(hwnd, None)
+
+        # Unlock Windows foreground lock timeout
+        user32.SystemParametersInfoW(0x2001, 0, 0, 3)
+
+        if fore_thread and fore_thread != cur_thread:
+            user32.AttachThreadInput(fore_thread, cur_thread, True)
+        if target_thread and target_thread != cur_thread:
+            user32.AttachThreadInput(target_thread, cur_thread, True)
+
+        try:
+            user32.keybd_event(0x12, 0, 0, 0)  # Alt key down
+            if maximize:
+                if user32.IsIconic(hwnd):
+                    user32.ShowWindow(hwnd, 9)  # SW_RESTORE first if minimized
+                    sleep(0.15)
+                user32.ShowWindow(hwnd, 3)  # SW_MAXIMIZE (full screen window)
+            else:
+                if user32.IsIconic(hwnd):
+                    user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+                else:
+                    placement = win32gui.GetWindowPlacement(hwnd)
+                    if placement and placement[1] == 3:
+                        user32.ShowWindow(hwnd, 3)  # Preserve maximized state
+                    else:
+                        user32.ShowWindow(hwnd, 5)  # SW_SHOW
+            user32.SetForegroundWindow(hwnd)
+            user32.BringWindowToTop(hwnd)
+            user32.SwitchToThisWindow(hwnd, True)
+        finally:
+            user32.keybd_event(0x12, 0, 2, 0)  # Alt key up
+            if fore_thread and fore_thread != cur_thread:
+                user32.AttachThreadInput(fore_thread, cur_thread, False)
+            if target_thread and target_thread != cur_thread:
+                user32.AttachThreadInput(target_thread, cur_thread, False)
+
+        sleep(0.15)
+        return True
+    except Exception as e:
+        print(f"[force_activate_window] Warning: {e}")
+        return False
+
+
 def remember_current_window():
     """Remember the foreground browser/system window HWND before activating WhatsApp Desktop."""
     global ORIGINAL_BROWSER_HWND
     try:
         ensure_desktop_attached()
         user32 = ctypes.windll.user32
+        import win32gui
+
         hwnd = user32.GetForegroundWindow()
-        if hwnd:
-            import win32gui
+        if hwnd and not is_whatsapp_desktop_window(hwnd):
             title = (win32gui.GetWindowText(hwnd) or "").lower()
-            if "whatsapp" not in title and "واتساب" not in title:
+            is_browser = any(b in title for b in ["google chrome", "edge", "firefox", "brave", "opera", "hulk", "gym", "cina", "127.0.0.1", "localhost"])
+            if is_browser:
                 ORIGINAL_BROWSER_HWND = hwnd
                 safe_title = title.encode("ascii", "replace").decode("ascii")
-                print(f"[remember_current_window] Saved active system HWND: {hwnd} ({safe_title})")
+                print(f"[remember_current_window] Saved active system browser HWND: {hwnd} ({safe_title})")
+                return
+
+        if not ORIGINAL_BROWSER_HWND or not win32gui.IsWindow(ORIGINAL_BROWSER_HWND) or is_whatsapp_desktop_window(ORIGINAL_BROWSER_HWND):
+            found_hwnd = find_system_browser_hwnd()
+            if found_hwnd:
+                ORIGINAL_BROWSER_HWND = found_hwnd
+                print(f"[remember_current_window] Located system browser HWND: {found_hwnd}")
     except Exception as e:
         print(f"[remember_current_window] Warning: {e}")
 
 
 def whatsupp_ready() -> bool:
     """
-    Ensures WhatsApp Desktop (native Windows application) is installed, running, restored,
-    and active in the foreground.
+    Ensures WhatsApp Desktop (native Windows application) is installed, running,
+    MAXIMIZED to full screen, and active in the foreground.
     """
     ensure_desktop_attached()
     installed, msg, _ = is_whatsapp_desktop_installed()
@@ -339,27 +465,12 @@ def whatsupp_ready() -> bool:
         print("[whatsupp_ready] Could not find or open WhatsApp Desktop window.")
         return False
 
-    # Restore if minimized
-    if user32.IsIconic(hwnd):
-        user32.ShowWindow(hwnd, 9)  # SW_RESTORE
-    else:
-        user32.ShowWindow(hwnd, 5)  # SW_SHOW
-
-    fore_hwnd = user32.GetForegroundWindow()
-    fore_thread = user32.GetWindowThreadProcessId(fore_hwnd, 0)
-    target_thread = user32.GetWindowThreadProcessId(hwnd, 0)
-
-    if fore_thread != target_thread:
-        user32.AttachThreadInput(fore_thread, target_thread, True)
-        user32.SetForegroundWindow(hwnd)
-        user32.BringWindowToTop(hwnd)
-        user32.AttachThreadInput(fore_thread, target_thread, False)
-    else:
-        user32.SetForegroundWindow(hwnd)
-        user32.BringWindowToTop(hwnd)
+    # Activate and MAXIMIZE WhatsApp Desktop to full screen (SW_MAXIMIZE = 3)
+    force_activate_window(hwnd, maximize=True)
+    user32.ShowWindow(hwnd, 3)
 
     sleep(0.8)
-    print(f"[whatsupp_ready] WhatsApp Desktop focused: HWND={hwnd}")
+    print(f"[whatsupp_ready] WhatsApp Desktop maximized and focused: HWND={hwnd}")
     return True
 
 
@@ -380,61 +491,24 @@ def get_browser_executable() -> str:
 
 def return_to_system_window(url: str = "http://127.0.0.1:8000/messaging/") -> bool:
     """
-    Seamlessly and reliably brings Google Chrome and the gym system back to the foreground.
-    Bypasses Windows SetForegroundWindow restrictions and launches/switches Chrome directly.
+    Seamlessly brings the original Google Chrome / browser window back to the foreground
+    WITHOUT opening any new tabs.
     """
     global ORIGINAL_BROWSER_HWND
     try:
         ensure_desktop_attached()
-        user32 = ctypes.windll.user32
         import win32gui
 
-        # Windows focus unlock trick: Send dummy Alt key down/up
-        user32.keybd_event(0x12, 0, 0, 0)
-        user32.keybd_event(0x12, 0, 2, 0)
-
         target_hwnd = ORIGINAL_BROWSER_HWND
-        if not target_hwnd or not win32gui.IsWindow(target_hwnd):
-            found = []
-            def enum_cb(h, _):
-                if win32gui.IsWindowVisible(h):
-                    t = (win32gui.GetWindowText(h) or "").lower()
-                    if "chrome" in t and "whatsapp" not in t and "واتساب" not in t:
-                        if any(k in t for k in ["hulk", "gym", "127.0.0.1", "localhost", "الرئيسية", "لوحة", "cina"]):
-                            found.insert(0, h)
-                        else:
-                            found.append(h)
-                    elif any(b in t for b in ["edge", "firefox", "brave", "opera"]) and "whatsapp" not in t:
-                        found.append(h)
-                return True
-            try:
-                win32gui.EnumWindows(enum_cb, None)
-            except Exception:
-                pass
-            if found:
-                target_hwnd = found[0]
+        if not target_hwnd or not win32gui.IsWindow(target_hwnd) or is_whatsapp_desktop_window(target_hwnd):
+            target_hwnd = find_system_browser_hwnd()
 
         if target_hwnd and win32gui.IsWindow(target_hwnd):
-            if user32.IsIconic(target_hwnd):
-                user32.ShowWindow(target_hwnd, 9)  # SW_RESTORE
-            else:
-                user32.ShowWindow(target_hwnd, 5)  # SW_SHOW
+            force_activate_window(target_hwnd, maximize=False)
+            print(f"[return_to_system_window] Restored and focused original browser HWND: {target_hwnd} (no new tab opened)")
+            return True
 
-            fore_hwnd = user32.GetForegroundWindow()
-            fore_thread = user32.GetWindowThreadProcessId(fore_hwnd, 0)
-            target_thread = user32.GetWindowThreadProcessId(target_hwnd, 0)
-
-            if fore_thread != target_thread:
-                user32.AttachThreadInput(fore_thread, target_thread, True)
-                user32.SetForegroundWindow(target_hwnd)
-                user32.BringWindowToTop(target_hwnd)
-                user32.AttachThreadInput(fore_thread, target_thread, False)
-            else:
-                user32.SetForegroundWindow(target_hwnd)
-                user32.BringWindowToTop(target_hwnd)
-            print(f"[return_to_system_window] Restored and focused Chrome HWND: {target_hwnd}")
-
-        # Direct execution of Chrome/Edge executable with exact binary path
+        # Fallback only if no browser window is open at all on the system
         browser_exe = get_browser_executable()
         if os.path.isabs(browser_exe):
             Popen([browser_exe, url])
@@ -443,16 +517,7 @@ def return_to_system_window(url: str = "http://127.0.0.1:8000/messaging/") -> bo
         return True
     except Exception as e:
         print(f"[return_to_system_window] Warning: {e}")
-        try:
-            browser_exe = get_browser_executable()
-            if os.path.isabs(browser_exe):
-                Popen([browser_exe, url])
-            else:
-                Popen(f'start "" "{browser_exe}" "{url}"', shell=True)
-            return True
-        except Exception:
-            hotkey("alt", "tab")
-            return False
+        return False
 
 
 def return_to_system_tab() -> bool:
@@ -690,14 +755,13 @@ def sending(
             context = contexts[i] if contexts and i < len(contexts) else None
             msg_text = choose_message_for_group(messages, topic)
 
-            is_last = (i == total_count - 1)
             result = send_message(
                 phone,
                 msg_text,
                 image,
                 x_search=x_search,
                 y_search=y_search,
-                return_to_system=is_last,
+                return_to_system=False,
                 context=context,
             )
             processed += 1
@@ -717,14 +781,13 @@ def sending(
             if i == 0:
                 whatsupp_ready()
             context = contexts[i] if contexts and i < len(contexts) else None
-            is_last = (i == total_count - 1)
             result = send_message(
                 phone,
                 message,
                 image,
                 x_search=x_search,
                 y_search=y_search,
-                return_to_system=is_last,
+                return_to_system=False,
                 context=context,
             )
             if result:
@@ -745,14 +808,13 @@ def sending(
             if i == 0:
                 whatsupp_ready()
             context = contexts[i] if contexts and i < len(contexts) else None
-            is_last = (i == total_count - 1)
             result = send_message(
                 phone,
                 messages[i],
                 image,
                 x_search=x_search,
                 y_search=y_search,
-                return_to_system=is_last,
+                return_to_system=False,
                 context=context,
             )
             if result:
