@@ -1,133 +1,188 @@
 {% extends "base.html" %}
 
-{% block title %}تسجيل باقة تدريب خاص وعمولة كابتن — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+{% block title %}تسجيل حصة برايفت خاصة — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
 
 {% block content %}
-<div style="display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; flex-direction: column; gap: 18px;">
 
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+  <!-- Header -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
     <div>
-      <h1 style="color: var(--gold); font-size: 1.4rem; font-weight: 800;">🏋️‍♂️ تسجيل باقة تدريب خاص وعمولة مدرب</h1>
-      <p style="color: var(--text-muted); font-size: 0.85rem;">تطبيق المعادلة الإلزامية: قيمة التدريب الخاص = سعر الباقة - سعر الاشتراك العام المماثل</p>
+      <h1 style="color: var(--text-main); font-size: 1.4rem; font-weight: 900; margin: 0;">
+        ⏱️ تسجيل حصة برايفت (حالة خاصة منفصلة)
+      </h1>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin: 4px 0 0 0;">
+        لحالات البرايفت الخاصة والحصص الفردية — أدخل المبلغ المدفوع ونسبة المدرب فقط (بدون أي ارتباط باشتراك شهري)
+      </p>
     </div>
-    <div style="display: flex; gap: 8px;">
-      <a href="{% url 'payroll:trainer_assignments' %}" class="btn btn-secondary">🤝 عقود ونسب العمولات</a>
-      <a href="{% url 'payroll:payroll_runs' %}" class="btn btn-secondary">💰 مسيرات الرواتب</a>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <a href="{% url 'members:smart_operations' %}" class="btn btn-secondary btn-sm" style="height: 36px; display: inline-flex; align-items: center; gap: 6px;">
+        🔄 اشتراك شهري + برايفت
+      </a>
+      <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary btn-sm" style="height: 36px; display: inline-flex; align-items: center; gap: 6px;">
+        ← صفحة المدربين
+      </a>
     </div>
   </div>
 
-  <div class="grid-2">
+  <!-- Info Banner explaining the 2 types -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+    <div style="background: rgba(77, 179, 255, 0.08); border: 1px solid rgba(77, 179, 255, 0.3); border-radius: 10px; padding: 12px 16px;">
+      <div style="color: #4DB3FF; font-weight: 800; font-size: 0.92rem; margin-bottom: 3px;">⚡ النوع الحالي هنا: حصة برايفت / حالة خاصة</div>
+      <div style="color: var(--text-muted); font-size: 0.82rem;">تدخل المبلغ المدفوع فقط (مثلاً 400 ج) ونسبة المدرب منه (مثلاً 50% = 200 ج)، ولا علاقة لها باشتراك شهري.</div>
+    </div>
+    <div style="background: rgba(168, 241, 75, 0.06); border: 1px solid rgba(168, 241, 75, 0.25); border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+      <div>
+        <div style="color: #A8F14B; font-weight: 800; font-size: 0.92rem; margin-bottom: 3px;">🏋️‍♂️ النوع الآخر: اشتراك شهري + إضافة برايفت</div>
+        <div style="color: var(--text-muted); font-size: 0.82rem;">يختار خطة شهرية (مثلاً 400 ج) + ثمن البرايفت (مثلاً 600 ج) وتُحسب نسبة المدرب من الـ 600 ج.</div>
+      </div>
+      <a href="{% url 'members:smart_operations' %}" class="btn btn-sm" style="background: rgba(168, 241, 75, 0.15); border: 1px solid rgba(168, 241, 75, 0.4); color: #A8F14B; white-space: nowrap; font-weight: 800; font-size: 0.8rem;">فتح العمليات ←</a>
+    </div>
+  </div>
+
+  <div class="grid-2" style="align-items: start;">
     <!-- Form Card -->
-    <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">➕ تسجيل دفعة تدريب خاص جديدة</h3>
+    <div class="card" style="border: 1px solid rgba(77, 179, 255, 0.35);">
+      <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+        <h3 class="card-title" style="color: #4DB3FF; margin: 0;">➕ تسجيل حصة برايفت خاصة جديدة</h3>
       </div>
 
-      <form method="post" id="pt-form">
+      <form method="post" id="pt-session-form">
         {% csrf_token %}
+        <input type="hidden" name="action" value="create">
 
+        <!-- 1. Coach -->
         <div class="form-group">
-          <label class="form-label">المدرب (الكابتن المستحق) *</label>
-          <select name="trainer_id" class="form-control" required>
-            <option value="">-- اختر المدرب --</option>
+          <label class="form-label">المدرب (الكابتن) *</label>
+          <select name="trainer_id" id="trainer_select" class="form-control" required onchange="onTrainerChange()">
+            <option value="" data-comm="50">-- اختر الكابتن --</option>
             {% for t in trainers %}
-              <option value="{{ t.id }}">{{ t.name }} ({{ t.phone }})</option>
+              <option value="{{ t.id }}" data-comm="{{ t.commission_percentage }}" {% if selected_trainer_id == t.id|stringformat:"s" %}selected{% endif %}>
+                {{ t.name }} (نسبته الطبيعية: {{ t.commission_percentage }}%)
+              </option>
             {% endfor %}
           </select>
         </div>
 
+        <!-- 2. Player (Select existing OR type any name) -->
         <div class="form-group">
-          <label class="form-label">اللاعب (العميل الخاص) *</label>
-          <select name="client_id" class="form-control" required>
-            <option value="">-- اختر اللاعب --</option>
+          <label class="form-label">اسم اللاعب / المتدرب (اختر من القائمة أو اكتب أي اسم) *</label>
+          <input type="text" name="client_name" id="client_name_input" list="members_datalist" class="form-control" placeholder="اكتب اسم المتدرب أو اختره من القائمة..." required autocomplete="off" oninput="syncSelectedMemberId()">
+          <input type="hidden" name="client_id" id="client_id_hidden" value="">
+          <datalist id="members_datalist">
             {% for m in members %}
-              <option value="{{ m.id }}">{{ m.name }} ({{ m.member_id }})</option>
+              <option data-id="{{ m.id }}" value="{{ m.name }}">{{ m.member_id }} - {{ m.mobile }}</option>
             {% endfor %}
-          </select>
+          </datalist>
+          <small style="color: var(--text-muted); font-size: 0.76rem;">لا يشترط أن يكون مشتركاً شهرياً — يمكنك كتابة اسم أي شخص مباشرة.</small>
         </div>
 
-        <div class="grid-2">
+        <!-- 3. Amount Paid & Coach Percentage -->
+        <div class="grid-2" style="gap: 14px;">
           <div class="form-group">
-            <label class="form-label">سعر الباقة الإجمالي مع التدريب *</label>
-            <input type="number" step="0.01" id="package_price" name="package_price" class="form-control" placeholder="مثال: 600" required oninput="calculatePT()">
+            <label class="form-label" style="color: #A8F14B;">المبلغ المدفوع (ج.م) *</label>
+            <input type="number" step="0.5" min="1" id="session_amount" name="session_amount" class="form-control" placeholder="مثال: 400" required oninput="calculateSession()" style="font-size: 1.15rem; font-weight: 900; color: #A8F14B;">
           </div>
 
           <div class="form-group">
-            <label class="form-label">سعر الاشتراك العام المماثل *</label>
-            <input type="number" step="0.01" id="standard_price" name="standard_plan_price" class="form-control" placeholder="مثال: 400" required oninput="calculatePT()">
+            <label class="form-label" style="color: #4DB3FF;">نسبة المدرب منها (%) *</label>
+            <input type="number" step="0.5" min="0" max="100" id="commission_pct" name="commission_pct" value="50" class="form-control" required oninput="calculateSession()" style="font-size: 1.15rem; font-weight: 900; color: #4DB3FF;">
           </div>
         </div>
 
-        <!-- Live Formula Preview Box -->
-        <div style="background: var(--bg-input); padding: 14px; border-radius: var(--radius-sm); border: 1px dashed var(--gold); margin: 12px 0;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem;">
-            <span style="color: var(--text-muted);">فارق التدريب الخاص (الوعاء):</span>
-            <strong id="markup_disp" style="color: var(--gold);">0.00 ج.م</strong>
+        <!-- Live Calculation Summary Box -->
+        <div style="background: rgba(77, 179, 255, 0.07); padding: 14px 16px; border-radius: 10px; border: 1px dashed rgba(77, 179, 255, 0.4); margin: 8px 0 16px 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="color: var(--text-secondary); font-size: 0.92rem; font-weight: 700;">عمولة الكابتن المستحقة من الحصة:</span>
+            <strong id="coach_comm_disp" style="color: #A8F14B; font-size: 1.25rem; font-weight: 900;">0.00 ج.م</strong>
           </div>
-          <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">
-            تنبيه: لا يتم احتساب عمولة المدرب إطلاقاً من كامل الاشتراك (600 ج.م)، بل من فارق التدريب الخاص فقط!
-          </p>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.84rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 6px;">
+            <span>صافي الجيم من الحصة: <strong id="gym_net_disp" style="color: var(--text-main);">0.00 ج.م</strong></span>
+            <span id="formula_disp">0 ج × 50%</span>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">طريقة الدفع</label>
-          <select name="payment_method" class="form-control">
-            {% for pm in payment_methods %}
-              <option value="{{ pm.name }}">{{ pm.name }}</option>
-            {% endfor %}
-          </select>
+        <!-- 4. Payment Method & Notes -->
+        <div class="grid-2" style="gap: 14px;">
+          <div class="form-group">
+            <label class="form-label">طريقة الدفع</label>
+            <select name="payment_method" class="form-control">
+              {% for pm in payment_methods %}
+                <option value="{{ pm.name }}">{{ pm.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">ملاحظات (اختياري)</label>
+            <input type="text" name="notes" class="form-control" placeholder="مثال: حصة برايفت خاصة...">
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">ملاحظات إضافية</label>
-          <input type="text" name="notes" class="form-control" placeholder="ملاحظات الباقة أو المواعيد...">
-        </div>
-
-        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.05rem;">
-          تسجيل الباقة واحتساب العمولة 🚀
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 13px; font-size: 1.05rem; font-weight: 900;">
+          حفظ الحصة وتسجيل عمولة المدرب 🚀
         </button>
       </form>
     </div>
 
     <!-- Recent Records Table -->
     <div class="card">
-      <div class="card-header">
-        <h3 class="card-title">📜 سجل عمليات التدريب الخاص الأخيرة</h3>
+      <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+        <h3 class="card-title" style="margin: 0;">📜 سجل عمليات البرايفت الأخيرة</h3>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">آخر {{ records|length }} عملية</span>
       </div>
       <div class="table-responsive">
         <table class="dark-table">
           <thead>
             <tr>
+              <th>النوع</th>
               <th>المدرب</th>
               <th>اللاعب</th>
-              <th>سعر الباقة</th>
-              <th>فارق التدريب</th>
-              <th>العمولة المستحقة</th>
-              <th>المسير</th>
+              <th>مبلغ البرايفت</th>
+              <th>عمولة المدرب</th>
+              <th>التاريخ</th>
+              <th>إجراء</th>
             </tr>
           </thead>
           <tbody>
             {% for r in records %}
               <tr>
-                <td style="font-weight: 700;">{{ r.trainer.name }}</td>
-                <td>{{ r.client.name }}</td>
-                <td>{{ r.package_price }} {{ gym_profile.currency }}</td>
-                <td style="color: var(--gold); font-weight: 700;">{{ r.private_markup }} {{ gym_profile.currency }}</td>
-                <td style="color: var(--success); font-weight: 800; font-size: 1.05rem;">
-                  {{ r.calculated_commission }} {{ gym_profile.currency }}
+                <td>
+                  {% if r.standard_plan_price == 0 %}
+                    <span class="badge badge-info" style="font-size: 0.74rem;">⚡ حصة خاصة</span>
+                  {% else %}
+                    <span class="badge badge-active" style="font-size: 0.74rem;">📅 اشتراك شهري</span>
+                  {% endif %}
                 </td>
+                <td style="font-weight: 800; color: var(--text-main);">{{ r.trainer.name }}</td>
+                <td style="color: var(--text-secondary);">{{ r.client.name }}</td>
+                <td style="color: var(--gold); font-weight: 800;">{{ r.private_markup }} ج</td>
+                <td style="color: #A8F14B; font-weight: 900; font-size: 1rem;">
+                  {{ r.calculated_commission }} ج
+                  <small style="color: var(--text-muted); font-size: 0.74rem; display: block;">
+                    ({% widthratio r.commission_rate 1 100 %}%)
+                  </small>
+                </td>
+                <td style="font-size: 0.78rem; color: var(--text-muted);">{{ r.created_at|date:"Y-m-d" }}</td>
                 <td>
                   {% if r.is_counted_in_payroll %}
-                    <span class="badge badge-active">تم الصرف</span>
+                    <span class="badge badge-active" style="font-size: 0.72rem;">تم الصرف</span>
+                  {% elif r.standard_plan_price == 0 %}
+                    <form method="post" style="display: inline;" onsubmit="return confirm('هل أنت متأكد من حذف هذه الحصة؟');">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete_session">
+                      <input type="hidden" name="record_id" value="{{ r.id }}">
+                      <button type="submit" class="btn btn-sm" style="background: rgba(239,68,68,0.14); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); padding: 2px 8px; font-size: 0.74rem;">حذف</button>
+                    </form>
                   {% else %}
-                    <span class="badge" style="background: var(--warning-bg); color: var(--warning);">في الانتظار</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">ضمن اشتراك</span>
                   {% endif %}
                 </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
-                  لا توجد عمليات تدريب خاص مسجلة بعد.
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                  لا توجد حصص تدريب خاص مسجلة بعد.
                 </td>
               </tr>
             {% endfor %}
@@ -142,11 +197,39 @@
 
 {% block extra_js %}
 <script>
-function calculatePT() {
-  const pkg = parseFloat(document.getElementById('package_price').value) || 0;
-  const std = parseFloat(document.getElementById('standard_price').value) || 0;
-  const markup = Math.max(0, pkg - std);
-  document.getElementById('markup_disp').innerText = markup.toFixed(2) + ' ج.م';
+const memberMap = {
+  {% for m in members %}
+    "{{ m.name|escapejs }}": "{{ m.id }}",
+  {% endfor %}
+};
+
+function syncSelectedMemberId() {
+  const val = (document.getElementById('client_name_input').value || '').trim();
+  document.getElementById('client_id_hidden').value = memberMap[val] || '';
 }
+
+function onTrainerChange() {
+  const sel = document.getElementById('trainer_select');
+  const opt = sel.options[sel.selectedIndex];
+  if (opt && opt.dataset.comm) {
+    document.getElementById('commission_pct').value = parseFloat(opt.dataset.comm) || 50;
+  }
+  calculateSession();
+}
+
+function calculateSession() {
+  const amount = parseFloat(document.getElementById('session_amount').value) || 0;
+  const pct = Math.max(0, Math.min(100, parseFloat(document.getElementById('commission_pct').value) || 0));
+  const comm = amount * (pct / 100);
+  const gymNet = Math.max(0, amount - comm);
+
+  document.getElementById('coach_comm_disp').innerText = comm.toFixed(2) + ' ج.م';
+  document.getElementById('gym_net_disp').innerText = gymNet.toFixed(2) + ' ج.م';
+  document.getElementById('formula_disp').innerText = `${amount.toFixed(0)} ج × ${pct}%`;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  onTrainerChange();
+});
 </script>
 {% endblock %}

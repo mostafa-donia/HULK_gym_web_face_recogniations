@@ -21,7 +21,7 @@
       <p style="color: var(--text-muted); margin: 4px 0 0 0; font-size: 0.88rem;">
         الهاتف: <strong style="color: var(--text-secondary); direction: ltr; display: inline-block;">{{ coach.phone|default:"—" }}</strong>
         &nbsp;•&nbsp;
-        تاريخ التعيين: <strong style="color: var(--text-secondary);">{{ coach.created_at|date:"Y-m-d" }}</strong>
+        نسبة العمولة الافتراضية: <strong style="color: #A8F14B;">{{ coach.commission_percentage }}%</strong>
       </p>
     </div>
 
@@ -48,69 +48,142 @@
       <span style="color: var(--text-main); font-size: 1.55rem; font-weight: 900; margin-top: 4px; display: block;">
         {{ coach.fixed_salary }} <small style="font-size: 0.88rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
       </span>
+      <span style="color: var(--text-dim); font-size: 0.76rem; display: block;">
+        النسبة الافتراضية للبرايفت: {{ coach.commission_percentage }}%
+      </span>
     </div>
 
-    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">نسبة عمولة البرايفت</span>
+    <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.3); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">1️⃣ اشتراكات البرايفت الشهرية</span>
       <span style="color: #A8F14B; font-size: 1.55rem; font-weight: 900; margin-top: 4px; display: block;">
-        {{ coach.commission_percentage }} %
+        {{ monthly_coach_commission }} <small style="font-size: 0.85rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }} عمولة</small>
+      </span>
+      <span style="color: var(--text-dim); font-size: 0.76rem; display: block;">
+        {{ active_private_count }} لاعب نشط (إجمالي برايفت: {{ monthly_private_income }} ج)
       </span>
     </div>
 
     <div style="background: var(--bg-card); border: 1px solid rgba(77, 179, 255, 0.3); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">لاعبي البرايفت النشطين</span>
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">2️⃣ حصص البرايفت الخاصة (الشهر)</span>
       <span style="color: #4DB3FF; font-size: 1.55rem; font-weight: 900; margin-top: 4px; display: block;">
-        {{ active_private_count }} <small style="font-size: 0.85rem; color: var(--text-muted);">لاعب (دخل: {{ total_private_income }} ج)</small>
+        {{ sessions_commission }} <small style="font-size: 0.85rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }} عمولة</small>
+      </span>
+      <span style="color: var(--text-dim); font-size: 0.76rem; display: block;">
+        {{ standalone_sessions_count }} حصة خاصة (إجمالي مدفوع: {{ sessions_income }} ج)
       </span>
     </div>
 
-    <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.35); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+    <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.45); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
       <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">صافي المستحق المقدر هذا الشهر</span>
       <span style="color: #A8F14B; font-size: 1.55rem; font-weight: 900; margin-top: 4px; display: block;">
         {{ net_monthly_due }} <small style="font-size: 0.88rem;">{{ gym_profile.currency|default:"ج" }}</small>
       </span>
       <span style="color: var(--text-dim); font-size: 0.76rem; display: block;">
-        عمولات: {{ total_coach_commission }} ج | سلف: {{ month_advances }} ج
+        إجمالي العمولات: {{ total_coach_commission }} ج | سلف: {{ month_advances }} ج
       </span>
     </div>
   </div>
 
-  <!-- ==================== 3. INLINE FAST ADD PLAYER BAR ==================== -->
-  <div style="background: var(--bg-card); border: 1px solid rgba(77, 179, 255, 0.35); border-radius: 12px; padding: 16px 20px; box-shadow: var(--shadow-sm);">
-    <form method="POST" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="assign_member">
+  <!-- ==================== 3. TWO CLEAR FORMS FOR THE 2 TYPES OF PRIVATE ==================== -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 14px;">
 
-      <div style="flex: 2; min-width: 240px;">
-        <label style="color: #4DB3FF; font-size: 0.85rem; font-weight: 800; margin-bottom: 6px; display: block;">
-          ➕ إسناد لاعب جديد لهذا الكابتن وتفعيل البرايفت:
-        </label>
-        <select name="member_id" class="form-control" required style="height: 40px; border-radius: 8px; padding: 0 12px; width: 100%; font-size: 0.9rem;">
-          <option value="">-- اختر اللاعب من القائمة --</option>
-          {% for m in available_members %}
-            <option value="{{ m.id }}">{{ m.name }} ({{ m.member_id }}) - {{ m.mobile|default:"بدون هاتف" }}</option>
-          {% endfor %}
-        </select>
+    <!-- Type 1: Monthly Subscription Private Add-on -->
+    <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.35); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <div style="margin-bottom: 10px;">
+        <h3 style="color: #A8F14B; font-size: 0.98rem; font-weight: 900; margin: 0;">
+          1️⃣ إسناد متدرب باقة برايفت شهرية (فوق الاشتراك الشهري)
+        </h3>
+        <span style="color: var(--text-muted); font-size: 0.78rem;">يُضاف ثمن البرايفت الشهري للاعب وتُحسب نسبة الكابتن منه</span>
       </div>
 
-      <div style="flex: 1; min-width: 160px;">
-        <label style="color: var(--text-secondary); font-size: 0.84rem; font-weight: 700; margin-bottom: 6px; display: block;">
-          قيمة إضافة البرايفت ({{ gym_profile.currency|default:"ج" }}):
-        </label>
-        <input type="number" step="0.01" min="0" name="private_price" value="600.00" class="form-control" required style="color: #A8F14B; font-weight: 800; height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
+      <form method="POST" style="display: flex; flex-direction: column; gap: 10px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="assign_member">
+
+        <div>
+          <label style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;">اللاعب المشترك *</label>
+          <select name="member_id" class="form-control" required style="height: 38px; font-size: 0.88rem;">
+            <option value="">-- اختر اللاعب من القائمة --</option>
+            {% for m in available_members %}
+              <option value="{{ m.id }}">{{ m.name }} ({{ m.member_id }}) - {{ m.mobile|default:"بدون هاتف" }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">
+          <div>
+            <label style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;">ثمن البرايفت الشهري (ج)</label>
+            <input type="number" step="0.01" min="0" name="private_price" value="600.00" class="form-control" required style="color: #A8F14B; font-weight: 800; height: 38px;">
+          </div>
+          <div>
+            <label style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;">نسبة الكابتن (%)</label>
+            <input type="number" step="0.5" min="0" max="100" name="commission_pct" value="{{ coach.commission_percentage }}" class="form-control" required style="color: #4DB3FF; font-weight: 800; height: 38px;">
+          </div>
+          <button type="submit" class="btn btn-primary" style="height: 38px; padding: 0 16px; font-weight: 800; white-space: nowrap;">
+            + إسناد شهري
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Type 2: Standalone Private Session / Special Case -->
+    <div style="background: var(--bg-card); border: 1px solid rgba(77, 179, 255, 0.4); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <div style="margin-bottom: 10px;">
+        <h3 style="color: #4DB3FF; font-size: 0.98rem; font-weight: 900; margin: 0;">
+          2️⃣ تسجيل حصة برايفت خاصة منفصلة (بدون اشتراك شهري)
+        </h3>
+        <span style="color: var(--text-muted); font-size: 0.78rem;">أدخل المبلغ المدفوع فقط ونسبة الكابتن منه وخلاص (حالات خاصة / حصة منفردة)</span>
       </div>
 
-      <button type="submit" class="btn btn-primary" style="height: 40px; padding: 0 22px; font-weight: 800; white-space: nowrap;">
-        إضافة اللاعب للكابتن 🚀
-      </button>
-    </form>
+      <form method="POST" style="display: flex; flex-direction: column; gap: 10px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="record_session">
+
+        <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px;">
+          <div>
+            <label style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;">اسم اللاعب (اختر أو اكتب أي اسم) *</label>
+            <input type="text" name="client_name" list="coach_all_members_list" class="form-control" placeholder="اسم اللاعب..." required autocomplete="off" style="height: 38px; font-size: 0.88rem;">
+            <datalist id="coach_all_members_list">
+              {% for m in all_members %}
+                <option value="{{ m.name }}">{{ m.member_id }} - {{ m.mobile }}</option>
+              {% endfor %}
+            </datalist>
+          </div>
+          <div>
+            <label style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;">طريقة الدفع</label>
+            <select name="payment_method" class="form-control" style="height: 38px; font-size: 0.88rem;">
+              {% for pm in payment_methods %}
+                <option value="{{ pm.name }}">{{ pm.name }}</option>
+              {% empty %}
+                <option value="نقدي">نقدي</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">
+          <div>
+            <label style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;">المبلغ المدفوع (ج) *</label>
+            <input type="number" step="0.5" min="1" name="session_amount" placeholder="مثال: 400" class="form-control" required style="color: #A8F14B; font-weight: 800; height: 38px;">
+          </div>
+          <div>
+            <label style="color: var(--text-secondary); font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; display: block;">نسبة الكابتن (%) *</label>
+            <input type="number" step="0.5" min="0" max="100" name="commission_pct" value="{{ coach.commission_percentage }}" class="form-control" required style="color: #4DB3FF; font-weight: 800; height: 38px;">
+          </div>
+          <button type="submit" class="btn btn-sm" style="height: 38px; padding: 0 16px; background: #4DB3FF; color: #061320; font-weight: 900; border: none; border-radius: 8px; white-space: nowrap; cursor: pointer;">
+            ⚡ تسجيل الحصة
+          </button>
+        </div>
+      </form>
+    </div>
+
   </div>
 
-  <!-- ==================== 4. ASSIGNED PRIVATE MEMBERS TABLE ==================== -->
+  <!-- ==================== 4. ASSIGNED MONTHLY PRIVATE MEMBERS TABLE ==================== -->
   <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
-      <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0;">
-        📋 متدربو الكابتن ({{ enriched_members|length }} لاعب)
+      <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 800; margin: 0;">
+        📋 1. مشتركو البرايفت الشهري مع الكابتن ({{ enriched_members|length }} لاعب)
       </h3>
 
       <input type="text" id="coachMembersSearch" oninput="filterCoachMembers()" placeholder="🔍 بحث في لاعبي الكابتن..." class="form-control" style="height: 34px; width: 220px; font-size: 0.85rem; padding: 0 12px;">
@@ -123,8 +196,8 @@
           <tr>
             <th>الكود</th>
             <th>اسم المتدرب</th>
-            <th>الباقة العامة</th>
-            <th>سعر البرايفت</th>
+            <th>الباقة الشهرية</th>
+            <th>ثمن البرايفت</th>
             <th>نسبة العمولة</th>
             <th>عمولة الكابتن</th>
             <th>حالة الاشتراك</th>
@@ -150,7 +223,7 @@
               {{ item.private_price }} {{ gym_profile.currency|default:"ج" }}
             </td>
             <td style="color: var(--text-secondary); font-weight: 700;">
-              {{ coach.commission_percentage }}%
+              {{ item.comm_rate_pct }}%
             </td>
             <td style="color: #A8F14B; font-weight: 900; font-size: 1.02rem;">
               {{ item.coach_share }} {{ gym_profile.currency|default:"ج" }}
@@ -178,8 +251,78 @@
       </table>
     </div>
     {% else %}
-    <div style="text-align: center; padding: 32px 20px; color: var(--text-muted);">
-      <p style="font-size: 1rem; margin: 0;">لا يوجد لاعبين مسندين لهذا الكابتن حالياً. استخدم الشريط أعلاه لإضافة لاعب فوراً.</p>
+    <div style="text-align: center; padding: 24px 20px; color: var(--text-muted);">
+      <p style="font-size: 0.95rem; margin: 0;">لا يوجد لاعبين مشتركين ببرايفت شهري مع هذا الكابتن حالياً.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ==================== 5. STANDALONE PRIVATE SESSIONS TABLE ==================== -->
+  <div class="card" style="background: var(--bg-card); border: 1px solid rgba(77, 179, 255, 0.3); border-radius: 12px; padding: 18px 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <h3 style="color: #4DB3FF; font-size: 1.1rem; font-weight: 800; margin: 0;">
+        ⏱️ 2. حصص البرايفت الخاصة (المنفصلة) المسجلة هذا الشهر ({{ standalone_sessions_count }} حصة)
+      </h3>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">
+        إجمالي عمولة الحصص الخاصة: <strong style="color: #A8F14B;">{{ sessions_commission }} {{ gym_profile.currency|default:"ج" }}</strong>
+      </span>
+    </div>
+
+    {% if standalone_sessions %}
+    <div class="table-responsive">
+      <table class="dark-table">
+        <thead>
+          <tr>
+            <th>اسم اللاعب</th>
+            <th>المبلغ المدفوع للحصة</th>
+            <th>نسبة الكابتن</th>
+            <th>عمولة الكابتن المستحقة</th>
+            <th>التاريخ</th>
+            <th>إجراء</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in standalone_sessions %}
+          <tr>
+            <td style="font-weight: 800; color: var(--text-main);">
+              <a href="{% url 'members:member_detail' s.client.id %}" style="color: var(--text-main); text-decoration: none;">
+                {{ s.client.name }}
+              </a>
+            </td>
+            <td style="color: var(--gold); font-weight: 800;">
+              {{ s.amount }} {{ gym_profile.currency|default:"ج" }}
+            </td>
+            <td style="color: #4DB3FF; font-weight: 800;">
+              {{ s.rate_pct }}%
+            </td>
+            <td style="color: #A8F14B; font-weight: 900; font-size: 1.02rem;">
+              {{ s.commission }} {{ gym_profile.currency|default:"ج" }}
+            </td>
+            <td style="color: var(--text-muted); font-size: 0.84rem;">
+              {{ s.created_at|date:"Y-m-d h:i A" }}
+            </td>
+            <td>
+              {% if not s.is_counted_in_payroll %}
+              <form method="POST" style="display: inline;" onsubmit="return confirm('هل تريد حذف هذه الحصة الخاصة؟');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_session">
+                <input type="hidden" name="record_id" value="{{ s.id }}">
+                <button type="submit" class="btn btn-secondary btn-sm" style="background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.35); color: #ef4444; font-size: 0.76rem; padding: 3px 8px;">
+                  حذف
+                </button>
+              </form>
+              {% else %}
+              <span class="badge badge-active">معتمد بالراتب</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 24px 20px; color: var(--text-muted);">
+      <p style="font-size: 0.95rem; margin: 0;">لا توجد حصص برايفت خاصة منفصلة مسجلة لهذا الكابتن خلال هذا الشهر.</p>
     </div>
     {% endif %}
   </div>

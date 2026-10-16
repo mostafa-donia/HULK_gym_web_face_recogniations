@@ -339,9 +339,9 @@
 
     <!-- Private Members & Commission Breakdown Table -->
     <div class="section-title">
-      <span>📋 بيان متدربي التدريب الخاص (Private Add-ons)</span>
+      <span>📋 1. بيان مشتركي البرايفت الشهري (باقة شهرية + إضافة برايفت)</span>
       <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">
-        عدد المتدربين: {{ members_count }} لاعب
+        عدد المشتركين: {{ members_count }} لاعب
       </span>
     </div>
 
@@ -374,13 +374,50 @@
           {% endfor %}
         {% else %}
           <tr>
-            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">
-              لا يوجد متدربي تدريب خاص مسندين للكابتن في هذه الفترة.
+            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 16px;">
+              لا يوجد متدربي اشتراك شهري مسندين للكابتن في هذه الفترة.
             </td>
           </tr>
         {% endif %}
       </tbody>
     </table>
+
+    {% if session_rows %}
+    <!-- Standalone Private Sessions Table -->
+    <div class="section-title">
+      <span>⏱️ 2. بيان حصص البرايفت المنفصلة (حالات خاصة بدون اشتراك شهري)</span>
+      <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">
+        عدد الحصص: {{ sessions_count }} حصة
+      </span>
+    </div>
+
+    <table class="clean-table">
+      <thead>
+        <tr>
+          <th>م</th>
+          <th>كود اللاعب</th>
+          <th>اسم اللاعب</th>
+          <th>التاريخ</th>
+          <th>المبلغ المدفوع للحصة</th>
+          <th>نسبة الكابتن</th>
+          <th>عمولة الكابتن المستحقة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in session_rows %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td style="font-family: monospace; font-weight: 700;">{{ s.member_id }}</td>
+          <td><strong>{{ s.name }}</strong></td>
+          <td>{{ s.date|date:"Y-m-d" }}</td>
+          <td class="num">{{ s.amount_paid }} ج.م</td>
+          <td class="num">{{ s.comm_rate_pct }} %</td>
+          <td class="num" style="color: #166534; font-weight: 900;">{{ s.commission_amount }} ج.م</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
 
     <!-- Financial Calculation Summary Box -->
     <div class="summary-card">
@@ -389,8 +426,18 @@
         <strong class="num">+ {{ fixed_salary }} ج.م</strong>
       </div>
       <div class="summary-line">
-        <span>إجمالي عمولات التدريب الخاص ({{ members_count }} متدرب):</span>
-        <strong class="num" style="color: #166534;">+ {{ total_commission }} ج.م</strong>
+        <span>عمولات اشتراكات البرايفت الشهرية ({{ members_count }} مشترك):</span>
+        <strong class="num" style="color: #166534;">+ {{ monthly_pt_commission|default:total_commission }} ج.م</strong>
+      </div>
+      {% if sessions_count %}
+      <div class="summary-line">
+        <span>عمولات حصص البرايفت المنفصلة ({{ sessions_count }} حصة خاصة):</span>
+        <strong class="num" style="color: #166534;">+ {{ sessions_commission }} ج.م</strong>
+      </div>
+      {% endif %}
+      <div class="summary-line" style="background: #f0fdf4; padding: 8px 10px; border-radius: 6px;">
+        <span style="font-weight: 800; color: #166534;">إجمالي عمولات التدريب الخاص بالكامل:</span>
+        <strong class="num" style="color: #166534; font-size: 1.08rem;">+ {{ total_commission }} ج.م</strong>
       </div>
       {% if bonuses > 0 %}
       <div class="summary-line">

@@ -71,30 +71,44 @@
 
       <!-- Private Training Add-on Card -->
       <div style="background: rgba(168, 241, 75, 0.05); border: 1px solid rgba(168, 241, 75, 0.25); border-radius: var(--radius-sm); padding: 14px 16px; margin: 16px 0;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
           <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-weight: 800; color: #A8F14B; font-size: 1rem;">
             <input type="checkbox" id="has_private" name="has_private" value="1" {% if selected_member and selected_member.has_private %}checked{% endif %} onchange="updatePlanCalculations()" style="width: 18px; height: 18px; accent-color: #A8F14B;">
-            🏋️‍♂️ إضافة باقة التدريب الخاص (Private Add-on)
+            🏋️‍♂️ إضافة برايفت شهري مع الباقة (Private Add-on)
           </label>
-          <span style="font-size: 0.8rem; color: var(--text-muted);">إضافة فوق سعر الاشتراك العام</span>
+          <a href="{% url 'payroll:private_training_records' %}" style="font-size: 0.78rem; color: #4DB3FF; text-decoration: none; font-weight: 700;">
+            ⏱️ أو تسجيل حصة برايفت خاصة منفصلة ←
+          </a>
         </div>
 
-        <div id="private_sub_fields" style="display: {% if selected_member and selected_member.has_private %}grid{% else %}none{% endif %}; grid-template-columns: 1fr 1fr; gap: 14px;">
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">الكابتن (المدرب المسؤول) *</label>
-            <select name="coach_id" id="coach_select" class="form-control">
-              <option value="">-- اختر الكابتن --</option>
-              {% for coach in coaches %}
-                <option value="{{ coach.id }}" {% if selected_member and selected_member.assigned_coach_id == coach.id %}selected{% endif %}>
-                  {{ coach.name }} (عمولته {{ coach.commission_percentage }}%)
-                </option>
-              {% endfor %}
-            </select>
+        <div id="private_sub_fields" style="display: {% if selected_member and selected_member.has_private %}block{% else %}none{% endif %};">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">الكابتن (المدرب) *</label>
+              <select name="coach_id" id="coach_select" class="form-control" onchange="onSubCoachChange()">
+                <option value="" data-comm="50">-- اختر الكابتن --</option>
+                {% for coach in coaches %}
+                  <option value="{{ coach.id }}" data-comm="{{ coach.commission_percentage }}" {% if selected_member and selected_member.assigned_coach_id == coach.id %}selected{% endif %}>
+                    {{ coach.name }} ({{ coach.commission_percentage }}%)
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">ثمن البرايفت الإضافي (ج.م) *</label>
+              <input type="number" step="0.01" min="0" id="private_price_input" name="private_price" value="{% if selected_member and selected_member.has_private and selected_member.private_price %}{{ selected_member.private_price }}{% else %}600.00{% endif %}" class="form-control" oninput="updatePlanCalculations()" style="font-weight: 800; color: #A8F14B;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">نسبة عمولة المدرب (%) *</label>
+              <input type="number" step="0.5" min="0" max="100" id="coach_comm_pct_input" name="coach_commission_pct" value="{% if selected_member and selected_member.assigned_coach %}{{ selected_member.assigned_coach.commission_percentage }}{% else %}50{% endif %}" class="form-control" oninput="updatePlanCalculations()" style="font-weight: 800; color: #4DB3FF;">
+            </div>
           </div>
 
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">قيمة إضافة البرايفت (ج.م) *</label>
-            <input type="number" step="0.01" min="0" id="private_price_input" name="private_price" value="{% if selected_member and selected_member.has_private and selected_member.private_price %}{{ selected_member.private_price }}{% else %}600.00{% endif %}" class="form-control" oninput="updatePlanCalculations()" style="font-weight: 800; color: #A8F14B;">
+          <div id="coach_comm_preview_box" style="margin-top: 10px; padding: 8px 12px; background: rgba(77, 179, 255, 0.08); border: 1px dashed rgba(77, 179, 255, 0.35); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.85rem;">
+            <span style="color: var(--text-secondary);">عمولة المدرب من البرايفت هذا الشهر:</span>
+            <strong id="coach_comm_amount_disp" style="color: #4DB3FF; font-size: 0.98rem;">300.00 ج.م</strong>
           </div>
         </div>
       </div>
@@ -185,22 +199,32 @@
 
 {% block extra_js %}
 <script>
+function onSubCoachChange() {
+  const coachSelect = document.getElementById('coach_select');
+  const commInput = document.getElementById('coach_comm_pct_input');
+  if (coachSelect && commInput) {
+    const opt = coachSelect.options[coachSelect.selectedIndex];
+    if (opt && opt.dataset.comm) {
+      commInput.value = parseFloat(opt.dataset.comm) || 50;
+    }
+  }
+  updatePlanCalculations();
+}
+
 function updatePlanCalculations() {
   const planSelect = document.getElementById('plan_select');
   const selectedOpt = planSelect.options[planSelect.selectedIndex];
-  if (!selectedOpt || !selectedOpt.dataset.price) return;
-
-  const basePrice = parseFloat(selectedOpt.dataset.price) || 0;
-  const days = parseInt(selectedOpt.dataset.days) || 28;
-  const months = parseInt(selectedOpt.dataset.months) || 1;
-  const planName = selectedOpt.dataset.name || selectedOpt.text;
+  const basePrice = (selectedOpt && selectedOpt.dataset.price) ? (parseFloat(selectedOpt.dataset.price) || 0) : 0;
+  const days = (selectedOpt && selectedOpt.dataset.days) ? (parseInt(selectedOpt.dataset.days) || 28) : 28;
+  const months = (selectedOpt && selectedOpt.dataset.months) ? (parseInt(selectedOpt.dataset.months) || 1) : 1;
+  const planName = (selectedOpt && selectedOpt.dataset.name) ? selectedOpt.dataset.name : (selectedOpt ? selectedOpt.text : "");
   
   // Private Add-on Calculation
   const hasPrivate = document.getElementById('has_private').checked;
   const privateFields = document.getElementById('private_sub_fields');
   const coachSelect = document.getElementById('coach_select');
   if (privateFields) {
-    privateFields.style.display = hasPrivate ? 'grid' : 'none';
+    privateFields.style.display = hasPrivate ? 'block' : 'none';
   }
   if (coachSelect) {
     coachSelect.required = hasPrivate;
@@ -208,6 +232,13 @@ function updatePlanCalculations() {
     else coachSelect.style.borderColor = 'var(--border-color)';
   }
   const privatePrice = hasPrivate ? (parseFloat(document.getElementById('private_price_input').value) || 0) : 0;
+  const commPct = hasPrivate ? (parseFloat(document.getElementById('coach_comm_pct_input')?.value) || 0) : 0;
+  const commAmount = (privatePrice * (commPct / 100));
+  const commDisp = document.getElementById('coach_comm_amount_disp');
+  if (commDisp) {
+    commDisp.textContent = `${commAmount.toFixed(2)} ج.م (${commPct}% من ${privatePrice.toFixed(0)} ج)`;
+  }
+
   const gross = basePrice + privatePrice;
   const discount = parseFloat(document.getElementById('discount_input').value) || 0;
 

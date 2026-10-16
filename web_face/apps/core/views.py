@@ -853,15 +853,27 @@ def manager_dashboard_view(request):
             "pct": pct,
         })
 
-    # B) Private Add-on Revenue & Breakdown
+    # B) Private Add-on & Standalone Private Sessions Revenue & Breakdown
+    from apps.payroll.models import PrivateTrainingRecord, TrainerClientAssignment
     period_private_subs = Subscription.objects.filter(
         created_at__date__gte=period_start,
         created_at__date__lte=period_end,
         has_private=True,
     )
-    period_private_count = period_private_subs.count()
-    period_private_revenue = period_private_subs.aggregate(Sum("private_price"))["private_price__sum"] or Decimal("0.00")
-    period_coaches_commission = period_private_subs.aggregate(Sum("coach_commission_amount"))["coach_commission_amount__sum"] or Decimal("0.00")
+    period_standalone_sessions = PrivateTrainingRecord.objects.filter(
+        standard_plan_price=Decimal("0.00"),
+        created_at__date__gte=period_start,
+        created_at__date__lte=period_end,
+    )
+    period_private_count = period_private_subs.count() + period_standalone_sessions.count()
+    period_private_revenue = (
+        (period_private_subs.aggregate(Sum("private_price"))["private_price__sum"] or Decimal("0.00"))
+        + (period_standalone_sessions.aggregate(Sum("price_paid"))["price_paid__sum"] or Decimal("0.00"))
+    )
+    period_coaches_commission = (
+        (period_private_subs.aggregate(Sum("coach_commission_amount"))["coach_commission_amount__sum"] or Decimal("0.00"))
+        + (period_standalone_sessions.aggregate(Sum("calculated_commission"))["calculated_commission__sum"] or Decimal("0.00"))
+    )
     period_gym_private_profit = period_private_revenue - period_coaches_commission
 
     month_private_subs = Subscription.objects.filter(
@@ -869,8 +881,19 @@ def manager_dashboard_view(request):
         created_at__date__lte=today,
         has_private=True,
     )
-    month_private_revenue = month_private_subs.aggregate(Sum("private_price"))["private_price__sum"] or Decimal("0.00")
-    month_coaches_commission = month_private_subs.aggregate(Sum("coach_commission_amount"))["coach_commission_amount__sum"] or Decimal("0.00")
+    month_standalone_sessions = PrivateTrainingRecord.objects.filter(
+        standard_plan_price=Decimal("0.00"),
+        created_at__date__gte=month_start,
+        created_at__date__lte=today,
+    )
+    month_private_revenue = (
+        (month_private_subs.aggregate(Sum("private_price"))["private_price__sum"] or Decimal("0.00"))
+        + (month_standalone_sessions.aggregate(Sum("price_paid"))["price_paid__sum"] or Decimal("0.00"))
+    )
+    month_coaches_commission = (
+        (month_private_subs.aggregate(Sum("coach_commission_amount"))["coach_commission_amount__sum"] or Decimal("0.00"))
+        + (month_standalone_sessions.aggregate(Sum("calculated_commission"))["calculated_commission__sum"] or Decimal("0.00"))
+    )
     month_gym_private_profit = month_private_revenue - month_coaches_commission
 
     # C) Total Salaries & Payroll Liabilities
@@ -881,21 +904,40 @@ def manager_dashboard_view(request):
     )
     total_payroll_liabilities = total_fixed_salaries + month_coaches_commission
 
-    # D) Coach Performance Summary Table
+    # D) Coach Performance Summary Table (Monthly Private Subscribers + Unapproved Standalone Sessions)
     coaches_summary = []
     for coach in active_trainers:
         assigned_pts = Member.objects.filter(assigned_coach=coach, has_private=True)
         coach_pt_count = assigned_pts.count()
-        coach_pt_revenue = assigned_pts.aggregate(Sum("private_price"))["private_price__sum"] or Decimal("0.00")
-        comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
-        coach_pt_commission = (coach_pt_revenue * comm_rate).quantize(Decimal("0.01"))
-        coach_total_due = coach.fixed_salary + coach_pt_commission
+        default_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+
+        coach_pt_revenue = Decimal("0.00")
+        coach_pt_commission = Decimal("0.00")
+        for m in assigned_pts:
+            custom_assign = TrainerClientAssignment.objects.filter(trainer=coach, client=m).first()
+            m_rate = custom_assign.commission_rate if custom_assign else default_comm_rate
+            m_price = m.private_price or Decimal("0.00")
+            coach_pt_revenue += m_price
+            coach_pt_commission += (m_price * m_rate).quantize(Decimal("0.01"))
+
+        standalone_qs = PrivateTrainingRecord.objects.filter(
+            trainer=coach,
+            standard_plan_price=Decimal("0.00"),
+            is_approved_for_payroll=False,
+        )
+        standalone_count = standalone_qs.count()
+        standalone_rev = standalone_qs.aggregate(Sum("price_paid"))["price_paid__sum"] or Decimal("0.00")
+        standalone_comm = standalone_qs.aggregate(Sum("calculated_commission"))["calculated_commission__sum"] or Decimal("0.00")
+
+        total_coach_rev = coach_pt_revenue + standalone_rev
+        total_coach_comm = coach_pt_commission + standalone_comm
+        coach_total_due = coach.fixed_salary + total_coach_comm
 
         coaches_summary.append({
             "coach": coach,
-            "private_members_count": coach_pt_count,
-            "private_revenue": coach_pt_revenue,
-            "commission_amount": coach_pt_commission,
+            "private_members_count": coach_pt_count + standalone_count,
+            "private_revenue": total_coach_rev,
+            "commission_amount": total_coach_comm,
             "total_due": coach_total_due,
         })
 

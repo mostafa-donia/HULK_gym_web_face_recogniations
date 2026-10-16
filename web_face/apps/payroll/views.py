@@ -85,13 +85,43 @@ def trainers_index_view(request):
     total_pt_commissions = Decimal("0.00")
     total_fixed_salaries = Decimal("0.00")
 
+    # Preload custom commission rate assignments
+    active_assignments = TrainerClientAssignment.objects.filter(is_active=True)
+    assignment_rates_map = {(a.trainer_id, a.client_id): a.commission_rate for a in active_assignments}
+
     for t in trainers_qs:
+        default_rate = (t.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+
+        # Type 1: Monthly Private Subscriptions (Active assigned members)
         pt_members = Member.objects.filter(assigned_coach=t, has_private=True)
         active_pt = [m for m in pt_members if (not m.last_subscription_end or m.last_subscription_end >= today)]
         t.active_pt_count = len(active_pt)
-        t.pt_revenue = sum((m.private_price or Decimal("0.00")) for m in active_pt)
-        comm_rate = (t.commission_percentage or Decimal("50.00")) / Decimal("100.00")
-        t.pt_commission = (t.pt_revenue * comm_rate).quantize(Decimal("0.01"))
+
+        monthly_rev = Decimal("0.00")
+        monthly_comm = Decimal("0.00")
+        for m in active_pt:
+            m_price = m.private_price or Decimal("0.00")
+            m_rate = assignment_rates_map.get((t.id, m.id), default_rate)
+            monthly_rev += m_price
+            monthly_comm += (m_price * m_rate).quantize(Decimal("0.01"))
+
+        # Type 2: Standalone Private Sessions recorded this month (standard_plan_price == 0)
+        standalone_qs = PrivateTrainingRecord.objects.filter(
+            trainer=t,
+            created_at__date__gte=month_start,
+            standard_plan_price=Decimal("0.00"),
+        )
+        t.standalone_sessions_count = standalone_qs.count()
+        sessions_rev = standalone_qs.aggregate(Sum("private_markup"))["private_markup__sum"] or Decimal("0.00")
+        sessions_comm = standalone_qs.aggregate(Sum("calculated_commission"))["calculated_commission__sum"] or Decimal("0.00")
+
+        t.monthly_pt_revenue = monthly_rev
+        t.monthly_pt_commission = monthly_comm
+        t.sessions_revenue = sessions_rev
+        t.sessions_commission = sessions_comm
+
+        t.pt_revenue = monthly_rev + sessions_rev
+        t.pt_commission = monthly_comm + sessions_comm
         t.total_due = t.fixed_salary + t.pt_commission
 
         if t.status == EmployeeStatus.ACTIVE:
@@ -99,16 +129,17 @@ def trainers_index_view(request):
             total_pt_commissions += t.pt_commission
             total_fixed_salaries += t.fixed_salary
 
-    assignments_count = TrainerClientAssignment.objects.filter(is_active=True).count() + total_private_members
-    month_pt_sessions = PrivateTrainingRecord.objects.filter(created_at__date__gte=month_start).count()
-    recorded_session_commissions = (
-        PrivateTrainingRecord.objects.filter(created_at__date__gte=month_start).aggregate(Sum("calculated_commission"))["calculated_commission__sum"]
-        or Decimal("0.00")
-    )
-    month_pt_commissions = total_pt_commissions + recorded_session_commissions
+    assignments_count = total_private_members
+    month_pt_sessions = PrivateTrainingRecord.objects.filter(
+        created_at__date__gte=month_start,
+        standard_plan_price=Decimal("0.00"),
+    ).count()
+    month_pt_commissions = total_pt_commissions
 
     assignments = TrainerClientAssignment.objects.select_related("trainer", "client").filter(is_active=True).order_by("-id")[:15]
-    recent_sessions = PrivateTrainingRecord.objects.select_related("trainer", "client").order_by("-created_at")[:15]
+    recent_sessions = PrivateTrainingRecord.objects.filter(
+        standard_plan_price=Decimal("0.00")
+    ).select_related("trainer", "client").order_by("-created_at")[:20]
     private_members_list = Member.objects.filter(has_private=True, assigned_coach__isnull=False).select_related("assigned_coach").order_by("-id")[:25]
 
     context = {
@@ -151,6 +182,7 @@ def employee_create_view(request):
         phone = request.POST.get("phone", "").strip()
         role = request.POST.get("role", EmployeeRole.TRAINER)
         fixed_salary = Decimal(request.POST.get("fixed_salary", "0.00") or "0.00")
+        commission_percentage = Decimal(request.POST.get("commission_percentage", "50.00") or "50.00")
         notes = request.POST.get("notes", "").strip()
 
         if not name:
@@ -162,6 +194,7 @@ def employee_create_view(request):
             phone=phone,
             role=role,
             fixed_salary=fixed_salary,
+            commission_percentage=commission_percentage,
             notes=notes,
         )
         messages.success(request, f"تمت إضافة {emp.name} ({emp.get_role_display()}) بنجاح.")
@@ -180,6 +213,8 @@ def employee_edit_view(request, employee_id):
         employee.role = request.POST.get("role", employee.role)
         employee.status = request.POST.get("status", employee.status)
         employee.fixed_salary = Decimal(request.POST.get("fixed_salary", str(employee.fixed_salary)) or "0.00")
+        if "commission_percentage" in request.POST:
+            employee.commission_percentage = Decimal(request.POST.get("commission_percentage", str(employee.commission_percentage or "50.00")) or "50.00")
         employee.notes = request.POST.get("notes", employee.notes).strip()
         employee.save()
         messages.success(request, f"تم تحديث بيانات {employee.name} بنجاح.")
@@ -229,84 +264,132 @@ def trainer_assignment_list_view(request):
 @login_required
 def record_private_training_view(request):
     """
-    Records a private training billing package.
-    Strictly applies the canonical formula:
-    Private Markup = Package Price - Standard Plan Price
-    Trainer Commission = Private Markup * Commission Rate
+    Type 2 Private Training: Standalone Private Session / Special Case (تسجيل حصة برايفت / حالة خاصة منفصلة).
+    Completely independent of monthly subscriptions or standard plans:
+    - Enter Coach, Player (select member or type any name), Session Amount Paid (e.g. 400 EGP),
+      and Coach Commission Percentage (e.g. 50%).
+    - Directly calculates Coach Commission = Session Amount * (Commission % / 100).
     """
     unlocked, resp = check_trainers_page_access(request)
     if not unlocked or resp:
         return resp
 
-    trainers = Employee.objects.filter(role=EmployeeRole.TRAINER, status=EmployeeStatus.ACTIVE)
-    members = Member.objects.all().order_by("name")[:100]
-    plans = Plan.objects.filter(is_active=True).order_by("price")
+    trainers = Employee.objects.filter(role=EmployeeRole.TRAINER, status=EmployeeStatus.ACTIVE).order_by("name")
+    members = Member.objects.all().order_by("name")[:200]
     payment_methods = PaymentMethod.objects.filter(is_active=True)
 
     if request.method == "POST":
+        action = request.POST.get("action", "create")
+        if action == "delete_session":
+            rec_id = request.POST.get("record_id")
+            rec = PrivateTrainingRecord.objects.filter(id=rec_id, is_counted_in_payroll=False).first()
+            if rec:
+                if rec.payment:
+                    rec.payment.delete()
+                rec.delete()
+                messages.info(request, "تم حذف حصة البرايفت المسجلة وإلغاء إيصالها من الخزينة.")
+            return redirect("payroll:private_training_records")
+
         trainer_id = request.POST.get("trainer_id")
-        client_id = request.POST.get("client_id")
-        package_price = Decimal(request.POST.get("package_price", "0.00") or "0.00")
-        standard_plan_price = Decimal(request.POST.get("standard_plan_price", "0.00") or "0.00")
+        client_id = request.POST.get("client_id", "").strip()
+        client_name_raw = request.POST.get("client_name", "").strip()
+
+        raw_amount = request.POST.get("session_amount") or request.POST.get("package_price") or "0.00"
+        session_amount = Decimal(raw_amount or "0.00")
+
+        trainer = get_object_or_404(Employee, id=trainer_id)
+
+        raw_pct = request.POST.get("commission_pct", "").strip()
+        try:
+            comm_pct = Decimal(raw_pct) if raw_pct != "" else (trainer.commission_percentage or Decimal("50.00"))
+        except Exception:
+            comm_pct = trainer.commission_percentage or Decimal("50.00")
+        comm_pct = max(Decimal("0.00"), min(Decimal("100.00"), comm_pct))
+        commission_rate = (comm_pct / Decimal("100.00")).quantize(Decimal("0.0001"))
+
         payment_method = request.POST.get("payment_method", "نقدي")
         notes = request.POST.get("notes", "").strip()
 
-        trainer = get_object_or_404(Employee, id=trainer_id)
-        client = get_object_or_404(Member, id=client_id)
+        if session_amount <= Decimal("0.00"):
+            messages.error(request, "يرجى إدخال المبلغ المدفوع للحصة بشكل صحيح (أكبر من صفر).")
+            return redirect("payroll:private_training_records")
 
-        # Lookup client assignment rate, or default to 50%
-        assignment = TrainerClientAssignment.objects.filter(trainer=trainer, client=client, is_active=True).first()
-        commission_rate = assignment.commission_rate if assignment else Decimal("0.5000")
+        # Resolve or create client (supports existing member OR walk-in/typed name without touching subscriptions)
+        client = None
+        if client_id:
+            client = Member.objects.filter(id=client_id).first()
+        if not client and client_name_raw:
+            client = Member.objects.filter(name__iexact=client_name_raw).first()
+            if not client:
+                from apps.members.views import generate_next_member_id
+                client = Member.objects.create(
+                    member_id=generate_next_member_id(),
+                    name=client_name_raw,
+                    mobile="",
+                    notes="تم تسجيله تلقائياً من حصة برايفت خاصة",
+                )
+        if not client:
+            messages.error(request, "يرجى اختيار اسم اللاعب أو كتابة اسمه.")
+            return redirect("payroll:private_training_records")
 
-        # Exact Formula
-        private_markup = max(Decimal("0.00"), package_price - standard_plan_price)
-        calculated_commission = (private_markup * commission_rate).quantize(Decimal("0.01"))
+        calculated_commission = (session_amount * commission_rate).quantize(Decimal("0.01"))
 
         with transaction.atomic():
-            # Create payment invoice
-            pay_num = Payment.objects.count() + 1
+            from apps.members.views import generate_next_payment_id
+            pay_id, inv_no = generate_next_payment_id()
             payment = Payment.objects.create(
-                payment_id=f"PAY-PT-{pay_num:05d}",
-                invoice_no=f"INV-PT-{pay_num:05d}",
+                payment_id=pay_id,
+                invoice_no=inv_no,
                 operation_type=PaymentOperationType.NEW_SUBSCRIPTION,
                 member=client,
-                amount=package_price,
+                amount=session_amount,
                 payment_method=payment_method,
-                notes=f"باقة تدريب خاص مع كابتن {trainer.name} | {notes}",
+                notes=f"حصة برايفت خاصة مع كابتن {trainer.name} (نسبة الكابتن {comm_pct}%) | {notes}".strip(" |"),
                 created_by=request.user,
             )
 
-            # Record Private Training detail
+            # standard_plan_price = 0.00 marks this as a standalone private session (independent of monthly plans)
             PrivateTrainingRecord.objects.create(
                 payment=payment,
                 trainer=trainer,
                 client=client,
-                package_price=package_price,
-                standard_plan_price=standard_plan_price,
-                private_markup=private_markup,
+                package_price=session_amount,
+                standard_plan_price=Decimal("0.00"),
+                private_markup=session_amount,
                 commission_rate=commission_rate,
                 calculated_commission=calculated_commission,
                 is_counted_in_payroll=False,
             )
 
-            client.total_paid += package_price
+            client.total_paid += session_amount
             client.save(update_fields=["total_paid"])
 
-        pct_label = (commission_rate * 100).quantize(Decimal("1"))
+            log_audit_event(
+                user=request.user,
+                action="standalone_pt_session",
+                target_model="PrivateTrainingRecord",
+                target_id=str(trainer.id),
+                details=f"تسجيل حصة برايفت خاصة للاعب {client.name} مع كابتن {trainer.name} بمبلغ {session_amount} ج (نسبة الكابتن {comm_pct}% = {calculated_commission} ج)",
+                amount=session_amount,
+            )
+
         messages.success(
             request,
-            f"تم تسجيل باقة التدريب الخاص بنجاح! قيمة التدريب الخاص: {private_markup} ج.م، وعمولة الكابتن {trainer.name}: {calculated_commission} ج.م ({pct_label}%).",
+            f"✓ تم تسجيل حصة البرايفت الخاصة بنجاح! المدفوع: {session_amount} ج.م — عمولة الكابتن {trainer.name} ({comm_pct}%): {calculated_commission} ج.م.",
         )
+        if request.POST.get("from_coach_detail"):
+            return redirect("payroll:coach_detail", employee_id=trainer.id)
         return redirect("payroll:private_training_records")
 
     records = PrivateTrainingRecord.objects.select_related("trainer", "client", "payment").order_by("-created_at")[:50]
+    selected_trainer_id = request.GET.get("trainer_id", "")
 
     context = {
         "trainers": trainers,
         "members": members,
-        "plans": plans,
         "payment_methods": payment_methods,
         "records": records,
+        "selected_trainer_id": selected_trainer_id,
     }
     return render(request, "payroll/private_training_form.html", context)
 
@@ -838,9 +921,10 @@ def coach_detail_view(request, employee_id):
     """
     Dedicated Coach (Trainer) Profile View:
     - Displays Coach details, monthly fixed salary, and commission percentage.
-    - Shows all private training members assigned to this coach.
-    - Allows adding/assigning players to this coach with custom private markup.
-    - Calculates this month's private commissions and total monthly dues.
+    - Shows both:
+      1) Monthly Private Subscribers (اشتراكات البرايفت الشهرية)
+      2) Standalone Private Sessions (حصص البرايفت الخاصة المنفصلة)
+    - Allows quick assignment of monthly private members AND quick recording of standalone private sessions.
     """
     unlocked, resp = check_trainers_page_access(request)
     if not unlocked or resp:
@@ -851,29 +935,126 @@ def coach_detail_view(request, employee_id):
     today = timezone.localdate()
     month_start = today.replace(day=1)
 
-    # Handle assigning / removing members
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "assign_member":
             member_id = request.POST.get("member_id")
             private_price_str = request.POST.get("private_price", "600.00")
             private_price = Decimal(private_price_str or "600.00")
-            member = get_object_or_404(Member, id=member_id)
+            raw_pct = request.POST.get("commission_pct", "").strip()
+            try:
+                comm_pct = Decimal(raw_pct) if raw_pct != "" else (coach.commission_percentage or Decimal("50.00"))
+            except Exception:
+                comm_pct = coach.commission_percentage or Decimal("50.00")
+            comm_pct = max(Decimal("0.00"), min(Decimal("100.00"), comm_pct))
+            comm_rate = (comm_pct / Decimal("100.00")).quantize(Decimal("0.0001"))
 
+            member = get_object_or_404(Member, id=member_id)
             member.assigned_coach = coach
             member.has_private = True
             member.private_price = private_price
             member.save()
+
+            TrainerClientAssignment.objects.update_or_create(
+                trainer=coach,
+                client=member,
+                defaults={"commission_rate": comm_rate, "is_active": True},
+            )
 
             log_audit_event(
                 user=request.user,
                 action="coach_member_assigned",
                 target_model="Member",
                 target_id=str(member.id),
-                details=f"تم إسناد اللاعب {member.name} للكابتن {coach.name} مع تفعيل باقة البرايفت بقيمة {private_price} ج",
+                details=f"تم إسناد اللاعب {member.name} للكابتن {coach.name} مع تفعيل باقة البرايفت الشهرية بقيمة {private_price} ج (عمولة {comm_pct}%)",
                 amount=private_price,
             )
-            messages.success(request, f"تمت إضافة المتدرب {member.name} إلى الكابتن {coach.name} بنجاح.")
+            messages.success(request, f"تمت إضافة المتدرب {member.name} إلى الكابتن {coach.name} (برايفت شهري {private_price} ج - نسبة {comm_pct}%) بنجاح.")
+            return redirect("payroll:coach_detail", employee_id=coach.id)
+
+        elif action == "record_session":
+            client_id = request.POST.get("client_id", "").strip()
+            client_name_raw = request.POST.get("client_name", "").strip()
+            session_amount = Decimal(request.POST.get("session_amount", "0.00") or "0.00")
+            raw_pct = request.POST.get("commission_pct", "").strip()
+            try:
+                comm_pct = Decimal(raw_pct) if raw_pct != "" else (coach.commission_percentage or Decimal("50.00"))
+            except Exception:
+                comm_pct = coach.commission_percentage or Decimal("50.00")
+            comm_pct = max(Decimal("0.00"), min(Decimal("100.00"), comm_pct))
+            comm_rate = (comm_pct / Decimal("100.00")).quantize(Decimal("0.0001"))
+            payment_method = request.POST.get("payment_method", "نقدي")
+            notes = request.POST.get("notes", "").strip()
+
+            if session_amount <= Decimal("0.00"):
+                messages.error(request, "يرجى إدخال المبلغ المدفوع للحصة بشكل صحيح.")
+                return redirect("payroll:coach_detail", employee_id=coach.id)
+
+            client = None
+            if client_id:
+                client = Member.objects.filter(id=client_id).first()
+            if not client and client_name_raw:
+                client = Member.objects.filter(name__iexact=client_name_raw).first()
+                if not client:
+                    from apps.members.views import generate_next_member_id
+                    client = Member.objects.create(
+                        member_id=generate_next_member_id(),
+                        name=client_name_raw,
+                        mobile="",
+                        notes="تم تسجيله تلقائياً من حصة برايفت خاصة",
+                    )
+            if not client:
+                messages.error(request, "يرجى اختيار اسم اللاعب أو كتابة اسمه.")
+                return redirect("payroll:coach_detail", employee_id=coach.id)
+
+            calculated_commission = (session_amount * comm_rate).quantize(Decimal("0.01"))
+            with transaction.atomic():
+                from apps.members.views import generate_next_payment_id
+                pay_id, inv_no = generate_next_payment_id()
+                payment = Payment.objects.create(
+                    payment_id=pay_id,
+                    invoice_no=inv_no,
+                    operation_type=PaymentOperationType.NEW_SUBSCRIPTION,
+                    member=client,
+                    amount=session_amount,
+                    payment_method=payment_method,
+                    notes=f"حصة برايفت خاصة مع كابتن {coach.name} (نسبة {comm_pct}%) | {notes}".strip(" |"),
+                    created_by=request.user,
+                )
+                PrivateTrainingRecord.objects.create(
+                    payment=payment,
+                    trainer=coach,
+                    client=client,
+                    package_price=session_amount,
+                    standard_plan_price=Decimal("0.00"),
+                    private_markup=session_amount,
+                    commission_rate=comm_rate,
+                    calculated_commission=calculated_commission,
+                    is_counted_in_payroll=False,
+                )
+                client.total_paid += session_amount
+                client.save(update_fields=["total_paid"])
+
+                log_audit_event(
+                    user=request.user,
+                    action="standalone_pt_session",
+                    target_model="PrivateTrainingRecord",
+                    target_id=str(coach.id),
+                    details=f"تسجيل حصة برايفت خاصة للاعب {client.name} مع كابتن {coach.name} بمبلغ {session_amount} ج (نسبة {comm_pct}% = {calculated_commission} ج)",
+                    amount=session_amount,
+                )
+
+            messages.success(request, f"✓ تم تسجيل حصة البرايفت الخاصة ({session_amount} ج) — عمولة الكابتن {coach.name}: {calculated_commission} ج.م ({comm_pct}%).")
+            return redirect("payroll:coach_detail", employee_id=coach.id)
+
+        elif action == "delete_session":
+            rec_id = request.POST.get("record_id")
+            rec = PrivateTrainingRecord.objects.filter(id=rec_id, trainer=coach, is_counted_in_payroll=False).first()
+            if rec:
+                if rec.payment:
+                    rec.payment.delete()
+                rec.delete()
+                messages.info(request, "تم حذف حصة البرايفت المسجلة.")
             return redirect("payroll:coach_detail", employee_id=coach.id)
 
         elif action == "remove_member":
@@ -895,33 +1076,65 @@ def coach_detail_view(request, employee_id):
                 messages.info(request, f"تم إخراج المتدرب {member.name} من قائمة الكابتن {coach.name}.")
             return redirect("payroll:coach_detail", employee_id=coach.id)
 
-    # Fetch assigned members
+    # Fetch assigned monthly private members
     assigned_members = Member.objects.filter(assigned_coach=coach).order_by("-has_private", "name")
+    default_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+    custom_rates_map = {
+        a.client_id: a.commission_rate
+        for a in TrainerClientAssignment.objects.filter(trainer=coach, is_active=True)
+    }
 
-    # Enrich assigned members with commission share
-    coach_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
     enriched_members = []
-    total_private_income = Decimal("0.00")
-    total_coach_commission = Decimal("0.00")
+    monthly_private_income = Decimal("0.00")
+    monthly_coach_commission = Decimal("0.00")
     active_private_count = 0
 
     for m in assigned_members:
         is_sub_active = bool(m.last_subscription_end and m.last_subscription_end >= today)
-        coach_share = (m.private_price * coach_comm_rate).quantize(Decimal("0.01")) if m.has_private else Decimal("0.00")
+        m_rate = custom_rates_map.get(m.id, default_comm_rate)
+        m_rate_pct = (m_rate * Decimal("100.00")).quantize(Decimal("1"))
+        coach_share = (m.private_price * m_rate).quantize(Decimal("0.01")) if m.has_private else Decimal("0.00")
         if m.has_private and is_sub_active:
-            total_private_income += m.private_price
-            total_coach_commission += coach_share
+            monthly_private_income += m.private_price
+            monthly_coach_commission += coach_share
             active_private_count += 1
 
         enriched_members.append({
             "member": m,
             "has_private": m.has_private,
             "private_price": m.private_price,
+            "comm_rate_pct": m_rate_pct,
             "coach_share": coach_share,
             "is_active": is_sub_active,
             "end_date": m.last_subscription_end,
             "plan_type": m.last_subscription_type or "عام",
         })
+
+    # Fetch standalone private sessions recorded this month (standard_plan_price == 0)
+    standalone_sessions_qs = PrivateTrainingRecord.objects.filter(
+        trainer=coach,
+        created_at__date__gte=month_start,
+        standard_plan_price=Decimal("0.00"),
+    ).select_related("client", "payment").order_by("-created_at")
+
+    standalone_sessions = []
+    sessions_income = Decimal("0.00")
+    sessions_commission = Decimal("0.00")
+    for s in standalone_sessions_qs:
+        sessions_income += s.private_markup
+        sessions_commission += s.calculated_commission
+        standalone_sessions.append({
+            "id": s.id,
+            "client": s.client,
+            "amount": s.private_markup,
+            "rate_pct": (s.commission_rate * Decimal("100.00")).quantize(Decimal("1")),
+            "commission": s.calculated_commission,
+            "created_at": s.created_at,
+            "is_counted_in_payroll": s.is_counted_in_payroll,
+        })
+
+    total_private_income = monthly_private_income + sessions_income
+    total_coach_commission = monthly_coach_commission + sessions_commission
 
     # Fetch month's salary adjustments / advances
     current_period = today.strftime("%Y-%m")
@@ -937,14 +1150,21 @@ def coach_detail_view(request, employee_id):
     # Estimated Net Monthly Due
     net_monthly_due = coach.fixed_salary + total_coach_commission + month_bonuses - month_deductions - month_advances
 
-    # Available members to assign (not already assigned to this coach)
     available_members = Member.objects.exclude(assigned_coach=coach).order_by("name")[:100]
+    all_members = Member.objects.all().order_by("name")[:200]
+    payment_methods = PaymentMethod.objects.filter(is_active=True)
 
     context = {
         "coach": coach,
         "profile": profile,
         "today": today,
         "enriched_members": enriched_members,
+        "standalone_sessions": standalone_sessions,
+        "standalone_sessions_count": len(standalone_sessions),
+        "sessions_income": sessions_income,
+        "sessions_commission": sessions_commission,
+        "monthly_private_income": monthly_private_income,
+        "monthly_coach_commission": monthly_coach_commission,
         "active_private_count": active_private_count,
         "total_private_income": total_private_income,
         "total_coach_commission": total_coach_commission,
@@ -953,6 +1173,8 @@ def coach_detail_view(request, employee_id):
         "month_advances": month_advances,
         "net_monthly_due": net_monthly_due,
         "available_members": available_members,
+        "all_members": all_members,
+        "payment_methods": payment_methods,
     }
     return render(request, "payroll/coach_detail.html", context)
 
@@ -961,7 +1183,7 @@ def coach_detail_view(request, employee_id):
 def coach_salary_report_view(request, employee_id):
     """
     Printable, ultra-clean, unjammed, spacious Coach Salary & Commission Statement.
-    Optimized for clean A4 paper printing and executive clarity.
+    Includes both Monthly Private Subscriptions and Standalone Private Sessions.
     """
     unlocked, resp = check_trainers_page_access(request)
     if not unlocked or resp:
@@ -974,7 +1196,6 @@ def coach_salary_report_view(request, employee_id):
 
     period_str = request.GET.get("period", today.strftime("%Y-%m"))
 
-    # Calculate period dates
     try:
         y, m = map(int, period_str.split("-")[:2])
         p_start = date(y, m, 1)
@@ -987,29 +1208,60 @@ def coach_salary_report_view(request, employee_id):
         p_end = today
         period_str = today.strftime("%Y-%m")
 
-    # 1. Fetch Subscriptions or PT Records for this coach in this period
-    coach_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+    default_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+    custom_rates_map = {
+        a.client_id: a.commission_rate
+        for a in TrainerClientAssignment.objects.filter(trainer=coach, is_active=True)
+    }
 
-    # Active assigned members with private
+    # 1. Type 1: Active assigned members with monthly private add-on
     assigned_members = Member.objects.filter(assigned_coach=coach, has_private=True)
     member_rows = []
     total_private_volume = Decimal("0.00")
     total_commission = Decimal("0.00")
 
     for m in assigned_members:
-        comm_amount = (m.private_price * coach_comm_rate).quantize(Decimal("0.01"))
+        m_rate = custom_rates_map.get(m.id, default_comm_rate)
+        m_rate_pct = (m_rate * Decimal("100.00")).quantize(Decimal("1"))
+        comm_amount = (m.private_price * m_rate).quantize(Decimal("0.01"))
         total_private_volume += m.private_price
         total_commission += comm_amount
         member_rows.append({
             "member_id": m.member_id,
             "name": m.name,
             "phone": m.mobile or "—",
-            "plan_name": m.last_subscription_type or "اشتراك عام",
+            "plan_name": m.last_subscription_type or "اشتراك شهري",
             "private_markup": m.private_price,
-            "comm_rate_pct": coach.commission_percentage,
+            "comm_rate_pct": m_rate_pct,
             "commission_amount": comm_amount,
             "status": "مشترك نشط" if (m.last_subscription_end and m.last_subscription_end >= today) else "منتهي",
             "renewal_date": m.last_subscription_end,
+        })
+
+    # 2. Type 2: Standalone Private Sessions in period (standard_plan_price == 0)
+    standalone_qs = PrivateTrainingRecord.objects.filter(
+        trainer=coach,
+        created_at__date__gte=p_start,
+        created_at__date__lte=p_end,
+        standard_plan_price=Decimal("0.00"),
+    ).select_related("client").order_by("-created_at")
+
+    session_rows = []
+    sessions_volume = Decimal("0.00")
+    sessions_commission = Decimal("0.00")
+    for s in standalone_qs:
+        s_rate_pct = (s.commission_rate * Decimal("100.00")).quantize(Decimal("1"))
+        sessions_volume += s.private_markup
+        sessions_commission += s.calculated_commission
+        total_private_volume += s.private_markup
+        total_commission += s.calculated_commission
+        session_rows.append({
+            "member_id": s.client.member_id,
+            "name": s.client.name,
+            "amount": s.private_markup,
+            "comm_rate_pct": s_rate_pct,
+            "commission_amount": s.calculated_commission,
+            "date": s.created_at,
         })
 
     # Adjustments in period
@@ -1036,6 +1288,10 @@ def coach_salary_report_view(request, employee_id):
         "p_end": p_end,
         "member_rows": member_rows,
         "members_count": len(member_rows),
+        "session_rows": session_rows,
+        "sessions_count": len(session_rows),
+        "sessions_volume": sessions_volume,
+        "sessions_commission": sessions_commission,
         "total_private_volume": total_private_volume,
         "total_commission": total_commission,
         "fixed_salary": fixed_salary,
@@ -1047,4 +1303,5 @@ def coach_salary_report_view(request, employee_id):
         "net_payable": net_payable,
     }
     return render(request, "payroll/coach_salary_report.html", context)
+
 

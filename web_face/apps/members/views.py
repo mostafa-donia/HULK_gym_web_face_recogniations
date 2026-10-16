@@ -17,7 +17,7 @@ from apps.members.models import Member, MemberStatus, Plan, Subscription
 from apps.messaging.models import MessageType, WhatsAppMessage
 from apps.payments.models import Payment, PaymentMethod, PaymentOperationType
 from apps.payments.services import queue_payment_receipt_whatsapp
-from apps.payroll.models import Employee, EmployeeRole, EmployeeStatus, PrivateTrainingRecord
+from apps.payroll.models import Employee, EmployeeRole, EmployeeStatus, PrivateTrainingRecord, TrainerClientAssignment
 
 
 def generate_next_member_id() -> str:
@@ -667,11 +667,17 @@ def subscription_create_view(request):
         payment_method = request.POST.get("payment_method", "نقدي")
         notes = request.POST.get("notes", "").strip()
 
-        # Coach Commission (Monthly Add-on Share)
+        # Coach Commission (Monthly Add-on Share from private_price only)
         coach_comm_rate = Decimal("0.5000")
         coach_comm_amount = Decimal("0.00")
         if has_private and coach:
-            coach_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+            raw_comm_pct = request.POST.get("coach_commission_pct", "").strip()
+            try:
+                comm_pct = Decimal(raw_comm_pct) if raw_comm_pct != "" else (coach.commission_percentage or Decimal("50.00"))
+            except Exception:
+                comm_pct = coach.commission_percentage or Decimal("50.00")
+            comm_pct = max(Decimal("0.00"), min(Decimal("100.00"), comm_pct))
+            coach_comm_rate = (comm_pct / Decimal("100.00")).quantize(Decimal("0.0001"))
             coach_comm_amount = (private_price * coach_comm_rate).quantize(Decimal("0.01"))
 
         if remaining_amount > Decimal("0.00"):
@@ -727,7 +733,7 @@ def subscription_create_view(request):
                     created_by=request.user,
                 )
 
-            # 3. Create PrivateTrainingRecord for the Coach
+            # 3. Create PrivateTrainingRecord for the Coach (Monthly Subscription Add-on: standard_plan_price = plan_price)
             if has_private and coach:
                 PrivateTrainingRecord.objects.create(
                     payment=payment,
@@ -738,6 +744,11 @@ def subscription_create_view(request):
                     private_markup=private_price,
                     commission_rate=coach_comm_rate,
                     calculated_commission=coach_comm_amount,
+                )
+                TrainerClientAssignment.objects.update_or_create(
+                    trainer=coach,
+                    client=member,
+                    defaults={"commission_rate": coach_comm_rate, "is_active": True},
                 )
 
             # 4. Update Member State
@@ -860,6 +871,7 @@ def smart_operations_view(request):
                 "private_price": float(m.private_price),
                 "coach_id": m.assigned_coach_id,
                 "coach_name": m.assigned_coach.name if m.assigned_coach else "",
+                "coach_commission_pct": float(m.assigned_coach.commission_percentage) if m.assigned_coach else 50.0,
                 "discount_enabled": m.discount_enabled,
                 "renewal_discount": float(m.renewal_discount),
             })
@@ -914,11 +926,17 @@ def smart_operations_view(request):
                 payment_method = request.POST.get("payment_method", "نقدي")
                 notes = request.POST.get("notes", "").strip()
 
-                # Coach Commission
+                # Coach Commission (Monthly Add-on Share from private_price only)
                 coach_comm_rate = Decimal("0.5000")
                 coach_comm_amount = Decimal("0.00")
                 if has_private and coach:
-                    coach_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+                    raw_comm_pct = request.POST.get("coach_commission_pct", "").strip()
+                    try:
+                        comm_pct = Decimal(raw_comm_pct) if raw_comm_pct != "" else (coach.commission_percentage or Decimal("50.00"))
+                    except Exception:
+                        comm_pct = coach.commission_percentage or Decimal("50.00")
+                    comm_pct = max(Decimal("0.00"), min(Decimal("100.00"), comm_pct))
+                    coach_comm_rate = (comm_pct / Decimal("100.00")).quantize(Decimal("0.0001"))
                     coach_comm_amount = (private_price * coach_comm_rate).quantize(Decimal("0.01"))
 
                 # Validation: Partial payment requires allowance_days between 1 and 10 days
@@ -1050,6 +1068,11 @@ def smart_operations_view(request):
                         private_markup=private_price,
                         commission_rate=coach_comm_rate,
                         calculated_commission=coach_comm_amount,
+                    )
+                    TrainerClientAssignment.objects.update_or_create(
+                        trainer=coach,
+                        client=member,
+                        defaults={"commission_rate": coach_comm_rate, "is_active": True},
                     )
 
                 # Audit Logging for Manager Transparency

@@ -26,8 +26,8 @@
       <a href="{% url 'payroll:trainer_assignments' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
         🤝 عقود البرايفت
       </a>
-      <a href="{% url 'payroll:private_training_records' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
-        ⏱️ تسجيل حصة PT
+      <a href="{% url 'payroll:private_training_records' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; border-color: rgba(168, 241, 75, 0.45); color: #A8F14B; font-weight: 800;">
+        ⏱️ تسجيل حصة برايفت منفصلة
       </a>
       <a href="{% url 'payroll:advance_create' %}" class="btn btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; background: rgba(34, 197, 94, 0.14); border: 1px solid rgba(34, 197, 94, 0.4); color: #22c55e; font-weight: 800;">
         💵 صرف سلفة
@@ -59,14 +59,14 @@
     </div>
 
     <div style="background: var(--bg-card); border: 1px solid rgba(77, 179, 255, 0.3); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">متدربو البرايفت النشطين</span>
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">مشتركو البرايفت الشهريين</span>
       <div style="color: #4DB3FF; font-size: 1.65rem; font-weight: 900; margin-top: 4px;">
-        {{ total_private_members|default:assignments_count }} <small style="font-size: 0.88rem; color: var(--text-muted);">لاعب خاص</small>
+        {{ total_private_members|default:assignments_count }} <small style="font-size: 0.88rem; color: var(--text-muted);">لاعب اشتراك</small>
       </div>
     </div>
 
     <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.35); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">إجمالي عمولات البرايفت الشهرية</span>
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">إجمالي عمولات البرايفت (اشتراكات + حصص)</span>
       <div style="color: #A8F14B; font-size: 1.65rem; font-weight: 900; margin-top: 4px;">
         {{ month_pt_commissions }} <small style="font-size: 0.88rem;">{{ gym_profile.currency|default:"ج" }}</small>
       </div>
@@ -80,11 +80,11 @@
       <span class="tr-tab-count">{{ total_trainers }}</span>
     </button>
     <button type="button" class="tr-tab-btn" onclick="switchTrainerTab('contracts', this)">
-      🤝 لاعبو وعقود التدريب الخاص
-      <span class="tr-tab-count">{{ assignments_count }}</span>
+      🤝 اشتراكات البرايفت الشهرية
+      <span class="tr-tab-count">{{ total_private_members|default:assignments_count }}</span>
     </button>
     <button type="button" class="tr-tab-btn" onclick="switchTrainerTab('sessions', this)">
-      ⏱️ سجل حصص التدريب المسجلة
+      ⏱️ حصص البرايفت المنفصلة (حالات خاصة)
       <span class="tr-tab-count">{{ recent_sessions|length }}</span>
     </button>
   </div>
@@ -112,9 +112,9 @@
             <tr>
               <th>اسم الكابتن</th>
               <th>الراتب الأساسي</th>
-              <th>نسبة العمولة</th>
-              <th>متدربو البرايفت</th>
-              <th>عمولة البرايفت</th>
+              <th>نسبته الطبيعية</th>
+              <th>اشتراكات / حصص برايفت</th>
+              <th>عمولة البرايفت الإجمالية</th>
               <th>إجمالي المستحق</th>
               <th>الحالة</th>
               <th>إجراءات سريعة</th>
@@ -136,8 +136,11 @@
                 {{ t.commission_percentage }}%
               </td>
               <td>
-                <a href="{% url 'payroll:coach_detail' t.id %}" style="text-decoration: none;">
-                  <span class="badge badge-info" style="cursor: pointer;">{{ t.active_pt_count|default:0 }} لاعب</span>
+                <a href="{% url 'payroll:coach_detail' t.id %}" style="text-decoration: none; display: inline-flex; gap: 4px; flex-wrap: wrap;">
+                  <span class="badge badge-info" style="cursor: pointer;">{{ t.active_pt_count|default:0 }} اشتراك</span>
+                  {% if t.standalone_sessions_count %}
+                    <span class="badge badge-active" style="cursor: pointer;">+ {{ t.standalone_sessions_count }} حصة</span>
+                  {% endif %}
                 </a>
               </td>
               <td style="color: #4DB3FF; font-weight: 800;">
@@ -191,9 +194,9 @@
       <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
           <h3 style="margin: 0; color: var(--text-main); font-size: 1.05rem; font-weight: 800;">
-            🏋️‍♂️ لاعبو البرايفت المسندون للكباتن
+            🏋️‍♂️ مشتركو البرايفت الشهريين المسندون للكباتن
           </h3>
-          <span style="font-size: 0.8rem; color: var(--text-muted);">إسناد مباشر من ملف اللاعب أو الكابتن</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">اشتراك شهري + إضافة برايفت</span>
         </div>
 
         {% if private_members_list %}
@@ -203,7 +206,7 @@
               <tr>
                 <th>اللاعب</th>
                 <th>الكابتن المسؤول</th>
-                <th>قيمة البرايفت</th>
+                <th>قيمة إضافة البرايفت</th>
               </tr>
             </thead>
             <tbody>
@@ -256,7 +259,7 @@
               <tr>
                 <td style="color: var(--text-main); font-weight: 700;">{{ a.trainer.name }}</td>
                 <td style="color: #4DB3FF;">{{ a.client.name }}</td>
-                <td style="color: #FFB300; font-weight: 800;">{{ a.commission_rate_percentage }}%</td>
+                <td style="color: #FFB300; font-weight: 800;">{% widthratio a.commission_rate 1 100 %}%</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -275,9 +278,9 @@
     <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
         <h3 style="margin: 0; color: var(--text-main); font-size: 1.05rem; font-weight: 800;">
-          ⏱️ أحدث حصص التدريب الخاص المسجلة
+          ⏱️ حصص البرايفت المنفصلة (حالات خاصة بدون اشتراك شهري)
         </h3>
-        <a href="{% url 'payroll:private_training_records' %}" class="btn btn-primary btn-sm" style="font-size: 0.82rem;">+ تسجيل حصة جديدة</a>
+        <a href="{% url 'payroll:private_training_records' %}" class="btn btn-primary btn-sm" style="font-size: 0.82rem;">+ تسجيل حصة برايفت منفصلة</a>
       </div>
 
       {% if recent_sessions %}
@@ -287,6 +290,8 @@
             <tr>
               <th>المدرب</th>
               <th>اللاعب</th>
+              <th>المبلغ المدفوع للحصة</th>
+              <th>نسبة المدرب</th>
               <th>عمولة الكابتن</th>
               <th>التاريخ</th>
             </tr>
@@ -295,8 +300,10 @@
             {% for s in recent_sessions %}
             <tr>
               <td style="color: var(--text-main); font-weight: 700;">{{ s.trainer.name }}</td>
-              <td style="color: #4DB3FF;">{{ s.client.name }}</td>
-              <td style="color: #A8F14B; font-weight: 800;">{{ s.calculated_commission }} {{ gym_profile.currency }}</td>
+              <td style="color: #4DB3FF; font-weight: 700;">{{ s.client.name }}</td>
+              <td style="color: var(--text-main); font-weight: 800;">{{ s.price_paid }} {{ gym_profile.currency|default:"ج" }}</td>
+              <td style="color: #FFB300; font-weight: 800;">{% widthratio s.commission_rate_applied 1 100 %}%</td>
+              <td style="color: #A8F14B; font-weight: 900;">{{ s.calculated_commission }} {{ gym_profile.currency|default:"ج" }}</td>
               <td style="font-size: 0.82rem; color: var(--text-muted);">{{ s.created_at|date:"Y-m-d" }}</td>
             </tr>
             {% endfor %}
