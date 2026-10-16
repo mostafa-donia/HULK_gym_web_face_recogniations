@@ -591,10 +591,31 @@ def send_message(
     set_keyboard_layout_to_english()
     random_delay(0.2, 0.4)
 
-    # 2. Focus the search bar via coordinates
-    human_move_to(x_search, y_search)
-    pyautogui.click()
-    random_delay(0.15, 0.25)
+    # 2. Focus the search bar via coordinates and verify WhatsApp is loaded & signed in
+    search_ready = False
+    for attempt in range(6):
+        human_move_to(x_search, y_search)
+        pyautogui.click()
+        random_delay(0.15, 0.25)
+
+        copy("__WAIT__")
+        write(" ")
+        sleep(0.15)
+        hotkey("ctrl", "a")
+        hotkey("ctrl", "c")
+        sleep(0.15)
+        if paste() != "__WAIT__":
+            search_ready = True
+            break
+
+        print(f"[send_message] WhatsApp search bar not ready yet (attempt {attempt + 1}/6). Waiting for loading/sign-in...")
+        sleep(1.5)
+
+    if not search_ready:
+        print("[send_message] ERROR: WhatsApp Desktop is either NOT signed in (QR screen) or still loading.")
+        if return_to_system:
+            return_to_system_window()
+        return False
 
     # Clear previous search content cleanly and type space then phone
     hotkey("ctrl", "a")
