@@ -1167,8 +1167,21 @@ def settings_view(request):
                 except (ValueError, TypeError):
                     pass
 
+            if "form_telegram" in request.POST or "telegram_bot_token" in request.POST:
+                profile.telegram_bot_enabled = "telegram_bot_enabled" in request.POST
+                profile.telegram_bot_token = request.POST.get("telegram_bot_token", profile.telegram_bot_token or "").strip()
+                profile.telegram_manager_chat_id = request.POST.get("telegram_manager_chat_id", profile.telegram_manager_chat_id or "").strip()
+
             profile.save()
             messages.success(request, "تم حفظ الإعدادات بنجاح.")
+            return redirect("core:settings")
+
+        elif action == "save_telegram":
+            profile.telegram_bot_enabled = "telegram_bot_enabled" in request.POST
+            profile.telegram_bot_token = request.POST.get("telegram_bot_token", profile.telegram_bot_token or "").strip()
+            profile.telegram_manager_chat_id = request.POST.get("telegram_manager_chat_id", profile.telegram_manager_chat_id or "").strip()
+            profile.save()
+            messages.success(request, "✓ تم حفظ وتحديث إعدادات بوت تليجرام بنجاح.")
             return redirect("core:settings")
 
         elif action == "change_trainers_password":

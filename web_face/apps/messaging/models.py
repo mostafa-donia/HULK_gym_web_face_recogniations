@@ -48,6 +48,7 @@ class WhatsAppMessage(models.Model):
     send_after = models.DateTimeField(null=True, blank=True, db_index=True, verbose_name="موعد الإرسال المؤجل")
     sent_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ ووقت الإرسال الفعلي")
     error_detail = models.TextField(blank=True, verbose_name="تفاصيل الخطأ إن وجد")
+    sent_via_telegram = models.BooleanField(default=False, verbose_name="أُرسلت عبر تليجرام أيضاً")
     dedup_key = models.CharField(max_length=150, unique=True, db_index=True, verbose_name="مفتاح منع التكرار")
     created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name="تاريخ الإنشاء")
 

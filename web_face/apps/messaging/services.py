@@ -219,6 +219,14 @@ def dispatch_message_record(msg_obj: WhatsAppMessage, return_to_system: bool = F
             msg_obj.sent_at = timezone.now()
             msg_obj.error_detail = ""
             msg_obj.save()
+
+            # Mirror notification to Telegram as requested
+            try:
+                from apps.messaging.telegram_bot import send_telegram_notification_for_message
+                send_telegram_notification_for_message(msg_obj)
+            except Exception as e:
+                logger.warning("Telegram notification mirror error: %s", e)
+
             return True
         else:
             msg_obj.status = MessageStatus.FAILED

@@ -70,6 +70,7 @@ class Member(models.Model):
     follow_up_date = models.DateField(null=True, blank=True, verbose_name="تاريخ المتابعة")
     notes = models.TextField(blank=True, verbose_name="ملاحظات")
     google_contact_synced_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ مزامنة جهات اتصال جوجل")
+    telegram_chat_id = models.CharField(max_length=50, blank=True, default="", db_index=True, verbose_name="معرف شات تليجرام (Telegram Chat ID)")
 
     # Private Training Add-on (التدريب الخاص كإضافة للباقة)
     has_private = models.BooleanField(default=False, db_index=True, verbose_name="تدريب خاص (Private)")

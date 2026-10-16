@@ -596,3 +596,56 @@ def whatsapp_test_search_coords_api(request):
         return JsonResponse({"success": True, "x": x, "y": y})
     except Exception as exc:
         return JsonResponse({"success": False, "error": str(exc)}, status=500)
+
+
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def telegram_webhook_view(request):
+    """Webhook receiver for Telegram Bot updates."""
+    if request.method == "POST":
+        try:
+            payload = json.loads(request.body.decode("utf-8"))
+            from apps.messaging.telegram_bot import handle_telegram_update
+            res = handle_telegram_update(payload)
+            return JsonResponse(res or {"ok": True})
+        except Exception as exc:
+            logger.exception("Error in telegram_webhook_view: %s", exc)
+            return JsonResponse({"ok": False, "error": str(exc)}, status=500)
+    return HttpResponse("Telegram Webhook Endpoint is Running (POST updates here).", content_type="text/plain")
+
+
+@login_required
+def telegram_test_connection_view(request):
+    """Tests Telegram bot token validity via getMe."""
+    from apps.messaging.telegram_bot import get_bot_info
+    token = request.GET.get("token") or None
+    res = get_bot_info(token=token)
+    return JsonResponse(res)
+
+
+@login_required
+def telegram_set_webhook_view(request):
+    """Sets the webhook URL automatically based on the current host."""
+    from apps.messaging.telegram_bot import set_telegram_webhook
+    base_url = request.build_absolute_uri('/')[:-1]
+    # If on local HTTP, Telegram requires HTTPS; return info if so
+    webhook_url = f"{base_url}/messaging/telegram/webhook/"
+    res = set_telegram_webhook(webhook_url)
+    res["target_url"] = webhook_url
+    return JsonResponse(res)
+
+
+@login_required
+def telegram_send_test_message_view(request):
+    """Sends a test message to manager chat ID."""
+    from apps.messaging.telegram_bot import send_telegram_message, get_telegram_config
+    enabled, token, mgr_chat, profile = get_telegram_config()
+    if not mgr_chat:
+        return JsonResponse({"ok": False, "description": "لم يتم إدخال معرف شات المدير (Manager Chat ID) بعد."})
+    res = send_telegram_message(
+        mgr_chat,
+        f"🔔 <b>رسالة تجريبية من نظام {profile.gym_name or 'HULK GYM'}!</b>\n\nبوت تليجرام متصل وجاهز للعمل والرد على المشتركين والإدارة بنجاح ✅"
+    )
+    return JsonResponse(res)
+

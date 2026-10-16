@@ -34,9 +34,11 @@ urlpatterns = [
     path('trainers/', RedirectView.as_view(url='/payroll/trainers/', permanent=False)),
     path('trainers', RedirectView.as_view(url='/payroll/trainers/', permanent=False)),
     path('bar/', RedirectView.as_view(url='/payments/bar/', permanent=False)),
-    path('bar', RedirectView.as_view(url='/payments/bar/', permanent=False)),
     path('reports/', include('apps.reports.urls')),
     path('messaging/', include('apps.messaging.urls')),
+    path('telegram/webhook/', RedirectView.as_view(url='/messaging/telegram/webhook/', permanent=False)),
+    path('telegram/', RedirectView.as_view(url='/messaging/telegram/webhook/', permanent=False)),
+    path('telegram', RedirectView.as_view(url='/messaging/telegram/webhook/', permanent=False)),
     path('', include('apps.core.urls')),
 ]
 

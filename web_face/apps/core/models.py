@@ -84,6 +84,25 @@ class GymProfile(models.Model):
     )
     last_update_check = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ آخر فحص للتحديثات")
     current_version_tag = models.CharField(max_length=50, default="v2.1.0-face", blank=True, verbose_name="رقم الإصدار")
+
+    # Telegram Bot Integration
+    telegram_bot_enabled = models.BooleanField(
+        default=True,
+        verbose_name="تفعيل بوت تليجرام",
+        help_text="تفعيل الرد التلقائي وإرسال إشعارات الاشتراكات والتقارير عبر تليجرام",
+    )
+    telegram_bot_token = models.CharField(
+        max_length=150,
+        default="7123456789:AAFlvExampleTokenPlaceholderForGym",
+        blank=True,
+        verbose_name="توكن بوت تليجرام (Bot Token)",
+    )
+    telegram_manager_chat_id = models.CharField(
+        max_length=50,
+        blank=True,
+        default="",
+        verbose_name="معرف شات تليجرام للمدير (Manager Chat ID)",
+    )
     
     # Updated timestamp
     updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ آخر تحديث")
