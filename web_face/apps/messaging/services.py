@@ -106,26 +106,24 @@ def dispatch_message_record(msg_obj: WhatsAppMessage, return_to_system: bool = F
                 except Exception:
                     pass
 
-        # If attachment is an HTML invoice, resolve to companion PNG or generate it on the fly
-        if image_path and image_path.lower().endswith(".html"):
-            png_cand = image_path[:-5] + ".png"
-            if os.path.exists(png_cand):
-                image_path = png_cand
-            else:
-                try:
-                    from apps.payments.models import Payment
-                    from apps.payments.services import generate_invoice_image_file
-                    base = os.path.splitext(os.path.basename(image_path))[0]
-                    inv_no = base.replace("invoice_", "").replace("_", "/")
-                    inv_no_alt = base.replace("invoice_", "")
-                    p_match = Payment.objects.filter(Q(invoice_no__iexact=inv_no) | Q(invoice_no__iexact=inv_no_alt)).first()
-                    if p_match:
-                        rel_png = generate_invoice_image_file(p_match)
-                        abs_png = os.path.join(settings.MEDIA_ROOT, rel_png)
-                        if os.path.exists(abs_png):
-                            image_path = abs_png
-                except Exception as e:
-                    logger.warning("Could not auto-generate PNG for invoice: %s", e)
+        # Always regenerate the latest PNG on the fly for invoice attachments so Arabic shaping and details are fresh
+        if image_path and ("invoice_" in os.path.basename(image_path).lower() or image_path.lower().endswith(".html")):
+            try:
+                from apps.payments.models import Payment
+                from apps.payments.services import generate_invoice_image_file
+                base = os.path.splitext(os.path.basename(image_path))[0]
+                inv_no = base.replace("invoice_", "").replace("_", "/")
+                inv_no_alt = base.replace("invoice_", "")
+                p_match = Payment.objects.filter(Q(invoice_no__iexact=inv_no) | Q(invoice_no__iexact=inv_no_alt)).first()
+                if p_match:
+                    rel_png = generate_invoice_image_file(p_match)
+                    abs_png = os.path.join(settings.MEDIA_ROOT, rel_png)
+                    if os.path.exists(abs_png):
+                        image_path = os.path.abspath(abs_png)
+            except Exception as e:
+                logger.warning("Could not auto-generate PNG for invoice: %s", e)
+                if image_path.lower().endswith(".html") and os.path.exists(image_path[:-5] + ".png"):
+                    image_path = image_path[:-5] + ".png"
 
         print(f"[dispatch_message_record] Sending msg id={msg_obj.id} to {msg_obj.mobile}, image_path={image_path}")
 
