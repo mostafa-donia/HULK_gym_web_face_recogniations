@@ -3,172 +3,283 @@
 {% block title %}إدارة المدربين — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
 
 {% block content %}
-<div style="display: flex; flex-direction: column; gap: 24px;">
+<div style="display: flex; flex-direction: column; gap: 16px;">
 
-  <!-- Header & Actions -->
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; background: #070D12; border: 1px solid #14202A; padding: 18px 24px; border-radius: 14px;">
+  <!-- ==================== 1. UNIFIED HEADER & QUICK ACTIONS ==================== -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px 20px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
     <div>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <h1 style="color: #A8F14B; font-size: 1.6rem; font-weight: 900; margin: 0;">
-          إدارة المدربين وعمولات الكباتن
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <h1 style="color: var(--text-main); font-size: 1.45rem; font-weight: 900; margin: 0;">
+          🏋️‍♂️ إدارة المدربين وعمولات الكباتن
         </h1>
-        <span class="badge badge-active" style="font-size: 0.8rem;">مفتوح ومؤمّن</span>
+        <span class="badge badge-active" style="font-size: 0.78rem;">مفتوح ومؤمّن</span>
       </div>
-      <p style="color: #8D99A3; margin: 4px 0 0 0; font-size: 0.95rem;">
-        متابعة رواتب المدربين، عقود التدريب الخاص (PT)، تسجيل الحصص، واحتساب العمولات
+      <p style="color: var(--text-muted); margin: 4px 0 0 0; font-size: 0.88rem;">
+        إدارة سريعة لرواتب الكباتن، لاعبي التدريب الخاص (Private)، السلف، وكشوف الرواتب الشهرية
       </p>
     </div>
 
-    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-      <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary btn-sm">
-        إضافة مدرب جديد
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+      <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary btn-sm" style="height: 36px; padding: 0 14px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;">
+        ➕ إضافة مدرب
       </a>
-      <a href="{% url 'payroll:trainer_assignments' %}" class="btn btn-secondary btn-sm">
-        إسناد متدرب خاص (عقد PT)
+      <a href="{% url 'payroll:trainer_assignments' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
+        🤝 عقود البرايفت
       </a>
-      <a href="{% url 'payroll:private_training_records' %}" class="btn btn-secondary btn-sm">
-        ⏱️ تسجيل حصة تدريب خاصة
+      <a href="{% url 'payroll:private_training_records' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
+        ⏱️ تسجيل حصة PT
       </a>
-      <a href="{% url 'payroll:advance_create' %}" class="btn btn-sm" style="background: #173322; border: 1px solid #7ED321; color: #7ED321; font-weight: 800;">
-        صرف سلفة نقدية
+      <a href="{% url 'payroll:advance_create' %}" class="btn btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; background: rgba(34, 197, 94, 0.14); border: 1px solid rgba(34, 197, 94, 0.4); color: #22c55e; font-weight: 800;">
+        💵 صرف سلفة
       </a>
-      <a href="{% url 'payroll:trainers_lock' %}" class="btn btn-sm" style="background: #3D141C; color: #FF5C67; border: 1px solid #6E1B29;">
-        قفل الصفحة
+      <a href="{% url 'payroll:payroll_runs' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
+        💼 مسير الرواتب
+      </a>
+      <a href="{% url 'payroll:trainers_lock' %}" class="btn btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; background: rgba(239, 68, 68, 0.14); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 800;">
+        🔒 قفل
       </a>
     </div>
   </div>
 
-  <!-- KPI Cards -->
-  <div class="grid-4">
-    <div class="stat-card">
-      <span class="stat-label">إجمالي المدربين المسجلين</span>
-      <span class="stat-val" style="color: #F3F8FB;">{{ total_trainers }}</span>
-    </div>
-
-    <div class="stat-card green">
-      <span class="stat-label">الكباتن النشطين حالياً</span>
-      <span class="stat-val">{{ active_trainers }}</span>
-    </div>
-
-    <div class="stat-card gold">
-      <span class="stat-label">عقود التدريب الخاص الفعالة</span>
-      <span class="stat-val">{{ assignments_count }}</span>
-    </div>
-
-    <div class="stat-card blue">
-      <span class="stat-label">عمولات PT هذا الشهر</span>
-      <span class="stat-val">{{ month_pt_commissions }} <small style="font-size: 0.9rem;">{{ gym_profile.currency|default:"ج.م" }}</small></span>
-    </div>
-  </div>
-
-  <!-- Trainers Table -->
-  <div class="card">
-    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h3 class="card-title">قائمة الكباتن والمدربين</h3>
-      <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary btn-sm">إضافة مدرب</a>
-    </div>
-
-    {% if trainers %}
-    <div class="table-responsive">
-      <table class="dark-table">
-        <thead>
-          <tr>
-            <th>اسم المدرب (الكابتن)</th>
-            <th>رقم الموبايل</th>
-            <th>الراتب الأساسي</th>
-            <th>حالة العمل</th>
-            <th>إجراءات الإدارة</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for t in trainers %}
-          <tr>
-            <td>
-              <a href="{% url 'payroll:coach_detail' t.id %}" style="text-decoration: none;">
-                <strong style="color: #A8F14B; font-size: 1.05rem;">{{ t.name }} 👤</strong>
-              </a>
-              {% if t.notes %}
-              <div style="font-size: 0.8rem; color: #8D99A3;">{{ t.notes|truncatewords:6 }}</div>
-              {% endif %}
-            </td>
-            <td style="color: #A9B7C1;">{{ t.phone|default:"—" }}</td>
-            <td style="color: #A8F14B; font-weight: 800;">{{ t.fixed_salary }} {{ gym_profile.currency }}</td>
-            <td>
-              {% if t.status == 'ACTIVE' %}
-                <span class="badge badge-active">نشط بالعمل</span>
-              {% else %}
-                <span class="badge badge-expired">متوقف / إجازة</span>
-              {% endif %}
-            </td>
-            <td>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="{% url 'payroll:coach_detail' t.id %}" class="btn btn-primary btn-sm" style="font-size: 0.82rem; font-weight: 800;">
-                  ملف الكابتن واللاعبين 📋
-                </a>
-                <a href="{% url 'payroll:coach_salary_report' t.id %}" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; background: #183C56; color: #4DB3FF;">
-                  طباعة كشف الراتب 🖨️
-                </a>
-                <a href="{% url 'payroll:employee_edit' t.id %}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem;">
-                  تعديل
-                </a>
-                <a href="{% url 'payroll:advance_create' %}?employee_id={{ t.id }}" class="btn btn-secondary btn-sm" style="font-size: 0.82rem; background: #132B1C; border-color: #255936; color: #7ED321;">
-                  صرف سلفة
-                </a>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-      <div style="text-align: center; padding: 36px; color: #8D99A3;">
-        <p style="font-size: 1.1rem; margin-bottom: 12px;">لا يوجد مدربين مسجلين في النظام حالياً.</p>
-        <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary">إضافة أول مدرب الآن</a>
+  <!-- ==================== 2. COMPACT 4-CARD KPI STRIP ==================== -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">الكباتن النشطين / الإجمالي</span>
+      <div style="color: var(--text-main); font-size: 1.65rem; font-weight: 900; margin-top: 4px;">
+        <span style="color: #A8F14B;">{{ active_trainers }}</span>
+        <small style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600;">/ {{ total_trainers }} مدرب</small>
       </div>
-    {% endif %}
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">إجمالي الرواتب الأساسية</span>
+      <div style="color: var(--text-main); font-size: 1.65rem; font-weight: 900; margin-top: 4px;">
+        {{ total_fixed_salaries|default:"0.00" }} <small style="font-size: 0.88rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(77, 179, 255, 0.3); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">متدربو البرايفت النشطين</span>
+      <div style="color: #4DB3FF; font-size: 1.65rem; font-weight: 900; margin-top: 4px;">
+        {{ total_private_members|default:assignments_count }} <small style="font-size: 0.88rem; color: var(--text-muted);">لاعب خاص</small>
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.35); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">إجمالي عمولات البرايفت الشهرية</span>
+      <div style="color: #A8F14B; font-size: 1.65rem; font-weight: 900; margin-top: 4px;">
+        {{ month_pt_commissions }} <small style="font-size: 0.88rem;">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+    </div>
   </div>
 
-  <!-- Recent PT Sessions & Contracts -->
-  <div class="grid-2">
-    <!-- Active Contracts -->
-    <div class="card">
-      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 class="card-title">أحدث عقود التدريب الخاص الفعالة</h3>
-        <a href="{% url 'payroll:trainer_assignments' %}" style="color: #A8F14B; font-size: 0.85rem; text-decoration: none;">إدارة العقود ←</a>
+  <!-- ==================== 3. FAST INTERACTIVE TABS BAR ==================== -->
+  <div style="display: flex; gap: 8px; flex-wrap: wrap; background: var(--bg-card); border: 1px solid var(--border-color); padding: 8px; border-radius: 12px;">
+    <button type="button" class="tr-tab-btn active" onclick="switchTrainerTab('coaches', this)">
+      🏋️‍♂️ قائمة الكباتن والرواتب
+      <span class="tr-tab-count">{{ total_trainers }}</span>
+    </button>
+    <button type="button" class="tr-tab-btn" onclick="switchTrainerTab('contracts', this)">
+      🤝 لاعبو وعقود التدريب الخاص
+      <span class="tr-tab-count">{{ assignments_count }}</span>
+    </button>
+    <button type="button" class="tr-tab-btn" onclick="switchTrainerTab('sessions', this)">
+      ⏱️ سجل حصص التدريب المسجلة
+      <span class="tr-tab-count">{{ recent_sessions|length }}</span>
+    </button>
+  </div>
+
+  <!-- ==================== TAB 1: COACHES LIST & FAST MANAGEMENT ==================== -->
+  <div id="tr-tab-coaches" class="tr-tab-panel active">
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow-sm);">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+        <h3 style="margin: 0; color: var(--text-main); font-size: 1.15rem; font-weight: 800;">
+          🏋️‍♂️ الكباتن والمدربين المسجلين
+        </h3>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <input type="text" id="trainerSearchInput" oninput="filterTrainersTable()" placeholder="🔍 بحث باسم الكابتن أو الهاتف..." class="form-control" style="height: 34px; width: 220px; font-size: 0.85rem; padding: 0 12px;">
+          <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary btn-sm" style="height: 34px; padding: 0 12px; display: inline-flex; align-items: center;">
+            + مدرب جديد
+          </a>
+        </div>
       </div>
-      {% if assignments %}
+
+      {% if trainers %}
       <div class="table-responsive">
-        <table class="dark-table">
+        <table class="dark-table" id="trainersTable">
           <thead>
             <tr>
-              <th>المدرب</th>
-              <th>اللاعب المتدرب</th>
+              <th>اسم الكابتن</th>
+              <th>الراتب الأساسي</th>
               <th>نسبة العمولة</th>
+              <th>متدربو البرايفت</th>
+              <th>عمولة البرايفت</th>
+              <th>إجمالي المستحق</th>
+              <th>الحالة</th>
+              <th>إجراءات سريعة</th>
             </tr>
           </thead>
           <tbody>
-            {% for a in assignments %}
+            {% for t in trainers %}
             <tr>
-              <td style="color: #F3F8FB; font-weight: 700;">{{ a.trainer.name }}</td>
-              <td style="color: #4DB3FF;">{{ a.client.name }}</td>
-              <td style="color: #FFB300; font-weight: 800;">{{ a.commission_rate_percentage }}%</td>
+              <td>
+                <a href="{% url 'payroll:coach_detail' t.id %}" style="text-decoration: none; color: var(--text-main); font-weight: 800; font-size: 1rem;">
+                  {{ t.name }}
+                </a>
+                <div style="font-size: 0.78rem; color: var(--text-muted); font-family: monospace;">{{ t.phone|default:"—" }}</div>
+              </td>
+              <td style="color: var(--text-secondary); font-weight: 800;">
+                {{ t.fixed_salary }} <small>{{ gym_profile.currency|default:"ج" }}</small>
+              </td>
+              <td style="color: var(--text-secondary); font-weight: 700;">
+                {{ t.commission_percentage }}%
+              </td>
+              <td>
+                <a href="{% url 'payroll:coach_detail' t.id %}" style="text-decoration: none;">
+                  <span class="badge badge-info" style="cursor: pointer;">{{ t.active_pt_count|default:0 }} لاعب</span>
+                </a>
+              </td>
+              <td style="color: #4DB3FF; font-weight: 800;">
+                {{ t.pt_commission|default:"0.00" }} <small>{{ gym_profile.currency|default:"ج" }}</small>
+              </td>
+              <td style="color: #A8F14B; font-weight: 900; font-size: 1.05rem;">
+                {{ t.total_due|default:t.fixed_salary }} <small>{{ gym_profile.currency|default:"ج" }}</small>
+              </td>
+              <td>
+                {% if t.status == 'ACTIVE' %}
+                  <span class="badge badge-active">نشط</span>
+                {% else %}
+                  <span class="badge badge-expired">متوقف</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  <a href="{% url 'payroll:coach_detail' t.id %}" class="btn btn-primary btn-sm" style="font-size: 0.8rem; padding: 5px 10px; font-weight: 800;" title="إدارة لاعبي الكابتن والبرايفت">
+                    📋 اللاعبين والملف
+                  </a>
+                  <a href="{% url 'payroll:coach_salary_report' t.id %}" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; padding: 5px 10px; color: #4DB3FF;" title="طباعة كشف الراتب الشهري">
+                    🖨️ كشف الراتب
+                  </a>
+                  <a href="{% url 'payroll:advance_create' %}?employee_id={{ t.id }}" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; padding: 5px 10px; color: #22c55e;" title="صرف سلفة نقدية">
+                    💵 سلفة
+                  </a>
+                  <a href="{% url 'payroll:employee_edit' t.id %}" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; padding: 5px 10px;" title="تعديل بيانات المدرب">
+                    ✏️
+                  </a>
+                </div>
+              </td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
       {% else %}
-        <p style="text-align: center; color: #8D99A3; padding: 20px;">لا توجد عقود تدريب خاص مسجلة بعد.</p>
+      <div style="text-align: center; padding: 36px; color: var(--text-muted);">
+        <p style="font-size: 1.05rem; margin-bottom: 12px;">لا يوجد مدربين مسجلين في النظام حالياً.</p>
+        <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary">➕ إضافة أول مدرب الآن</a>
+      </div>
       {% endif %}
     </div>
+  </div>
 
-    <!-- Recent Recorded Sessions -->
-    <div class="card">
-      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 class="card-title">⏱️ أحدث حصص التدريب الخاص المسجلة</h3>
-        <a href="{% url 'payroll:private_training_records' %}" style="color: #A8F14B; font-size: 0.85rem; text-decoration: none;">سجل الحصص ←</a>
+  <!-- ==================== TAB 2: ACTIVE PT PLAYERS & CONTRACTS ==================== -->
+  <div id="tr-tab-contracts" class="tr-tab-panel">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 14px;">
+      
+      <!-- Direct Private Members assigned to Coaches -->
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
+          <h3 style="margin: 0; color: var(--text-main); font-size: 1.05rem; font-weight: 800;">
+            🏋️‍♂️ لاعبو البرايفت المسندون للكباتن
+          </h3>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">إسناد مباشر من ملف اللاعب أو الكابتن</span>
+        </div>
+
+        {% if private_members_list %}
+        <div class="table-responsive">
+          <table class="dark-table">
+            <thead>
+              <tr>
+                <th>اللاعب</th>
+                <th>الكابتن المسؤول</th>
+                <th>قيمة البرايفت</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in private_members_list %}
+              <tr>
+                <td>
+                  <a href="{% url 'members:member_detail' m.id %}" style="color: var(--text-main); font-weight: 800; text-decoration: none;">
+                    {{ m.name }}
+                  </a>
+                </td>
+                <td>
+                  <a href="{% url 'payroll:coach_detail' m.assigned_coach.id %}" style="color: #4DB3FF; font-weight: 700; text-decoration: none;">
+                    {{ m.assigned_coach.name }}
+                  </a>
+                </td>
+                <td style="color: #A8F14B; font-weight: 800;">
+                  {{ m.private_price }} {{ gym_profile.currency|default:"ج" }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: var(--text-muted); padding: 20px; margin: 0;">لا يوجد لاعبين مسندين حالياً. افتح "اللاعبين والملف" لأي كابتن لإضافة لاعبين.</p>
+        {% endif %}
       </div>
+
+      <!-- Custom Commission Contracts -->
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
+          <h3 style="margin: 0; color: var(--text-main); font-size: 1.05rem; font-weight: 800;">
+            🤝 عقود نسب العمولة الخاصة
+          </h3>
+          <a href="{% url 'payroll:trainer_assignments' %}" class="btn btn-secondary btn-sm" style="font-size: 0.8rem;">إدارة العقود ←</a>
+        </div>
+
+        {% if assignments %}
+        <div class="table-responsive">
+          <table class="dark-table">
+            <thead>
+              <tr>
+                <th>المدرب</th>
+                <th>اللاعب المتدرب</th>
+                <th>نسبة العمولة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for a in assignments %}
+              <tr>
+                <td style="color: var(--text-main); font-weight: 700;">{{ a.trainer.name }}</td>
+                <td style="color: #4DB3FF;">{{ a.client.name }}</td>
+                <td style="color: #FFB300; font-weight: 800;">{{ a.commission_rate_percentage }}%</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: var(--text-muted); padding: 20px; margin: 0;">لا توجد عقود نسب مخصصة مسجلة بعد.</p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== TAB 3: RECENT RECORDED PT SESSIONS ==================== -->
+  <div id="tr-tab-sessions" class="tr-tab-panel">
+    <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
+        <h3 style="margin: 0; color: var(--text-main); font-size: 1.05rem; font-weight: 800;">
+          ⏱️ أحدث حصص التدريب الخاص المسجلة
+        </h3>
+        <a href="{% url 'payroll:private_training_records' %}" class="btn btn-primary btn-sm" style="font-size: 0.82rem;">+ تسجيل حصة جديدة</a>
+      </div>
+
       {% if recent_sessions %}
       <div class="table-responsive">
         <table class="dark-table">
@@ -183,20 +294,84 @@
           <tbody>
             {% for s in recent_sessions %}
             <tr>
-              <td style="color: #F3F8FB; font-weight: 700;">{{ s.trainer.name }}</td>
+              <td style="color: var(--text-main); font-weight: 700;">{{ s.trainer.name }}</td>
               <td style="color: #4DB3FF;">{{ s.client.name }}</td>
               <td style="color: #A8F14B; font-weight: 800;">{{ s.calculated_commission }} {{ gym_profile.currency }}</td>
-              <td style="font-size: 0.8rem; color: #8D99A3;">{{ s.created_at|date:"Y-m-d" }}</td>
+              <td style="font-size: 0.82rem; color: var(--text-muted);">{{ s.created_at|date:"Y-m-d" }}</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
       {% else %}
-        <p style="text-align: center; color: #8D99A3; padding: 20px;">لم يتم تسجيل حصص تدريب خاص مؤخراً.</p>
+      <p style="text-align: center; color: var(--text-muted); padding: 24px; margin: 0;">لم يتم تسجيل حصص تدريب خاص منفصلة مؤخراً.</p>
       {% endif %}
     </div>
   </div>
 
 </div>
+
+<script>
+  function switchTrainerTab(tabKey, btnEl) {
+    document.querySelectorAll('.tr-tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tr-tab-btn').forEach(b => b.classList.remove('active'));
+    const target = document.getElementById('tr-tab-' + tabKey);
+    if (target) target.classList.add('active');
+    if (btnEl) btnEl.classList.add('active');
+  }
+
+  function filterTrainersTable() {
+    const q = (document.getElementById('trainerSearchInput')?.value || '').trim().toLowerCase();
+    const rows = document.querySelectorAll('#trainersTable tbody tr');
+    rows.forEach(row => {
+      row.style.display = (!q || row.innerText.toLowerCase().includes(q)) ? '' : 'none';
+    });
+  }
+</script>
+
+<style>
+  .tr-tab-btn {
+    flex: 1;
+    min-width: 170px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    border-radius: 9px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+  }
+  .tr-tab-btn:hover {
+    background: var(--bg-surface-subtle);
+    color: var(--text-main);
+  }
+  .tr-tab-btn.active {
+    background: rgba(168, 241, 75, 0.14);
+    border-color: rgba(168, 241, 75, 0.4);
+    color: #A8F14B;
+  }
+  .tr-tab-btn .tr-tab-count {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+  }
+  .tr-tab-btn.active .tr-tab-count {
+    background: #A8F14B;
+    color: #071209;
+    font-weight: 900;
+  }
+  .tr-tab-panel {
+    display: none;
+  }
+  .tr-tab-panel.active {
+    display: block;
+  }
+</style>
 {% endblock %}

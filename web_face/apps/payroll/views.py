@@ -77,28 +77,52 @@ def trainers_index_view(request):
     today = timezone.localdate()
     month_start = today.replace(day=1)
 
-    trainers = Employee.objects.filter(role=EmployeeRole.TRAINER).order_by("name")
-    total_trainers = trainers.count()
-    active_trainers = trainers.filter(status=EmployeeStatus.ACTIVE).count()
-    assignments_count = TrainerClientAssignment.objects.filter(is_active=True).count()
+    trainers_qs = list(Employee.objects.filter(role=EmployeeRole.TRAINER).order_by("name"))
+    total_trainers = len(trainers_qs)
+    active_trainers = sum(1 for t in trainers_qs if t.status == EmployeeStatus.ACTIVE)
+
+    total_private_members = 0
+    total_pt_commissions = Decimal("0.00")
+    total_fixed_salaries = Decimal("0.00")
+
+    for t in trainers_qs:
+        pt_members = Member.objects.filter(assigned_coach=t, has_private=True)
+        active_pt = [m for m in pt_members if (not m.last_subscription_end or m.last_subscription_end >= today)]
+        t.active_pt_count = len(active_pt)
+        t.pt_revenue = sum((m.private_price or Decimal("0.00")) for m in active_pt)
+        comm_rate = (t.commission_percentage or Decimal("50.00")) / Decimal("100.00")
+        t.pt_commission = (t.pt_revenue * comm_rate).quantize(Decimal("0.01"))
+        t.total_due = t.fixed_salary + t.pt_commission
+
+        if t.status == EmployeeStatus.ACTIVE:
+            total_private_members += t.active_pt_count
+            total_pt_commissions += t.pt_commission
+            total_fixed_salaries += t.fixed_salary
+
+    assignments_count = TrainerClientAssignment.objects.filter(is_active=True).count() + total_private_members
     month_pt_sessions = PrivateTrainingRecord.objects.filter(created_at__date__gte=month_start).count()
-    month_pt_commissions = (
+    recorded_session_commissions = (
         PrivateTrainingRecord.objects.filter(created_at__date__gte=month_start).aggregate(Sum("calculated_commission"))["calculated_commission__sum"]
         or Decimal("0.00")
     )
+    month_pt_commissions = total_pt_commissions + recorded_session_commissions
 
     assignments = TrainerClientAssignment.objects.select_related("trainer", "client").filter(is_active=True).order_by("-id")[:15]
     recent_sessions = PrivateTrainingRecord.objects.select_related("trainer", "client").order_by("-created_at")[:15]
+    private_members_list = Member.objects.filter(has_private=True, assigned_coach__isnull=False).select_related("assigned_coach").order_by("-id")[:25]
 
     context = {
-        "trainers": trainers,
+        "trainers": trainers_qs,
         "total_trainers": total_trainers,
         "active_trainers": active_trainers,
         "assignments_count": assignments_count,
+        "total_private_members": total_private_members,
+        "total_fixed_salaries": total_fixed_salaries,
         "month_pt_sessions": month_pt_sessions,
         "month_pt_commissions": month_pt_commissions,
         "assignments": assignments,
         "recent_sessions": recent_sessions,
+        "private_members_list": private_members_list,
     }
     return render(request, "payroll/trainers_index.html", context)
 
