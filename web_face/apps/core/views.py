@@ -767,22 +767,91 @@ def manager_dashboard_view(request):
             ),
         })
 
-    # 6. Advanced Managerial Analytics: Discounts, Private Add-on, and Payroll Liabilities
-    # A) Discounts given (Lost Revenue)
+    # 6. Advanced Managerial Analytics: Separate Remaining Debts, Separate Discounts, Private Add-on, and Payroll
+    # A1) Remaining Debts (المتبقيات المستحقة للتحصيل - منفصلة تماماً عن الخصومات)
+    period_subs_qs = Subscription.objects.filter(
+        created_at__date__gte=period_start,
+        created_at__date__lte=period_end,
+    )
+    month_subs_qs = Subscription.objects.filter(
+        created_at__date__gte=month_start,
+        created_at__date__lte=today,
+    )
+
+    period_remaining_created = (
+        period_subs_qs.aggregate(Sum("remaining_amount"))["remaining_amount__sum"]
+        or Decimal("0.00")
+    )
+    period_remaining_collected = (
+        period_payments.filter(operation_type="remaining").aggregate(Sum("amount"))["amount__sum"]
+        or Decimal("0.00")
+    )
+
+    # A2) Discounts Given (الخصومات الممنوحة - منفصلة تماماً عن المتبقيات)
     period_discounts_lost = (
-        Subscription.objects.filter(
-            created_at__date__gte=period_start,
-            created_at__date__lte=period_end,
-        ).aggregate(Sum("discount"))["discount__sum"]
+        period_subs_qs.aggregate(Sum("discount"))["discount__sum"]
         or Decimal("0.00")
     )
+    period_discounted_subs_count = period_subs_qs.filter(discount__gt=0).count()
+
     month_discounts_lost = (
-        Subscription.objects.filter(
-            created_at__date__gte=month_start,
-            created_at__date__lte=today,
-        ).aggregate(Sum("discount"))["discount__sum"]
+        month_subs_qs.aggregate(Sum("discount"))["discount__sum"]
         or Decimal("0.00")
     )
+    month_discounted_subs_count = month_subs_qs.filter(discount__gt=0).count()
+
+    # A3) Clear Numerical Analytics (Revenue diffs, Top Plans, Payment Methods, Peak Hour)
+    day_rev_diff = today_revenue - yesterday_revenue
+    week_rev_diff = week_revenue - prev_week_revenue
+    month_rev_diff = month_revenue - last_month_revenue
+
+    if peak_hour is not None and peak_count > 0:
+        peak_hour_label = f"{peak_hour if peak_hour <= 12 else peak_hour - 12}:00 {'صباحاً' if peak_hour < 12 else 'مساءً'}"
+    else:
+        peak_hour_label = "لا يوجد حضور مسجل"
+
+    avg_payment_amount = (
+        (period_total_revenue / Decimal(period_ops_count)).quantize(Decimal("1"))
+        if period_ops_count > 0
+        else Decimal("0")
+    )
+
+    # Top Plans Breakdown (for selected period, or current month if period has no subscriptions yet)
+    from django.db.models import Count
+    plans_source_qs = period_subs_qs if period_subs_qs.exists() else month_subs_qs
+    plans_source_label = period_title if period_subs_qs.exists() else "هذا الشهر"
+    total_subs_for_plans = max(1, plans_source_qs.count())
+    raw_top_plans = (
+        plans_source_qs.values("plan_name")
+        .annotate(subs_count=Count("id"), total_paid=Sum("paid_amount"))
+        .order_by("-subs_count", "-total_paid")[:5]
+    )
+    top_plans = []
+    for tp in raw_top_plans:
+        cnt = tp["subs_count"] or 0
+        top_plans.append({
+            "plan_name": tp["plan_name"] or "باقة عامة",
+            "subs_count": cnt,
+            "total_paid": tp["total_paid"] or Decimal("0.00"),
+            "pct": round((cnt / total_subs_for_plans) * 100),
+        })
+
+    # Payment Methods Breakdown for the selected period
+    raw_pay_methods = (
+        period_payments.values("payment_method")
+        .annotate(ops_count=Count("id"), total_amount=Sum("amount"))
+        .order_by("-total_amount")
+    )
+    payment_methods_breakdown = []
+    for pm in raw_pay_methods:
+        amt = pm["total_amount"] or Decimal("0.00")
+        pct = round((float(amt) / float(period_total_revenue)) * 100) if period_total_revenue > 0 else 0
+        payment_methods_breakdown.append({
+            "method": pm["payment_method"] or "نقدي",
+            "ops_count": pm["ops_count"] or 0,
+            "total_amount": amt,
+            "pct": pct,
+        })
 
     # B) Private Add-on Revenue & Breakdown
     period_private_subs = Subscription.objects.filter(
@@ -843,6 +912,10 @@ def manager_dashboard_view(request):
         "week_revenue": week_revenue,
         "month_revenue": month_revenue,
         "total_remaining": total_remaining,
+        "debtors_count": debtors_count,
+        "avg_debt": avg_debt,
+        "period_remaining_created": period_remaining_created,
+        "period_remaining_collected": period_remaining_collected,
         "new_members_month": new_members_month,
         "today_ops_count": today_ops_count,
         # Period reporting
@@ -875,7 +948,7 @@ def manager_dashboard_view(request):
         "revenue_trend_data": json.dumps(revenue_trend_data),
         "hourly_labels": json.dumps(hourly_labels),
         "hourly_data": json.dumps(hourly_data),
-        # AI Analytics Engine
+        # Clean Numerical Analytics
         "t10_new_members": t10_new_members,
         "p10_new_members": p10_new_members,
         "marketing_growth_pct": marketing_growth_pct,
@@ -884,14 +957,27 @@ def manager_dashboard_view(request):
         "marketing_analysis": marketing_analysis,
         "day_comp_pct": day_comp_pct,
         "yesterday_revenue": yesterday_revenue,
+        "day_rev_diff": day_rev_diff,
         "week_comp_pct": week_comp_pct,
         "prev_week_revenue": prev_week_revenue,
+        "week_rev_diff": week_rev_diff,
         "month_comp_pct": month_comp_pct,
         "last_month_revenue": last_month_revenue,
+        "month_rev_diff": month_rev_diff,
+        "expiring_3_days_count": expiring_3_days_count,
+        "expired_last_7_days": expired_last_7_days,
+        "peak_hour_label": peak_hour_label,
+        "peak_count": peak_count,
+        "avg_payment_amount": avg_payment_amount,
+        "top_plans": top_plans,
+        "plans_source_label": plans_source_label,
+        "payment_methods_breakdown": payment_methods_breakdown,
         "smart_insights": smart_insights,
-        # New KPIs: Discounts, Private Add-on, Payroll, Coaches & Audit
+        # Discounts (Separated from Debts), Private Add-on, Payroll, Coaches & Audit
         "period_discounts_lost": period_discounts_lost,
+        "period_discounted_subs_count": period_discounted_subs_count,
         "month_discounts_lost": month_discounts_lost,
+        "month_discounted_subs_count": month_discounted_subs_count,
         "period_private_count": period_private_count,
         "period_private_revenue": period_private_revenue,
         "period_coaches_commission": period_coaches_commission,
