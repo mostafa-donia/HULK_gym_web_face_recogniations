@@ -12,4 +12,8 @@ urlpatterns = [
     path("settings/", views.settings_view, name="settings"),
     path("settings/updates/check/", views.api_check_system_updates_view, name="check_updates"),
     path("settings/updates/perform/", views.api_perform_system_update_view, name="perform_update"),
+    path("license/activate/", views.license_activate_api, name="license_activate"),
+    path("license/sync/", views.license_sync_remote_api, name="license_sync"),
+    path("license/status/", views.license_status_api, name="license_status"),
 ]
+

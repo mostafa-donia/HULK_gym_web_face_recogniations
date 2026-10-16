@@ -1232,6 +1232,142 @@
         </details>
       </div>
 
+      <!-- Dev Card 4: Software Licensing, Anti-Copy Protection & Central Cloud Control -->
+      <div class="card" style="background: var(--bg-card); border: 2px solid #84CC16; border-radius: 12px; padding: 22px; box-shadow: 0 4px 20px rgba(132, 204, 22, 0.08);">
+        <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h3 class="card-title" style="color: #84CC16; font-size: 1.15rem; font-weight: 900; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+              <i class="fa fa-shield-alt"></i>
+              حماية الملكية ومنع النسخ والتحكم المركزي بالتراخيص (License & Anti-Copy Control)
+            </h3>
+            <span style="color: var(--text-muted); font-size: 0.82rem;">
+              ربط البرنامج بهاردوير الجهاز (Motherboard + CPU + Disk Serial)، التحكم عن بعد في تفعيل وإيقاف النظام والميزات، والعمل أوفلاين.
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="background: rgba(132, 204, 22, 0.15); border: 1px solid #84CC16; color: #84CC16; font-size: 0.8rem; font-weight: 800; padding: 4px 10px; border-radius: 12px;">
+              HWID Secured ✓
+            </span>
+          </div>
+        </div>
+
+        <!-- Section A: Hardware Machine Fingerprint (HWID) -->
+        <div style="background: var(--bg-input); border: 1px dashed rgba(132, 204, 22, 0.4); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <span style="color: #94a3b8; font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 4px;">بصمة هاردوير هذا الجهاز (Machine HWID):</span>
+              <span id="settingsHwidVal" style="color: #84CC16; font-family: monospace; font-size: 1.2rem; font-weight: 900; letter-spacing: 1px;">{{ machine_hwid }}</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" onclick="navigator.clipboard.writeText('{{ machine_hwid }}'); this.innerText='تم النسخ ✓'; setTimeout(()=>this.innerText='نسخ الكود', 2000);"
+                      style="background: rgba(132, 204, 22, 0.15); border: 1px solid #84CC16; color: #84CC16; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-size: 0.82rem; cursor: pointer;">
+                نسخ الكود
+              </button>
+            </div>
+          </div>
+          <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 8px;">
+            * هذا المعرّف يربط نسخة HULK GYM باللوحة الأم والمعالج لمنع نسخ مجلد البرنامج إلى أي كمبيوتر آخر دون إذنك.
+          </small>
+        </div>
+
+        <!-- Section B: License Status & Current Scope -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+            <span style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 4px;">حالة الترخيص الحالية</span>
+            <span style="font-size: 1rem; font-weight: 900; color: {% if system_license.status == 'active' %}#10b981{% elif system_license.status == 'demo' %}#f59e0b{% else %}#ef4444{% endif %};">
+              {{ system_license.get_status_display }}
+            </span>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+            <span style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 4px;">نوع الترخيص / الباقة</span>
+            <span style="font-size: 1rem; font-weight: 800; color: var(--text-main);">
+              {{ system_license.get_license_type_display }}
+            </span>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+            <span style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 4px;">تاريخ انتهاء الصلاحية</span>
+            <span style="font-size: 0.95rem; font-weight: 800; color: #60a5fa;">
+              {% if system_license.valid_until %}{{ system_license.valid_until|date:"Y-m-d H:i" }}{% else %}مدى الحياة (Lifetime){% endif %}
+            </span>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+            <span style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 4px;">آخر مزامنة مع السيرفر</span>
+            <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">
+              {% if system_license.last_remote_sync %}{{ system_license.last_remote_sync|date:"Y-m-d H:i" }}{% else %}لم تتم بعد (أوفلاين){% endif %}
+            </span>
+          </div>
+        </div>
+
+        <!-- Section C: Remote Control Center Configuration -->
+        <form method="post" action="{% url 'core:settings' %}" style="margin-bottom: 20px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save_license_settings">
+
+          <h4 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin: 0 0 10px 0;">
+            إعدادات مركز التحكم السحابي للمطور (Developer Cloud Control Center)
+          </h4>
+
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: flex-end;">
+            <div>
+              <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 4px;">
+                رابط ملف أو API التحكم المركزي (GitHub Gist Raw / Supabase / Endpoint):
+              </label>
+              <input type="url" name="remote_control_url" value="{{ system_license.remote_control_url }}" placeholder="https://gist.githubusercontent.com/.../clients.json"
+                     style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 9px 12px; border-radius: 8px; font-size: 0.85rem; font-family: monospace;">
+            </div>
+
+            <div>
+              <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 4px;">
+                رقم واتساب المطور لتفعيل العملاء:
+              </label>
+              <input type="text" name="developer_contact_phone" value="{{ system_license.developer_contact_phone|default:'01080922432' }}"
+                     style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 9px 12px; border-radius: 8px; font-size: 0.85rem;">
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button type="submit" class="btn btn-primary" style="background: #2563eb; color: #fff; border: none; font-weight: 800; font-size: 0.85rem; padding: 10px 16px; border-radius: 8px; cursor: pointer; flex: 1;">
+                حفظ الرابط
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Section D: Manual Remote Sync & Offline Token Activation -->
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 16px; border-top: 1px solid var(--border-color); pt-4; padding-top: 16px; flex-wrap: wrap;">
+          <!-- Remote Sync Trigger -->
+          <div>
+            <h5 style="color: var(--text-main); font-size: 0.88rem; font-weight: 800; margin: 0 0 6px 0;">مزامنة فورية مع مركز التحكم</h5>
+            <p style="color: var(--text-muted); font-size: 0.75rem; margin: 0 0 10px 0;">فحص التعديلات التي قمت بها أونلاين على هذا العميل (تمديد/إيقاف/تغيير ميزات).</p>
+            <form method="post" action="{% url 'core:settings' %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="sync_remote_license">
+              <button type="submit" class="btn btn-secondary" style="background: #0f2744; border: 1px solid #1e4a78; color: #60a5fa; font-weight: 800; font-size: 0.82rem; padding: 8px 16px; border-radius: 8px; cursor: pointer;">
+                <i class="fa fa-sync-alt ml-1"></i> مزامنة الآن مع السيرفر
+              </button>
+            </form>
+          </div>
+
+          <!-- Offline Token Input -->
+          <div>
+            <h5 style="color: var(--text-main); font-size: 0.88rem; font-weight: 800; margin: 0 0 6px 0;">تفعيل يدوي بكود ترخيص مشفر (100% Offline)</h5>
+            <form method="post" action="{% url 'core:settings' %}" style="display: flex; gap: 8px;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="activate_license_key">
+              <input type="text" name="license_key" placeholder="HULK-LIC-..." required dir="ltr"
+                     style="flex: 1; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-family: monospace;">
+              <button type="submit" style="background: #84CC16; color: #081104; border: none; font-weight: 900; font-size: 0.82rem; padding: 8px 16px; border-radius: 8px; cursor: pointer; white-space: nowrap;">
+                تفعيل أوفلاين
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   {% endif %}
 

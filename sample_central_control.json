@@ -1,0 +1,19 @@
+{
+  "clients": {
+    "HWID-5515-ACE5-D064-3EE0": {
+      "name": "جيم الأبطال - فرع 1",
+      "status": "active",
+      "license_type": "monthly",
+      "valid_until": "2026-11-15T15:24:06.220243+00:00",
+      "features": {
+        "face_recognition": true,
+        "whatsapp": true,
+        "telegram": true,
+        "bar": true,
+        "payroll": true
+      },
+      "developer_message": "شكراً لاشتراككم في نظام HULK GYM. اشتراككم سارٍ بنجاح."
+    }
+  },
+  "default_demo_days": 7
+}

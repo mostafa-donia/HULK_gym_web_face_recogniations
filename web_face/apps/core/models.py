@@ -170,3 +170,66 @@ def log_audit_event(user=None, action="", target_model="Member", target_id="", d
     except Exception as e:
         print(f"[log_audit_event] Error: {e}")
         return None
+
+
+class SystemLicense(models.Model):
+    STATUS_CHOICES = [
+        ("demo", "فترة تجريبية (Demo)"),
+        ("active", "مرخص ونشط (Active)"),
+        ("suspended", "معلق يدوياً من المطور (Suspended)"),
+        ("expired", "انتهت فترة الاشتراك (Expired)"),
+        ("tampered", "محاولة تلاعب بالنظام (Tampered)"),
+    ]
+
+    LICENSE_TYPE_CHOICES = [
+        ("demo", "تجريبي (7 أيام)"),
+        ("monthly", "اشتراك شهري (SaaS Monthly)"),
+        ("yearly", "اشتراك سنوي (SaaS Yearly)"),
+        ("lifetime", "شراء مدى الحياة (Lifetime)"),
+    ]
+
+    machine_id = models.CharField(max_length=120, unique=True, verbose_name="بصمة الجهاز (Machine HWID)")
+    client_name = models.CharField(max_length=150, default="عميل تجريبي", verbose_name="اسم العميل / الصالة")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="demo", verbose_name="حالة الترخيص")
+    license_type = models.CharField(max_length=20, choices=LICENSE_TYPE_CHOICES, default="demo", verbose_name="نوع الترخيص")
+    
+    first_run_date = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ أول تشغيل")
+    valid_until = models.DateTimeField(null=True, blank=True, verbose_name="صالح حتى تاريخ")
+    
+    # Feature Flags
+    feature_face_recognition = models.BooleanField(default=True, verbose_name="بصمة الوجه الذكية")
+    feature_whatsapp = models.BooleanField(default=True, verbose_name="رسائل الواتساب")
+    feature_telegram = models.BooleanField(default=True, verbose_name="بوت تليجرام")
+    feature_bar = models.BooleanField(default=True, verbose_name="مخزون ومبيعات البار")
+    feature_payroll = models.BooleanField(default=True, verbose_name="المدربين ومسيرات الرواتب")
+
+    # Anti-Tampering & Security
+    tamper_hash = models.CharField(max_length=256, blank=True, default="", verbose_name="توقيع الأمان الرقمي")
+    last_clock_check = models.DateTimeField(null=True, blank=True, verbose_name="آخر توقيت فحص للنظام")
+    
+    # Remote Control Center
+    remote_control_url = models.CharField(
+        max_length=300,
+        blank=True,
+        default="",
+        verbose_name="رابط مركز التحكم السحابي للمطور",
+        help_text="رابط الـ API أو JSON للتحكم المركزي في صلاحيات العميل عن بعد",
+    )
+    last_remote_sync = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ آخر مزامنة مع السيرفر")
+    developer_notes = models.TextField(blank=True, default="", verbose_name="رسالة المطور أو إشعار الإيقاف")
+    developer_contact_phone = models.CharField(
+        max_length=30,
+        default="01080922432",
+        verbose_name="رقم واتساب المطور للتفعيل",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "ترخيص النظام وحماية الملكية"
+        verbose_name_plural = "تراخيص النظام وحماية الملكية"
+
+    def __str__(self):
+        return f"{self.client_name} - {self.machine_id} ({self.get_status_display()})"
+

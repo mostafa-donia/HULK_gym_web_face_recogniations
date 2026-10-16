@@ -281,6 +281,26 @@
 <body>
 
   <!-- Top Horizontal Navigation Bar -->
+  {% if is_demo %}
+  <!-- Demo Mode Countdown Banner -->
+  <div style="background: linear-gradient(90deg, #d97706, #b45309); color: #FFFFFF; padding: 7px 20px; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(251, 191, 36, 0.4); z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.3); flex-wrap: wrap; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="background: rgba(0,0,0,0.25); padding: 2px 8px; border-radius: 6px; font-size: 11px;">فترة تجريبية مجانية</span>
+      <span>متبقي على انتهاء التجربة: <strong>{{ remaining_demo_days }} يوم</strong> و <strong>{{ remaining_demo_hours }} ساعة</strong></span>
+      <span style="opacity: 0.85; font-size: 11px; font-family: monospace; font-weight: 700; margin-right: 6px;">(كود جهازك: {{ license_info.machine_id }})</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      {% with phone=license_info.phone|default:"01080922432" %}
+      <a href="https://wa.me/2{{ phone }}?text=مرحباً، أود تفعيل ترخيص HULK GYM لجهازي، كود جهازي هو: {{ license_info.machine_id }}"
+         target="_blank"
+         style="background: #10B981; color: #FFFFFF; padding: 4px 12px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: 900; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
+        <i class="fa fa-whatsapp"></i> تفعيل النسخة الآن
+      </a>
+      {% endwith %}
+    </div>
+  </div>
+  {% endif %}
+
   {% if user.is_authenticated %}
   <header class="top-navbar">
     <div class="top-navbar-container">
@@ -307,9 +327,11 @@
         </a>
         {% endif %}
 
+        {% if license_features.payroll %}
         <a href="{% url 'payroll:trainers_index' %}" class="top-nav-item {% if 'trainers' in request.path %}active{% endif %}">
           <span>المدربين</span>
         </a>
+        {% endif %}
 
         <a href="{% url 'members:member_list' %}" class="top-nav-item {% if 'members' in request.path and not 'subscription' in request.path %}active{% endif %}">
           <span>الأعضاء</span>
@@ -319,13 +341,17 @@
           <span>المدفوعات</span>
         </a>
 
+        {% if license_features.bar %}
         <a href="{% url 'payments:bar_inventory' %}" class="top-nav-item {% if 'bar' in request.path %}active{% endif %}">
           <span>البار والمخزون</span>
         </a>
+        {% endif %}
 
+        {% if license_features.whatsapp %}
         <a href="{% url 'messaging:whatsapp_queue' %}" class="top-nav-item {% if 'messaging' in request.path %}active{% endif %}">
           <span>واتساب</span>
         </a>
+        {% endif %}
 
         {% if user.is_manager %}
         <a href="{% url 'core:settings' %}" class="top-nav-item {% if 'settings' in request.path %}active{% endif %}">

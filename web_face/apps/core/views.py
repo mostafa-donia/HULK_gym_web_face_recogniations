@@ -1391,10 +1391,50 @@ def settings_view(request):
             messages.info(request, "🔒 تم قفل خيارات المطور.")
             return redirect("core:settings")
 
+        elif action == "save_license_settings":
+            if not request.session.get("developer_options_unlocked"):
+                messages.error(request, "❌ خيارات المطور مقفلة.")
+                return redirect("core:settings")
+            from apps.core.licensing.engine import get_or_create_system_license
+            from apps.core.licensing.crypto import compute_tamper_token
+            lic, _ = get_or_create_system_license()
+            lic.remote_control_url = request.POST.get("remote_control_url", "").strip()
+            lic.developer_contact_phone = request.POST.get("developer_contact_phone", "01080922432").strip()
+            lic.client_name = request.POST.get("license_client_name", lic.client_name).strip()
+            exp_iso = lic.valid_until.isoformat() if lic.valid_until else "NONE"
+            lic.tamper_hash = compute_tamper_token(lic.machine_id, lic.status, lic.license_type, exp_iso)
+            lic.save()
+            messages.success(request, "✓ تم حفظ إعدادات مركز التحكم والترخيص بنجاح.")
+            return redirect("core:settings")
+
+        elif action == "activate_license_key":
+            key_token = request.POST.get("license_key", "").strip()
+            from apps.core.licensing.engine import activate_offline_token
+            ok, msg = activate_offline_token(key_token)
+            if ok:
+                messages.success(request, f"🎉 {msg}")
+            else:
+                messages.error(request, f"❌ {msg}")
+            return redirect("core:settings")
+
+        elif action == "sync_remote_license":
+            from apps.core.licensing.engine import validate_system_license
+            is_valid, reason, msg, info = validate_system_license(allow_remote_sync=True)
+            if is_valid:
+                messages.success(request, f"✓ تم الاتصال بمركز التحكم السحابي: {msg}")
+            else:
+                messages.warning(request, f"تنبيه مركز التحكم: {msg}")
+            return redirect("core:settings")
+
     google_status = check_google_contacts_status()
 
     from apps.core.updater import get_current_version_info
     version_info = get_current_version_info()
+
+    from apps.core.licensing.engine import get_or_create_system_license
+    from apps.core.licensing.hwid import get_hardware_fingerprint
+    system_lic, _ = get_or_create_system_license()
+    hwid = get_hardware_fingerprint()
 
     legacy_candidates = [
         Path(settings.BASE_DIR) / "data",
@@ -1420,6 +1460,8 @@ def settings_view(request):
         "total_subscriptions_count": Subscription.objects.count(),
         "total_payments_count": Payment.objects.count(),
         "developer_unlocked": request.session.get("developer_options_unlocked", False),
+        "system_license": system_lic,
+        "machine_hwid": hwid,
     }
     return render(request, "core/settings.html", context)
 
@@ -1463,3 +1505,53 @@ def api_perform_system_update_view(request):
             "message": f"حدث خطأ أثناء تطبيق التحديث: {str(exc)}",
             "logs": [f"❌ خطأ غير متوقع: {str(exc)}"],
         })
+
+
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def license_activate_api(request):
+    """API endpoint to activate an offline signed license token."""
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "طلب POST مطلوب."}, status=405)
+    try:
+        data = json.loads(request.body.decode("utf-8")) if request.body else request.POST
+        key = data.get("license_key", "").strip()
+    except Exception:
+        key = request.POST.get("license_key", "").strip()
+
+    if not key:
+        return JsonResponse({"success": False, "message": "يرجى إدخال مفتاح الترخيص."})
+
+    from apps.core.licensing.engine import activate_offline_token
+    ok, msg = activate_offline_token(key)
+    return JsonResponse({"success": ok, "message": msg})
+
+
+@login_required
+@manager_required
+def license_sync_remote_api(request):
+    """API endpoint to manually sync license status with remote control center."""
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "طلب POST مطلوب."}, status=405)
+    from apps.core.licensing.engine import validate_system_license
+    is_valid, reason, msg, info = validate_system_license(allow_remote_sync=True)
+    return JsonResponse({
+        "success": is_valid,
+        "reason": reason,
+        "message": msg,
+        "info": info,
+    })
+
+
+def license_status_api(request):
+    """API endpoint returning public machine HWID and license status."""
+    from apps.core.licensing.engine import validate_system_license, get_hardware_fingerprint
+    _, reason, msg, info = validate_system_license(allow_remote_sync=False)
+    return JsonResponse({
+        "hwid": get_hardware_fingerprint(),
+        "reason": reason,
+        "message": msg,
+        "info": info,
+    })
+

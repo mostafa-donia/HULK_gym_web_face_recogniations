@@ -1,0 +1,225 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفعيل ترخيص النظام — HULK GYM</title>
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}">
+    <style>
+        body {
+            background-color: #07090e;
+            color: #f3f4f6;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            margin: 0;
+            background-image: radial-gradient(circle at 50% 20%, rgba(132, 204, 22, 0.08) 0%, transparent 60%);
+        }
+        .glass-card {
+            background: rgba(18, 23, 35, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            max-width: 38rem;
+            width: 100%;
+            overflow: hidden;
+        }
+        .code-box {
+            background: #0b0e14;
+            border: 1px dashed rgba(132, 204, 22, 0.35);
+            border-radius: 0.75rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-card">
+        <!-- Top Status Bar -->
+        <div class="p-6 text-center border-b border-gray-800 bg-gray-900/50">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 mb-3 border border-amber-500/20">
+                {% if license_reason == "copied_unauthorized" %}
+                    <i class="fa fa-laptop text-2xl text-rose-500"></i>
+                {% elif license_reason == "suspended" %}
+                    <i class="fa fa-lock text-2xl text-rose-500"></i>
+                {% elif license_reason == "demo_expired" %}
+                    <i class="fa fa-hourglass-end text-2xl text-amber-400"></i>
+                {% else %}
+                    <i class="fa fa-shield-alt text-2xl text-lime-400"></i>
+                {% endif %}
+            </div>
+            
+            <h1 class="text-2xl font-black text-white tracking-wide">
+                {% if license_reason == "copied_unauthorized" %}
+                    نسخة غير مصرح بها على هذا الجهاز
+                {% elif license_reason == "suspended" %}
+                    تم إيقاف تشغيل النسخة من قِبل المطور
+                {% elif license_reason == "demo_expired" %}
+                    انتهت الفترة التجريبية المجانية (7 أيام)
+                {% elif license_reason == "subscription_expired" %}
+                    انتهت فترة الاشتراك في النظام
+                {% elif license_reason == "clock_rollback" %}
+                    تنبيه أمان: تلاعب في توقيت الجهاز
+                {% else %}
+                    مطلوب تفعيل ترخيص HULK GYM
+                {% endif %}
+            </h1>
+            <p class="text-sm text-gray-400 mt-2 max-w-md mx-auto leading-relaxed">
+                {{ license_message|linebreaksbr }}
+            </p>
+        </div>
+
+        <!-- Body Details -->
+        <div class="p-6 sm:p-8 space-y-6">
+            
+            <!-- Machine HWID Section -->
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    كود هذا الجهاز الخاص بك (Hardware Machine ID):
+                </label>
+                <div class="code-box flex items-center justify-between p-3.5 px-4 text-lime-400 text-lg font-bold">
+                    <span id="hwidText">{{ license_info.machine_id }}</span>
+                    <button type="button" onclick="copyHWID()" class="text-xs bg-lime-500/20 hover:bg-lime-500/30 text-lime-300 px-3 py-1.5 rounded-lg border border-lime-500/40 transition">
+                        <i class="fa fa-copy ml-1"></i> <span id="copyBtnText">نسخ الكود</span>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-400 mt-1.5">
+                    * هذا الكود مشتق من لوحة الأم والمعالج لهذا الجهاز لضمان أمان اشتراكك.
+                </p>
+            </div>
+
+            <!-- WhatsApp Direct Contact -->
+            <div class="bg-gray-900/60 p-4 rounded-xl border border-gray-800">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                        <h4 class="text-sm font-bold text-gray-200">طلب التفعيل / تجديد الاشتراك</h4>
+                        <p class="text-xs text-gray-400">تواصل مباشرة مع مطور النظام لتفعيل باقتك.</p>
+                    </div>
+                    {% with phone=license_info.phone|default:"01080922432" %}
+                    <a href="https://wa.me/2{{ phone }}?text=مرحباً، أود تفعيل ترخيص نظام HULK GYM لجهازي، كود الجهاز الخاص بي هو: {{ license_info.machine_id }}"
+                       target="_blank"
+                       class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg transition">
+                        <i class="fa fa-whatsapp text-lg"></i>
+                        <span>تواصل واتساب ({{ phone }})</span>
+                    </a>
+                    {% endwith %}
+                </div>
+            </div>
+
+            <!-- Offline Activation Key Form -->
+            <div class="border-t border-gray-800 pt-6">
+                <label class="block text-sm font-bold text-gray-300 mb-2">
+                    هل استلمت مفتاح التفعيل؟ (أدخله هنا لتفعيل النظام فوراً أوفلاين):
+                </label>
+                <form id="activationForm" onsubmit="submitActivation(event)" class="space-y-3">
+                    <div class="relative">
+                        <input type="text"
+                               id="licenseKeyInput"
+                               name="license_key"
+                               placeholder="HULK-LIC-..."
+                               required
+                               dir="ltr"
+                               class="w-full bg-gray-950/80 border border-gray-700 focus:border-lime-500 focus:ring-1 focus:ring-lime-500 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-600 font-mono transition">
+                    </div>
+                    <button type="submit"
+                            id="submitBtn"
+                            class="w-full bg-lime-500 hover:bg-lime-400 text-gray-950 font-black py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                        <i class="fa fa-key"></i>
+                        <span>تفعيل النظام الآن</span>
+                    </button>
+                    <div id="activationResult" class="hidden text-xs p-3 rounded-lg font-bold"></div>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-gray-950/50 p-4 px-6 border-t border-gray-800 flex items-center justify-between text-xs text-gray-400">
+            <span>HULK GYM Enterprise Suite v2.1</span>
+            <button onclick="location.reload()" class="hover:text-gray-300 flex items-center gap-1 transition">
+                <i class="fa fa-sync-alt"></i> إعادة الفحص
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function copyHWID() {
+            const hwid = document.getElementById('hwidText').innerText.trim();
+            navigator.clipboard.writeText(hwid).then(() => {
+                const btn = document.getElementById('copyBtnText');
+                btn.innerText = 'تم النسخ ✓';
+                setTimeout(() => { btn.innerText = 'نسخ الكود'; }, 2500);
+            });
+        }
+
+        async function submitActivation(e) {
+            e.preventDefault();
+            const keyInput = document.getElementById('licenseKeyInput');
+            const submitBtn = document.getElementById('submitBtn');
+            const resultBox = document.getElementById('activationResult');
+            const token = keyInput.value.trim();
+
+            if (!token) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> جاري التحقق من الترخيص...';
+            resultBox.className = 'hidden';
+
+            try {
+                const response = await fetch('/license/activate/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken') || ''
+                    },
+                    body: JSON.stringify({ license_key: token })
+                });
+
+                const data = await response.json();
+                resultBox.classList.remove('hidden');
+
+                if (data.success) {
+                    resultBox.className = 'text-xs p-3 rounded-lg font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                    resultBox.innerText = data.message || 'تم التفعيل بنجاح! جاري توجيهك للنظام...';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1200);
+                } else {
+                    resultBox.className = 'text-xs p-3 rounded-lg font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30';
+                    resultBox.innerText = data.message || 'فشل التفعيل. يرجى التحقق من صحة الكود.';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fa fa-key"></i> <span>تفعيل النظام الآن</span>';
+                }
+            } catch (err) {
+                resultBox.classList.remove('hidden');
+                resultBox.className = 'text-xs p-3 rounded-lg font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30';
+                resultBox.innerText = 'تعذر الاتصال بالخادم. يرجى التأكد من تشغيل البرنامج.';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa fa-key"></i> <span>تفعيل النظام الآن</span>';
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>
