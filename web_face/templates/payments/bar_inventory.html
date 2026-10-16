@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة مخزون ومبيعات البار — {{ profile.gym_name|default:"HULK GYM" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px; max-width: 1200px; margin: 0 auto;">
+
+  <!-- Header -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px 24px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <h1 style="color: var(--text-main); font-size: 1.5rem; font-weight: 900; margin: 0;">
+          🥤 إدارة مخزون ومبيعات البار
+        </h1>
+        <span class="badge badge-active" style="font-size: 0.8rem;">مخزون ومشروبات</span>
+      </div>
+      <p style="color: var(--text-muted); margin: 4px 0 0 0; font-size: 0.88rem;">
+        متابعة كميات المياه، المكملات، البروتين، تسجيل المبيعات النقدية والآجلة (بعد التمرين)
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+      <button type="button" onclick="openNewProductModal()" class="btn btn-primary btn-sm" style="height: 38px; padding: 0 16px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+        ➕ إضافة منتج جديد
+      </button>
+      <a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="height: 38px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px;">
+        ← العودة للرئيسية
+      </a>
+    </div>
+  </div>
+
+  <!-- 4 KPI Cards Strip -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px;">
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">المنتجات بالمخزون</span>
+      <div style="color: var(--text-main); font-size: 1.7rem; font-weight: 900; margin-top: 4px;">
+        {{ total_products_count }} <small style="font-size: 0.9rem; color: var(--text-muted);">منتج</small>
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-right: 6px;">({{ total_stock_units }} قطعة)</span>
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(139, 92, 246, 0.35); border-radius: 12px; padding: 16px 20px;">
+      <span style="color: #a78bfa; font-size: 0.82rem; font-weight: 800; display: block;">⏳ آجل البار المعلق (لم يُدفع بعد)</span>
+      <div style="color: #c084fc; font-size: 1.7rem; font-weight: 900; margin-top: 4px;">
+        {{ total_unpaid_debt }} <small style="font-size: 0.88rem;">{{ profile.currency|default:"ج" }}</small>
+        <span style="font-size: 0.82rem; background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 2px 8px; border-radius: 10px; margin-right: 8px;">{{ unpaid_orders_count }} طلب</span>
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 16px 20px;">
+      <span style="color: #34d399; font-size: 0.82rem; font-weight: 800; display: block;">💵 مبيعات البار اليوم المحصلة</span>
+      <div style="color: #10b981; font-size: 1.7rem; font-weight: 900; margin-top: 4px;">
+        {{ today_bar_revenue }} <small style="font-size: 0.88rem;">{{ profile.currency|default:"ج" }}</small>
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px;">
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">إجمالي إيرادات البار التاريخية</span>
+      <div style="color: #A8F14B; font-size: 1.7rem; font-weight: 900; margin-top: 4px;">
+        {{ total_bar_revenue }} <small style="font-size: 0.88rem;">{{ profile.currency|default:"ج" }}</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Grid (Cards with Quick Restock) -->
+  <div class="card" style="padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 900; margin: 0;">
+        📦 قائمة منتجات البار والمخزون المتاح
+      </h3>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">يمكنك تزويد المخزون بضغطة زر سريعة</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
+      {% for p in products %}
+      <div style="background: var(--bg-surface-subtle); border: 1px solid {% if p.is_low_stock %}rgba(239, 68, 68, 0.45){% else %}var(--border-color){% endif %}; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; position: relative;">
+        {% if p.is_low_stock %}
+          <span style="position: absolute; top: 12px; left: 12px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; font-size: 0.72rem; font-weight: 900; padding: 2px 7px; border-radius: 6px;">
+            ⚠️ وشك النفاذ
+          </span>
+        {% endif %}
+
+        <div>
+          <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">
+            {{ p.get_category_display }}
+          </div>
+          <h4 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin: 0 0 8px 0;">
+            {{ p.name }}
+          </h4>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <span style="color: var(--text-muted); font-size: 0.85rem;">سعر البيع:</span>
+            <strong style="color: #A8F14B; font-size: 1.15rem; font-weight: 900;">{{ p.price }} {{ profile.currency|default:"ج" }}</strong>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+            <span style="color: var(--text-muted); font-size: 0.85rem;">الرصيد المتاح:</span>
+            <strong style="color: {% if p.stock_quantity <= 0 %}#ef4444{% elif p.is_low_stock %}#f59e0b{% else %}#38bdf8{% endif %}; font-size: 1.1rem; font-weight: 900;">
+              {{ p.stock_quantity }} قطعة
+            </strong>
+          </div>
+        </div>
+
+        <!-- Quick Restock Actions -->
+        <div style="border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">تزويد فوري للرصيد:</span>
+          <div style="display: flex; gap: 6px;">
+            <form method="post" action="{% url 'payments:bar_product_restock' p.id %}" style="display: inline;">
+              {% csrf_token %}
+              <input type="hidden" name="add_quantity" value="12">
+              <button type="submit" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.78rem;">+12</button>
+            </form>
+            <form method="post" action="{% url 'payments:bar_product_restock' p.id %}" style="display: inline;">
+              {% csrf_token %}
+              <input type="hidden" name="add_quantity" value="24">
+              <button type="submit" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.78rem;">+24 (كرتونة)</button>
+            </form>
+            <form method="post" action="{% url 'payments:bar_product_restock' p.id %}" style="display: inline;">
+              {% csrf_token %}
+              <input type="hidden" name="add_quantity" value="50">
+              <button type="submit" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.78rem;">+50</button>
+            </form>
+            <button type="button" onclick="openEditProductModal('{{ p.id }}', '{{ p.name }}', '{{ p.category }}', '{{ p.price }}', '{{ p.cost_price }}', '{{ p.min_stock_alert }}')" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.78rem; margin-right: auto;" title="تعديل السعر">
+              ✏️
+            </button>
+          </div>
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Sales Log Table with Filter (All / Unpaid / Paid) -->
+  <div class="card" style="padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <div>
+        <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 900; margin: 0;">
+          📋 سجل طلبات ومبيعات البار
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.82rem; margin: 2px 0 0 0;">
+          تتبع الطلبات المحصلة والطلبات المعلقة لحين انتهاء التمرين
+        </p>
+      </div>
+
+      <!-- Filter Buttons -->
+      <div style="display: flex; gap: 6px;">
+        <a href="?filter=all" class="btn btn-sm {% if filter_type == 'all' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size: 0.85rem;">
+          الكل
+        </a>
+        <a href="?filter=unpaid" class="btn btn-sm {% if filter_type == 'unpaid' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size: 0.85rem; color: #c084fc;">
+          ⏳ لم يدفع (آجل) ({{ unpaid_orders_count }})
+        </a>
+        <a href="?filter=paid" class="btn btn-sm {% if filter_type == 'paid' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size: 0.85rem; color: #10b981;">
+          ✅ تم الدفع
+        </a>
+      </div>
+    </div>
+
+    {% if page_obj %}
+    <div class="table-responsive">
+      <table class="dark-table">
+        <thead>
+          <tr>
+            <th>كود الطلب</th>
+            <th>المنتج</th>
+            <th>الكمية</th>
+            <th>الإجمالي</th>
+            <th>المشتري / اللاعب</th>
+            <th>الحالة</th>
+            <th>التاريخ والوقت</th>
+            <th>الملاحظات</th>
+            <th style="text-align: center;">إجراء سريع</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in page_obj %}
+          <tr>
+            <td style="font-family: monospace; font-weight: 800; font-size: 0.85rem;">{{ s.sale_id }}</td>
+            <td style="color: var(--text-main); font-weight: 800;">{{ s.product.name }}</td>
+            <td style="font-weight: 800; color: #38bdf8;">{{ s.quantity }}</td>
+            <td style="color: #A8F14B; font-weight: 900; font-size: 1.05rem;">
+              {{ s.total_price }} <small>{{ profile.currency|default:"ج" }}</small>
+            </td>
+            <td>
+              {% if s.member %}
+                <a href="{% url 'members:member_detail' s.member.id %}" style="color: #38bdf8; font-weight: 800; text-decoration: none;">
+                  {{ s.buyer_name }}
+                </a>
+              {% else %}
+                <span style="color: var(--text-main); font-weight: 700;">{{ s.buyer_name }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if s.is_paid %}
+                <span class="badge badge-active">تم الدفع ({{ s.payment_method }})</span>
+              {% else %}
+                <span class="badge badge-expired" style="background: rgba(139, 92, 246, 0.18); border-color: rgba(139, 92, 246, 0.4); color: #c084fc;">
+                  ⏳ آجل (لم يدفع)
+                </span>
+              {% endif %}
+            </td>
+            <td style="font-size: 0.82rem; color: var(--text-muted);">{{ s.created_at|date:"Y-m-d h:i A" }}</td>
+            <td style="font-size: 0.82rem; color: var(--text-muted);">{{ s.notes|default:"—" }}</td>
+            <td style="text-align: center;">
+              {% if not s.is_paid %}
+              <div style="display: flex; gap: 6px; justify-content: center;">
+                <form method="post" action="{% url 'payments:bar_settle_sale' s.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="payment_method" value="نقدي">
+                  <button type="submit" class="btn btn-primary btn-sm" style="padding: 4px 10px; font-size: 0.8rem; background: #10b981; border-color: #10b981;" title="تحصيل المبلغ الآن وإضافته للخزينة">
+                    💵 سداد الآن
+                  </button>
+                </form>
+                <form method="post" action="{% url 'payments:bar_cancel_sale' s.id %}" onsubmit="return confirm('هل أنت متأكد من إلغاء هذا الطلب واسترجاع الكمية للمخزون؟');" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.8rem; color: #ef4444;" title="إلغاء الطلب واسترجاع الرصيد">
+                    ✕
+                  </button>
+                </form>
+              </div>
+              {% else %}
+                <span style="color: #10b981; font-weight: 800; font-size: 0.82rem;">✓ مسدد</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+        لا توجد طلبات بار مطابقة في هذا السجل.
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Modal: New Product -->
+<div id="newProductModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 480px; padding: 24px; box-shadow: var(--shadow-lg);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+      <h3 style="margin: 0; color: var(--text-main); font-weight: 900;">➕ إضافة منتج جديد للبار</h3>
+      <button type="button" onclick="closeNewProductModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">✕</button>
+    </div>
+
+    <form method="post" action="{% url 'payments:bar_product_create' %}" style="display: flex; flex-direction: column; gap: 14px;">
+      {% csrf_token %}
+      <div>
+        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">اسم المنتج *</label>
+        <input type="text" name="name" required class="form-control" placeholder="مثال: مياه معدنية 600 مل / سكوب بروتين...">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">التصنيف</label>
+          <select name="category" class="form-control">
+            {% for code, label in categories %}
+              <option value="{{ code }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">سعر البيع (ج.م) *</label>
+          <input type="number" step="0.5" name="price" required class="form-control" placeholder="10">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">الكمية الأولية بالمخزون</label>
+          <input type="number" name="stock_quantity" value="0" class="form-control">
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">تنبيه النقص عند (قطعة)</label>
+          <input type="number" name="min_stock_alert" value="5" class="form-control">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 8px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center; font-weight: 900;">
+          حفظ المنتج في المخزون
+        </button>
+        <button type="button" onclick="closeNewProductModal()" class="btn btn-secondary">
+          إلغاء
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Edit Product -->
+<div id="editProductModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 480px; padding: 24px; box-shadow: var(--shadow-lg);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+      <h3 style="margin: 0; color: var(--text-main); font-weight: 900;">✏️ تعديل بيانات المنتج</h3>
+      <button type="button" onclick="closeEditProductModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">✕</button>
+    </div>
+
+    <form id="editProductForm" method="post" action="" style="display: flex; flex-direction: column; gap: 14px;">
+      {% csrf_token %}
+      <div>
+        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">اسم المنتج</label>
+        <input type="text" id="editName" name="name" required class="form-control">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">التصنيف</label>
+          <select id="editCategory" name="category" class="form-control">
+            {% for code, label in categories %}
+              <option value="{{ code }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">سعر البيع (ج.م)</label>
+          <input type="number" step="0.5" id="editPrice" name="price" required class="form-control">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 8px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1; justify-content: center; font-weight: 900;">
+          حفظ التعديلات
+        </button>
+        <button type="button" onclick="closeEditProductModal()" class="btn btn-secondary">
+          إلغاء
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openNewProductModal() {
+  document.getElementById('newProductModal').style.display = 'flex';
+}
+function closeNewProductModal() {
+  document.getElementById('newProductModal').style.display = 'none';
+}
+function openEditProductModal(id, name, cat, price, cost, minAlert) {
+  const form = document.getElementById('editProductForm');
+  form.action = '/payments/bar/product/' + id + '/edit/';
+  document.getElementById('editName').value = name;
+  document.getElementById('editCategory').value = cat;
+  document.getElementById('editPrice').value = price;
+  document.getElementById('editProductModal').style.display = 'flex';
+}
+function closeEditProductModal() {
+  document.getElementById('editProductModal').style.display = 'none';
+}
+</script>
+{% endblock %}

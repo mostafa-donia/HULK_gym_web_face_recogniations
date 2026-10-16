@@ -70,6 +70,17 @@ def dashboard_view(request):
 
     recent_checkins = CheckInEvent.objects.select_related("member").order_by("-checked_in_at")[:10]
 
+    # Bar & Inventory Quick Actions
+    from apps.payments.models import BarProduct, BarSale
+    bar_products = BarProduct.objects.filter(is_active=True).order_by("category", "name")
+    unpaid_bar_sales = BarSale.objects.filter(is_paid=False).select_related("product", "member").order_by("-created_at")
+    unpaid_bar_count = unpaid_bar_sales.count()
+    unpaid_bar_total = (
+        unpaid_bar_sales.aggregate(Sum("total_price"))["total_price__sum"]
+        or Decimal("0.00")
+    )
+    payment_methods = PaymentMethod.objects.filter(is_active=True)
+
     context = {
         "active_members_count": active_members_count,
         "expired_members_count": expired_members_count,
@@ -78,8 +89,14 @@ def dashboard_view(request):
         "total_debt": total_debt,
         "pending_whatsapp_count": pending_whatsapp_count,
         "recent_checkins": recent_checkins,
+        "bar_products": bar_products,
+        "unpaid_bar_sales": unpaid_bar_sales,
+        "unpaid_bar_count": unpaid_bar_count,
+        "unpaid_bar_total": unpaid_bar_total,
+        "payment_methods": payment_methods,
     }
     return render(request, "core/dashboard.html", context)
+
 
 
 @login_required
@@ -941,11 +958,24 @@ def manager_dashboard_view(request):
             "total_due": coach_total_due,
         })
 
-    # E) Anti-Deception Audit Trail (Recent Sensitive Actions)
+    # E) Bar & Inventory Revenue in Period
+    from apps.payments.models import BarSale
+    period_bar_sales = BarSale.objects.filter(
+        created_at__date__gte=period_start,
+        created_at__date__lte=period_end,
+    )
+    period_bar_revenue = period_bar_sales.filter(is_paid=True).aggregate(Sum("total_price"))["total_price__sum"] or Decimal("0.00")
+    period_bar_unpaid = period_bar_sales.filter(is_paid=False).aggregate(Sum("total_price"))["total_price__sum"] or Decimal("0.00")
+    period_bar_ops_count = period_bar_sales.count()
+
+    # F) Anti-Deception Audit Trail (Recent Sensitive Actions)
     recent_audit_logs = AuditLog.objects.select_related("user").order_by("-created_at")[:12]
 
     context = {
         "gym_profile": gym_profile,
+        "period_bar_revenue": period_bar_revenue,
+        "period_bar_unpaid": period_bar_unpaid,
+        "period_bar_ops_count": period_bar_ops_count,
         # 9 Legacy Screen Cards
         "total_members": total_members,
         "active_members": active_members,

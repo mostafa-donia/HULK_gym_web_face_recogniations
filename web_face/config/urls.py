@@ -33,6 +33,8 @@ urlpatterns = [
     path('payroll/', include('apps.payroll.urls')),
     path('trainers/', RedirectView.as_view(url='/payroll/trainers/', permanent=False)),
     path('trainers', RedirectView.as_view(url='/payroll/trainers/', permanent=False)),
+    path('bar/', RedirectView.as_view(url='/payments/bar/', permanent=False)),
+    path('bar', RedirectView.as_view(url='/payments/bar/', permanent=False)),
     path('reports/', include('apps.reports.urls')),
     path('messaging/', include('apps.messaging.urls')),
     path('', include('apps.core.urls')),

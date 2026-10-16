@@ -315,8 +315,12 @@
           <span>الأعضاء</span>
         </a>
 
-        <a href="{% url 'payments:payment_list' %}" class="top-nav-item {% if 'payments' in request.path %}active{% endif %}">
+        <a href="{% url 'payments:payment_list' %}" class="top-nav-item {% if 'payments' in request.path and not 'bar' in request.path %}active{% endif %}">
           <span>المدفوعات</span>
+        </a>
+
+        <a href="{% url 'payments:bar_inventory' %}" class="top-nav-item {% if 'bar' in request.path %}active{% endif %}">
+          <span>البار والمخزون</span>
         </a>
 
         <a href="{% url 'messaging:whatsapp_queue' %}" class="top-nav-item {% if 'messaging' in request.path %}active{% endif %}">

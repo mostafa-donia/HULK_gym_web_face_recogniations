@@ -57,52 +57,306 @@
         انتهت اشتراكات
       </a>
     </div>
+
+    <!-- Bar Action Buttons Row: شراء منتج من البار & لم يدفع للبار (آجل) -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 4px;">
+      <!-- Button 1: شراء منتج من البار -->
+      <button type="button" onclick="openBarSaleModal()" class="btn-dashboard-action" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; min-height: 64px; border-radius: 14px; font-size: 1.15rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid rgba(14, 165, 233, 0.45); box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3); cursor: pointer; transition: transform 0.15s ease;">
+        <span style="font-size: 1.45rem;">🥤</span>
+        <span>شراء منتج من البار</span>
+      </button>
+
+      <!-- Button 2: لم يدفع للبار (آجل) -->
+      <button type="button" onclick="openBarUnpaidModal()" class="btn-dashboard-action" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: #ffffff; min-height: 64px; border-radius: 14px; font-size: 1.15rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid rgba(139, 92, 246, 0.45); box-shadow: 0 4px 14px rgba(109, 40, 217, 0.3); cursor: pointer; position: relative;">
+        <span style="font-size: 1.35rem;">⏳</span>
+        <span>لم يدفع للبار (آجل)</span>
+        {% if unpaid_bar_count > 0 %}
+          <span style="background: #ef4444; color: #ffffff; font-size: 0.8rem; font-weight: 900; padding: 3px 10px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); margin-right: 6px;">
+            {{ unpaid_bar_count }} طلب ({{ unpaid_bar_total }} ج)
+          </span>
+        {% else %}
+          <span style="background: rgba(255,255,255,0.18); color: #e2e8f0; font-size: 0.78rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-right: 6px;">
+            0 معلق
+          </span>
+        {% endif %}
+      </button>
+    </div>
   </div>
 
 </div>
 
-<!-- Smart Modal for "سجل / جدد / دفع المتبقي" -->
-<div id="smart-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
-  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; width: 100%; max-width: 550px; padding: 24px; box-shadow: var(--shadow-lg);">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 20px;">
-      <h2 style="color: var(--text-main); font-size: 1.4rem; font-weight: 900; margin: 0;">سجل / جدد / دفع المتبقي</h2>
-      <button type="button" onclick="closeSmartModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
+<!-- 1. Modal: شراء منتج من البار (Fast Bar Sale) -->
+<div id="bar-sale-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 18px;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; width: 100%; max-width: 520px; padding: 24px; box-shadow: var(--shadow-lg);">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.5rem;">🥤</span>
+        <h2 style="color: var(--text-main); font-size: 1.35rem; font-weight: 900; margin: 0;">شراء منتج من البار</h2>
+      </div>
+      <button type="button" onclick="closeBarSaleModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
     </div>
 
-    <div style="display: flex; flex-direction: column; gap: 14px;">
-      <a href="{% url 'members:subscription_create' %}" class="btn-dashboard-action btn-lime" style="min-height: 60px; font-size: 1.2rem;">
-        اشتراك عضو جديد
-      </a>
-      <a href="{% url 'members:member_list' %}" class="btn-dashboard-action btn-lime" style="min-height: 60px; font-size: 1.2rem;">
-        تجديد اشتراك لاعب حالي
-      </a>
-      <a href="{% url 'members:member_list' %}?filter=remaining" class="btn-dashboard-action btn-orange" style="min-height: 60px; font-size: 1.2rem;">
-        سداد متبقي (الديون)
-      </a>
+    <form method="post" action="{% url 'payments:bar_quick_sale' %}" id="quickBarSaleForm" style="display: flex; flex-direction: column; gap: 14px;">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.path }}">
+
+      <!-- Product Picker -->
+      <div>
+        <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
+          اختر المنتج من البار *
+        </label>
+        <select name="product_id" id="barProductSelect" onchange="updateBarSaleTotal()" required class="form-control" style="font-size: 1rem; font-weight: 800; height: 46px;">
+          {% for p in bar_products %}
+            <option value="{{ p.id }}" data-price="{{ p.price }}" data-stock="{{ p.stock_quantity }}">
+              {{ p.name }} — {{ p.price }} {{ gym_profile.currency|default:"ج" }} (متاح: {{ p.stock_quantity }})
+            </option>
+          {% empty %}
+            <option value="" disabled selected>لا توجد منتجات بالمخزون حالياً</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Quantity Stepper -->
+      <div>
+        <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
+          الكمية المطلوبة *
+        </label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" onclick="stepBarQty(-1)" class="btn btn-secondary" style="width: 44px; height: 44px; font-size: 1.4rem; font-weight: 900; padding: 0; justify-content: center;">-</button>
+          <input type="number" id="barQtyInput" name="quantity" value="1" min="1" max="999" oninput="updateBarSaleTotal()" class="form-control" style="text-align: center; font-size: 1.25rem; font-weight: 900; height: 44px;">
+          <button type="button" onclick="stepBarQty(1)" class="btn btn-secondary" style="width: 44px; height: 44px; font-size: 1.4rem; font-weight: 900; padding: 0; justify-content: center;">+</button>
+        </div>
+      </div>
+
+      <!-- Buyer Name (Member or Walk-in) -->
+      <div>
+        <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
+          اسم المتدرب / المشتري (اختياري)
+        </label>
+        <input type="text" name="buyer_name" class="form-control" placeholder="اكتب اسم اللاعب أو اتركه كعميل نقدي..." style="height: 42px;">
+      </div>
+
+      <!-- Payment Status Toggle: تم الدفع vs لم يدفع (آجل) -->
+      <div>
+        <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">
+          حالة الدفع *
+        </label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <label id="lbl-status-paid" style="border: 2px solid #10b981; background: rgba(16, 185, 129, 0.12); padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.15s ease;">
+            <input type="radio" name="payment_status" value="paid" checked onchange="toggleBarPaymentStatus()" style="display: none;">
+            <span style="color: #10b981; font-weight: 900; font-size: 0.95rem; display: block;">✅ تم الدفع الآن</span>
+            <small style="color: var(--text-muted); font-size: 0.76rem;">تسجيل فوري بالخزينة</small>
+          </label>
+
+          <label id="lbl-status-unpaid" style="border: 2px solid rgba(255,255,255,0.15); background: var(--bg-surface-subtle); padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.15s ease;">
+            <input type="radio" name="payment_status" value="unpaid" onchange="toggleBarPaymentStatus()" style="display: none;">
+            <span style="color: #c084fc; font-weight: 900; font-size: 0.95rem; display: block;">⏳ لم يدفع (آجل)</span>
+            <small style="color: var(--text-muted); font-size: 0.76rem;">هيدفع بعد ما يخلص التمرين</small>
+          </label>
+        </div>
+      </div>
+
+      <!-- Payment Method (shown if paid) -->
+      <div id="barPaymentMethodBox">
+        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">طريقة الدفع</label>
+        <select name="payment_method" class="form-control" style="height: 40px;">
+          {% for pm in payment_methods %}
+            <option value="{{ pm.name }}">{{ pm.name }}</option>
+          {% empty %}
+            <option value="نقدي">نقدي</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Notes field -->
+      <div>
+        <input type="text" name="notes" class="form-control" placeholder="ملاحظة إضافية (اختياري: مثلاً مع كابتن فلان)..." style="height: 38px; font-size: 0.85rem;">
+      </div>
+
+      <!-- Total Price Live Calculation Strip -->
+      <div style="background: rgba(168, 241, 75, 0.1); border: 1.5px solid rgba(168, 241, 75, 0.35); border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">المبلغ الإجمالي للطلب:</span>
+        <strong id="barSaleTotalText" style="color: #A8F14B; font-size: 1.35rem; font-weight: 900;">0.00 ج.م</strong>
+      </div>
+
+      <!-- Submit Button -->
+      <div style="display: flex; gap: 10px; margin-top: 6px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1; min-height: 48px; font-size: 1.05rem; font-weight: 900; justify-content: center; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-color: #0284c7;">
+          ✓ تسجيل العملية فوراً
+        </button>
+        <button type="button" onclick="closeBarSaleModal()" class="btn btn-secondary" style="min-height: 48px;">
+          إلغاء
+        </button>
+      </div>
+
+      <div style="text-align: center; margin-top: 4px;">
+        <a href="{% url 'payments:bar_inventory' %}" style="color: #38bdf8; font-size: 0.84rem; text-decoration: none; font-weight: 800;">
+          📦 فتح صفحة إدارة مخزون وأسعار البار بالكامل ←
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 2. Modal: لم يدفع للبار (Unpaid / Deferred Bar Orders) -->
+<div id="bar-unpaid-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 18px;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; width: 100%; max-width: 680px; max-height: 85vh; display: flex; flex-direction: column; padding: 24px; box-shadow: var(--shadow-lg);">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 14px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.5rem;">⏳</span>
+        <div>
+          <h2 style="color: var(--text-main); font-size: 1.35rem; font-weight: 900; margin: 0;">حسابات البار المعلقة (آجل)</h2>
+          <p style="color: var(--text-muted); font-size: 0.8rem; margin: 2px 0 0 0;">لاعبين أخذوا منتجات وهيدفعوا بعد انتهاء التمرين</p>
+        </div>
+      </div>
+      <button type="button" onclick="closeBarUnpaidModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
     </div>
 
-    <div style="text-align: center; margin-top: 18px;">
-      <button type="button" onclick="closeSmartModal()" class="btn btn-secondary" style="width: 100%; justify-content: center;">
+    <!-- Scrollable Unpaid Orders List -->
+    <div style="flex: 1; overflow-y: auto; padding-left: 4px;">
+      {% if unpaid_bar_sales %}
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          {% for s in unpaid_bar_sales %}
+          <div style="background: var(--bg-surface-subtle); border: 1px solid rgba(139, 92, 246, 0.35); border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <strong style="color: var(--text-main); font-size: 1.05rem;">{{ s.buyer_name }}</strong>
+                <span style="font-size: 0.76rem; color: #a78bfa; background: rgba(139, 92, 246, 0.16); padding: 2px 8px; border-radius: 6px; font-weight: 800;">آجل</span>
+              </div>
+              <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 3px;">
+                المنتج: <span style="color: #38bdf8; font-weight: 800;">{{ s.product.name }}</span> (عدد: {{ s.quantity }})
+                {% if s.notes %} • <span style="color: var(--text-muted);">{{ s.notes }}</span>{% endif %}
+              </div>
+              <div style="font-size: 0.76rem; color: var(--text-dim); margin-top: 3px; font-family: monospace;">
+                {{ s.created_at|date:"Y-m-d h:i A" }}
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="text-align: left;">
+                <div style="color: #A8F14B; font-size: 1.25rem; font-weight: 900;">
+                  {{ s.total_price }} <small style="font-size: 0.8rem;">{{ gym_profile.currency|default:"ج" }}</small>
+                </div>
+              </div>
+
+              <!-- Fast Actions: Settle Now & Cancel -->
+              <div style="display: flex; gap: 6px;">
+                <form method="post" action="{% url 'payments:bar_settle_sale' s.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="payment_method" value="نقدي">
+                  <button type="submit" class="btn btn-primary btn-sm" style="background: #10b981; border-color: #10b981; font-weight: 800; padding: 6px 12px; font-size: 0.85rem;" title="سداد الحساب الآن وإضافته للخزينة">
+                    ✓ سداد الآن
+                  </button>
+                </form>
+                <form method="post" action="{% url 'payments:bar_cancel_sale' s.id %}" onsubmit="return confirm('إلغاء هذا الطلب واسترجاع الكمية للمخزون؟');" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-secondary btn-sm" style="padding: 6px 10px; color: #ef4444; font-size: 0.85rem;" title="إلغاء الطلب">
+                    ✕
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+          <span style="font-size: 2.8rem; display: block; margin-bottom: 10px;">✨</span>
+          <p style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">لا توجد أي مبالغ معلقة على البار حالياً</p>
+          <p style="font-size: 0.85rem;">جميع طلبات البار مسددة بالكامل ولا يوجد مديونيات مؤجلة.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="border-top: 1px solid var(--border-color); padding-top: 14px; margin-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <span style="color: var(--text-muted); font-size: 0.85rem;">إجمالي المعلقات: </span>
+        <strong style="color: #c084fc; font-size: 1.15rem; font-weight: 900;">{{ unpaid_bar_total }} {{ gym_profile.currency|default:"ج" }}</strong>
+      </div>
+      <button type="button" onclick="closeBarUnpaidModal()" class="btn btn-secondary btn-sm" style="padding: 6px 18px;">
         إغلاق
       </button>
     </div>
+
   </div>
 </div>
 
 <script>
-function openSmartModal() {
-  const modal = document.getElementById('smart-modal');
-  modal.style.display = 'flex';
+function openBarSaleModal() {
+  document.getElementById('bar-sale-modal').style.display = 'flex';
+  updateBarSaleTotal();
 }
-function closeSmartModal() {
-  const modal = document.getElementById('smart-modal');
-  modal.style.display = 'none';
+function closeBarSaleModal() {
+  document.getElementById('bar-sale-modal').style.display = 'none';
 }
-window.addEventListener('click', function(e) {
-  const modal = document.getElementById('smart-modal');
-  if (e.target === modal) {
-    closeSmartModal();
+function openBarUnpaidModal() {
+  document.getElementById('bar-unpaid-modal').style.display = 'flex';
+}
+function closeBarUnpaidModal() {
+  document.getElementById('bar-unpaid-modal').style.display = 'none';
+}
+
+function stepBarQty(delta) {
+  const input = document.getElementById('barQtyInput');
+  if (!input) return;
+  let val = parseInt(input.value || 1, 10);
+  val = Math.max(1, val + delta);
+  input.value = val;
+  updateBarSaleTotal();
+}
+
+function updateBarSaleTotal() {
+  const sel = document.getElementById('barProductSelect');
+  const qtyInput = document.getElementById('barQtyInput');
+  const totalTxt = document.getElementById('barSaleTotalText');
+  if (!sel || !qtyInput || !totalTxt) return;
+
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt) return;
+
+  const price = parseFloat(opt.getAttribute('data-price') || 0);
+  const qty = parseInt(qtyInput.value || 1, 10);
+  const total = (price * qty).toFixed(2);
+  totalTxt.innerText = total + ' ج.م';
+}
+
+function toggleBarPaymentStatus() {
+  const radios = document.getElementsByName('payment_status');
+  let selected = 'paid';
+  for (let r of radios) {
+    if (r.checked) {
+      selected = r.value;
+      break;
+    }
   }
+
+  const lblPaid = document.getElementById('lbl-status-paid');
+  const lblUnpaid = document.getElementById('lbl-status-unpaid');
+  const methodBox = document.getElementById('barPaymentMethodBox');
+
+  if (selected === 'paid') {
+    lblPaid.style.borderColor = '#10b981';
+    lblPaid.style.background = 'rgba(16, 185, 129, 0.12)';
+    lblUnpaid.style.borderColor = 'rgba(255,255,255,0.15)';
+    lblUnpaid.style.background = 'var(--bg-surface-subtle)';
+    if (methodBox) methodBox.style.display = 'block';
+  } else {
+    lblUnpaid.style.borderColor = '#8b5cf6';
+    lblUnpaid.style.background = 'rgba(139, 92, 246, 0.18)';
+    lblPaid.style.borderColor = 'rgba(255,255,255,0.15)';
+    lblPaid.style.background = 'var(--bg-surface-subtle)';
+    if (methodBox) methodBox.style.display = 'none';
+  }
+}
+
+window.addEventListener('click', function(e) {
+  const saleModal = document.getElementById('bar-sale-modal');
+  const unpaidModal = document.getElementById('bar-unpaid-modal');
+  if (e.target === saleModal) closeBarSaleModal();
+  if (e.target === unpaidModal) closeBarUnpaidModal();
 });
 </script>
 {% endblock %}

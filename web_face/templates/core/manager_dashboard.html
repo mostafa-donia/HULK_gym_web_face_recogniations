@@ -186,6 +186,25 @@
       </div>
     </div>
 
+    <!-- Card 6: Bar & Snacks Sales (مبيعات البار والمشروبات) -->
+    <div style="background: var(--bg-card); border: 1px solid rgba(14, 165, 233, 0.35); border-radius: 12px; padding: 15px 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">مبيعات البار المحصلة (الفترة)</span>
+          <div style="color: #38bdf8; font-size: 1.65rem; font-weight: 900; line-height: 1.15; margin-top: 4px;">
+            {{ period_bar_revenue }} <small style="font-size: 0.85rem; font-weight: 700;">{{ gym_profile.currency|default:"ج" }}</small>
+          </div>
+        </div>
+        <a href="{% url 'payments:bar_inventory' %}" style="background: rgba(14, 165, 233, 0.14); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 0.74rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-decoration: none;">
+          {{ period_bar_ops_count }} طلب بار ←
+        </a>
+      </div>
+      <div style="display: flex; justify-content: space-between; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border-color); font-size: 0.78rem; flex-wrap: wrap;">
+        <span style="color: var(--text-muted);">آجل البار المعلق (لم يُدفع): <strong style="color: #c084fc;">{{ period_bar_unpaid }} ج</strong></span>
+        <a href="{% url 'payments:bar_inventory' %}?filter=unpaid" style="color: #c084fc; font-weight: 700; text-decoration: none;">عرض الآجل</a>
+      </div>
+    </div>
+
   </div>
 
   {% if period == 'compare' and comparison_data %}
@@ -385,21 +404,28 @@
             {% for p in period_payments %}
             <tr data-op-type="{{ p.operation_type }}">
               <td>
-                <a href="{% url 'members:member_detail' p.member.id %}" style="color: var(--text-main); font-weight: 800; text-decoration: none;">
-                  {{ p.member.name }}
-                </a>
-                <div style="font-size: 0.78rem; color: var(--text-muted); font-family: monospace;">{{ p.member.mobile|default:"" }}</div>
+                {% if p.member %}
+                  <a href="{% url 'members:member_detail' p.member.id %}" style="color: var(--text-main); font-weight: 800; text-decoration: none;">
+                    {{ p.member.name }}
+                  </a>
+                  <div style="font-size: 0.78rem; color: var(--text-muted); font-family: monospace;">{{ p.member.mobile|default:"" }}</div>
+                {% else %}
+                  <span style="color: var(--text-main); font-weight: 800;">عميل بار</span>
+                  <div style="font-size: 0.78rem; color: var(--text-muted);">{{ p.notes|truncatechars:28 }}</div>
+                {% endif %}
               </td>
               <td style="text-align: left; color: var(--hulk-primary); font-weight: 800; font-size: 1.02rem; font-variant-numeric: tabular-nums;">
                 {{ p.amount }} <small style="font-size: 0.78rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
               </td>
               <td>
-                {% if p.operation_type == 'new' %}
+                {% if p.operation_type == 'new' or p.operation_type == 'new_subscription' %}
                   <span class="badge badge-active">اشتراك جديد</span>
                 {% elif p.operation_type == 'renewal' %}
                   <span class="badge badge-info">تجديد</span>
                 {% elif p.operation_type == 'remaining' %}
                   <span class="badge badge-debt">سداد متبقي</span>
+                {% elif p.operation_type == 'bar_sale' %}
+                  <span class="badge" style="background: rgba(14, 165, 233, 0.18); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.35);">مبيعات البار</span>
                 {% else %}
                   <span class="badge badge-neutral">{{ p.get_operation_type_display }}</span>
                 {% endif %}

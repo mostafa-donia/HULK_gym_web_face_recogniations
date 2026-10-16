@@ -65,17 +65,26 @@
               </span>
             </td>
             <td>
-              <a href="{% url 'members:member_detail' p.member.id %}" style="color: var(--text-main); font-weight: 800; text-decoration: none;">
-                {{ p.member.name }}
-              </a>
+              {% if p.member %}
+                <a href="{% url 'members:member_detail' p.member.id %}" style="color: var(--text-main); font-weight: 800; text-decoration: none;">
+                  {{ p.member.name }}
+                </a>
+              {% else %}
+                <span style="color: var(--text-main); font-weight: 800;">عميل بار</span>
+                <div style="font-size: 0.76rem; color: var(--text-muted);">{{ p.notes|truncatechars:28 }}</div>
+              {% endif %}
             </td>
             <td>
               {% if p.operation_type == 'new_subscription' %}
                 <span class="badge badge-active">اشتراك جديد</span>
               {% elif p.operation_type == 'renewal' %}
                 <span class="badge badge-info">تجديد</span>
-              {% else %}
+              {% elif p.operation_type == 'remaining' %}
                 <span class="badge badge-debt">سداد متبقي</span>
+              {% elif p.operation_type == 'bar_sale' %}
+                <span class="badge" style="background: rgba(14, 165, 233, 0.18); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.35);">مبيعات البار</span>
+              {% else %}
+                <span class="badge badge-neutral">{{ p.get_operation_type_display }}</span>
               {% endif %}
             </td>
             <td style="text-align: left; color: var(--hulk-primary); font-weight: 900; font-size: 1.05rem; font-variant-numeric: tabular-nums;">
