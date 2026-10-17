@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 
 from django.contrib import messages
@@ -243,6 +244,7 @@ def bar_quick_sale_view(request):
     product = get_object_or_404(BarProduct, id=product_id)
     member_id = request.POST.get("member_id")
     buyer_name = request.POST.get("buyer_name", "").strip()
+    buyer_phone = request.POST.get("buyer_phone", "").strip()
     payment_status = request.POST.get("payment_status", "paid")
     is_paid = (payment_status == "paid")
     payment_method = request.POST.get("payment_method", "نقدي")
@@ -256,6 +258,20 @@ def bar_quick_sale_view(request):
         buyer_name = member.name
     elif not buyer_name:
         buyer_name = "عميل نقدي / لاعب"
+
+    if member and not buyer_phone and member.mobile:
+        buyer_phone = member.mobile
+
+    # Validation: If payment is deferred / unpaid, a valid phone number is mandatory!
+    if not is_paid:
+        clean_phone = re.sub(r"[^\d]", "", buyer_phone)
+        if len(clean_phone) < 10 or len(clean_phone) > 15:
+            messages.error(
+                request,
+                "⚠️ خطأ: يجب إدخال رقم هاتف صحيح للمشتري (11 رقم مثل: 010xxxxxxxx) عند تسجيل الطلب بالآجل (لم يدفع بعد) لضمان المتابعة والتحصيل."
+            )
+            next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or "/"
+            return redirect(next_url)
 
     unit_price = product.price
     total_price = (unit_price * quantity).quantize(Decimal("0.01"))
@@ -286,6 +302,7 @@ def bar_quick_sale_view(request):
             product=product,
             member=member,
             buyer_name=buyer_name,
+            buyer_phone=buyer_phone,
             quantity=quantity,
             unit_price=unit_price,
             total_price=total_price,
@@ -297,9 +314,10 @@ def bar_quick_sale_view(request):
             created_by=request.user,
         )
 
+        phone_info = f" (هاتف: {buyer_phone})" if buyer_phone else ""
         AuditLog.log(
             action_type="BAR_SALE_PAID" if is_paid else "BAR_SALE_UNPAID",
-            description=f"طلب بار ({'تم الدفع' if is_paid else 'آجل'}): {product.name} x {quantity} بمبلغ {total_price} ج للمتدرب {buyer_name}",
+            description=f"طلب بار ({'تم الدفع' if is_paid else 'آجل'}): {product.name} x {quantity} بمبلغ {total_price} ج للمتدرب {buyer_name}{phone_info}",
             user=request.user,
             member=member,
             amount=total_price,

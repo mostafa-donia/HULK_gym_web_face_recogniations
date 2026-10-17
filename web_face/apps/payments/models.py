@@ -132,6 +132,12 @@ class BarSale(models.Model):
         default="عميل نقدي / لاعب",
         verbose_name="اسم المشتري / اللاعب",
     )
+    buyer_phone = models.CharField(
+        max_length=30,
+        blank=True,
+        default="",
+        verbose_name="رقم هاتف المشتري",
+    )
     quantity = models.PositiveIntegerField(default=1, verbose_name="الكمية")
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="سعر القطعة")
     total_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="المبلغ الإجمالي")

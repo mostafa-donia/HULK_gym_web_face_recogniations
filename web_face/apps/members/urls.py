@@ -12,4 +12,5 @@ urlpatterns = [
     path("operations/", views.smart_operations_view, name="smart_operations"),
     path("subscription/create/", views.subscription_create_view, name="subscription_create"),
     path("subscription/<int:subscription_id>/edit/", views.subscription_edit_view, name="subscription_edit"),
+    path("api/search/", views.member_search_api, name="member_search_api"),
 ]

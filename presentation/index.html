@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Systemize — سيستم إدارة الجيمات الذكي | العرض التقديمي</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900;1000&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #050811;
+      --card-bg: rgba(14, 22, 38, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #84cc16;
+      --primary-glow: rgba(132, 204, 22, 0.4);
+      --cyan: #38bdf8;
+      --purple: #a855f7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Ambient Background Glow */
+    .ambient-sphere {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(140px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.45;
+      animation: floatAmbient 12s ease-in-out infinite alternate;
+    }
+    .sphere-1 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(132, 204, 22, 0.25) 0%, transparent 70%);
+      top: -150px;
+      left: -150px;
+    }
+    .sphere-2 {
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%);
+      bottom: -200px;
+      right: -200px;
+    }
+    @keyframes floatAmbient {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, 30px) scale(1.1); }
+    }
+
+    /* Top Nav Bar */
+    header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      padding: 0 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 30;
+      background: linear-gradient(180deg, rgba(5,8,17,0.9) 0%, transparent 100%);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #84cc16 0%, #10b981 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+    .brand-title {
+      font-size: 1.35rem;
+      font-weight: 1000;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+    }
+    .brand-badge {
+      background: rgba(132, 204, 22, 0.15);
+      border: 1px solid rgba(132, 204, 22, 0.4);
+      color: #bef264;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 20px;
+      margin-right: 6px;
+    }
+
+    /* Hand Wave HUD Control in Header */
+    .gesture-hud {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 6px 14px;
+      border-radius: 30px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    .camera-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #84cc16;
+      overflow: hidden;
+      position: relative;
+      background: #000;
+    }
+    .camera-circle video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    .gesture-status-text {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .gesture-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #84cc16;
+      box-shadow: 0 0 10px #84cc16;
+      animation: pulseDot 1.5s infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+    .gesture-btn {
+      background: rgba(132, 204, 22, 0.2);
+      border: 1px solid rgba(132, 204, 22, 0.4);
+      color: #bef264;
+      font-size: 0.76rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .gesture-btn:hover {
+      background: #84cc16;
+      color: #050811;
+    }
+
+    /* Presentation Slide Carousel Container */
+    .deck-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 90px 60px 80px 60px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(80px) scale(0.96);
+      transition: all 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .slide.prev {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(-80px) scale(0.96);
+    }
+
+    /* Two-Column Slide Layout (Content + Visual) */
+    .slide-layout {
+      width: 100%;
+      max-width: 1380px;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 50px;
+      align-items: center;
+    }
+
+    /* Single Center Column Layout for Hero/Final slides */
+    .slide-layout-center {
+      width: 100%;
+      max-width: 1100px;
+      text-align: center;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Typography & Content */
+    .slide-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--primary);
+      background: rgba(132, 204, 22, 0.12);
+      border: 1px solid rgba(132, 204, 22, 0.3);
+      padding: 6px 16px;
+      border-radius: 30px;
+      margin-bottom: 16px;
+      width: fit-content;
+    }
+
+    .slide-title {
+      font-size: 2.8rem;
+      font-weight: 1000;
+      line-height: 1.25;
+      color: #ffffff;
+      margin-bottom: 16px;
+    }
+    .slide-title span {
+      background: linear-gradient(135deg, #a3e635 0%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-desc {
+      font-size: 1.25rem;
+      line-height: 1.7;
+      color: #cbd5e1;
+      margin-bottom: 26px;
+      font-weight: 600;
+    }
+
+    /* Bullet Cards ("Not Jammy" - Spacious & Punchy) */
+    .bullet-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .bullet-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .bullet-item:hover {
+      transform: translateX(-6px);
+      border-color: rgba(132, 204, 22, 0.4);
+    }
+    .bullet-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(132, 204, 22, 0.15);
+      border: 1px solid rgba(132, 204, 22, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+    .bullet-text strong {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: #ffffff;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .bullet-text p {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin: 0;
+      line-height: 1.45;
+    }
+
+    /* Visual Mockup Container */
+    .visual-container {
+      position: relative;
+      border-radius: 20px;
+      background: #090e17;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 50px rgba(132, 204, 22, 0.15);
+      transition: transform 0.3s ease;
+      max-height: 620px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .visual-container:hover {
+      transform: translateY(-4px) scale(1.01);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    .visual-container img {
+      width: 100%;
+      height: auto;
+      max-height: 600px;
+      object-fit: contain;
+      display: block;
+      border-radius: 18px;
+    }
+
+    /* Floating Navigation Controls */
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      z-index: 25;
+      transition: all 0.2s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .nav-arrow:hover {
+      background: var(--primary);
+      color: #050811;
+      border-color: var(--primary);
+      box-shadow: 0 0 30px var(--primary-glow);
+    }
+    .nav-arrow.next {
+      left: 30px;
+    }
+    .nav-arrow.prev {
+      right: 30px;
+    }
+
+    /* Bottom Status & Progress Bar */
+    footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      padding: 0 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 30;
+      background: linear-gradient(0deg, rgba(5,8,17,0.95) 0%, transparent 100%);
+    }
+
+    .slide-counter {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      direction: ltr;
+    }
+    .slide-counter span {
+      color: #ffffff;
+      font-size: 1.1rem;
+      font-weight: 1000;
+    }
+
+    .slide-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .dot {
+      width: 24px;
+      height: 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .dot.active {
+      width: 44px;
+      background: linear-gradient(90deg, #84cc16, #38bdf8);
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+
+    .bottom-hint {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .kbd-badge {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #ffffff;
+    }
+
+    /* Hand Wave Toast Notification */
+    #waveNotification {
+      position: fixed;
+      top: 85px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-30px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid #84cc16;
+      box-shadow: 0 10px 40px rgba(132, 204, 22, 0.3);
+      padding: 10px 24px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 0.92rem;
+      color: #ffffff;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #waveNotification.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Motion Canvas (Hidden) */
+    #motionCanvas {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Ambience -->
+  <div class="ambient-sphere sphere-1"></div>
+  <div class="ambient-sphere sphere-2"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">🏋️‍♂️</div>
+      <div>
+        <div style="display: flex; align-items: center;">
+          <h1 class="brand-title">Systemize</h1>
+          <span class="brand-badge">PRO GYM OS</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hand Gesture HUD Widget -->
+    <div class="gesture-hud">
+      <div class="camera-circle" id="cameraCircle">
+        <video id="gestureVideo" autoplay playsinline muted></video>
+      </div>
+      <div class="gesture-status-text">
+        <span class="gesture-pulse" id="hudPulse"></span>
+        <span id="hudStatus">لوّح بيدك ✋ لتقليب الشريحة</span>
+      </div>
+      <button type="button" class="gesture-btn" id="toggleGestureBtn" onclick="toggleWebcamGesture()">
+        الكاميرا نشطة ✓
+      </button>
+    </div>
+  </header>
+
+  <!-- Hand Wave Notification Toast -->
+  <div id="waveNotification">
+    <span style="font-size: 1.4rem;" id="waveIcon">👋</span>
+    <span id="waveText">تم التقليب بالتلويح!</span>
+  </div>
+
+  <!-- Floating Nav Arrows -->
+  <div class="nav-arrow next" onclick="nextSlide()" title="الشريحة التالية (أو اضغط السهم لليسار)">
+    ←
+  </div>
+  <div class="nav-arrow prev" onclick="prevSlide()" title="الشريحة السابقة (أو اضغط السهم لليمين)">
+    →
+  </div>
+
+  <!-- Main Deck Container -->
+  <main class="deck-container" id="deckContainer">
+
+    <!-- Slide 1: Welcome & Overview (Hero) -->
+    <section class="slide active" data-index="0">
+      <div class="slide-layout">
+        <div>
+          <div class="slide-tag">🚀 الجيل الجديد في إدارة الجيمات</div>
+          <h2 class="slide-title">
+            سيستم <span>Systemize</span><br>
+            دماغك ترتاح.. وجيمك يكبر
+          </h2>
+          <p class="slide-desc">
+            وداعاً للدفاتر المقطوعة، والكروت الضايعة، وسؤال "أنت باقي عليك كام؟".
+            سيستم ذكي معمول بلهجة واحتياجات الجيمات المصرية بالملي؛ يحكم صالتك ويقفل أبواب اللخبطة والسرقة في ثانية.
+          </p>
+
+          <div class="bullet-list">
+            <div class="bullet-item">
+              <div class="bullet-icon">⚡</div>
+              <div class="bullet-text">
+                <strong>بصمة وجه فورية (Face ID)</strong>
+                <p>اللاعب يدخل وشه في الكاميرا، السيستم يفتح البوابة ويسجل حضوره بدون كروت.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">💬</div>
+              <div class="bullet-text">
+                <strong>إشعارات واتساب تلقائية باسم الجيم</strong>
+                <p>فواتير، ترحيب، وبواقي اشتراكات بتتبعت أوتوماتيك لشياكة المكان.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">🔒</div>
+              <div class="bullet-text">
+                <strong>شغال 100% بدون إنترنت (Offline)</strong>
+                <p>النت قطع؟ النور رمش؟ السيستم شغال محلياً على جهازك ومحمي بأعلى درجات التشفير.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-container">
+          <img src="assets/01_dashboard.png" alt="Systemize Dashboard">
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 2: Face Recognition -->
+    <section class="slide" data-index="1">
+      <div class="slide-layout">
+        <div>
+          <div class="slide-tag">👁️ التعرف الذكي بالوجه</div>
+          <h2 class="slide-title">
+            بصمة الوجه <span>Face ID</span><br>
+            دخول في ثانية واحدة
+          </h2>
+          <p class="slide-desc">
+            مفيش متدرب يقدر يدي كرته لصحبه، ولا حد يقولك "نسيت الكارت في البيت".
+            الكاميرا بتلقط الوش حتى مع الإضاءة المختلفة وبتفتح البوابة في رمشة عين.
+          </p>
+
+          <div class="bullet-list">
+            <div class="bullet-item">
+              <div class="bullet-icon">⚡</div>
+              <div class="bullet-text">
+                <strong>سرعة جبارة (أقل من نصف ثانية)</strong>
+                <p>التعرف بيتم محلياً بدون ما يعطل طابور الدخول في أوقات الذروة.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">⚠️</div>
+              <div class="bullet-text">
+                <strong>كشف الاشتراكات المنتهية فوراً</strong>
+                <p>لو الاشتراك خلص أو عليه باقي فلوس، السيستم بينبه الريسبشن بصوت وصورة بشياكة.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">📺</div>
+              <div class="bullet-text">
+                <strong>شاشة كشك ترحيبية للمتدرب</strong>
+                <p>شاشة مستقلة للمتدرب ترحب بيه باسمه وعدد الأيام المتبقية في اشتراكه.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-container">
+          <img src="assets/18_face_kiosk.png" alt="Face Recognition Kiosk">
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 3: WhatsApp Automation -->
+    <section class="slide" data-index="2">
+      <div class="slide-layout">
+        <div>
+          <div class="slide-tag">📲 خدمة عملاء VIP</div>
+          <h2 class="slide-title">
+            رسائل وفواتير <span>واتساب</span><br>
+            شياكة تليق باسم جيمك
+          </h2>
+          <p class="slide-desc">
+            كل حركة مالية أو اشتراك جديد بيتحول لرسالة واتساب رسمية شيك رايحة على تليفون المتدرب مباشرة باسم الجيم.
+          </p>
+
+          <div class="bullet-list">
+            <div class="bullet-item">
+              <div class="bullet-icon">🧾</div>
+              <div class="bullet-text">
+                <strong>فاتورة وإيصال سداد رسمي</strong>
+                <p>بيوصل المتدرب أول ما يدفع في الخزينة برقم الفاتورة والمبلغ والمتبقي.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">⏰</div>
+              <div class="bullet-text">
+                <strong>تنبيه ذكي قبل انتهاء الاشتراك بـ 3 أيام</strong>
+                <p>بيفكر اللاعب يجدد قبل ما وقته يخلص.. يعني دخل شهري مستمر ومضمون.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">🎉</div>
+              <div class="bullet-text">
+                <strong>رسائل ترحيب وتشجيع للمشتركين</strong>
+                <p>بتبني ولاء حقيقي بين الجيم والمتدربين من غير مجهود يدوي.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-container">
+          <img src="assets/13_whatsapp_center.png" alt="WhatsApp Automation Center">
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4: Bar & Inventory Sales -->
+    <section class="slide" data-index="3">
+      <div class="slide-layout">
+        <div>
+          <div class="slide-tag">🥤 مبيعات ومخزون البار</div>
+          <h2 class="slide-title">
+            البار والمكملات<br>
+            <span>بيع سريع.. وحقك مش هيضيع</span>
+          </h2>
+          <p class="slide-desc">
+            مياه، بروتين، مشروبات طاقة.. المتدرب بياخد إزازة المية ويدخل يتمرن ويقولك "هحاسب بعد التمرين".
+            مع Systemize، كل إزازة متسجلة ومفيش مليم بيسقط!
+          </p>
+
+          <div class="bullet-list">
+            <div class="bullet-item">
+              <div class="bullet-icon">⚡</div>
+              <div class="bullet-text">
+                <strong>زرارين كبار في الرئيسية (بيع فوري vs آجل)</strong>
+                <p>تسجيل الطلب في 3 ثواني ببحث فوري في المنتجات وبكليك واحدة على الصنف.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">📱</div>
+              <div class="bullet-text">
+                <strong>شرط رقم التليفون الإجباري للآجل</strong>
+                <p>لو المتدرب هيدفع بعد التمرين، السيستم بيجبر تسجيل رقم تليفونه للتواصل والتحصيل.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">💬</div>
+              <div class="bullet-text">
+                <strong>تذكير واتساب بضغطة زر واحدة</strong>
+                <p>زرار واتساب جنب كل حساب معلق يبعتله تذكير ودي بالمبلغ المطلوب.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-container">
+          <img src="assets/06_bar_inventory.png" alt="Bar Inventory & POS">
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 5: Private Training & Coach Payroll -->
+    <section class="slide" data-index="4">
+      <div class="slide-layout">
+        <div>
+          <div class="slide-tag">🏋️‍♂️ عمولات ومرتبات المدربين</div>
+          <h2 class="slide-title">
+            حسابات <span>البرايفت (PT)</span><br>
+            مضبوطة بالسحتوت
+          </h2>
+          <p class="slide-desc">
+            مفيش خناقات آخر الشهر مع الكباتن على مين درّب مين وحصته كام.. السيستم بيحسب النسبتين أوتوماتيك:
+          </p>
+
+          <div class="bullet-list">
+            <div class="bullet-item">
+              <div class="bullet-icon">📅</div>
+              <div class="bullet-text">
+                <strong>اشتراك برايفت شهري</strong>
+                <p>اشتراك الجيم + ثمن البرايفت، ونسبة المدرب (مثلاً 50%) بتتحسب لوحدها في حسابه.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">🎯</div>
+              <div class="bullet-text">
+                <strong>حصص برايفت فردية سريعة</strong>
+                <p>حصة واحدة استثنائية يدخل يدفع تمنها ونسبة الكابتن تتسجل كاش فوري.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">📋</div>
+              <div class="bullet-text">
+                <strong>كشف حساب مرتبات تفصيلي لكل كابتن</strong>
+                <p>عدد الحصص، المتدربين، السلفيات، والعمولة الصافية بضغطة زر واحدة.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-container">
+          <img src="assets/09_trainers_management.png" alt="Trainers Management & Payroll">
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 6: Financial Reports & Safety -->
+    <section class="slide" data-index="5">
+      <div class="slide-layout">
+        <div>
+          <div class="slide-tag">📊 أرباح وخزينة الجيم</div>
+          <h2 class="slide-title">
+            تقارير <span>الأرباح والمصروفات</span><br>
+            عينك على كل قرش
+          </h2>
+          <p class="slide-desc">
+            من غير برامج محاسبة معقدة ولا شيتات إكسيل تبوظ.. لوحة تحكم الخزينة بتوريك كل قرش دخل وكل قرش خرج.
+          </p>
+
+          <div class="bullet-list">
+            <div class="bullet-item">
+              <div class="bullet-icon">💰</div>
+              <div class="bullet-text">
+                <strong>صافي الربح الحقيقي</strong>
+                <p>إيرادات الاشتراكات + مبيعات البار - المصروفات (إيجار، صيانة، فواتير) وعمولات المدربين.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">🔐</div>
+              <div class="bullet-text">
+                <strong>قفل أرقام الخزينة برمز المدير (PIN)</strong>
+                <p>الكاشير يسجل عمليات فقط، لكن الأرباح الإجمالية والمرتبات مقفولة للمدير وحده.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">👁️</div>
+              <div class="bullet-text">
+                <strong>سجل تدقيق كامل (Audit Trail)</strong>
+                <p>كل خصم، حذف، أو تعديل في الفلوس متسجل باسم الموظف بالساعة والدقيقة.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-container">
+          <img src="assets/15_reports_financial.png" alt="Financial Reports">
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 7: Offline Protection & License -->
+    <section class="slide" data-index="6">
+      <div class="slide-layout">
+        <div>
+          <div class="slide-tag">🛡️ حماية وتشغيل مضمون</div>
+          <h2 class="slide-title">
+            شغال <span>أوفلاين 100%</span><br>
+            ومحمي بأقوى تشفير
+          </h2>
+          <p class="slide-desc">
+            مش موقع ويب عادي يقع لو النت فصل.. ده سيستم احترافي كامل شغال على جهازك بأعلى سرعة وأمان.
+          </p>
+
+          <div class="bullet-list">
+            <div class="bullet-item">
+              <div class="bullet-icon">🔌</div>
+              <div class="bullet-text">
+                <strong>النت فصل؟ ولا يشغلك!</strong>
+                <p>الجيم مكمل شغال بصمة وجه وفواتير وبار عادي جداً كأن مفيش حاجة حصلت.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">🔒</div>
+              <div class="bullet-text">
+                <strong>مربوط بالعتاد (Anti-Copy HWID)</strong>
+                <p>السيستم متقفل ببصمة الهارد والمازربورد.. مستحيل حد ينسخه على فلاشة أو يسرقه.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">🚀</div>
+              <div class="bullet-text">
+                <strong>محمول بالكامل (Standalone / Portable)</strong>
+                <p>مش محتاج تسطيب بايثون ولا برامج مساعدة.. فك الضغط واضغط تشغيل وابدأ فوراً!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-container">
+          <img src="assets/16_settings.png" alt="Systemize Security & Settings">
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 8: 1-Click Update from GitHub -->
+    <section class="slide" data-index="7">
+      <div class="slide-layout">
+        <div>
+          <div class="slide-tag">⚡ تطوير وتحديث مستمر</div>
+          <h2 class="slide-title">
+            تحديثات الجيم<br>
+            <span>بضغطة زر واحدة</span>
+          </h2>
+          <p class="slide-desc">
+            مش محتاج مهندس يجيلك ولا فلاشات تنقلها عشان تحدث النظام.. السيستم مربوط بسيرفر التحديثات مباشرة.
+          </p>
+
+          <div class="bullet-list">
+            <div class="bullet-item">
+              <div class="bullet-icon">☁️</div>
+              <div class="bullet-text">
+                <strong>تحديث فوري من لوحة التحكم</strong>
+                <p>زرار "تحديث النظام الآن" بيسحب أي ميزة جديدة أو شاشات إضافية في ثواني.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">🛡️</div>
+              <div class="bullet-text">
+                <strong>نسخة احتياطية تلقائية لقاعدتك</strong>
+                <p>السيستم بيحفظ نسخة كاملة من بيانات المشتركين والفلوس أوتوماتيك قبل أي تحديث.</p>
+              </div>
+            </div>
+            <div class="bullet-item">
+              <div class="bullet-icon">🔄</div>
+              <div class="bullet-text">
+                <strong>ملف الطوارئ UPDATE_SYSTEMIZE.bat</strong>
+                <p>لو حصل أي انقطاع في المتصفح، ملف واحد بيحدث كل حاجة ويرجع الخادم للعمل فوراً.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-container">
+          <img src="assets/17_manager_dashboard.png" alt="System Updates & Control">
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 9: Ready to Start / Call to Action -->
+    <section class="slide" data-index="8">
+      <div class="slide-layout-center">
+        <div class="slide-tag" style="margin: 0 auto 20px auto;">🎯 ابدأ طفرة في جيمك اليوم</div>
+        <h2 class="slide-title" style="font-size: 3.4rem; margin-bottom: 20px;">
+          جاهز تنقل صالتك لمستوى <span>Systemize</span>؟
+        </h2>
+        <p class="slide-desc" style="max-width: 780px; margin: 0 auto 36px auto; font-size: 1.35rem;">
+          وفر ساعات من تضييع الوقت، احكم فلوسك ومخزونك، وادي متدربينك تجربة عالمية ببصمة الوجه وفواتير الواتساب.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 960px; margin-bottom: 36px;">
+          <div class="bullet-item" style="flex-direction: column; text-align: center; padding: 24px;">
+            <div class="bullet-icon" style="margin: 0 auto 12px auto; font-size: 2rem; width: 60px; height: 60px;">🎁</div>
+            <strong style="font-size: 1.25rem;">تجربة مجانية 7 أيام</strong>
+            <p>شغل السيستم بكامل ميزاته وبصمة الوجه بدون أي قيود لمدة أسبوع كامل.</p>
+          </div>
+          
+          <div class="bullet-item" style="flex-direction: column; text-align: center; padding: 24px; border-color: rgba(132, 204, 22, 0.4);">
+            <div class="bullet-icon" style="margin: 0 auto 12px auto; font-size: 2rem; width: 60px; height: 60px; background: rgba(132, 204, 22, 0.25);">⚡</div>
+            <strong style="font-size: 1.25rem; color: #a3e635;">تشغيل فوري في 5 دقائق</strong>
+            <p>نسخة جاهزة بدون تثبيت على أي لابتوب أو كمبيوتر بويندوز.</p>
+          </div>
+
+          <div class="bullet-item" style="flex-direction: column; text-align: center; padding: 24px;">
+            <div class="bullet-icon" style="margin: 0 auto 12px auto; font-size: 2rem; width: 60px; height: 60px;">🤝</div>
+            <strong style="font-size: 1.25rem;">دعم فني وتدريب كامل</strong>
+            <p>فريق العمل عندك هيتدرب على كل شاشة وتفصيلة بكل سهولة.</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+          <a href="https://wa.me/201000000000?text=مرحباً،%20أريد%20طلب%20تجربة%20سيستم%20Systemize%20للجيم" target="_blank" style="background: linear-gradient(135deg, #84cc16 0%, #10b981 100%); color: #050811; font-weight: 1000; font-size: 1.2rem; padding: 14px 36px; border-radius: 40px; text-decoration: none; box-shadow: 0 10px 30px var(--primary-glow); display: flex; align-items: center; gap: 10px;">
+            💬 اطلب نسختك الآن عبر واتساب
+          </a>
+          <button onclick="goToSlide(0)" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #ffffff; font-weight: 800; font-size: 1.1rem; padding: 14px 28px; border-radius: 40px; cursor: pointer;">
+            🔄 إعادة العرض من البداية
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Hidden Motion Canvas for WebCam Frame Difference Processing -->
+  <canvas id="motionCanvas" width="120" height="90"></canvas>
+
+  <!-- Bottom Bar -->
+  <footer>
+    <div class="slide-counter">
+      <span id="currentSlideNum">01</span> / <span id="totalSlideNum" style="color: var(--text-muted); font-size: 0.9rem;">09</span>
+    </div>
+
+    <div class="slide-dots" id="slideDots"></div>
+
+    <div class="bottom-hint">
+      <span>✋ لوّح بيدك قدام الكاميرا</span>
+      <span>أو استخدم <span class="kbd-badge">←</span> <span class="kbd-badge">→</span> <span class="kbd-badge">Space</span></span>
+      <button onclick="toggleFullscreen()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.1rem; cursor: pointer; padding: 4px;" title="ملء الشاشة">⛶</button>
+    </div>
+  </footer>
+
+  <!-- Gesture Recognition & Slide Carousel Logic -->
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let currentSlide = 0;
+    const dotsContainer = document.getElementById('slideDots');
+    const currentSlideNumEl = document.getElementById('currentSlideNum');
+    const totalSlideNumEl = document.getElementById('totalSlideNum');
+
+    // Build Dots
+    totalSlideNumEl.innerText = String(totalSlides).padStart(2, '0');
+    slides.forEach((_, idx) => {
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (idx === 0 ? ' active' : '');
+      dot.onclick = () => goToSlide(idx);
+      dotsContainer.appendChild(dot);
+    });
+
+    function updateSlideUI() {
+      slides.forEach((s, idx) => {
+        s.classList.remove('active', 'prev');
+        if (idx === currentSlide) {
+          s.classList.add('active');
+        } else if (idx < currentSlide) {
+          s.classList.add('prev');
+        }
+      });
+
+      // Update dots
+      document.querySelectorAll('.dot').forEach((d, idx) => {
+        d.classList.toggle('active', idx === currentSlide);
+      });
+
+      currentSlideNumEl.innerText = String(currentSlide + 1).padStart(2, '0');
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        currentSlide++;
+        updateSlideUI();
+      } else {
+        // loop back to first
+        currentSlide = 0;
+        updateSlideUI();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlideUI();
+      } else {
+        currentSlide = totalSlides - 1;
+        updateSlideUI();
+      }
+    }
+
+    function goToSlide(index) {
+      if (index >= 0 && index < totalSlides) {
+        currentSlide = index;
+        updateSlideUI();
+      }
+    }
+
+    // Keyboard Controls
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowRight' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key === 'Home') {
+        goToSlide(0);
+      } else if (e.key === 'End') {
+        goToSlide(totalSlides - 1);
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      }
+    });
+
+    // Touch Swipe Controls
+    let touchStartX = 0;
+    window.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    window.addEventListener('touchend', e => {
+      const diffX = e.changedTouches[0].clientX - touchStartX;
+      if (diffX < -50) nextSlide();
+      if (diffX > 50) prevSlide();
+    }, { passive: true });
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    /* ========================================================
+       👋 HAND WAVE DETECTION ALGORITHM VIA WEBCAM
+       High-Speed Frame Difference + Horizontal Motion Centroid
+       ======================================================== */
+    const video = document.getElementById('gestureVideo');
+    const canvas = document.getElementById('motionCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const hudStatus = document.getElementById('hudStatus');
+    const hudPulse = document.getElementById('hudPulse');
+    const toggleGestureBtn = document.getElementById('toggleGestureBtn');
+    const waveToast = document.getElementById('waveNotification');
+    const waveIcon = document.getElementById('waveIcon');
+    const waveText = document.getElementById('waveText');
+
+    let isCameraActive = false;
+    let cameraStream = null;
+    let prevFrameData = null;
+    let motionHistory = [];
+    let isGestureCoolingDown = false;
+    let waveDetectionAnimationId = null;
+
+    async function initWebcamGesture() {
+      try {
+        hudStatus.innerText = 'جاري تشغيل الكاميرا...';
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 320, height: 240, frameRate: { ideal: 30 } },
+          audio: false
+        });
+        cameraStream = stream;
+        video.srcObject = stream;
+        await video.play();
+        isCameraActive = true;
+        hudStatus.innerText = 'لوّح بيدك ✋ لتقليب الشريحة';
+        hudPulse.style.background = '#84cc16';
+        hudPulse.style.boxShadow = '0 0 10px #84cc16';
+        toggleGestureBtn.innerText = 'الكاميرا نشطة ✓';
+        toggleGestureBtn.style.background = 'rgba(132, 204, 22, 0.2)';
+        processMotionFrames();
+      } catch (err) {
+        console.warn('Webcam permission error or no camera', err);
+        hudStatus.innerText = 'الكاميرا غير متوفرة (استخدم الأسهم ⌨️)';
+        hudPulse.style.background = '#f59e0b';
+        toggleGestureBtn.innerText = 'تشغيل الكاميرا';
+        toggleGestureBtn.style.background = 'rgba(255,255,255,0.1)';
+        isCameraActive = false;
+      }
+    }
+
+    function toggleWebcamGesture() {
+      if (isCameraActive) {
+        // Stop
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(t => t.stop());
+        }
+        isCameraActive = false;
+        video.srcObject = null;
+        hudStatus.innerText = 'الكاميرا متوقفة ⏸️';
+        hudPulse.style.background = '#94a3b8';
+        toggleGestureBtn.innerText = 'تشغيل الكاميرا';
+        toggleGestureBtn.style.background = 'rgba(255,255,255,0.1)';
+        if (waveDetectionAnimationId) cancelAnimationFrame(waveDetectionAnimationId);
+      } else {
+        initWebcamGesture();
+      }
+    }
+
+    function processMotionFrames() {
+      if (!isCameraActive) return;
+
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        // Draw small frame
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const currentData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const curPixels = currentData.data;
+
+        if (prevFrameData) {
+          let sumX = 0;
+          let motionPixels = 0;
+          const prevPixels = prevFrameData.data;
+          const len = curPixels.length;
+
+          // Greyscale pixel diff
+          for (let i = 0; i < len; i += 4) {
+            const curBrightness = (curPixels[i] + curPixels[i+1] + curPixels[i+2]) / 3;
+            const prevBrightness = (prevPixels[i] + prevPixels[i+1] + prevPixels[i+2]) / 3;
+            const diff = Math.abs(curBrightness - prevBrightness);
+
+            if (diff > 28) {
+              const pixelIndex = i / 4;
+              const x = pixelIndex % canvas.width;
+              sumX += x;
+              motionPixels++;
+            }
+          }
+
+          // If substantial motion is detected (hand wave in front of cam)
+          const minMotionThreshold = 180; // minimum changed pixels
+          if (motionPixels > minMotionThreshold) {
+            const centroidX = sumX / motionPixels;
+            const now = Date.now();
+            motionHistory.push({ x: centroidX, time: now });
+
+            // Keep only recent 400ms
+            motionHistory = motionHistory.filter(p => now - p.time < 420);
+
+            if (!isGestureCoolingDown && motionHistory.length >= 4) {
+              const first = motionHistory[0];
+              const last = motionHistory[motionHistory.length - 1];
+              const deltaX = last.x - first.x;
+              const duration = last.time - first.time;
+
+              // Notice: camera is mirrored in user perception
+              // Moving hand left-to-right on camera
+              if (deltaX > 28 && duration > 80 && duration < 400) {
+                // Wave Right -> Next Slide
+                triggerHandWaveAction('next');
+              } else if (deltaX < -28 && duration > 80 && duration < 400) {
+                // Wave Left -> Prev Slide
+                triggerHandWaveAction('prev');
+              }
+            }
+          } else {
+            // Decaying history when motion drops
+            if (motionHistory.length > 0 && Date.now() - motionHistory[motionHistory.length - 1].time > 200) {
+              motionHistory = [];
+            }
+          }
+        }
+
+        prevFrameData = currentData;
+      }
+
+      waveDetectionAnimationId = requestAnimationFrame(processMotionFrames);
+    }
+
+    function triggerHandWaveAction(direction) {
+      isGestureCoolingDown = true;
+      motionHistory = [];
+
+      if (direction === 'next') {
+        nextSlide();
+        showWaveToast('👋 لوّحت لليمين ➡️ الشريحة التالية');
+      } else {
+        prevSlide();
+        showWaveToast('👋 لوّحت لليسار ⬅️ الشريحة السابقة');
+      }
+
+      // Visual flash on camera HUD
+      hudPulse.style.background = '#38bdf8';
+      hudPulse.style.boxShadow = '0 0 16px #38bdf8';
+
+      // Cooldown timer (750ms)
+      setTimeout(() => {
+        isGestureCoolingDown = false;
+        hudPulse.style.background = '#84cc16';
+        hudPulse.style.boxShadow = '0 0 10px #84cc16';
+      }, 750);
+    }
+
+    let toastTimer = null;
+    function showWaveToast(message) {
+      clearTimeout(toastTimer);
+      waveText.innerText = message;
+      waveToast.classList.add('show');
+      toastTimer = setTimeout(() => {
+        waveToast.classList.remove('show');
+      }, 1600);
+    }
+
+    // Auto-launch camera on user click or load
+    window.addEventListener('DOMContentLoaded', () => {
+      // Prompt user or start on first interaction
+      initWebcamGesture();
+    });
+  </script>
+</body>
+</html>

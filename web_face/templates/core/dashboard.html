@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}الرئيسية — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
@@ -86,13 +86,16 @@
 </div>
 
 <!-- 1. Modal: شراء منتج من البار (Fast Bar Sale) -->
-<div id="bar-sale-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.78); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 18px;">
-  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; width: 100%; max-width: 520px; padding: 24px; box-shadow: var(--shadow-lg);">
+<div id="bar-sale-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.82); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 18px; overflow-y: auto;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; padding: 24px; box-shadow: var(--shadow-lg);">
     
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
       <div style="display: flex; align-items: center; gap: 8px;">
         <span style="font-size: 1.5rem;">🥤</span>
-        <h2 style="color: var(--text-main); font-size: 1.35rem; font-weight: 900; margin: 0;">شراء منتج من البار</h2>
+        <div>
+          <h2 style="color: var(--text-main); font-size: 1.35rem; font-weight: 900; margin: 0;">شراء منتج من البار</h2>
+          <small style="color: var(--text-muted); font-size: 0.78rem;">تسجيل سريع لطلبات المشروبات والمكملات (نقدي أو آجل)</small>
+        </div>
       </div>
       <button type="button" onclick="closeBarSaleModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
     </div>
@@ -100,15 +103,38 @@
     <form method="post" action="{% url 'payments:bar_quick_sale' %}" id="quickBarSaleForm" style="display: flex; flex-direction: column; gap: 14px;">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ request.path }}">
+      <input type="hidden" name="member_id" id="barMemberIdInput" value="">
 
-      <!-- Product Picker -->
-      <div>
-        <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
-          اختر المنتج من البار *
-        </label>
-        <select name="product_id" id="barProductSelect" onchange="updateBarSaleTotal()" required class="form-control" style="font-size: 1rem; font-weight: 800; height: 46px;">
+      <!-- Product Section with Live Search & Chips -->
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <label style="font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin: 0;">
+            اختر المنتج من البار *
+          </label>
+          <span style="font-size: 0.75rem; color: #38bdf8;">⚡ بحث سريع بالاسم</span>
+        </div>
+
+        <!-- Quick Product Search Input -->
+        <div style="position: relative; margin-bottom: 8px;">
+          <input type="text" id="barProductSearchInput" oninput="filterBarProductsLive(this.value)" placeholder="🔍 اكتب اسم المنتج (مثلاً: ماء، بروتين، ريد بول)..." class="form-control" style="height: 38px; font-size: 0.88rem; padding-right: 32px;" autocomplete="off">
+          <span style="position: absolute; right: 10px; top: 9px; color: var(--text-muted); pointer-events: none;">🔍</span>
+        </div>
+
+        <!-- Interactive Product Chips for instant 1-click selection -->
+        <div id="barProductChipsContainer" style="display: flex; flex-wrap: wrap; gap: 6px; max-height: 110px; overflow-y: auto; margin-bottom: 8px; padding-bottom: 2px;">
           {% for p in bar_products %}
-            <option value="{{ p.id }}" data-price="{{ p.price }}" data-stock="{{ p.stock_quantity }}">
+            <button type="button" class="bar-product-chip" data-id="{{ p.id }}" data-name="{{ p.name|lower }}" data-price="{{ p.price }}" data-stock="{{ p.stock_quantity }}" onclick="selectBarProductChip('{{ p.id }}')" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); font-size: 0.82rem; font-weight: 700; padding: 5px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s ease;">
+              <span>{{ p.name }}</span>
+              <span style="color: #A8F14B; font-weight: 900;">{{ p.price }} {{ gym_profile.currency|default:"ج" }}</span>
+              <small style="color: {% if p.stock_quantity <= 0 %}#ef4444{% else %}#94a3b8{% endif %}; font-size: 0.72rem;">({{ p.stock_quantity }})</small>
+            </button>
+          {% endfor %}
+        </div>
+
+        <!-- Master Select Dropdown -->
+        <select name="product_id" id="barProductSelect" onchange="onBarProductSelectChanged()" required class="form-control" style="font-size: 0.95rem; font-weight: 800; height: 42px;">
+          {% for p in bar_products %}
+            <option value="{{ p.id }}" data-price="{{ p.price }}" data-stock="{{ p.stock_quantity }}" data-name="{{ p.name|lower }}">
               {{ p.name }} — {{ p.price }} {{ gym_profile.currency|default:"ج" }} (متاح: {{ p.stock_quantity }})
             </option>
           {% empty %}
@@ -129,12 +155,58 @@
         </div>
       </div>
 
-      <!-- Buyer Name (Member or Walk-in) -->
-      <div>
-        <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
-          اسم المتدرب / المشتري (اختياري)
-        </label>
-        <input type="text" name="buyer_name" class="form-control" placeholder="اكتب اسم اللاعب أو اتركه كعميل نقدي..." style="height: 42px;">
+      <!-- Member Live Search & Selection Section -->
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <label style="font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin: 0;">
+            المشتري / اللاعب
+          </label>
+          <span style="font-size: 0.75rem; color: #38bdf8;">👤 بحث سريع في الأعضاء</span>
+        </div>
+
+        <!-- Quick Member Live Search -->
+        <div style="position: relative; margin-bottom: 8px;">
+          <input type="text" id="barMemberSearchInput" oninput="searchBarMembersLive(this.value)" placeholder="🔍 اكتب اسم المشترك، الكود (MEM)، أو رقم الهاتف..." class="form-control" style="height: 40px; font-size: 0.88rem;" autocomplete="off">
+          
+          <!-- Dropdown suggestions -->
+          <div id="barMemberSearchResults" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #0b1320; border: 1px solid #38bdf8; border-radius: 10px; max-height: 220px; overflow-y: auto; z-index: 10000; box-shadow: 0 12px 30px rgba(0,0,0,0.7);">
+          </div>
+        </div>
+
+        <!-- Selected Member Pill -->
+        <div id="barSelectedMemberPill" style="display: none; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.1rem;">✓</span>
+            <div>
+              <strong id="barSelectedMemberName" style="color: #38bdf8; font-size: 0.92rem; display: block;"></strong>
+              <small id="barSelectedMemberMeta" style="color: var(--text-muted); font-size: 0.76rem;"></small>
+            </div>
+          </div>
+          <button type="button" onclick="clearSelectedBarMember()" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 0.75rem; color: #ef4444;" title="إزالة واختيار عميل آخر">
+            ✕ إلغاء
+          </button>
+        </div>
+
+        <!-- Buyer Name Input (Auto-filled or walk-in) -->
+        <div style="margin-bottom: 8px;">
+          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+            اسم المشتري
+          </label>
+          <input type="text" id="barBuyerNameInput" name="buyer_name" class="form-control" placeholder="اسم المتدرب أو اتركه كعميل نقدي..." style="height: 38px; font-size: 0.9rem;">
+        </div>
+
+        <!-- Phone Number Input (Required for Unpaid!) -->
+        <div id="barBuyerPhoneBox">
+          <label style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+            <span>
+              رقم الهاتف 
+              <span id="barPhoneRequiredBadge" style="color: #ef4444; font-weight: 900; display: none;">* (إجباري عند الشراء بالآجل)</span>
+            </span>
+            <span id="barPhoneHint" style="font-size: 0.72rem; color: #a78bfa;">11 رقم (متابعة وتحصيل)</span>
+          </label>
+          <input type="tel" id="barBuyerPhoneInput" name="buyer_phone" class="form-control" placeholder="مثال: 01012345678" style="height: 38px; font-size: 0.95rem; direction: ltr; text-align: right;" oninput="validateBarPhoneLive()">
+          <div id="barPhoneErrorMsg" style="display: none; color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 4px;"></div>
+        </div>
       </div>
 
       <!-- Payment Status Toggle: تم الدفع vs لم يدفع (آجل) -->
@@ -152,7 +224,7 @@
           <label id="lbl-status-unpaid" style="border: 2px solid rgba(255,255,255,0.15); background: var(--bg-surface-subtle); padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.15s ease;">
             <input type="radio" name="payment_status" value="unpaid" onchange="toggleBarPaymentStatus()" style="display: none;">
             <span style="color: #c084fc; font-weight: 900; font-size: 0.95rem; display: block;">⏳ لم يدفع (آجل)</span>
-            <small style="color: var(--text-muted); font-size: 0.76rem;">هيدفع بعد ما يخلص التمرين</small>
+            <small style="color: var(--text-muted); font-size: 0.76rem;">هيدفع بعد ما يخلص التمرين (يتطلب رقم هاتف)</small>
           </label>
         </div>
       </div>
@@ -171,7 +243,7 @@
 
       <!-- Notes field -->
       <div>
-        <input type="text" name="notes" class="form-control" placeholder="ملاحظة إضافية (اختياري: مثلاً مع كابتن فلان)..." style="height: 38px; font-size: 0.85rem;">
+        <input type="text" name="notes" class="form-control" placeholder="ملاحظة إضافية (اختياري)..." style="height: 38px; font-size: 0.85rem;">
       </div>
 
       <!-- Total Price Live Calculation Strip -->
@@ -182,7 +254,7 @@
 
       <!-- Submit Button -->
       <div style="display: flex; gap: 10px; margin-top: 6px;">
-        <button type="submit" class="btn btn-primary" style="flex: 1; min-height: 48px; font-size: 1.05rem; font-weight: 900; justify-content: center; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-color: #0284c7;">
+        <button type="submit" id="barSubmitSaleBtn" class="btn btn-primary" style="flex: 1; min-height: 48px; font-size: 1.05rem; font-weight: 900; justify-content: center; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-color: #0284c7;">
           ✓ تسجيل العملية فوراً
         </button>
         <button type="button" onclick="closeBarSaleModal()" class="btn btn-secondary" style="min-height: 48px;">
@@ -225,6 +297,16 @@
                 <strong style="color: var(--text-main); font-size: 1.05rem;">{{ s.buyer_name }}</strong>
                 <span style="font-size: 0.76rem; color: #a78bfa; background: rgba(139, 92, 246, 0.16); padding: 2px 8px; border-radius: 6px; font-weight: 800;">آجل</span>
               </div>
+              
+              {% if s.buyer_phone %}
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+                <span style="color: #38bdf8; font-size: 0.82rem; font-weight: 800; direction: ltr; font-family: monospace;">📱 {{ s.buyer_phone }}</span>
+                <a href="https://wa.me/2{{ s.buyer_phone }}?text=مرحباً%20كابتن%20{{ s.buyer_name }}،%20نود%20تذكيركم%20بحساب%20البار%20المعلق%20بمبلغ%20{{ s.total_price }}%20ج.م" target="_blank" class="btn btn-secondary btn-sm" style="padding: 1px 7px; font-size: 0.72rem; color: #22c55e; border-color: rgba(34, 197, 94, 0.35);" title="مراسلة عبر واتساب">
+                  💬 واتساب
+                </a>
+              </div>
+              {% endif %}
+
               <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 3px;">
                 المنتج: <span style="color: #38bdf8; font-weight: 800;">{{ s.product.name }}</span> (عدد: {{ s.quantity }})
                 {% if s.notes %} • <span style="color: var(--text-muted);">{{ s.notes }}</span>{% endif %}
@@ -288,9 +370,16 @@
 function openBarSaleModal() {
   document.getElementById('bar-sale-modal').style.display = 'flex';
   updateBarSaleTotal();
+  // highlight first product chip
+  const sel = document.getElementById('barProductSelect');
+  if (sel && sel.value) {
+    highlightActiveProductChip(sel.value);
+  }
 }
 function closeBarSaleModal() {
   document.getElementById('bar-sale-modal').style.display = 'none';
+  const resBox = document.getElementById('barMemberSearchResults');
+  if (resBox) resBox.style.display = 'none';
 }
 function openBarUnpaidModal() {
   document.getElementById('bar-unpaid-modal').style.display = 'flex';
@@ -323,6 +412,157 @@ function updateBarSaleTotal() {
   totalTxt.innerText = total + ' ج.م';
 }
 
+// 1. Live Product Search and Chips
+function filterBarProductsLive(query) {
+  const q = (query || '').trim().toLowerCase();
+  const chips = document.querySelectorAll('.bar-product-chip');
+  const sel = document.getElementById('barProductSelect');
+  let firstMatchId = null;
+
+  chips.forEach(chip => {
+    const name = chip.getAttribute('data-name') || '';
+    if (!q || name.includes(q)) {
+      chip.style.display = 'flex';
+      if (!firstMatchId) firstMatchId = chip.getAttribute('data-id');
+    } else {
+      chip.style.display = 'none';
+    }
+  });
+
+  if (sel) {
+    for (let i = 0; i < sel.options.length; i++) {
+      const opt = sel.options[i];
+      const name = opt.getAttribute('data-name') || opt.text.toLowerCase();
+      if (!q || name.includes(q)) {
+        opt.style.display = '';
+        if (!firstMatchId) firstMatchId = opt.value;
+      } else {
+        opt.style.display = 'none';
+      }
+    }
+    if (firstMatchId && q) {
+      sel.value = firstMatchId;
+      highlightActiveProductChip(firstMatchId);
+      updateBarSaleTotal();
+    }
+  }
+}
+
+function selectBarProductChip(productId) {
+  const sel = document.getElementById('barProductSelect');
+  if (sel) {
+    sel.value = productId;
+    highlightActiveProductChip(productId);
+    updateBarSaleTotal();
+  }
+}
+
+function onBarProductSelectChanged() {
+  const sel = document.getElementById('barProductSelect');
+  if (sel) {
+    highlightActiveProductChip(sel.value);
+    updateBarSaleTotal();
+  }
+}
+
+function highlightActiveProductChip(productId) {
+  const chips = document.querySelectorAll('.bar-product-chip');
+  chips.forEach(chip => {
+    if (chip.getAttribute('data-id') === String(productId)) {
+      chip.style.borderColor = '#38bdf8';
+      chip.style.background = 'rgba(56, 189, 248, 0.18)';
+    } else {
+      chip.style.borderColor = 'rgba(255,255,255,0.12)';
+      chip.style.background = 'rgba(255,255,255,0.05)';
+    }
+  });
+}
+
+// 2. Live Member Search & Auto-complete
+let memberSearchTimer = null;
+function searchBarMembersLive(query) {
+  clearTimeout(memberSearchTimer);
+  const q = (query || '').trim();
+  const resultsBox = document.getElementById('barMemberSearchResults');
+  if (!resultsBox) return;
+
+  if (q.length < 1) {
+    resultsBox.style.display = 'none';
+    resultsBox.innerHTML = '';
+    return;
+  }
+
+  memberSearchTimer = setTimeout(async () => {
+    try {
+      const res = await fetch("{% url 'members:member_search_api' %}?q=" + encodeURIComponent(q));
+      if (!res.ok) return;
+      const data = await res.json();
+      const members = data.results || [];
+
+      if (members.length === 0) {
+        resultsBox.innerHTML = '<div style="padding: 10px 14px; font-size: 0.82rem; color: #94a3b8; text-align: center;">لم يتم العثور على مشترك مطابق (يمكنك كتابة اسم ورقم الزائر يدوياً)</div>';
+        resultsBox.style.display = 'block';
+        return;
+      }
+
+      let html = '';
+      members.forEach(m => {
+        const statusColor = m.is_active ? '#10b981' : '#ef4444';
+        html += `
+          <div onclick="selectBarMember(${m.id}, '${m.name.replace(/'/g, "\\'")}', '${m.member_id}', '${m.mobile}', '${m.is_active ? 'نشط' : 'منتهي'}')" 
+               style="padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s ease;"
+               onmouseover="this.style.background='rgba(56, 189, 248, 0.15)'" onmouseout="this.style.background='transparent'">
+            <div>
+              <strong style="color: #ffffff; font-size: 0.9rem; display: block;">${m.name}</strong>
+              <small style="color: #94a3b8; font-size: 0.74rem;">كود: ${m.member_id} • هاتف: ${m.mobile || '—'}</small>
+            </div>
+            <span style="font-size: 0.72rem; font-weight: 800; color: ${statusColor}; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 6px;">
+              ${m.status_label}
+            </span>
+          </div>
+        `;
+      });
+      resultsBox.innerHTML = html;
+      resultsBox.style.display = 'block';
+    } catch (err) {
+      console.error('Member search error', err);
+    }
+  }, 220);
+}
+
+function selectBarMember(id, name, memberCode, mobile, statusText) {
+  document.getElementById('barMemberIdInput').value = id;
+  document.getElementById('barBuyerNameInput').value = name;
+  const phoneInput = document.getElementById('barBuyerPhoneInput');
+  if (phoneInput && mobile) {
+    phoneInput.value = mobile;
+    validateBarPhoneLive();
+  }
+
+  // Show Pill
+  const pill = document.getElementById('barSelectedMemberPill');
+  document.getElementById('barSelectedMemberName').innerText = name;
+  document.getElementById('barSelectedMemberMeta').innerText = `كود: ${memberCode} • هاتف: ${mobile || 'غير مسجل'} (${statusText})`;
+  pill.style.display = 'flex';
+
+  // Clear search input & close results
+  const searchInput = document.getElementById('barMemberSearchInput');
+  if (searchInput) searchInput.value = '';
+  const resultsBox = document.getElementById('barMemberSearchResults');
+  if (resultsBox) resultsBox.style.display = 'none';
+}
+
+function clearSelectedBarMember() {
+  document.getElementById('barMemberIdInput').value = '';
+  document.getElementById('barBuyerNameInput').value = '';
+  const phoneInput = document.getElementById('barBuyerPhoneInput');
+  if (phoneInput) phoneInput.value = '';
+  const pill = document.getElementById('barSelectedMemberPill');
+  if (pill) pill.style.display = 'none';
+  validateBarPhoneLive();
+}
+
+// 3. Payment Status & Required Phone Enforcement
 function toggleBarPaymentStatus() {
   const radios = document.getElementsByName('payment_status');
   let selected = 'paid';
@@ -336,6 +576,9 @@ function toggleBarPaymentStatus() {
   const lblPaid = document.getElementById('lbl-status-paid');
   const lblUnpaid = document.getElementById('lbl-status-unpaid');
   const methodBox = document.getElementById('barPaymentMethodBox');
+  const phoneBadge = document.getElementById('barPhoneRequiredBadge');
+  const phoneBox = document.getElementById('barBuyerPhoneBox');
+  const phoneInput = document.getElementById('barBuyerPhoneInput');
 
   if (selected === 'paid') {
     lblPaid.style.borderColor = '#10b981';
@@ -343,20 +586,101 @@ function toggleBarPaymentStatus() {
     lblUnpaid.style.borderColor = 'rgba(255,255,255,0.15)';
     lblUnpaid.style.background = 'var(--bg-surface-subtle)';
     if (methodBox) methodBox.style.display = 'block';
+    if (phoneBadge) phoneBadge.style.display = 'none';
+    if (phoneInput) {
+      phoneInput.required = false;
+      phoneInput.style.borderColor = '';
+    }
+    const errBox = document.getElementById('barPhoneErrorMsg');
+    if (errBox) errBox.style.display = 'none';
   } else {
+    // Unpaid (Deferred) -> Strictly requires valid phone number!
     lblUnpaid.style.borderColor = '#8b5cf6';
     lblUnpaid.style.background = 'rgba(139, 92, 246, 0.18)';
     lblPaid.style.borderColor = 'rgba(255,255,255,0.15)';
     lblPaid.style.background = 'var(--bg-surface-subtle)';
     if (methodBox) methodBox.style.display = 'none';
+    if (phoneBadge) phoneBadge.style.display = 'inline';
+    if (phoneInput) {
+      phoneInput.required = true;
+      phoneInput.style.borderColor = '#8b5cf6';
+    }
+    validateBarPhoneLive();
   }
 }
 
+function isValidPhoneNumber(phone) {
+  if (!phone) return false;
+  const clean = phone.replace(/[^0-9]/g, '');
+  // Egyptian numbers: 11 digits starting with 01
+  // General standard phone: 10 to 14 digits
+  return clean.length >= 10 && clean.length <= 15;
+}
+
+function validateBarPhoneLive() {
+  const isUnpaid = document.querySelector('input[name="payment_status"]:checked')?.value === 'unpaid';
+  const phoneInput = document.getElementById('barBuyerPhoneInput');
+  const errBox = document.getElementById('barPhoneErrorMsg');
+  if (!phoneInput || !errBox) return;
+
+  const val = phoneInput.value.trim();
+  if (!isUnpaid) {
+    errBox.style.display = 'none';
+    phoneInput.style.borderColor = '';
+    return true;
+  }
+
+  if (!val) {
+    phoneInput.style.borderColor = '#ef4444';
+    errBox.innerText = '⚠️ مطلوب: يجب كتابة رقم هاتف المشتري لتسجيل الطلب بالآجل ومتابعته.';
+    errBox.style.display = 'block';
+    return false;
+  }
+
+  if (!isValidPhoneNumber(val)) {
+    phoneInput.style.borderColor = '#ef4444';
+    errBox.innerText = '⚠️ رقم الهاتف غير مكتمل: يرجى كتابة 11 رقم صحيح (مثال: 01012345678).';
+    errBox.style.display = 'block';
+    return false;
+  }
+
+  // Valid
+  phoneInput.style.borderColor = '#10b981';
+  errBox.style.display = 'none';
+  return true;
+}
+
+// Intercept form submit to enforce valid phone number on unpaid orders
+document.getElementById('quickBarSaleForm')?.addEventListener('submit', function(e) {
+  const isUnpaid = document.querySelector('input[name="payment_status"]:checked')?.value === 'unpaid';
+  if (isUnpaid) {
+    const valid = validateBarPhoneLive();
+    if (!valid) {
+      e.preventDefault();
+      const phoneInput = document.getElementById('barBuyerPhoneInput');
+      if (phoneInput) {
+        phoneInput.focus();
+        phoneInput.style.borderColor = '#ef4444';
+        phoneInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.35)';
+      }
+      alert('⚠️ تنبيه: لا يمكن تسجيل طلب آجل (لم يدفع بعد) بدون كتابة رقم هاتف صحيح للمشتري (11 رقم) لضمان متابعة وتحصيل الحساب.');
+      return false;
+    }
+  }
+});
+
+// Click outside closes modal and search results
 window.addEventListener('click', function(e) {
   const saleModal = document.getElementById('bar-sale-modal');
   const unpaidModal = document.getElementById('bar-unpaid-modal');
   if (e.target === saleModal) closeBarSaleModal();
   if (e.target === unpaidModal) closeBarUnpaidModal();
+
+  const resultsBox = document.getElementById('barMemberSearchResults');
+  const searchInput = document.getElementById('barMemberSearchInput');
+  if (resultsBox && !resultsBox.contains(e.target) && e.target !== searchInput) {
+    resultsBox.style.display = 'none';
+  }
 });
 </script>
 {% endblock %}

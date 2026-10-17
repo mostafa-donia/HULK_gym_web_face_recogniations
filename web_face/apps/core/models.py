@@ -150,6 +150,21 @@ class AuditLog(models.Model):
     details = models.TextField(blank=True, verbose_name="التفاصيل")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ ووقت العملية")
 
+    @classmethod
+    def log(cls, action_type="", description="", user=None, member=None, amount=Decimal("0.00")):
+        try:
+            return cls.objects.create(
+                user=user if getattr(user, "is_authenticated", False) else None,
+                action=action_type,
+                target_model="Member" if member else "System",
+                target_id=str(member.id if member else ""),
+                details=description,
+                amount=Decimal(str(amount or "0.00")),
+            )
+        except Exception as e:
+            print(f"[AuditLog.log] Error: {e}")
+            return None
+
     class Meta:
         verbose_name = "سجل العمليات (Audit Log)"
         verbose_name_plural = "سجلات العمليات"
