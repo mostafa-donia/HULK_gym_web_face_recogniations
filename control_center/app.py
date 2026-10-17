@@ -341,7 +341,7 @@ def get_client_token_api(hwid: str):
 
 @app.route("/api/clients/<hwid>/update/", methods=["POST"])
 def update_client_api(hwid: str):
-    """Updates client features, name, or phone."""
+    """Updates client features, duration, name, phone, or status."""
     hwid = hwid.strip().upper()
     req = request.get_json() or {}
     data = load_clients_data()
@@ -354,13 +354,68 @@ def update_client_api(hwid: str):
         client["name"] = req["name"].strip()
     if "phone" in req:
         client["phone"] = req["phone"].strip()
-    if "features" in req and isinstance(req["features"], dict):
-        client["features"] = req["features"]
+    if "status" in req and req["status"] in ["active", "suspended", "expired"]:
+        client["status"] = req["status"]
     if "developer_message" in req:
         client["developer_message"] = req["developer_message"].strip()
 
+    # Features update
+    if "features" in req and isinstance(req["features"], dict):
+        client["features"] = req["features"]
+
+    # Duration / Valid Until Update
+    now = datetime.now(timezone.utc)
+    if "valid_until" in req:
+        val = req["valid_until"]
+        if val == "NONE" or val is None or val == "":
+            client["valid_until"] = "NONE"
+            client["license_type"] = "lifetime"
+        else:
+            client["valid_until"] = val
+            if "license_type" in req:
+                client["license_type"] = req["license_type"]
+    elif "duration" in req:
+        dur = str(req["duration"]).strip()
+        if dur == "lifetime":
+            client["valid_until"] = "NONE"
+            client["license_type"] = "lifetime"
+        elif dur == "7":
+            client["valid_until"] = (now + timedelta(days=7)).isoformat()
+            client["license_type"] = "demo"
+        elif dur == "30":
+            client["valid_until"] = (now + timedelta(days=30)).isoformat()
+            client["license_type"] = "monthly"
+        elif dur == "90":
+            client["valid_until"] = (now + timedelta(days=90)).isoformat()
+            client["license_type"] = "quarterly"
+        elif dur == "365":
+            client["valid_until"] = (now + timedelta(days=365)).isoformat()
+            client["license_type"] = "yearly"
+        else:
+            try:
+                days_int = int(dur)
+                client["valid_until"] = (now + timedelta(days=days_int)).isoformat()
+                client["license_type"] = "custom"
+            except Exception:
+                pass
+
     save_clients_data(data)
-    return jsonify({"success": True, "message": "تم تحديث بيانات العميل بنجاح."})
+
+    # Immediately regenerate a fresh offline token
+    fresh_token = generate_offline_license_token(
+        machine_id=hwid,
+        client_name=client.get("name", ""),
+        license_type=client.get("license_type", "monthly"),
+        valid_until_iso=client.get("valid_until"),
+        features=client.get("features"),
+    )
+
+    return jsonify({
+        "success": True,
+        "message": f"تم تحديث بيانات وصلاحيات العميل {client.get('name')} بنجاح!",
+        "client": client,
+        "token": fresh_token,
+    })
 
 
 @app.route("/api/clients/<hwid>/delete/", methods=["DELETE", "POST"])

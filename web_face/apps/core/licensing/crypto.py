@@ -50,18 +50,21 @@ def generate_offline_license_token(
     Generates an encrypted/signed offline license token for the client.
     Can be pasted directly into the system without internet.
     """
+    raw_ft = features or {}
+    clean_ft = {
+        "face": bool(raw_ft.get("face", raw_ft.get("face_recognition", True))),
+        "face_recognition": bool(raw_ft.get("face_recognition", raw_ft.get("face", True))),
+        "whatsapp": bool(raw_ft.get("whatsapp", True)),
+        "telegram": bool(raw_ft.get("telegram", True)),
+        "bar": bool(raw_ft.get("bar", True)),
+        "payroll": bool(raw_ft.get("payroll", True)),
+    }
     payload = {
         "mid": machine_id.strip(),
         "cn": client_name.strip(),
         "lt": license_type.strip(),  # demo, monthly, yearly, lifetime
         "exp": valid_until_iso or "NONE",
-        "ft": features or {
-            "face": True,
-            "whatsapp": True,
-            "telegram": True,
-            "bar": True,
-            "payroll": True,
-        },
+        "ft": clean_ft,
         "iss": datetime.now(timezone.utc).isoformat(),
     }
     json_str = json.dumps(payload, separators=(",", ":"), sort_keys=True)

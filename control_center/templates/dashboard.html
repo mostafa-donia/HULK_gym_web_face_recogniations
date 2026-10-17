@@ -274,6 +274,142 @@
         </div>
     </div>
 
+    <!-- Modal: Edit Client & Permissions -->
+    <div id="editClientModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg font-black">
+                        <i class="fa fa-sliders"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-white">تعديل بيانات وصلاحيات العميل</h3>
+                        <p class="text-xs text-slate-400">التحكم في الميزات المفعلة ومدة الاشتراك</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('editClientModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times text-lg"></i></button>
+            </div>
+
+            <form id="editClientForm" onsubmit="submitEditClient(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1">كود الجهاز (HWID)</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="editHwid" readonly dir="ltr"
+                               class="code-font w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-lime-400 font-bold focus:outline-none">
+                        <button type="button" onclick="copyText(document.getElementById('editHwid').value, this)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-xl border border-slate-700 text-xs" title="نسخ">
+                            <i class="fa fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1.5">اسم العميل / الصالة *</label>
+                        <input type="text" id="editName" required
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1.5">رقم الموبايل</label>
+                        <input type="text" id="editPhone" placeholder="010XXXXXXXX"
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1.5">حالة الاشتراك *</label>
+                        <select id="editStatus" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                            <option value="active">نشط (Active) ✓</option>
+                            <option value="demo">تجريبي (Demo 7 Days)</option>
+                            <option value="suspended">معلق / إيقاف النظام (Suspended)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1.5">تمديد المدة</label>
+                        <select id="editDuration" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                            <option value="custom">الإبقاء على التاريخ الحالي</option>
+                            <option value="7">تجريبي 7 أيام من اليوم</option>
+                            <option value="30">شهر واحد (+30 يوم)</option>
+                            <option value="90">3 شهور (+90 يوم)</option>
+                            <option value="180">6 شهور (+180 يوم)</option>
+                            <option value="365">سنة كاملة (+365 يوم)</option>
+                            <option value="lifetime">مدى الحياة (Lifetime)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">تاريخ الانتهاء المحدد (YYYY-MM-DD)</label>
+                    <input type="date" id="editValidUntil"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <!-- Feature Permissions Toggles -->
+                <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2.5">
+                    <span class="block text-xs font-black text-slate-300 border-b border-slate-800 pb-2">
+                        <i class="fa fa-shield-halved text-indigo-400 ml-1"></i> الصلاحيات والميزات المفتوحة للعميل:
+                    </span>
+                    
+                    <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa fa-camera text-sky-400"></i>
+                            <span>التعرف على الوجه الذكي (Face Recognition)</span>
+                        </span>
+                        <input type="checkbox" id="editFeatFace" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-brands fa-whatsapp text-emerald-400"></i>
+                            <span>إشعارات ورسائل الواتساب الآلية</span>
+                        </span>
+                        <input type="checkbox" id="editFeatWhatsapp" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa-brands fa-telegram text-sky-400"></i>
+                            <span>بوت تيليجرام التفاعلي للإدارة والمشتركين</span>
+                        </span>
+                        <input type="checkbox" id="editFeatTelegram" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa fa-glass-water text-amber-400"></i>
+                            <span>نظام ومبيعات البار والمخزن والآجل</span>
+                        </span>
+                        <input type="checkbox" id="editFeatBar" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa fa-users-gear text-purple-400"></i>
+                            <span>إدارة المدربين والنسب والرواتب</span>
+                        </span>
+                        <input type="checkbox" id="editFeatPayroll" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">رسالة الإيقاف أو ملاحظة تظهر للعميل</label>
+                    <input type="text" id="editDevMsg" placeholder="مثال: يرجى سداد الاشتراك الشهري لاستئناف الخدمة"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="flex items-center gap-3 pt-2">
+                    <button type="submit" id="saveEditBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                        <i class="fa fa-floppy-disk"></i>
+                        <span>حفظ وإصدار كود التفعيل الجديد</span>
+                    </button>
+                    <button type="button" onclick="closeModal('editClientModal')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-4 rounded-xl transition text-sm">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal: Gist / Cloud Export -->
     <div id="exportModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl">
@@ -436,6 +572,12 @@
 
                         <!-- Action Buttons -->
                         <div class="flex items-center gap-2 flex-wrap">
+                            <!-- Edit Client & Features Button -->
+                            <button onclick="openEditClientModal('${c.hwid}')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-black px-3 py-2 rounded-xl transition flex items-center gap-1.5" title="تعديل الصلاحيات وبيانات العميل">
+                                <i class="fa fa-sliders"></i>
+                                <span>تعديل الصلاحيات</span>
+                            </button>
+
                             <!-- Generate Token Button -->
                             <button onclick="openTokenModal('${c.hwid}', '${c.name}', '${c.phone}')" class="bg-lime-500/10 hover:bg-lime-500/20 text-lime-400 border border-lime-500/30 text-xs font-black px-3 py-2 rounded-xl transition flex items-center gap-1.5">
                                 <i class="fa fa-key"></i>
@@ -475,6 +617,81 @@
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         function openAddClientModal() { openModal('addClientModal'); }
+
+        function openEditClientModal(hwid) {
+            const client = allClients.find(c => c.hwid === hwid);
+            if (!client) {
+                alert('العميل غير موجود!');
+                return;
+            }
+            document.getElementById('editHwid').value = client.hwid;
+            document.getElementById('editName').value = client.name || '';
+            document.getElementById('editPhone').value = client.phone || '';
+            document.getElementById('editStatus').value = client.status || 'active';
+            document.getElementById('editDuration').value = 'custom';
+            document.getElementById('editValidUntil').value = client.valid_until ? client.valid_until.split('T')[0] : '';
+            document.getElementById('editDevMsg').value = client.developer_message || '';
+
+            const ft = client.features || {};
+            document.getElementById('editFeatFace').checked = (ft.face !== false && ft.face_recognition !== false);
+            document.getElementById('editFeatWhatsapp').checked = (ft.whatsapp !== false);
+            document.getElementById('editFeatTelegram').checked = (ft.telegram !== false);
+            document.getElementById('editFeatBar').checked = (ft.bar !== false);
+            document.getElementById('editFeatPayroll').checked = (ft.payroll !== false);
+
+            openModal('editClientModal');
+        }
+
+        async function submitEditClient(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveEditBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> <span>جاري التحديث وتوليد الكود...</span>';
+
+            const hwid = document.getElementById('editHwid').value;
+            const payload = {
+                name: document.getElementById('editName').value.trim(),
+                phone: document.getElementById('editPhone').value.trim(),
+                status: document.getElementById('editStatus').value,
+                duration: document.getElementById('editDuration').value,
+                valid_until: document.getElementById('editValidUntil').value || null,
+                developer_message: document.getElementById('editDevMsg').value.trim(),
+                features: {
+                    face_recognition: document.getElementById('editFeatFace').checked,
+                    face: document.getElementById('editFeatFace').checked,
+                    whatsapp: document.getElementById('editFeatWhatsapp').checked,
+                    telegram: document.getElementById('editFeatTelegram').checked,
+                    bar: document.getElementById('editFeatBar').checked,
+                    payroll: document.getElementById('editFeatPayroll').checked
+                }
+            };
+
+            try {
+                const res = await fetch(`/api/clients/${encodeURIComponent(hwid)}/update/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeModal('editClientModal');
+                    await fetchClients();
+                    if (data.token) {
+                        openTokenModal(data.client.hwid, data.client.name, data.client.phone, data.token);
+                    } else {
+                        alert('تم تحديث بيانات العميل بنجاح!');
+                    }
+                } else {
+                    alert('خطأ: ' + (data.message || 'فشل التحديث'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('فشل الاتصال بالخادم.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-floppy-disk"></i> <span>حفظ وإصدار كود التفعيل الجديد</span>';
+            }
+        }
 
         async function submitAddClient(e) {
             e.preventDefault();

@@ -268,11 +268,11 @@ def activate_offline_token(token_str: str) -> tuple[bool, str]:
 
     ft = payload.get("ft", {})
     if isinstance(ft, dict):
-        license_obj.feature_face_recognition = ft.get("face", True)
-        license_obj.feature_whatsapp = ft.get("whatsapp", True)
-        license_obj.feature_telegram = ft.get("telegram", True)
-        license_obj.feature_bar = ft.get("bar", True)
-        license_obj.feature_payroll = ft.get("payroll", True)
+        license_obj.feature_face_recognition = bool(ft.get("face_recognition", ft.get("face", True)))
+        license_obj.feature_whatsapp = bool(ft.get("whatsapp", True))
+        license_obj.feature_telegram = bool(ft.get("telegram", True))
+        license_obj.feature_bar = bool(ft.get("bar", True))
+        license_obj.feature_payroll = bool(ft.get("payroll", True))
 
     license_obj.tamper_hash = compute_tamper_token(
         current_hwid, "active", license_obj.license_type, license_obj.valid_until
