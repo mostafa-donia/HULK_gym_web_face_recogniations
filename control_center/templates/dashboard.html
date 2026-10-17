@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HULK GYM — Developer Command & Control Center</title>
+    <title>Systemize — Developer Command & Control Center</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
@@ -38,7 +38,7 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h1 class="text-xl font-black tracking-wide text-white">HULK GYM</h1>
+                        <h1 class="text-xl font-black tracking-wide text-white">Systemize</h1>
                         <span class="bg-lime-500/20 text-lime-300 text-[10px] font-black px-2 py-0.5 rounded-full border border-lime-500/30">MASTER CONTROL</span>
                     </div>
                     <p class="text-xs text-slate-400">مركز التحكم المركزي وإدارة تراخيص وباقات العملاء</p>
@@ -599,7 +599,7 @@
 
         function setupWhatsAppLink(phone, name, token) {
             const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
-            const msg = `مرحباً كابتن ${name}،\nتم تفعيل/تجديد ترخيص برنامج HULK GYM الخاص بصالتكم بنجاح! 💪\nكود التفعيل الخاص بكم هو:\n\n${token}\n\nيرجى نسخه ولصقه في شاشة التفعيل أو في صفحة الإعدادات لتفعيل البرنامج أوفلاين فوراً.`;
+            const msg = `مرحباً كابتن ${name}،\nتم تفعيل/تجديد ترخيص برنامج Systemize الخاص بصالتكم بنجاح! 💪\nكود التفعيل الخاص بكم هو:\n\n${token}\n\nيرجى نسخه ولصقه في شاشة التفعيل أو في صفحة الإعدادات لتفعيل البرنامج أوفلاين فوراً.`;
             const waUrl = `https://wa.me/2${cleanPhone}?text=${encodeURIComponent(msg)}`;
             document.getElementById('tokenWhatsAppLink').href = waUrl;
         }

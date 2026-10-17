@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}إعدادات النظام — {{ gym_profile.gym_name|default:"HULK GYM" }}{% endblock %}
+{% block title %}إعدادات النظام — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
 {% block content %}
 <div style="display: flex; flex-direction: column; gap: 24px;">
@@ -775,11 +775,11 @@
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
-              <!-- 1. Hulk Lime -->
+              <!-- 1. Neon Volt Lime -->
               <button type="button" onclick="applyPresetPalette('#84CC16', '#121723', '#0B0E14')" class="palette-preset-btn" style="background: #0b141e; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px; text-align: right; cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
                 <div>
-                  <strong style="color: #A3E635; font-size: 0.85rem; display: block;">Hulk Volt Lime</strong>
-                  <span style="color: #64748b; font-size: 0.72rem;">أخضر هالك الرياضي</span>
+                  <strong style="color: #A3E635; font-size: 0.85rem; display: block;">Neon Volt Lime</strong>
+                  <span style="color: #64748b; font-size: 0.72rem;">أخضر نيون رياضي عصري</span>
                 </div>
                 <div style="display: flex; gap: 3px;">
                   <span style="width: 14px; height: 24px; border-radius: 3px; background: #84CC16;"></span>
@@ -953,7 +953,7 @@
               <div id="mockNav" style="border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; background: {{ profile.secondary_color|default:'#121723' }}; border: 1px solid rgba(255,255,255,0.08);">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <span id="mockLogoDot" style="width: 14px; height: 14px; border-radius: 50%; background: {{ profile.primary_color|default:'#84CC16' }}; display: inline-block;"></span>
-                  <span style="color: #FFFFFF; font-size: 0.8rem; font-weight: 800;">{{ profile.gym_name|default:"HULK GYM" }}</span>
+                  <span style="color: #FFFFFF; font-size: 0.8rem; font-weight: 800;">{{ profile.gym_name|default:"Systemize Gym" }}</span>
                 </div>
                 <div style="display: flex; gap: 8px; align-items: center;">
                   <span id="mockNavActive" style="font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; color: {{ profile.primary_color|default:'#84CC16' }}; background: rgba(255,255,255,0.06);">الرئيسية</span>
@@ -1267,7 +1267,7 @@
             </div>
           </div>
           <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 8px;">
-            * هذا المعرّف يربط نسخة HULK GYM باللوحة الأم والمعالج لمنع نسخ مجلد البرنامج إلى أي كمبيوتر آخر دون إذنك.
+            * هذا المعرّف يربط نسخة Systemize باللوحة الأم والمعالج لمنع نسخ مجلد البرنامج إلى أي كمبيوتر آخر دون إذنك.
           </small>
         </div>
 
@@ -1357,7 +1357,7 @@
             <form method="post" action="{% url 'core:settings' %}" style="display: flex; gap: 8px;">
               {% csrf_token %}
               <input type="hidden" name="action" value="activate_license_key">
-              <input type="text" name="license_key" placeholder="HULK-LIC-..." required dir="ltr"
+              <input type="text" name="license_key" placeholder="SYSTEMIZE-LIC-..." required dir="ltr"
                      style="flex: 1; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-family: monospace;">
               <button type="submit" style="background: #84CC16; color: #081104; border: none; font-weight: 900; font-size: 0.82rem; padding: 8px 16px; border-radius: 8px; cursor: pointer; white-space: nowrap;">
                 تفعيل أوفلاين
@@ -1565,7 +1565,7 @@ async function checkGitHubUpdates() {
     banner.style.background = 'rgba(239, 68, 68, 0.12)';
     banner.style.border = '1px solid #ef4444';
     banner.style.color = '#f87171';
-    banner.innerHTML = `⚠️ تعذر فحص التحديثات (${err.message}). تأكد من اتصال الإنترنت أو استخدم ملف <code>UPDATE_HULK_GYM.bat</code> المباشر.`;
+    banner.innerHTML = `⚠️ تعذر فحص التحديثات (${err.message}). تأكد من اتصال الإنترنت أو استخدم ملف <code>UPDATE_SYSTEMIZE.bat</code> المباشر.`;
   } finally {
     btn.disabled = false;
     icon.style.animation = 'none';
@@ -1651,7 +1651,7 @@ async function performSystemUpdate() {
       termContent.innerHTML += `<div style="color: #34d399; font-weight: bold; margin-top: 8px;">✓ تم تطبيق التحديثات وإعادة تشغيل الخادم بنجاح! جاري تحديث الصفحة...</div>`;
       setTimeout(() => { window.location.reload(); }, 1500);
     } else {
-      termContent.innerHTML += `<div style="color: #ef4444; margin-top: 8px;">⚠️ ${err.message}. يمكنك تشغيل ملف UPDATE_HULK_GYM.bat من مجلد البرنامج لتحديث فوري وآمن.</div>`;
+      termContent.innerHTML += `<div style="color: #ef4444; margin-top: 8px;">⚠️ ${err.message}. يمكنك تشغيل ملف UPDATE_SYSTEMIZE.bat من مجلد البرنامج لتحديث فوري وآمن.</div>`;
       termStatus.textContent = 'تنبيه';
       performBtn.disabled = false;
       performBtn.style.opacity = '1';

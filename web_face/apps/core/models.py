@@ -14,7 +14,7 @@ class GymProfile(models.Model):
     accent_theme = models.CharField(
         max_length=30,
         choices=[
-            ("lime", "أخضر رياضي (Hulk Lime)"),
+            ("lime", "أخضر رياضي (Neon Lime)"),
             ("blue", "أزرق تيتانيوم (Titanium Blue)"),
             ("red", "أحمر طاقة (Power Red)"),
             ("orange", "برتقالي حماسي (Blaze Orange)"),

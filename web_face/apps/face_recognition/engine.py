@@ -635,7 +635,7 @@ class FaceEngine:
         img = np.zeros((480, 640, 3), dtype=np.uint8)
         for y in range(480):
             img[y, :, :] = (int(10 + y * 0.02), int(16 + y * 0.03), int(24 + y * 0.04))
-        cv2.putText(img, "HULK GYM - INDEPENDENT CAMERA", (80, 220),
+        cv2.putText(img, "SYSTEMIZE - INDEPENDENT CAMERA", (80, 220),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (16, 185, 129), 2, cv2.LINE_AA)
         cv2.putText(img, "INITIALIZING STREAM...", (180, 270),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (148, 163, 184), 1, cv2.LINE_AA)

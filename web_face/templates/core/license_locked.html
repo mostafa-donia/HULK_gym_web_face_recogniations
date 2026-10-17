@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تفعيل ترخيص النظام — HULK GYM</title>
+    <title>تفعيل ترخيص النظام — Systemize</title>
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}">
     <style>
@@ -68,7 +68,7 @@
                 {% elif license_reason == "clock_rollback" %}
                     تنبيه أمان: تلاعب في توقيت الجهاز
                 {% else %}
-                    مطلوب تفعيل ترخيص HULK GYM
+                    مطلوب تفعيل ترخيص Systemize
                 {% endif %}
             </h1>
             <p class="text-sm text-gray-400 mt-2 max-w-md mx-auto leading-relaxed">
@@ -103,7 +103,7 @@
                         <p class="text-xs text-gray-400">تواصل مباشرة مع مطور النظام لتفعيل باقتك.</p>
                     </div>
                     {% with phone=license_info.phone|default:"01080922432" %}
-                    <a href="https://wa.me/2{{ phone }}?text=مرحباً، أود تفعيل ترخيص نظام HULK GYM لجهازي، كود الجهاز الخاص بي هو: {{ license_info.machine_id }}"
+                    <a href="https://wa.me/2{{ phone }}?text=مرحباً، أود تفعيل ترخيص نظام Systemize لجهازي، كود الجهاز الخاص بي هو: {{ license_info.machine_id }}"
                        target="_blank"
                        class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg transition">
                         <i class="fa fa-whatsapp text-lg"></i>
@@ -123,7 +123,7 @@
                         <input type="text"
                                id="licenseKeyInput"
                                name="license_key"
-                               placeholder="HULK-LIC-..."
+                               placeholder="SYSTEMIZE-LIC-..."
                                required
                                dir="ltr"
                                class="w-full bg-gray-950/80 border border-gray-700 focus:border-lime-500 focus:ring-1 focus:ring-lime-500 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-600 font-mono transition">
@@ -142,7 +142,7 @@
 
         <!-- Footer -->
         <div class="bg-gray-950/50 p-4 px-6 border-t border-gray-800 flex items-center justify-between text-xs text-gray-400">
-            <span>HULK GYM Enterprise Suite v2.1</span>
+            <span>Systemize Enterprise Suite v2.1</span>
             <button onclick="location.reload()" class="hover:text-gray-300 flex items-center gap-1 transition">
                 <i class="fa fa-sync-alt"></i> إعادة الفحص
             </button>

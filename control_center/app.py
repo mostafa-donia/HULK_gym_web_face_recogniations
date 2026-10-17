@@ -205,7 +205,7 @@ def add_client_api():
         "license_type": lic_type,
         "valid_until": valid_until,
         "features": features,
-        "developer_message": req.get("developer_message", "شكراً لاشتراككم في نظام HULK GYM."),
+        "developer_message": req.get("developer_message", "شكراً لاشتراككم في نظام Systemize."),
         "created_at": now.isoformat(),
         "last_seen": None,
     }
@@ -401,5 +401,5 @@ def live_sync_endpoint():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9000))
-    print(f"\n🚀 HULK GYM DEVELOPER CONTROL CENTER RUNNING ON: http://127.0.0.1:{port}\n")
+    print(f"\n🚀 SYSTEMIZE DEVELOPER CONTROL CENTER RUNNING ON: http://127.0.0.1:{port}\n")
     app.run(host="0.0.0.0", port=port, debug=False)

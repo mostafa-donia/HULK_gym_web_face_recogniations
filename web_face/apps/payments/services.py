@@ -99,7 +99,7 @@ def generate_invoice_image_file(payment: Payment, subscription=None) -> str:
         except Exception:
             font_title = font_sub = font_bold = font_normal = font_sm = ImageFont.load_default()
 
-    raw_gym_name = profile.gym_name or "HULK GYM"
+    raw_gym_name = profile.gym_name or "Systemize Gym"
     curr = profile.currency or "ج.م"
 
     draw.text((w // 2, 48), reshape_arabic(raw_gym_name), fill=(132, 204, 22), font=font_title, anchor="mm")

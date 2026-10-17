@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-HULK GYM — Developer Master License Generator & Control Tool
+Systemize — Developer Master License Generator & Control Tool
 Use this tool on your developer machine to:
-1. Generate cryptographically signed offline license keys (HULK-LIC-...) for clients.
+1. Generate cryptographically signed offline license keys (SYSTEMIZE-LIC-...) for clients.
 2. View this machine's HWID.
 3. Generate sample JSON for the Online Central Control Center.
 """
@@ -30,7 +30,7 @@ from apps.core.licensing.crypto import (
 
 def print_banner():
     print("=" * 65)
-    print("  🏋️‍♂️ HULK GYM — DEVELOPER LICENSE & CONTROL MASTER TOOL")
+    print("  🏋️‍♂️ SYSTEMIZE — DEVELOPER LICENSE & CONTROL MASTER TOOL")
     print("  🔒 Anti-Copy Hardware ID & SaaS License Generator")
     print("=" * 65)
 

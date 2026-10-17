@@ -1,18 +1,20 @@
 @echo off
 chcp 65001 > nul
-title HULK GYM - Developer Command & Control Center
+title Systemize - Developer Command & Control Center
 color 0B
 
 cd /d "%~dp0"
 
 echo ===================================================================
-echo     HULK GYM — DEVELOPER COMMAND & CONTROL CENTER (PORT 9000)
+echo     SYSTEMIZE — DEVELOPER COMMAND & CONTROL CENTER (PORT 9000)
 echo ===================================================================
 echo.
 
 set PY_BIN=
 if exist "web_face\venv\Scripts\python.exe" (
     set PY_BIN=web_face\venv\Scripts\python.exe
+) else if exist "dist\Systemize\runtime\python.exe" (
+    set PY_BIN=dist\Systemize\runtime\python.exe
 ) else if exist "dist\HULK_GYM\runtime\python.exe" (
     set PY_BIN=dist\HULK_GYM\runtime\python.exe
 ) else (

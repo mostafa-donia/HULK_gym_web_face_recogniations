@@ -69,7 +69,7 @@ def generate_offline_license_token(
     
     combined = f"{json_str}:::{sig}"
     token_b64 = base64.urlsafe_b64encode(combined.encode("utf-8")).decode("utf-8").rstrip("=")
-    return f"HULK-LIC-{token_b64}"
+    return f"SYSTEMIZE-LIC-{token_b64}"
 
 def verify_offline_license_token(token: str, current_machine_id: str) -> tuple[bool, dict, str]:
     """
@@ -77,10 +77,12 @@ def verify_offline_license_token(token: str, current_machine_id: str) -> tuple[b
     Returns: (is_valid, payload_dict, message)
     """
     token = token.strip()
-    if not token.startswith("HULK-LIC-"):
-        return False, {}, "صيغة كود الترخيص غير صالحة. يجب أن يبدأ بـ HULK-LIC-"
-
-    raw_b64 = token[len("HULK-LIC-") :]
+    if token.startswith("SYSTEMIZE-LIC-"):
+        raw_b64 = token[len("SYSTEMIZE-LIC-") :]
+    elif token.startswith("HULK-LIC-"):
+        raw_b64 = token[len("HULK-LIC-") :]
+    else:
+        return False, {}, "صيغة كود الترخيص غير صالحة. يجب أن يبدأ بـ SYSTEMIZE-LIC-"
     # Add padding back
     missing_padding = len(raw_b64) % 4
     if missing_padding:

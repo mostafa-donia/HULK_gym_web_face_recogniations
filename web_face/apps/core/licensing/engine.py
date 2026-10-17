@@ -223,7 +223,7 @@ def validate_system_license(allow_remote_sync: bool = True) -> tuple[bool, str, 
                 msg = f"انتهت الفترة التجريبية المجانية (7 أيام).\nلتفعيل النسخة الدائمة أو الاشتراك الشهري، يرجى تزويد المطور بكود جهازك: {current_hwid}"
                 return False, "demo_expired", msg, info_dict
             else:
-                msg = f"انتهت فترة اشتراكك في نظام HULK GYM بتاريخ {license_obj.valid_until.strftime('%Y-%m-%d')}.\nيرجى التواصل مع المطور لتجديد الاشتراك."
+                msg = f"انتهت فترة اشتراكك في نظام Systemize بتاريخ {license_obj.valid_until.strftime('%Y-%m-%d')}.\nيرجى التواصل مع المطور لتجديد الاشتراك."
                 return False, "subscription_expired", msg, info_dict
 
     # If demo is still active, compute remaining days

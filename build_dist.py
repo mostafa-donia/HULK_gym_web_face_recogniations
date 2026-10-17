@@ -13,7 +13,7 @@ import time
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEB_DIR = os.path.join(BASE_DIR, "web_face")
 DIST_ROOT = os.path.join(BASE_DIR, "dist")
-OUTPUT_DIR = os.path.join(DIST_ROOT, "HULK_GYM")
+OUTPUT_DIR = os.path.join(DIST_ROOT, "Systemize")
 RUNTIME_DIR = os.path.join(OUTPUT_DIR, "runtime")
 
 # Python Source locations
@@ -182,21 +182,18 @@ def copy_web_app():
 
 
 def create_launchers():
-    log("Creating single one-click standalone launcher in dist folder...")
+    log("Creating single one-click standalone launchers in dist folder...")
 
-    # Single Primary Launcher
-    start_bat = os.path.join(OUTPUT_DIR, "START_HULK_GYM.bat")
-    with open(start_bat, "w", encoding="utf-8") as f:
-        f.write(
-            """@echo off
+    # Primary Launcher: START_SYSTEMIZE.bat
+    start_bat_content = """@echo off
 chcp 65001 >nul
-title HULK GYM - Standalone Portable System
+title Systemize - Standalone Portable System
 color 0A
 
 cd /d "%~dp0"
 
 echo ===================================================================
-echo     HULK GYM MANAGEMENT SYSTEM - PORTABLE CLIENT EDITION
+echo     SYSTEMIZE MANAGEMENT SYSTEM - PORTABLE CLIENT EDITION
 echo ===================================================================
 echo.
 
@@ -209,25 +206,24 @@ if exist "startup.html" (
 echo [*] Checking database migrations...
 "runtime\\python.exe" manage.py migrate --noinput >nul 2>&1
 
-echo [*] Starting HULK GYM server at http://127.0.0.1:8000 ...
+echo [*] Starting Systemize server at http://127.0.0.1:8000 ...
 "runtime\\python.exe" manage.py runserver 0.0.0.0:8000
 pause
 """
-        )
+    for fname in ["START_SYSTEMIZE.bat", "START_GYM_SYSTEM.bat", "تشغيل_النظام.bat"]:
+        with open(os.path.join(OUTPUT_DIR, fname), "w", encoding="utf-8") as f:
+            f.write(start_bat_content)
 
-    # Standalone Update Launcher
-    update_bat = os.path.join(OUTPUT_DIR, "UPDATE_HULK_GYM.bat")
-    with open(update_bat, "w", encoding="utf-8") as f:
-        f.write(
-            """@echo off
+    # Standalone Update Launcher: UPDATE_SYSTEMIZE.bat
+    update_bat_content = """@echo off
 chcp 65001 >nul
-title HULK GYM - GitHub System Updater
+title Systemize - GitHub System Updater
 color 0b
 
 cd /d "%~dp0"
 
 echo ===================================================================
-echo             HULK GYM - Standalone GitHub Updater
+echo             Systemize - Standalone GitHub Updater
 echo      Portable GitHub Updater with Automatic Database Backup
 echo ===================================================================
 echo.
@@ -238,18 +234,20 @@ echo.
 
 echo.
 echo ===================================================================
-echo  Update check completed. You may now continue using HULK GYM.
+echo  Update check completed. You may now continue using Systemize.
 echo ===================================================================
 echo.
 pause
 """
-        )
+    for fname in ["UPDATE_SYSTEMIZE.bat", "UPDATE_HULK_GYM.bat", "تحديث_النظام.bat"]:
+        with open(os.path.join(OUTPUT_DIR, fname), "w", encoding="utf-8") as f:
+            f.write(update_bat_content)
 
     # Readme for client
     readme = os.path.join(OUTPUT_DIR, "README_INSTRUCTIONS.txt")
     with open(readme, "w", encoding="utf-8") as f:
         f.write(
-            """تعليمات تشغيل نظام HULK GYM المحمول (نسخة العميل):
+            """تعليمات تشغيل نظام Systemize المحمول (نسخة العميل):
 =============================================================
 
 1. هذا المجلد محمول بالكامل (Standalone / Portable):
@@ -259,7 +257,7 @@ pause
 
 2. طريقة التشغيل:
    - قم بنسخ هذا المجلد بالكامل لأي لابتوب أو كمبيوتر يعمل بنظام Windows.
-   - اضغط مرتين على ملف: "تشغيل_النظام.bat" (أو "Run_Hulk_Gym.bat").
+   - اضغط مرتين على ملف: "START_SYSTEMIZE.bat" أو "تشغيل_النظام.bat".
    - سيفتح المتصفح تلقائياً على الرابط: http://127.0.0.1:8000
 
 3. بيانات الدخول الافتراضية:
@@ -272,7 +270,7 @@ pause
 
 5. زر تحديث النظام وسحب التعديلات من GitHub:
    - يمكن التحديث مباشرة بضغطة زر واحدة من داخل لوحة التحكم: الإعدادات -> تحديثات النظام -> "تحديث النظام الآن".
-   - أو تشغيل ملف "تحديث_النظام.bat" (أو "UPDATE_HULK_GYM.bat") في أي وقت لسحب أحدث إصدار مع نسخ احتياطي تلقائي لقاعدة البيانات.
+   - أو تشغيل ملف "UPDATE_SYSTEMIZE.bat" أو "تحديث_النظام.bat" في أي وقت لسحب أحدث إصدار مع نسخ احتياطي تلقائي لقاعدة البيانات.
 """
         )
 

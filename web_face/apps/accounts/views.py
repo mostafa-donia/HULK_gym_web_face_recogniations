@@ -14,7 +14,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            messages.success(request, f"مرحباً بك {user.first_name or user.username} في HULK GYM!")
+            messages.success(request, f"مرحباً بك {user.first_name or user.username} في Systemize!")
             return redirect("core:dashboard")
         else:
             messages.error(request, "اسم المستخدم أو كلمة المرور غير صحيحة.")

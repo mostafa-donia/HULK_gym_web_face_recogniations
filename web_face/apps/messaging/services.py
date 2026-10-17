@@ -350,7 +350,7 @@ def prepare_due_reminders() -> dict:
     """
     today = timezone.localdate()
     profile = GymProfile.get_solo()
-    gym_name = profile.gym_name or "HULK GYM"
+    gym_name = profile.gym_name or "Systemize Gym"
 
     members = Member.objects.filter(phone__isnull=False).exclude(phone="").select_related()
     queued_count = 0
@@ -476,7 +476,7 @@ def generate_manager_report_image_file(report_data: dict) -> str:
         except Exception:
             font_badge = font_title = font_sub = font_card_val = font_card_lbl = font_card_sub = font_sec_title = font_normal = font_sm = ImageFont.load_default()
 
-    gym_name = report_data.get("gym_name", "HULK GYM")
+    gym_name = report_data.get("gym_name", "Systemize Gym")
     curr = report_data.get("currency", "ج.م")
 
     # Header Top Badge
@@ -604,7 +604,7 @@ def prepare_manager_daily_report():
         return None
 
     today = timezone.localdate()
-    gym_name = profile.gym_name or "HULK GYM"
+    gym_name = profile.gym_name or "Systemize Gym"
 
     # Daily financials
     payments_today = Payment.objects.filter(created_at__date=today)
@@ -787,7 +787,7 @@ def prepare_bulk_campaign(
     )
 
     profile = GymProfile.get_solo()
-    gym_name = profile.gym_name or "HULK GYM"
+    gym_name = profile.gym_name or "Systemize Gym"
     today = timezone.localdate()
     queued_count = 0
     batch_tag = f"bulk_{category}_{today.isoformat()}_{int(timezone.now().timestamp())}"

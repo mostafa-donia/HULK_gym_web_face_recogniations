@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>فاتورة رقم {{ payment.invoice_no }} — {{ profile.gym_name|default:"HULK GYM" }}</title>
+  <title>فاتورة رقم {{ payment.invoice_no }} — {{ profile.gym_name|default:"Systemize Gym" }}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
     * {
@@ -182,7 +182,7 @@
   <div class="receipt-box">
     
     <div class="receipt-header">
-      <h1 class="gym-title">{{ profile.gym_name|default:"HULK GYM" }}</h1>
+      <h1 class="gym-title">{{ profile.gym_name|default:"Systemize Gym" }}</h1>
       {% if profile.gym_tagline %}
         <p style="font-size: 0.8rem; color: #84CC16; font-weight: 700; margin-top: 2px;">{{ profile.gym_tagline }}</p>
       {% endif %}
@@ -250,7 +250,7 @@
 
     <div class="footer-note">
       <p>المحصل: <strong>{% if payment.created_by %}{{ payment.created_by.first_name|default:payment.created_by.username }}{% else %}كاشير الصالة{% endif %}</strong></p>
-      <p style="margin-top: 5px;">شكراً لاختيارك {{ profile.gym_name|default:"HULK GYM" }} نتمنى لك تمريناً ممتعاً وموفقاً!</p>
+      <p style="margin-top: 5px;">شكراً لاختيارك {{ profile.gym_name|default:"Systemize Gym" }} نتمنى لك تمريناً ممتعاً وموفقاً!</p>
     </div>
 
   </div>

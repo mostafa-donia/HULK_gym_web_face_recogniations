@@ -1,10 +1,10 @@
-{% load static %}
+﻿{% load static %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>حماية وضع الموبايل — {{ profile.gym_name|default:"HULK GYM" }}</title>
+  <title>حماية وضع الموبايل — {{ profile.gym_name|default:"Systemize Gym" }}</title>
   {% if profile.logo %}
     <link rel="icon" type="image/png" href="{{ profile.logo.url }}">
   {% else %}
@@ -218,7 +218,7 @@
     </div>
 
     <!-- Gym Name & Badge -->
-    <h1 class="brand-title">{{ profile.gym_name|default:"HULK GYM" }}</h1>
+    <h1 class="brand-title">{{ profile.gym_name|default:"Systemize Gym" }}</h1>
     <div class="badge-lock">
       <span>وضع الموبايل محمي بكلمة مرور</span>
     </div>

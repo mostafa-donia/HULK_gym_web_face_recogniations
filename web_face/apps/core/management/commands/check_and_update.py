@@ -38,7 +38,7 @@ class Command(BaseCommand):
             self.stdout.write(style_fn(clean) if style_fn else clean)
 
     def handle(self, *args, **options):
-        self.safe_print("=== HULK GYM System Updater ===", self.style.MIGRATE_HEADING)
+        self.safe_print("=== Systemize System Updater ===", self.style.MIGRATE_HEADING)
         info = get_current_version_info()
         self.safe_print(f"Current Version: {info.get('version_tag', 'v2.1.0')} ({info.get('commit', 'unknown')})")
         self.safe_print(f"Active Branch  : {info.get('branch', 'main')}")

@@ -221,7 +221,7 @@ def handle_telegram_update(update: dict) -> dict:
     is_manager = bool(profile.telegram_manager_chat_id and str(profile.telegram_manager_chat_id) == chat_id)
     linked_member = Member.objects.filter(telegram_chat_id=chat_id).first()
 
-    gym_name = profile.gym_name or "HULK GYM"
+    gym_name = profile.gym_name or "Systemize Gym"
     currency = profile.currency or "ج"
 
     # 1. Contact Shared by User
