@@ -751,6 +751,107 @@
       will-change: transform;
     }
 
+    /* Floating On-Screen Zoom Controller */
+    .floating-zoom-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 32px;
+      z-index: 45;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 30px;
+      padding: 4px 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      transition: all 0.2s ease;
+    }
+    .floating-zoom-bar:hover {
+      border-color: rgba(132, 204, 22, 0.45);
+      box-shadow: 0 10px 30px rgba(132, 204, 22, 0.25);
+    }
+    .floating-zoom-bar .zoom-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.06);
+      color: #cbd5e1;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .floating-zoom-bar .zoom-btn:hover {
+      background: #84cc16;
+      color: #030712;
+      border-color: #84cc16;
+    }
+    .floating-zoom-bar .zoom-val {
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: #84cc16;
+      padding: 0 6px;
+      cursor: pointer;
+      min-width: 44px;
+      text-align: center;
+    }
+
+    /* Editable Price Live Inputs */
+    .price-input-live {
+      background: rgba(3, 7, 18, 0.95);
+      border: 2px solid #84cc16;
+      border-radius: 8px;
+      color: #a3e635;
+      font-family: var(--font-mono);
+      font-size: 1.8rem;
+      font-weight: 900;
+      width: 140px;
+      text-align: center;
+      padding: 2px 6px;
+      outline: none;
+      box-shadow: 0 0 16px rgba(132, 204, 22, 0.4);
+      transition: all 0.2s;
+    }
+    .price-input-live:focus {
+      border-color: #38bdf8;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+      color: #38bdf8;
+    }
+    .addon-input-live {
+      background: rgba(3, 7, 18, 0.95);
+      border: 1px solid #84cc16;
+      border-radius: 6px;
+      color: #a3e635;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 800;
+      width: 68px;
+      text-align: center;
+      padding: 1px 4px;
+      outline: none;
+      margin: 0 3px;
+    }
+    .modal-price-live {
+      background: rgba(3, 7, 18, 0.9);
+      border: 1px solid rgba(132, 204, 22, 0.6);
+      border-radius: 6px;
+      color: #a3e635;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 800;
+      width: 78px;
+      text-align: center;
+      padding: 2px 4px;
+      outline: none;
+      margin: 0 3px;
+    }
+
     @media (max-width: 1100px) {
       .slide-2col { grid-template-columns: 1fr; gap: 20px; }
       .slide-title { font-size: 2.1rem; }
@@ -844,6 +945,14 @@
   </div>
   <div class="nav-arrow prev" onclick="prevSlide()" title="الشريحة السابقة (سهم يمين)">
     <i class="fa fa-chevron-right"></i>
+  </div>
+
+  <!-- Floating On-Screen Zoom Controller -->
+  <div class="floating-zoom-bar" id="floatingZoomBar">
+    <button class="zoom-btn" onclick="zoomStep(-0.25)" title="تصغير (-)"><i class="fa fa-minus"></i></button>
+    <div class="zoom-val" id="floatingZoomVal" onclick="toggleKeyboardZoom()" title="اضغط لتكبير 2.2x / إلغاء التكبير">1.0x</div>
+    <button class="zoom-btn" onclick="zoomStep(0.25)" title="تكبير (+)"><i class="fa fa-plus"></i></button>
+    <button class="zoom-btn reset-btn" onclick="resetZoom()" title="إعادة ضبط (1x)"><i class="fa fa-rotate-left"></i></button>
   </div>
 
   <!-- ==========================================
@@ -1338,37 +1447,59 @@
           <span>اختار اللي يناسب صالتك.</span>
         </h2>
 
+        <!-- Quick Edit Toolbar on Slide -->
+        <div style="display: flex; gap: 10px; margin-bottom: 16px; justify-content: center; align-items: center;">
+          <button id="btnEditPricesToggle" onclick="togglePriceEditMode()" class="btn-secondary" style="background: rgba(132, 204, 22, 0.15); border: 1px solid #84cc16; color: #bef264; font-size: 0.85rem; padding: 6px 16px; border-radius: 20px; cursor: pointer;">
+            <i class="fa fa-pen-to-square"></i> <span id="btnEditPricesText">تعديل الأسعار والإضافات مباشرة</span>
+          </button>
+          <button onclick="resetPricesToDefault()" class="btn-secondary" style="font-size: 0.82rem; padding: 6px 14px; border-radius: 20px; color: #94a3b8;" title="استعادة الأسعار الأصلية">
+            <i class="fa fa-rotate-left"></i> استعادة الافتراضي
+          </button>
+        </div>
+
         <!-- Pricing 3 Cards -->
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; width: 100%; max-width: 920px; margin-bottom: 18px;">
           <div class="glass-card" style="padding: 22px; text-align: center;">
             <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 4px;">اشتراك شهري</span>
-            <div style="font-size: 2.2rem; font-weight: 900; color: #ffffff; font-family: var(--font-mono); margin: 8px 0;"><span id="lblPriceMonthly">٣٥٠</span> <span style="font-size: 0.9rem; font-family: Cairo;">ج / شهر</span></div>
+            <div style="font-size: 2.2rem; font-weight: 900; color: #ffffff; font-family: var(--font-mono); margin: 8px 0; display: flex; align-items: center; justify-content: center; gap: 4px;">
+              <span class="price-static-val" id="lblPriceMonthly">٣٥٠</span>
+              <input type="number" class="price-input-live" id="inLivePriceMonthly" value="350" style="display: none;" oninput="onInlinePriceChange('monthly', this.value)">
+              <span style="font-size: 0.9rem; font-family: Cairo;">ج / شهر</span>
+            </div>
             <div style="font-size: 0.78rem; color: #cbd5e1; font-weight: 700;">البرنامج الأساسي الكامل ✓</div>
           </div>
 
           <div class="glass-card" style="padding: 22px; text-align: center; border-color: #84cc16; background: linear-gradient(180deg, rgba(132,204,22,0.12) 0%, rgba(15,23,42,0.85) 100%); transform: translateY(-4px);">
             <span style="font-size: 0.8rem; color: #bef264; font-weight: 900; display: block; margin-bottom: 4px;">اشتراك سنوي (توفير شهرين)</span>
-            <div style="font-size: 2.2rem; font-weight: 900; color: #ffffff; font-family: var(--font-mono); margin: 8px 0;"><span id="lblPriceYearly">٣٬٥٠٠</span> <span style="font-size: 0.9rem; font-family: Cairo;">ج / سنة</span></div>
+            <div style="font-size: 2.2rem; font-weight: 900; color: #ffffff; font-family: var(--font-mono); margin: 8px 0; display: flex; align-items: center; justify-content: center; gap: 4px;">
+              <span class="price-static-val" id="lblPriceYearly">٣٬٥٠٠</span>
+              <input type="number" class="price-input-live" id="inLivePriceYearly" value="3500" style="display: none;" oninput="onInlinePriceChange('yearly', this.value)">
+              <span style="font-size: 0.9rem; font-family: Cairo;">ج / سنة</span>
+            </div>
             <div style="font-size: 0.78rem; color: #ffffff; font-weight: 800;">البرنامج الأساسي الكامل ✓</div>
           </div>
 
           <div class="glass-card" style="padding: 22px; text-align: center;">
             <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 4px;">مدى الحياة</span>
-            <div style="font-size: 2.2rem; font-weight: 900; color: #ffffff; font-family: var(--font-mono); margin: 8px 0;"><span id="lblPriceLifetime">٦٬٠٠٠</span> <span style="font-size: 0.9rem; font-family: Cairo;">ج لمرة واحدة</span></div>
+            <div style="font-size: 2.2rem; font-weight: 900; color: #ffffff; font-family: var(--font-mono); margin: 8px 0; display: flex; align-items: center; justify-content: center; gap: 4px;">
+              <span class="price-static-val" id="lblPriceLifetime">٦٬٠٠٠</span>
+              <input type="number" class="price-input-live" id="inLivePriceLifetime" value="6000" style="display: none;" oninput="onInlinePriceChange('lifetime', this.value)">
+              <span style="font-size: 0.9rem; font-family: Cairo;">ج لمرة واحدة</span>
+            </div>
             <div style="font-size: 0.78rem; color: #cbd5e1; font-weight: 700;">ترخيص دائم للجهاز ✓</div>
           </div>
         </div>
 
-        <!-- Add-ons Quick Strip -->
+        <!-- Add-ons Quick Strip with Inline Edit Inputs -->
         <div class="glass-card" style="padding: 14px 20px; width: 100%; max-width: 920px; margin-bottom: 22px; text-align: right;">
           <div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.82rem; color: #cbd5e1; justify-content: center;">
-            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بصمة وجه: <strong id="lblAddonFace" style="color: #a3e635; margin-right: 4px;">٤٬٠٠٠</strong> ج</span>
-            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بصمة يد: <strong id="lblAddonFingerprint" style="color: #a3e635; margin-right: 4px;">٣٬٥٠٠</strong> ج</span>
-            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">باركود: <strong id="lblAddonBarcode" style="color: #a3e635; margin-right: 4px;">٢٬٥٠٠</strong> ج</span>
-            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">كود QR: <strong id="lblAddonQr" style="color: #a3e635; margin-right: 4px;">١٬٥٠٠</strong> ج</span>
-            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بوت واتساب: <strong id="lblAddonBot" style="color: #a3e635; margin-right: 4px;">٢٬٠٠٠</strong> ج</span>
-            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">نقاط البار: <strong id="lblAddonBar" style="color: #a3e635; margin-right: 4px;">١٬٥٠٠</strong> ج</span>
-            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem; border-color: rgba(56,189,248,0.4);">Global Access: <strong id="lblAddonGlobal" style="color: #38bdf8; margin-right: 4px;">٢٬٥٠٠</strong> ج/سنة</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بصمة وجه: <strong class="addon-static-val" id="lblAddonFace" style="color: #a3e635; margin-right: 4px;">٤٬٠٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonFace" value="4000" style="display: none;" oninput="onInlinePriceChange('addonFace', this.value)"> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بصمة يد: <strong class="addon-static-val" id="lblAddonFingerprint" style="color: #a3e635; margin-right: 4px;">٣٬٥٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonFingerprint" value="3500" style="display: none;" oninput="onInlinePriceChange('addonFingerprint', this.value)"> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">باركود: <strong class="addon-static-val" id="lblAddonBarcode" style="color: #a3e635; margin-right: 4px;">٢٬٥٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonBarcode" value="2500" style="display: none;" oninput="onInlinePriceChange('addonBarcode', this.value)"> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">كود QR: <strong class="addon-static-val" id="lblAddonQr" style="color: #a3e635; margin-right: 4px;">١٬٥٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonQr" value="1500" style="display: none;" oninput="onInlinePriceChange('addonQr', this.value)"> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بوت واتساب: <strong class="addon-static-val" id="lblAddonBot" style="color: #a3e635; margin-right: 4px;">٢٬٠٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonBot" value="2000" style="display: none;" oninput="onInlinePriceChange('addonBot', this.value)"> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">نقاط البار: <strong class="addon-static-val" id="lblAddonBar" style="color: #a3e635; margin-right: 4px;">١٬٥٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonBar" value="1500" style="display: none;" oninput="onInlinePriceChange('addonBar', this.value)"> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem; border-color: rgba(56,189,248,0.4);">Global Access: <strong class="addon-static-val" id="lblAddonGlobal" style="color: #38bdf8; margin-right: 4px;">٢٬٥٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonGlobal" value="2500" style="display: none;" oninput="onInlinePriceChange('addonGlobal', this.value)"> ج/سنة</span>
           </div>
         </div>
 
@@ -1487,48 +1618,78 @@
       </div>
 
       <div style="margin-bottom: 16px;">
-        <label class="form-label">1. خطة الترخيص الأساسي:</label>
+        <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>1. خطة الترخيص الأساسي (الأسعار قابلة للتعديل مباشرة):</span>
+          <span style="font-size: 0.72rem; color: #a3e635;">✏️ يمكنك تعديل أي سعر فوراً</span>
+        </label>
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-          <label class="glass-card" style="padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="selectPlan('monthly')">
-            <div><strong style="font-size: 0.9rem; color: #fff; display: block;">شهري</strong><span style="font-size: 0.75rem; color: #94a3b8;"><span id="calcLblPriceMonthly">350</span> ج/شهر</span></div>
-            <input type="radio" name="basePlan" value="monthly" checked class="accent-lime-500">
+          <label class="glass-card" style="padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <div>
+              <strong style="font-size: 0.9rem; color: #fff; display: block;">شهري</strong>
+              <span style="font-size: 0.75rem; color: #94a3b8;">
+                <input type="number" class="modal-price-live" id="inCalcPriceMonthly" value="350" oninput="onInlinePriceChange('monthly', this.value)" onclick="event.stopPropagation()"> ج/شهر
+              </span>
+            </div>
+            <input type="radio" name="basePlan" value="monthly" checked class="accent-lime-500" onclick="selectPlan('monthly')">
           </label>
-          <label class="glass-card" style="padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="selectPlan('yearly')">
-            <div><strong style="font-size: 0.9rem; color: #fff; display: block;">سنوي (توفير شهرين)</strong><span style="font-size: 0.75rem; color: #94a3b8;"><span id="calcLblPriceYearly">3,500</span> ج/سنة</span></div>
-            <input type="radio" name="basePlan" value="yearly" class="accent-lime-500">
+          <label class="glass-card" style="padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <div>
+              <strong style="font-size: 0.9rem; color: #fff; display: block;">سنوي (توفير شهرين)</strong>
+              <span style="font-size: 0.75rem; color: #94a3b8;">
+                <input type="number" class="modal-price-live" id="inCalcPriceYearly" value="3500" oninput="onInlinePriceChange('yearly', this.value)" onclick="event.stopPropagation()"> ج/سنة
+              </span>
+            </div>
+            <input type="radio" name="basePlan" value="yearly" class="accent-lime-500" onclick="selectPlan('yearly')">
           </label>
-          <label class="glass-card" style="padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="selectPlan('lifetime')">
-            <div><strong style="font-size: 0.9rem; color: #fff; display: block;">مدى الحياة</strong><span style="font-size: 0.75rem; color: #94a3b8;"><span id="calcLblPriceLifetime">6,000</span> ج مرة واحدة</span></div>
-            <input type="radio" name="basePlan" value="lifetime" class="accent-lime-500">
+          <label class="glass-card" style="padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <div>
+              <strong style="font-size: 0.9rem; color: #fff; display: block;">مدى الحياة</strong>
+              <span style="font-size: 0.75rem; color: #94a3b8;">
+                <input type="number" class="modal-price-live" id="inCalcPriceLifetime" value="6000" oninput="onInlinePriceChange('lifetime', this.value)" onclick="event.stopPropagation()"> ج مرة واحدة
+              </span>
+            </div>
+            <input type="radio" name="basePlan" value="lifetime" class="accent-lime-500" onclick="selectPlan('lifetime')">
           </label>
         </div>
       </div>
 
       <div style="margin-bottom: 16px;">
-        <label class="form-label">2. الإضافات الاختيارية (دفع مرة واحدة):</label>
+        <label class="form-label">2. الإضافات الاختيارية (دفع مرة واحدة — عدّل السعر إن أردت):</label>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
           <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-            <span style="font-size: 0.82rem; color: #fff;">التعرف بالوجه الذكي AI (+<span id="calcLblAddonFace">4,000</span> ج)</span>
+            <span style="font-size: 0.82rem; color: #fff;">
+              التعرف بالوجه الذكي AI (+<input type="number" class="modal-price-live" id="inCalcAddonFace" value="4000" oninput="onInlinePriceChange('addonFace', this.value)" onclick="event.stopPropagation()"> ج)
+            </span>
             <input type="checkbox" id="chkAddonFace" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
           <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-            <span style="font-size: 0.82rem; color: #fff;">بصمة الأصبع (+<span id="calcLblAddonFingerprint">3,500</span> ج)</span>
+            <span style="font-size: 0.82rem; color: #fff;">
+              بصمة الأصبع (+<input type="number" class="modal-price-live" id="inCalcAddonFingerprint" value="3500" oninput="onInlinePriceChange('addonFingerprint', this.value)" onclick="event.stopPropagation()"> ج)
+            </span>
             <input type="checkbox" id="chkAddonFingerprint" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
           <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-            <span style="font-size: 0.82rem; color: #fff;">قارئ الباركود (+<span id="calcLblAddonBarcode">2,500</span> ج)</span>
+            <span style="font-size: 0.82rem; color: #fff;">
+              قارئ الباركود (+<input type="number" class="modal-price-live" id="inCalcAddonBarcode" value="2500" oninput="onInlinePriceChange('addonBarcode', this.value)" onclick="event.stopPropagation()"> ج)
+            </span>
             <input type="checkbox" id="chkAddonBarcode" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
           <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-            <span style="font-size: 0.82rem; color: #fff;">قارئ كود QR (+<span id="calcLblAddonQr">1,500</span> ج)</span>
+            <span style="font-size: 0.82rem; color: #fff;">
+              قارئ كود QR (+<input type="number" class="modal-price-live" id="inCalcAddonQr" value="1500" oninput="onInlinePriceChange('addonQr', this.value)" onclick="event.stopPropagation()"> ج)
+            </span>
             <input type="checkbox" id="chkAddonQr" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
           <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-            <span style="font-size: 0.82rem; color: #fff;">بوت واتساب وتليجرام (+<span id="calcLblAddonBot">2,000</span> ج)</span>
+            <span style="font-size: 0.82rem; color: #fff;">
+              بوت واتساب وتليجرام (+<input type="number" class="modal-price-live" id="inCalcAddonBot" value="2000" oninput="onInlinePriceChange('addonBot', this.value)" onclick="event.stopPropagation()"> ج)
+            </span>
             <input type="checkbox" id="chkAddonBot" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
           <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-            <span style="font-size: 0.82rem; color: #fff;">مخزون ونقاط بيع البار (+<span id="calcLblAddonBar">1,500</span> ج)</span>
+            <span style="font-size: 0.82rem; color: #fff;">
+              مخزون ونقاط بيع البار (+<input type="number" class="modal-price-live" id="inCalcAddonBar" value="1500" oninput="onInlinePriceChange('addonBar', this.value)" onclick="event.stopPropagation()"> ج)
+            </span>
             <input type="checkbox" id="chkAddonBar" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
         </div>
@@ -1536,11 +1697,15 @@
 
       <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; margin-bottom: 16px;">
         <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-          <span style="font-size: 0.82rem; color: #fff;">Global Access سحابي (+<span id="calcLblAddonGlobal">2,500</span> ج/سنة)</span>
+          <span style="font-size: 0.82rem; color: #fff;">
+            Global Access سحابي (+<input type="number" class="modal-price-live" id="inCalcAddonGlobal" value="2500" oninput="onInlinePriceChange('addonGlobal', this.value)" onclick="event.stopPropagation()"> ج/سنة)
+          </span>
           <input type="checkbox" id="chkAddonGlobal" class="accent-lime-500" onchange="recalculatePackage()">
         </label>
         <div class="glass-card" style="padding: 6px 12px;">
-          <label class="form-label" style="font-size: 0.72rem; margin-bottom: 2px;">فروع إضافية (2,500 ج/فرع/سنة):</label>
+          <label class="form-label" style="font-size: 0.72rem; margin-bottom: 2px;">
+            فروع إضافية (<input type="number" class="modal-price-live" id="inCalcBranchPrice" value="2500" oninput="onInlinePriceChange('branchPrice', this.value)" style="width: 60px;"> ج/فرع/سنة):
+          </label>
           <input type="number" id="inExtraBranches" class="form-input" style="padding: 4px 8px; font-size: 0.85rem;" value="0" min="0" oninput="recalculatePackage()">
         </div>
       </div>
@@ -1873,30 +2038,99 @@
       const p = appConfig.prices;
       const c = appConfig.currency;
 
-      document.getElementById('lblPriceMonthly').innerText = formatNumber(p.monthly);
-      document.getElementById('lblPriceYearly').innerText = formatNumber(p.yearly);
-      document.getElementById('lblPriceLifetime').innerText = formatNumber(p.lifetime);
+      // Slide 13 Static Displays
+      const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el && document.activeElement !== el) el.value = val; };
 
-      document.getElementById('lblAddonFace').innerText = formatNumber(p.addonFace);
-      document.getElementById('lblAddonFingerprint').innerText = formatNumber(p.addonFingerprint);
-      document.getElementById('lblAddonBarcode').innerText = formatNumber(p.addonBarcode);
-      document.getElementById('lblAddonQr').innerText = formatNumber(p.addonQr);
-      document.getElementById('lblAddonBot').innerText = formatNumber(p.addonBot);
-      document.getElementById('lblAddonBar').innerText = formatNumber(p.addonBar);
-      document.getElementById('lblAddonGlobal').innerText = formatNumber(p.addonGlobal);
+      setTxt('lblPriceMonthly', formatNumber(p.monthly));
+      setTxt('lblPriceYearly', formatNumber(p.yearly));
+      setTxt('lblPriceLifetime', formatNumber(p.lifetime));
 
-      document.getElementById('compareSoftwarePrice').innerText = `${formatNumber(p.monthly)} ${c}`;
+      setTxt('lblAddonFace', formatNumber(p.addonFace));
+      setTxt('lblAddonFingerprint', formatNumber(p.addonFingerprint));
+      setTxt('lblAddonBarcode', formatNumber(p.addonBarcode));
+      setTxt('lblAddonQr', formatNumber(p.addonQr));
+      setTxt('lblAddonBot', formatNumber(p.addonBot));
+      setTxt('lblAddonBar', formatNumber(p.addonBar));
+      setTxt('lblAddonGlobal', formatNumber(p.addonGlobal));
 
-      document.getElementById('calcLblPriceMonthly').innerText = formatNumber(p.monthly);
-      document.getElementById('calcLblPriceYearly').innerText = formatNumber(p.yearly);
-      document.getElementById('calcLblPriceLifetime').innerText = formatNumber(p.lifetime);
-      document.getElementById('calcLblAddonFace').innerText = formatNumber(p.addonFace);
-      document.getElementById('calcLblAddonFingerprint').innerText = formatNumber(p.addonFingerprint);
-      document.getElementById('calcLblAddonBarcode').innerText = formatNumber(p.addonBarcode);
-      document.getElementById('calcLblAddonQr').innerText = formatNumber(p.addonQr);
-      document.getElementById('calcLblAddonBot').innerText = formatNumber(p.addonBot);
-      document.getElementById('calcLblAddonBar').innerText = formatNumber(p.addonBar);
-      document.getElementById('calcLblAddonGlobal').innerText = formatNumber(p.addonGlobal);
+      setTxt('compareSoftwarePrice', `${formatNumber(p.monthly)} ${c}`);
+
+      // Slide 13 Live Inputs
+      setVal('inLivePriceMonthly', p.monthly);
+      setVal('inLivePriceYearly', p.yearly);
+      setVal('inLivePriceLifetime', p.lifetime);
+      setVal('inLiveAddonFace', p.addonFace);
+      setVal('inLiveAddonFingerprint', p.addonFingerprint);
+      setVal('inLiveAddonBarcode', p.addonBarcode);
+      setVal('inLiveAddonQr', p.addonQr);
+      setVal('inLiveAddonBot', p.addonBot);
+      setVal('inLiveAddonBar', p.addonBar);
+      setVal('inLiveAddonGlobal', p.addonGlobal);
+
+      // Modal 2 Live Inputs
+      setVal('inCalcPriceMonthly', p.monthly);
+      setVal('inCalcPriceYearly', p.yearly);
+      setVal('inCalcPriceLifetime', p.lifetime);
+      setVal('inCalcAddonFace', p.addonFace);
+      setVal('inCalcAddonFingerprint', p.addonFingerprint);
+      setVal('inCalcAddonBarcode', p.addonBarcode);
+      setVal('inCalcAddonQr', p.addonQr);
+      setVal('inCalcAddonBot', p.addonBot);
+      setVal('inCalcAddonBar', p.addonBar);
+      setVal('inCalcAddonGlobal', p.addonGlobal);
+      setVal('inCalcBranchPrice', p.branchPrice || 2500);
+    }
+
+    function onInlinePriceChange(key, val) {
+      const num = Number(val) || 0;
+      if (!appConfig.prices) appConfig.prices = {};
+      appConfig.prices[key] = num;
+      saveConfigToStorage();
+      updateUIDisplayPrices();
+      recalculatePackage();
+    }
+
+    let isPriceEditMode = false;
+    function togglePriceEditMode(forceState) {
+      if (typeof forceState === 'boolean') isPriceEditMode = forceState;
+      else isPriceEditMode = !isPriceEditMode;
+
+      const btnText = document.getElementById('btnEditPricesText');
+      const btn = document.getElementById('btnEditPricesToggle');
+
+      const staticVals = document.querySelectorAll('.price-static-val, .addon-static-val');
+      const inputVals = document.querySelectorAll('.price-input-live, .addon-input-live');
+
+      if (isPriceEditMode) {
+        staticVals.forEach(el => el.style.display = 'none');
+        inputVals.forEach(el => el.style.display = 'inline-block');
+        if (btnText) btnText.innerText = '✓ تم الحفظ وتثبيت الأسعار';
+        if (btn) {
+          btn.style.background = '#84cc16';
+          btn.style.color = '#030712';
+          btn.style.borderColor = '#84cc16';
+        }
+        showWaveToast('✏️ تم فتح تعديل الأسعار: اكتب أي رقم وسيحفظ فوراً');
+      } else {
+        staticVals.forEach(el => el.style.display = '');
+        inputVals.forEach(el => el.style.display = 'none');
+        if (btnText) btnText.innerText = 'تعديل الأسعار والإضافات مباشرة';
+        if (btn) {
+          btn.style.background = 'rgba(132, 204, 22, 0.15)';
+          btn.style.color = '#bef264';
+          btn.style.borderColor = '#84cc16';
+        }
+        showWaveToast('✓ تم تثبيت الأسعار الجديدة بنجاح');
+      }
+    }
+
+    function resetPricesToDefault() {
+      appConfig.prices = JSON.parse(JSON.stringify(DEFAULT_CONFIG.prices));
+      saveConfigToStorage();
+      updateUIDisplayPrices();
+      recalculatePackage();
+      showWaveToast('↺ تم استعادة الأسعار الافتراضية');
     }
 
     /* 3. Slides Engine */
@@ -2152,6 +2386,7 @@
     // MediaPipe Hands & Zoom State
     let mpHands = null;
     let isMediaPipeReady = false;
+    let isMediaPipeProcessing = false;
     let isZoomActive = false;
     let isKeyboardZoomActive = false;
     let consecutiveZoomFrames = 0;
@@ -2166,7 +2401,7 @@
 
     let targetBox = { x: 0, y: 0, w: 0, h: 0 };
     let currentBox = { x: 0, y: 0, w: 0, h: 0 };
-    let fingersPos = { lIndex: null, lThumb: null, rIndex: null, rThumb: null };
+    let fingersPos = { lIndex: null, lThumb: null, rIndex: null, rThumb: null, pinchL: null, pinchR: null };
 
     // Initialize MediaPipe Hands if available
     function initMediaPipe() {
@@ -2180,13 +2415,13 @@
         });
         mpHands.setOptions({
           maxNumHands: 2,
-          modelComplexity: 1,
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.5
+          modelComplexity: 0, // Lite model: ultra fast, low CPU, instant load
+          minDetectionConfidence: 0.35,
+          minTrackingConfidence: 0.35
         });
         mpHands.onResults(onHandResults);
         isMediaPipeReady = true;
-        console.log("✓ MediaPipe Hands 4-finger tracker initialized.");
+        console.log("✓ MediaPipe Hands 2-hand L-frame tracker initialized.");
       } catch (err) {
         console.warn("Failed to init MediaPipe Hands:", err);
       }
@@ -2211,21 +2446,21 @@
           initMediaPipe();
         }
 
-        hudStatus.innerText = 'لوّح ✋ أو Pinch 🤏 للتكبير';
+        hudStatus.innerText = 'برواز الأصابع ✌️ للتكبير';
         hudPulse.style.background = '#84cc16';
         hudPulse.style.boxShadow = '0 0 10px #84cc16';
         toggleGestureBtn.innerHTML = '<i class="fa fa-video"></i> إيقاف';
         processMotionFrames();
-        showWaveToast('الكاميرا نشطة: لوّح للتقليب، أو اعمل Pinch 🤏 للتكبير والتجول!');
+        showWaveToast('الكاميرا نشطة: شكّل برواز التكبير بيديك ✌️ أو لوّح للتقليب!');
       } catch (err) {
         console.warn("Camera access error:", err);
         hudStatus.innerText = 'الكاميرا غير مفعلة (أو مقيدة)';
         hudPulse.style.background = '#f59e0b';
         isCameraActive = false;
         if (window.location.protocol === 'file:') {
-          showWaveToast('لتفعيل الكاميرا تلقائياً، شغّل ملف RUN_PRESENTATION.bat، أو استخدم مفتاح Z للتكبير!');
+          showWaveToast('لتفعيل الكاميرا تلقائياً، شغّل ملف RUN_PRESENTATION.bat، أو استخدم شريط التكبير ومفتاح Z!');
         } else {
-          showWaveToast('الكاميرا تحتاج إذن المتصفح، أو استخدم مفتاح Z للتكبير والأسهم للتقليب!');
+          showWaveToast('الكاميرا تحتاج إذن المتصفح، أو استخدم شريط التكبير ومفتاح Z!');
         }
       }
     }
@@ -2246,16 +2481,16 @@
       }
     }
 
-    let frameSkipCounter = 0;
     function processMotionFrames() {
       if (!isCameraActive) return;
 
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        // Send frame to MediaPipe Hands if initialized
-        if (isMediaPipeReady && mpHands) {
-          frameSkipCounter++;
-          // Run hand detection at 20-30 FPS for optimal performance
-          mpHands.send({ image: video }).catch(() => {});
+        // Send frame to MediaPipe Hands if initialized and NOT currently processing (avoids WASM freezing)
+        if (isMediaPipeReady && mpHands && !isMediaPipeProcessing) {
+          isMediaPipeProcessing = true;
+          mpHands.send({ image: video })
+            .catch(err => console.warn("MediaPipe send error:", err))
+            .finally(() => { isMediaPipeProcessing = false; });
         }
 
         // Parallel Fallback: Motion difference for simple wave
@@ -2300,16 +2535,50 @@
       waveDetectionAnimationId = requestAnimationFrame(processMotionFrames);
     }
 
-    /* 1. Pinch Gesture Recognition (Thumb Tip to Index Tip) */
+    /* 1. L-Shape Framing Hand Recognition (The Exact Gesture Shown by User) */
+    function checkHandLShape(landmarks) {
+      if (!landmarks || landmarks.length < 21) return null;
+      const wrist = landmarks[0];
+      const thumbTip = landmarks[4];
+      const thumbMcp = landmarks[2];
+      const indexTip = landmarks[8];
+      const indexPip = landmarks[6];
+      const indexMcp = landmarks[5];
+
+      // 1. Index finger extended (distance from wrist to tip is clearly greater than to pip)
+      const distIndexTip = Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y);
+      const distIndexPip = Math.hypot(indexPip.x - wrist.x, indexPip.y - wrist.y);
+      if (distIndexTip <= distIndexPip * 1.05) return null;
+
+      // 2. Thumb extended and separated from index (not a closed pinch)
+      const distThumbTip = Math.hypot(thumbTip.x - wrist.x, thumbTip.y - wrist.y);
+      const distThumbMcp = Math.hypot(thumbMcp.x - wrist.x, thumbMcp.y - wrist.y);
+      const distThumbIndex = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+
+      // In pinch, thumb and index touch (dist < 0.07). In L-frame, they are open!
+      if (distThumbIndex < 0.065) return null;
+
+      // 3. Middle, Ring, Pinky folded/curled (at least 2 out of 3 folded or lower than index)
+      const distMid = Math.hypot(landmarks[12].x - wrist.x, landmarks[12].y - wrist.y);
+      const distRing = Math.hypot(landmarks[16].x - wrist.x, landmarks[16].y - wrist.y);
+      const distPinky = Math.hypot(landmarks[20].x - wrist.x, landmarks[20].y - wrist.y);
+
+      let foldedCount = 0;
+      if (distMid < distIndexTip * 0.94 || landmarks[12].y > indexTip.y + 0.02) foldedCount++;
+      if (distRing < distIndexTip * 0.94 || landmarks[16].y > indexTip.y + 0.02) foldedCount++;
+      if (distPinky < distIndexTip * 0.94 || landmarks[20].y > indexTip.y + 0.02) foldedCount++;
+
+      if (foldedCount < 2) return null;
+
+      return { indexTip, thumbTip, indexMcp, wrist, distIndexTip };
+    }
+
+    /* 2. Pinch Gesture Recognition (Thumb Tip to Index Tip) */
     function checkHandPinch(landmarks) {
       if (!landmarks || landmarks.length < 9) return null;
       const thumbTip = landmarks[4];
       const indexTip = landmarks[8];
-
-      // Euclidean distance in normalized 2D camera coordinates
       const dist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
-
-      // Hysteresis threshold: 0.085 to enter pinch, 0.12 to maintain pinch
       const threshold = isZoomActive ? 0.12 : 0.085;
 
       if (dist <= threshold) {
@@ -2325,45 +2594,6 @@
       return null;
     }
 
-    /* 2. Geometric L-Shape Finger Recognition (Alternative Fallback) */
-    function checkHandLShape(landmarks) {
-      const wrist = landmarks[0];
-      const thumbTip = landmarks[4];
-      const thumbMcp = landmarks[2];
-      const indexTip = landmarks[8];
-      const indexMcp = landmarks[5];
-      const indexPip = landmarks[6];
-
-      // Index finger pointed UP (tip significantly above pip and mcp)
-      const isIndexUp = (indexTip.y < indexPip.y) && (indexTip.y < indexMcp.y - 0.03);
-      if (!isIndexUp) return null;
-
-      // Vectors for angle calculation
-      const vIndex = { x: indexTip.x - indexMcp.x, y: indexTip.y - indexMcp.y };
-      const vThumb = { x: thumbTip.x - thumbMcp.x, y: thumbTip.y - thumbMcp.y };
-      const magIndex = Math.hypot(vIndex.x, vIndex.y);
-      const magThumb = Math.hypot(vThumb.x, vThumb.y);
-      if (magIndex < 0.04 || magThumb < 0.03) return null;
-
-      // Angle between Index and Thumb
-      const dot = (vIndex.x * vThumb.x + vIndex.y * vThumb.y) / (magIndex * magThumb);
-      const angleDeg = Math.acos(Math.max(-1, Math.min(1, dot))) * (180 / Math.PI);
-
-      if (angleDeg < 50 || angleDeg > 135) return null;
-
-      const midDist = Math.hypot(landmarks[12].x - wrist.x, landmarks[12].y - wrist.y);
-      const ringDist = Math.hypot(landmarks[16].x - wrist.x, landmarks[16].y - wrist.y);
-      const pinkyDist = Math.hypot(landmarks[20].x - wrist.x, landmarks[20].y - wrist.y);
-      const idxDist = Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y);
-
-      const areOtherFolded = (midDist < idxDist * 0.92) && (ringDist < idxDist * 0.92) && (pinkyDist < idxDist * 0.92);
-      const isIndexHigher = (indexTip.y < landmarks[12].y) && (indexTip.y < landmarks[16].y);
-
-      if (!areOtherFolded && !isIndexHigher) return null;
-
-      return { indexTip, thumbTip, indexMcp, wrist, angleDeg };
-    }
-
     /* MediaPipe Hand Results Callback */
     function onHandResults(results) {
       if (!isCameraActive) return;
@@ -2371,7 +2601,71 @@
       const hands = results.multiHandLandmarks;
 
       // ==========================================
-      // A. PRIMARY: TWO-HANDED PINCH (Pinch بالايدين)
+      // A. PRIMARY: TWO-HAND L-SHAPE FRAMING (برواز التكبير بالإيدين)
+      // ==========================================
+      if (hands && hands.length >= 2) {
+        const handA = checkHandLShape(hands[0]);
+        const handB = checkHandLShape(hands[1]);
+
+        if (handA && handB) {
+          consecutiveZoomFrames++;
+          consecutiveDropFrames = 0;
+
+          const leftH = handA.indexTip.x < handB.indexTip.x ? handA : handB;
+          const rightH = handA.indexTip.x < handB.indexTip.x ? handB : handA;
+
+          const f1 = leftH.indexTip;
+          const f2 = leftH.thumbTip;
+          const f3 = rightH.indexTip;
+          const f4 = rightH.thumbTip;
+
+          const cx = (f1.x + f2.x + f3.x + f4.x) / 4;
+          const cy = (f1.y + f2.y + f3.y + f4.y) / 4;
+
+          // Distance between hands: moving apart zooms in, closer zooms out
+          const distHands = Math.hypot(rightH.indexTip.x - leftH.indexTip.x, rightH.indexTip.y - leftH.indexTip.y);
+          // Calibrated range: 0.14 (close) to 0.60 (wide) maps to 1.3x - 3.7x zoom
+          const normDist = Math.max(0, Math.min(1, (distHands - 0.14) / 0.46));
+          const calcScale = 1.3 + normDist * 2.4;
+
+          const normCenterX = (1 - cx) - 0.5;
+          const normCenterY = cy - 0.5;
+
+          const maxPanX = (calcScale - 1) * 420;
+          const maxPanY = (calcScale - 1) * 280;
+
+          const calcPanX = -normCenterX * maxPanX * 2.0;
+          const calcPanY = -normCenterY * maxPanY * 1.8;
+
+          const minX = Math.min(f1.x, f2.x, f3.x, f4.x);
+          const maxX = Math.max(f1.x, f2.x, f3.x, f4.x);
+          const minY = Math.min(f1.y, f2.y, f3.y, f4.y);
+          const maxY = Math.max(f1.y, f2.y, f3.y, f4.y);
+
+          const screenBox = {
+            x: (1 - maxX) * window.innerWidth - 20,
+            y: minY * window.innerHeight - 20,
+            w: Math.max((maxX - minX) * window.innerWidth + 40, 160),
+            h: Math.max((maxY - minY) * window.innerHeight + 40, 120)
+          };
+
+          const dots = {
+            pinchL: null, pinchR: null,
+            lIndex: { x: (1 - leftH.indexTip.x) * window.innerWidth, y: leftH.indexTip.y * window.innerHeight },
+            lThumb: { x: (1 - leftH.thumbTip.x) * window.innerWidth, y: leftH.thumbTip.y * window.innerHeight },
+            rIndex: { x: (1 - rightH.indexTip.x) * window.innerWidth, y: rightH.indexTip.y * window.innerHeight },
+            rThumb: { x: (1 - rightH.thumbTip.x) * window.innerWidth, y: rightH.thumbTip.y * window.innerHeight }
+          };
+
+          if (consecutiveZoomFrames >= 2) {
+            enableGestureZoom(calcScale, calcPanX, calcPanY, screenBox, dots, 'lshape');
+          }
+          return;
+        }
+      }
+
+      // ==========================================
+      // B. SECONDARY: TWO-HANDED PINCH
       // ==========================================
       if (hands && hands.length >= 2) {
         const pinchA = checkHandPinch(hands[0]);
@@ -2381,34 +2675,26 @@
           consecutiveZoomFrames++;
           consecutiveDropFrames = 0;
 
-          // Identify left pinch point vs right pinch point
           const leftPinch = pinchA.point.x < pinchB.point.x ? pinchA : pinchB;
           const rightPinch = pinchA.point.x < pinchB.point.x ? pinchB : pinchA;
 
           const pL = leftPinch.point;
           const pR = rightPinch.point;
-
-          // Distance between the two hands: moving apart zooms in, bringing closer zooms out!
           const handsDist = Math.hypot(pR.x - pL.x, pR.y - pL.y);
 
-          // Calibrated range: 0.12 (close) to 0.58 (wide) maps to 1.4x - 4.0x zoom
           const normDist = Math.max(0, Math.min(1, (handsDist - 0.12) / 0.46));
           const calcScale = 1.4 + normDist * 2.6;
 
-          // Midpoint between hands controls pan offset (mirrored horizontally)
           const midX = (pL.x + pR.x) / 2;
           const midY = (pL.y + pR.y) / 2;
-
           const normCenterX = (1 - midX) - 0.5;
           const normCenterY = midY - 0.5;
 
           const maxPanX = (calcScale - 1) * 380;
           const maxPanY = (calcScale - 1) * 260;
+          const calcPanX = -normCenterX * maxPanX * 2.0;
+          const calcPanY = -normCenterY * maxPanY * 1.8;
 
-          const calcPanX = -normCenterX * maxPanX * 2.2;
-          const calcPanY = -normCenterY * maxPanY * 2.0;
-
-          // Viewfinder box bounding the two pinch points
           const minX = Math.min(pL.x, pR.x);
           const maxX = Math.max(pL.x, pR.x);
           const minY = Math.min(pL.y, pR.y);
@@ -2435,7 +2721,7 @@
       }
 
       // ==========================================
-      // B. SECONDARY: SINGLE-HAND PINCH
+      // C. TERTIARY: SINGLE-HAND PINCH
       // ==========================================
       if (hands && hands.length >= 1) {
         const p1 = checkHandPinch(hands[0]);
@@ -2469,68 +2755,6 @@
 
           if (consecutiveZoomFrames >= 3) {
             enableGestureZoom(calcScale, calcPanX, calcPanY, screenBox, dots, 'pinch');
-          }
-          return;
-        }
-      }
-
-      // ==========================================
-      // C. TERTIARY: 2-HAND L-SHAPE VIEWFINDER
-      // ==========================================
-      if (hands && hands.length >= 2) {
-        const handA = checkHandLShape(hands[0]);
-        const handB = checkHandLShape(hands[1]);
-
-        if (handA && handB) {
-          consecutiveZoomFrames++;
-          consecutiveDropFrames = 0;
-
-          const leftH = handA.indexTip.x < handB.indexTip.x ? handA : handB;
-          const rightH = handA.indexTip.x < handB.indexTip.x ? handB : handA;
-
-          const f1 = leftH.indexTip;
-          const f2 = leftH.thumbTip;
-          const f3 = rightH.indexTip;
-          const f4 = rightH.thumbTip;
-
-          const cx = (f1.x + f2.x + f3.x + f4.x) / 4;
-          const cy = (f1.y + f2.y + f3.y + f4.y) / 4;
-
-          const distHands = Math.hypot(rightH.indexTip.x - leftH.indexTip.x, rightH.indexTip.y - leftH.indexTip.y);
-          const normDist = Math.max(0, Math.min(1, (distHands - 0.16) / 0.45));
-          const calcScale = 1.6 + normDist * 2.2;
-
-          const normCenterX = (1 - cx) - 0.5;
-          const normCenterY = cy - 0.5;
-
-          const maxPanX = (calcScale - 1) * 360;
-          const maxPanY = (calcScale - 1) * 240;
-
-          const calcPanX = -normCenterX * maxPanX * 2.2;
-          const calcPanY = -normCenterY * maxPanY * 2.0;
-
-          const minX = Math.min(f1.x, f2.x, f3.x, f4.x);
-          const maxX = Math.max(f1.x, f2.x, f3.x, f4.x);
-          const minY = Math.min(f1.y, f2.y, f3.y, f4.y);
-          const maxY = Math.max(f1.y, f2.y, f3.y, f4.y);
-
-          const screenBox = {
-            x: (1 - maxX) * window.innerWidth,
-            y: minY * window.innerHeight,
-            w: Math.max((maxX - minX) * window.innerWidth, 120),
-            h: Math.max((maxY - minY) * window.innerHeight, 90)
-          };
-
-          const dots = {
-            pinchL: null, pinchR: null,
-            lIndex: { x: (1 - leftH.indexTip.x) * window.innerWidth, y: leftH.indexTip.y * window.innerHeight },
-            lThumb: { x: (1 - leftH.thumbTip.x) * window.innerWidth, y: leftH.thumbTip.y * window.innerHeight },
-            rIndex: { x: (1 - rightH.indexTip.x) * window.innerWidth, y: rightH.indexTip.y * window.innerHeight },
-            rThumb: { x: (1 - rightH.thumbTip.x) * window.innerWidth, y: rightH.thumbTip.y * window.innerHeight }
-          };
-
-          if (consecutiveZoomFrames >= 2) {
-            enableGestureZoom(calcScale, calcPanX, calcPanY, screenBox, dots, 'lshape');
           }
           return;
         }
@@ -2583,12 +2807,12 @@
     }
 
     /* Enable Gesture Zoom */
-    function enableGestureZoom(scale, panX, panY, box, dots, mode = 'pinch') {
+    function enableGestureZoom(scale, panX, panY, box, dots, mode = 'lshape') {
       if (!isZoomActive) {
         isZoomActive = true;
-        const msg = (mode === 'pinch') 
-          ? '🤏 تم فتح التكبير بحركة Pinch — باعد بين يديك للتكبير'
-          : '⌕ تم فتح التكبير بتتبع الأصابع (L-Shape)';
+        const msg = (mode === 'lshape')
+          ? '📸 تم تفعيل برواز التكبير بالإيدين (L-Frame) — باعد للتكبير | قرّب للتصغير'
+          : '🤏 تم فتح التكبير بحركة Pinch';
         showWaveToast(msg);
         hudPulse.style.background = '#a3e635';
         hudPulse.style.boxShadow = '0 0 18px #a3e635';
@@ -2609,20 +2833,25 @@
       const hudZoomSubtext = document.getElementById('hudZoomSubtext');
 
       if (hudZoomTitle) {
-        if (mode === 'pinch') {
+        if (mode === 'lshape') {
+          hudZoomTitle.innerText = 'وضع التكبير: برواز الأصابع (L-Frame) 📸';
+          if (hudZoomIcon) hudZoomIcon.innerText = '✌️';
+          if (hudZoomSubtext) hudZoomSubtext.innerText = 'باعد بين يديك للتكبير | قرّب للتصغير | أنزل يديك للعودة';
+        } else if (mode === 'pinch') {
           hudZoomTitle.innerText = 'وضع التكبير: Pinch بالأيدي 🤏';
           if (hudZoomIcon) hudZoomIcon.innerText = '🤏';
           if (hudZoomSubtext) hudZoomSubtext.innerText = 'باعد يديك للتكبير | قرّب للتصغير | افتح يدك للعودة';
         } else {
-          hudZoomTitle.innerText = 'وضع التكبير: برواز الأصابع (L-Shape)';
-          if (hudZoomIcon) hudZoomIcon.innerText = '✌️';
-          if (hudZoomSubtext) hudZoomSubtext.innerText = 'حرك يديك للتجول | انزل أصابعك للعودة';
+          hudZoomTitle.innerText = 'وضع التكبير التفاعلي 🔍';
+          if (hudZoomIcon) hudZoomIcon.innerText = '🔍';
+          if (hudZoomSubtext) hudZoomSubtext.innerText = 'استخدم شريط التكبير أو الماوس | Esc للعودة';
         }
       }
 
       if (hudZoomFactor) {
         hudZoomFactor.innerText = `${scale.toFixed(1)}x`;
       }
+      updateFloatingZoomDisplay(scale);
 
       const activeSlide = slides[currentSlide];
       if (activeSlide) {
@@ -2633,7 +2862,7 @@
       }
     }
 
-    /* Disable Gesture Zoom (Triggered when user OPENS pinch or LOWERS hands) */
+    /* Disable Gesture Zoom (Smooth return to 1x) */
     function disableGestureZoom() {
       if (!isZoomActive) return;
       isZoomActive = false;
@@ -2648,35 +2877,74 @@
         viewfinderHud.classList.remove('active');
       }
 
-      // Smoothly restore image on active slide
+      // Smoothly restore any elements on active slide
       const activeSlide = slides[currentSlide];
       if (activeSlide) {
         const visual = activeSlide.querySelector('.visual-wrapper');
-        if (visual) {
-          visual.classList.remove('gesture-zoomed');
-          const img = visual.querySelector('img');
-          if (img) {
-            img.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
-            img.style.transform = 'translate(0px, 0px) scale(1)';
-            setTimeout(() => { if (!isZoomActive && img) img.style.transition = ''; }, 480);
+        if (visual) visual.classList.remove('gesture-zoomed');
+
+        const elementsToReset = [
+          activeSlide.querySelector('.visual-wrapper img'),
+          activeSlide.querySelector('.slide-center'),
+          activeSlide.querySelector('.slide-2col'),
+          activeSlide
+        ];
+        elementsToReset.forEach(el => {
+          if (el && el.style.transform) {
+            el.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+            el.style.transform = '';
+            setTimeout(() => { if (!isZoomActive && el) el.style.transition = ''; }, 450);
           }
-        }
+        });
       }
 
-      // Also reset lightbox image if open
+      // Reset lightbox image if open
       const lightboxImg = document.getElementById('lightboxImg');
       if (lightboxImg) {
-        lightboxImg.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
-        lightboxImg.style.transform = 'translate(0px, 0px) scale(1)';
-        setTimeout(() => { if (!isZoomActive && lightboxImg) lightboxImg.style.transition = ''; }, 480);
+        lightboxImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+        lightboxImg.style.transform = '';
+        setTimeout(() => { if (!isZoomActive && lightboxImg) lightboxImg.style.transition = ''; }, 450);
       }
 
+      updateFloatingZoomDisplay(1.0);
       hudPulse.style.background = '#84cc16';
       hudPulse.style.boxShadow = '0 0 10px #84cc16';
-      showWaveToast('تم فك الـ Pinch — العودة للشريحة العادية ↺');
+      showWaveToast('العودة للشريحة العادية ↺');
     }
 
-    /* Keyboard / Mouse Zoom Toggle (Z Key) */
+    /* Floating Zoom Controls & Keyboard Toggle */
+    function zoomStep(delta) {
+      let newScale = currentZoomScale + delta;
+      if (newScale < 1.0) newScale = 1.0;
+      if (newScale > 3.6) newScale = 3.6;
+
+      if (newScale <= 1.05) {
+        resetZoom();
+        return;
+      }
+
+      targetZoomScale = newScale;
+      if (!isZoomActive) {
+        enableGestureZoom(newScale, 0, 0, {
+          x: window.innerWidth * 0.2,
+          y: window.innerHeight * 0.15,
+          w: window.innerWidth * 0.6,
+          h: window.innerHeight * 0.7
+        }, { pinchL: null, pinchR: null, lIndex: null, lThumb: null, rIndex: null, rThumb: null }, 'manual');
+      }
+      updateFloatingZoomDisplay(newScale);
+    }
+
+    function resetZoom() {
+      disableGestureZoom();
+    }
+
+    function updateFloatingZoomDisplay(scale) {
+      const el = document.getElementById('floatingZoomVal');
+      if (el) el.innerText = `${(Number(scale) || 1).toFixed(1)}x`;
+    }
+
+    /* Keyboard Zoom Toggle (Z Key) */
     function toggleKeyboardZoom() {
       if (isZoomActive) {
         disableGestureZoom();
@@ -2688,31 +2956,32 @@
           w: window.innerWidth * 0.5,
           h: window.innerHeight * 0.6
         }, { pinchL: null, pinchR: null, lIndex: null, lThumb: null, rIndex: null, rThumb: null }, 'key');
-        showWaveToast('⌕ وضع التكبير التفاعلي: حرّك الماوس للتجول | Esc للعودة');
+        showWaveToast('⌕ وضع التكبير التفاعلي: حرّك الماوس للتجول | اضغط Z أو Esc للعودة');
       }
     }
 
     // Mouse movement panning during keyboard zoom
     window.addEventListener('mousemove', (e) => {
-      if (!isKeyboardZoomActive) return;
-      const normX = (e.clientX / window.innerWidth) - 0.5;
-      const normY = (e.clientY / window.innerHeight) - 0.5;
-      targetPanX = -normX * 420;
-      targetPanY = -normY * 280;
+      if (!isKeyboardZoomActive && !isZoomActive) return;
+      if (isKeyboardZoomActive) {
+        const normX = (e.clientX / window.innerWidth) - 0.5;
+        const normY = (e.clientY / window.innerHeight) - 0.5;
+        targetPanX = -normX * 420;
+        targetPanY = -normY * 280;
+      }
     });
 
     /* Continuous Buttery 60FPS LERP Loop */
     function updateZoomTransformLoop() {
       if (isZoomActive) {
-        // Smooth LERP (0.16 speed factor)
         currentZoomScale += (targetZoomScale - currentZoomScale) * 0.16;
         currentPanX += (targetPanX - currentPanX) * 0.16;
         currentPanY += (targetPanY - currentPanY) * 0.16;
 
-        currentBox.x += (targetBox.x - currentBox.x) * 0.2;
-        currentBox.y += (targetBox.y - currentBox.y) * 0.2;
-        currentBox.w += (targetBox.w - currentBox.w) * 0.2;
-        currentBox.h += (targetBox.h - currentBox.h) * 0.2;
+        currentBox.x += (targetBox.x - currentBox.x) * 0.22;
+        currentBox.y += (targetBox.y - currentBox.y) * 0.22;
+        currentBox.w += (targetBox.w - currentBox.w) * 0.22;
+        currentBox.h += (targetBox.h - currentBox.h) * 0.22;
 
         if (viewfinderBox) {
           viewfinderBox.style.left = `${currentBox.x}px`;
@@ -2728,20 +2997,21 @@
         updateFingerDot('fDotRIndex', fingersPos.rIndex);
         updateFingerDot('fDotRThumb', fingersPos.rThumb);
 
-        // Apply transform to active image
-        let targetImg = null;
+        // Apply zoom transform to active slide content or image
+        let targetEl = null;
         if (document.getElementById('imageLightbox').classList.contains('open')) {
-          targetImg = document.getElementById('lightboxImg');
+          targetEl = document.getElementById('lightboxImg');
         } else {
           const activeSlide = slides[currentSlide];
           if (activeSlide) {
-            const visual = activeSlide.querySelector('.visual-wrapper');
-            if (visual) targetImg = visual.querySelector('img');
+            const visualImg = activeSlide.querySelector('.visual-wrapper img');
+            targetEl = visualImg || activeSlide.querySelector('.slide-center') || activeSlide.querySelector('.slide-2col') || activeSlide;
           }
         }
 
-        if (targetImg) {
-          targetImg.style.transform = `translate(${currentPanX.toFixed(1)}px, ${currentPanY.toFixed(1)}px) scale(${currentZoomScale.toFixed(2)})`;
+        if (targetEl) {
+          targetEl.style.transformOrigin = 'center center';
+          targetEl.style.transform = `translate(${currentPanX.toFixed(1)}px, ${currentPanY.toFixed(1)}px) scale(${currentZoomScale.toFixed(2)})`;
         }
       }
 
@@ -2835,6 +3105,29 @@
       saveAndApplyLoss();
       goToSlide(0);
       requestAnimationFrame(updateZoomTransformLoop);
+
+      // Double click to zoom / reset zoom on any slide
+      const deck = document.getElementById('deckContainer');
+      if (deck) {
+        deck.addEventListener('dblclick', (e) => {
+          if (['INPUT', 'BUTTON', 'A', 'SELECT'].includes(e.target.tagName)) return;
+          if (isZoomActive) {
+            resetZoom();
+          } else {
+            const normX = (e.clientX / window.innerWidth) - 0.5;
+            const normY = (e.clientY / window.innerHeight) - 0.5;
+            targetPanX = -normX * 420;
+            targetPanY = -normY * 280;
+            targetZoomScale = 2.2;
+            enableGestureZoom(2.2, targetPanX, targetPanY, {
+              x: e.clientX - 150,
+              y: e.clientY - 100,
+              w: 300,
+              h: 200
+            }, { pinchL: null, pinchR: null, lIndex: null, lThumb: null, rIndex: null, rThumb: null }, 'click');
+          }
+        });
+      }
 
       // Auto-attempt webcam gesture initialization
       initWebcamGesture();
