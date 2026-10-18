@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}قفل صفحة حركة الأعضاء — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
+
+{% block content %}
+<div style="min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: var(--bg-card); border: 2px solid #1A2B36; border-radius: 20px; width: 100%; max-width: 480px; padding: 36px 28px; box-shadow: 0 16px 40px rgba(0,0,0,0.6); text-align: center;">
+    
+    <!-- Lock Icon -->
+    <div style="width: 72px; height: 72px; background: rgba(225, 29, 72, 0.12); border: 2px solid var(--hulk-primary, #E11D48); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto 20px auto;">
+      🔒
+    </div>
+
+    <h2 style="color: #F3F8FB; font-size: 1.5rem; font-weight: 900; margin-bottom: 8px;">
+      صفحة حركة الأعضاء محمية
+    </h2>
+
+    <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.6; margin-bottom: 24px;">
+      يرجى إدخال كلمة المرور للوصول إلى كشوفات حركة الأعضاء ومعدلات التجديد والاحتفاظ وميزان الأرباح والخسائر.
+      <br>
+      <span style="color: #f59e0b; font-size: 0.84rem; display: inline-block; margin-top: 6px;">
+        يتم إعادة قفل الصفحة تلقائياً بمجرد الخروج منها لأي قسم آخر.
+      </span>
+    </p>
+
+    <form method="post" action="{{ target_url|default:request.get_full_path }}" style="display: flex; flex-direction: column; gap: 16px;">
+      {% csrf_token %}
+      <input type="hidden" name="target_url" value="{{ target_url|default:request.get_full_path }}">
+
+      <div style="text-align: right;">
+        <label for="retention-pwd" style="display: block; color: var(--text-muted); font-size: 0.88rem; font-weight: 700; margin-bottom: 8px;">
+          كلمة المرور:
+        </label>
+        <input 
+          type="password" 
+          id="retention-pwd" 
+          name="password" 
+          required 
+          autofocus
+          placeholder="أدخل كلمة المرور هنا..."
+          style="width: 100%; background: var(--bg-card); border: 2px solid #182834; color: var(--text-main); font-size: 1.1rem; padding: 14px 16px; border-radius: 10px; outline: none; text-align: center; letter-spacing: 2px;"
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1.1rem; padding: 14px; font-weight: 900;">
+        🔓 فتح القفل والمتابعة
+      </button>
+
+      <a href="{% url 'core:dashboard' %}" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.95rem;">
+        الرجوع إلى الرئيسية
+      </a>
+    </form>
+
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #14202A; font-size: 0.8rem; color: #586571;">
+      نظام أمان فوري — يعود للقفل مباشرة فور الانتقال لقسم آخر
+    </div>
+
+  </div>
+</div>
+{% endblock %}

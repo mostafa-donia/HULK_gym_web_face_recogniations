@@ -4,10 +4,11 @@ import json
 from datetime import datetime, timedelta, timezone
 from flask import Flask, render_template, request, jsonify, send_file
 
-# Add web_face to Python path to import licensing crypto
+# Add BASE_DIR and web_face to Python path to import licensing crypto
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PARENT_DIR = os.path.dirname(BASE_DIR)
-sys.path.insert(0, os.path.join(PARENT_DIR, "web_face"))
+sys.path.insert(0, BASE_DIR)
+sys.path.insert(1, os.path.join(PARENT_DIR, "web_face"))
 
 from apps.core.licensing.crypto import (
     generate_offline_license_token,

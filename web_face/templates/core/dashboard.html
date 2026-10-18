@@ -3,11 +3,11 @@
 {% block title %}الرئيسية — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
 {% block content %}
-<div style="display: flex; flex-direction: column; gap: 12px; max-width: 760px; margin: 0 auto; width: 100%;">
+<div style="display: flex; flex-direction: column; gap: 20px; max-width: 1200px; margin: 0 auto; width: 100%; padding: 10px 16px;">
 
-  <!-- Search Row (Focused & Responsive) -->
-  <div class="search-row" style="margin-bottom: 2px;">
-    <button type="button" class="search-btn" onclick="document.getElementById('main-search-input').focus()" style="border-radius: 10px; height: 42px; font-weight: 800; font-size: 0.92rem; border-color: rgba(255,255,255,0.15);">
+  <!-- Search Row (Prominent, Broad & Modern) -->
+  <div class="search-row" style="margin-bottom: 4px;">
+    <button type="button" class="search-btn" onclick="document.getElementById('main-search-input').focus()" style="border-radius: 12px; height: 54px; font-weight: 800; font-size: 1.15rem; padding: 0 24px; border-color: rgba(255,255,255,0.18);">
       🔍 بحث
     </button>
     <input 
@@ -18,7 +18,7 @@
       placeholder="ابحث باسم المتدرب، رقم الموبايل، أو نوع الباقة..." 
       autocomplete="off"
       autofocus
-      style="height: 42px; border-radius: 10px; font-size: 0.95rem; padding: 0 16px;"
+      style="height: 54px; border-radius: 12px; font-size: 1.12rem; padding: 0 20px; font-weight: 700;"
       hx-get="{% url 'core:quick_search' %}" 
       hx-trigger="keyup changed delay:200ms, search" 
       hx-target="#search-results"
@@ -27,98 +27,71 @@
   </div>
 
   <!-- Live Search Spinner -->
-  <div id="search-spinner" class="htmx-indicator" style="text-align: center; color: var(--hulk-primary, #E11D48); font-weight: 800; margin-top: -6px; font-size: 0.85rem;">
+  <div id="search-spinner" class="htmx-indicator" style="text-align: center; color: var(--hulk-primary, #E11D48); font-weight: 800; margin-top: -8px; font-size: 0.95rem;">
     جاري البحث الفوري...
   </div>
 
   <!-- Live Search Results (appears dynamically when typing) -->
   <div id="search-results"></div>
 
-  <!-- Balanced 2-Column Action Cards Grid -->
-  <div style="display: flex; flex-direction: column; gap: 9px;">
-    <!-- Row 1: Primary Operation & Expense Creation -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 9px;">
-      <!-- Hero Primary Action: سجل / جدد / دفع المتبقي -->
-      <a href="{% url 'members:smart_operations' %}" class="btn-dashboard-action btn-lime" style="min-height: 48px; max-height: 52px; font-size: 1.02rem; font-weight: 900; gap: 8px; border-radius: 10px;">
-        <span style="font-size: 1.15rem;">⚡</span>
-        <span>سجل / جدد / دفع المتبقي</span>
-      </a>
-
-      <!-- Expense Action: إضافة مصروف -->
-      <a href="{% url 'expenses:expense_create' %}" class="btn-dashboard-action" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #f8fafc; border: 1px solid color-mix(in srgb, var(--hulk-primary, #E11D48) 50%, #334155); min-height: 48px; max-height: 52px; font-size: 1.02rem; font-weight: 800; gap: 8px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.35);">
-        <span style="font-size: 1.15rem;">💸</span>
-        <span>إضافة مصروف للخزينة</span>
-      </a>
-    </div>
-
-    <!-- Row 2: Subscriptions Status (Remaining & Expired) -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 9px;">
-      <!-- عليهم متبقي (Orange/Amber Gradient) -->
-      <a href="{% url 'members:member_list' %}?filter=remaining" class="btn-dashboard-action btn-orange" style="min-height: 46px; max-height: 50px; font-size: 0.98rem; font-weight: 800; gap: 8px; border-radius: 10px;">
-        <span style="font-size: 1.1rem;">⚠️</span>
-        <span>عليهم متبقي (ديون)</span>
-        {% if total_debt > 0 %}
-          <span style="background: rgba(0,0,0,0.35); color: #fde68a; font-size: 0.74rem; font-weight: 900; padding: 2px 8px; border-radius: 999px; margin-right: 4px;">
-            {{ total_debt }} ج
-          </span>
-        {% endif %}
-      </a>
-
-      <!-- انتهت اشتراكات (Red / Crimson Gradient) -->
-      <a href="{% url 'members:member_list' %}?filter=expired" class="btn-dashboard-action btn-red" style="min-height: 46px; max-height: 50px; font-size: 0.98rem; font-weight: 800; gap: 8px; border-radius: 10px;">
-        <span style="font-size: 1.1rem;">❌</span>
-        <span>انتهت اشتراكاتهم</span>
-        {% if expired_members_count > 0 %}
-          <span style="background: rgba(0,0,0,0.35); color: #fecdd3; font-size: 0.74rem; font-weight: 900; padding: 2px 8px; border-radius: 999px; margin-right: 4px;">
-            {{ expired_members_count }}
-          </span>
-        {% endif %}
-      </a>
-    </div>
-
-    <!-- Row 3: Bar & POS Operations -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 9px;">
-      <!-- Button 1: شراء منتج من البار -->
-      <button type="button" onclick="openBarSaleModal()" class="btn-dashboard-action" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; min-height: 46px; max-height: 50px; border-radius: 10px; font-size: 0.98rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(14, 165, 233, 0.45); box-shadow: 0 3px 10px rgba(2, 132, 199, 0.25); cursor: pointer; padding: 6px 14px;">
-        <span style="font-size: 1.15rem;">🥤</span>
-        <span>شراء منتج من البار</span>
-      </button>
-
-      <!-- Button 2: لم يدفع للبار (آجل) -->
-      <button type="button" onclick="openBarUnpaidModal()" class="btn-dashboard-action" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: #ffffff; min-height: 46px; max-height: 50px; border-radius: 10px; font-size: 0.98rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(139, 92, 246, 0.45); box-shadow: 0 3px 10px rgba(109, 40, 217, 0.25); cursor: pointer; padding: 6px 14px; position: relative;">
-        <span style="font-size: 1.15rem;">⏳</span>
-        <span>لم يدفع للبار (آجل)</span>
-        {% if unpaid_bar_count > 0 %}
-          <span style="background: #ef4444; color: #ffffff; font-size: 0.74rem; font-weight: 900; padding: 2px 7px; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); margin-right: 4px;">
-            {{ unpaid_bar_count }} ({{ unpaid_bar_total }} ج)
-          </span>
-        {% else %}
-          <span style="background: rgba(255,255,255,0.18); color: #e2e8f0; font-size: 0.72rem; font-weight: 800; padding: 1px 6px; border-radius: 999px; margin-right: 4px;">
-            0 معلق
-          </span>
-        {% endif %}
-      </button>
-    </div>
-  </div>
-
-  <!-- Quick Live Metrics Bar (Fills viewport elegantly & eliminates empty dead space) -->
-  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-top: 4px;">
-    <a href="{% url 'members:member_list' %}?status=active" style="text-decoration: none; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; text-align: center; transition: all 0.15s ease;" onmouseover="this.style.borderColor='var(--hulk-primary, #E11D48)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
-      <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 2px;">👥 المشتركين النشطين</span>
-      <strong style="font-size: 1.35rem; color: #10b981; font-weight: 900; font-family: monospace;">{{ active_members_count }}</strong>
+  <!-- Prominent 6 Large Action Buttons (Filling Screen Commandingly) -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 4px;">
+    
+    <!-- Button 1: سجل / جدد / دفع المتبقي -->
+    <a href="{% url 'members:smart_operations' %}" class="btn-dashboard-action btn-lime" style="min-height: 105px; font-size: 1.45rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 10px 25px rgba(225, 29, 72, 0.35); text-decoration: none; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">⚡</span>
+      <span>سجل / جدد / دفع المتبقي</span>
     </a>
-    <a href="{% url 'members:member_list' %}?filter=expiring" style="text-decoration: none; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; text-align: center; transition: all 0.15s ease;" onmouseover="this.style.borderColor='var(--hulk-primary, #E11D48)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
-      <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 2px;">⏳ ينتهي قريباً (3 أيام)</span>
-      <strong style="font-size: 1.35rem; color: #f59e0b; font-weight: 900; font-family: monospace;">{{ expiring_soon_count }}</strong>
+
+    <!-- Button 2: إضافة مصروف للخزينة -->
+    <a href="{% url 'expenses:expense_create' %}" class="btn-dashboard-action" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; border: 2px solid color-mix(in srgb, var(--hulk-primary, #E11D48) 60%, #334155); min-height: 105px; font-size: 1.45rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 8px 22px rgba(0,0,0,0.5); text-decoration: none; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">💸</span>
+      <span>إضافة مصروف للخزينة</span>
     </a>
-    <a href="{% url 'payments:payment_list' %}" style="text-decoration: none; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; text-align: center; transition: all 0.15s ease;" onmouseover="this.style.borderColor='var(--hulk-primary, #E11D48)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
-      <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 2px;">💰 إيراد اليوم</span>
-      <strong style="font-size: 1.35rem; color: #38bdf8; font-weight: 900; font-family: monospace;">{{ today_revenue }} <small style="font-size: 0.70rem;">{{ gym_profile.currency|default:"ج.م" }}</small></strong>
+
+    <!-- Button 3: عليهم متبقي (ديون) -->
+    <a href="{% url 'members:member_list' %}?filter=remaining" class="btn-dashboard-action btn-orange" style="min-height: 105px; font-size: 1.4rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 8px 22px rgba(217, 119, 6, 0.3); text-decoration: none; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">⚠️</span>
+      <span>عليهم متبقي (ديون)</span>
+      {% if total_debt > 0 %}
+        <span style="background: rgba(0,0,0,0.45); color: #fef08a; font-size: 1.15rem; font-weight: 900; padding: 6px 16px; border-radius: 999px; margin-right: 8px; border: 1px solid rgba(254, 240, 138, 0.3);">
+          {{ total_debt }} ج
+        </span>
+      {% endif %}
     </a>
-    <a href="{% url 'face_recognition:kiosk' %}" style="text-decoration: none; background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; text-align: center; transition: all 0.15s ease;" onmouseover="this.style.borderColor='var(--hulk-primary, #E11D48)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
-      <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 2px;">🏃‍♂️ حضور اليوم</span>
-      <strong style="font-size: 1.35rem; color: #c084fc; font-weight: 900; font-family: monospace;">{{ recent_checkins|length }}</strong>
+
+    <!-- Button 4: انتهت اشتراكاتهم -->
+    <a href="{% url 'members:member_list' %}?filter=expired" class="btn-dashboard-action btn-red" style="min-height: 105px; font-size: 1.4rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 8px 22px rgba(225, 29, 72, 0.3); text-decoration: none; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">❌</span>
+      <span>انتهت اشتراكاتهم</span>
+      {% if expired_members_count > 0 %}
+        <span style="background: rgba(0,0,0,0.45); color: #fecdd3; font-size: 1.15rem; font-weight: 900; padding: 6px 16px; border-radius: 999px; margin-right: 8px; border: 1px solid rgba(254, 205, 211, 0.3);">
+          {{ expired_members_count }}
+        </span>
+      {% endif %}
     </a>
+
+    <!-- Button 5: شراء منتج من البار -->
+    <button type="button" onclick="openBarSaleModal()" class="btn-dashboard-action" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; min-height: 105px; border-radius: 16px; font-size: 1.4rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 16px; border: 2px solid rgba(56, 189, 248, 0.5); box-shadow: 0 8px 22px rgba(2, 132, 199, 0.35); cursor: pointer; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">🥤</span>
+      <span>شراء منتج من البار</span>
+    </button>
+
+    <!-- Button 6: لم يدفع للبار (آجل) -->
+    <button type="button" onclick="openBarUnpaidModal()" class="btn-dashboard-action" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: #ffffff; min-height: 105px; border-radius: 16px; font-size: 1.4rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 16px; border: 2px solid rgba(167, 139, 250, 0.5); box-shadow: 0 8px 22px rgba(109, 40, 217, 0.35); cursor: pointer; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">⏳</span>
+      <span>لم يدفع للبار (آجل)</span>
+      {% if unpaid_bar_count > 0 %}
+        <span style="background: #ef4444; color: #ffffff; font-size: 1.1rem; font-weight: 900; padding: 6px 14px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); margin-right: 8px;">
+          {{ unpaid_bar_count }} ({{ unpaid_bar_total }} ج)
+        </span>
+      {% else %}
+        <span style="background: rgba(255,255,255,0.2); color: #f1f5f9; font-size: 0.95rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; margin-right: 8px;">
+          0 معلق
+        </span>
+      {% endif %}
+    </button>
+
   </div>
 
 </div>
