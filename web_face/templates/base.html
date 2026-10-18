@@ -272,6 +272,19 @@
     [data-theme="light"] p[style*="color: var(--text-muted)"] {
       color: #475569 !important;
     }
+    [data-theme="light"] .systemize-global-footer {
+      border-top-color: #E2E8F0 !important;
+      color: #64748B !important;
+    }
+    [data-theme="light"] .tech-support-modal-box {
+      background-color: #FFFFFF !important;
+      border-color: #CBD5E1 !important;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important;
+      color: #0F172A !important;
+    }
+    [data-theme="light"] .tech-support-modal-box h3 {
+      color: #0F172A !important;
+    }
   </style>
 
   <!-- Local offline HTMX for live instant search & dynamic components -->
@@ -509,7 +522,202 @@
     {% endif %}
 
     {% block content %}{% endblock %}
+
+    <!-- Global Systemize Bottom Footer -->
+    <footer class="systemize-global-footer" style="margin-top: 45px; padding: 22px 0 12px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 0.85rem; color: #94a3b8;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span style="font-weight: 800; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: #84cc16; display: inline-block; box-shadow: 0 0 6px #84cc16;"></span>
+          Systemize Gym OS
+        </span>
+        <span style="color: #64748b;">|</span>
+        <span>نظام إدارة الصالات الرياضية الذكي والتعرف على الوجه</span>
+        {% if license_info.machine_id %}
+        <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 6px; font-family: monospace; font-size: 0.78rem; color: #94a3b8;" title="كود ترخيص هذا الجهاز (HWID)">
+          HWID: {{ license_info.machine_id }}
+        </span>
+        {% endif %}
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <button type="button" onclick="openTechSupportModal()" style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.35); color: #4ade80; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+          <span>🛠️ تواصل مع الدعم الفني</span>
+          <span style="font-family: monospace; font-weight: 900; color: #fff;">01080922432</span>
+        </button>
+        <a href="https://wa.me/201080922432?text=مرحباً، أود التواصل المباشر مع الدعم الفني ومطور نظام Systemize" target="_blank" style="background: #25D366; color: #000; padding: 6px 14px; border-radius: 20px; font-weight: 900; font-size: 0.82rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(37,211,102,0.3);">
+          <span>واتساب المطور</span>
+          <span>💬</span>
+        </a>
+      </div>
+    </footer>
   </main>
+
+  <!-- Floating Technical Support CTA Pill (Fixed Bottom Right) -->
+  <div id="floatingTechSupportBtn" style="position: fixed; bottom: 24px; right: 24px; z-index: 9995;">
+    <button type="button" onclick="openTechSupportModal()" title="تواصل مع الدعم الفني المباشر (01080922432)"
+      style="background: #0f172a; border: 1.5px solid #22c55e; color: #ffffff; padding: 9px 16px; border-radius: 30px; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 9px; box-shadow: 0 10px 25px rgba(0,0,0,0.65), 0 0 20px rgba(34, 197, 94, 0.35); transition: all 0.25s ease;">
+      <span style="position: relative; display: inline-flex; width: 10px; height: 10px;">
+        <span style="animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; position: absolute; display: inline-flex; height: 100%; width: 100%; border-radius: 50%; background-color: #4ade80; opacity: 0.75;"></span>
+        <span style="position: relative; display: inline-flex; border-radius: 50%; height: 100%; width: 100%; background-color: #22c55e;"></span>
+      </span>
+      <span style="display: flex; align-items: center; gap: 6px;">
+        <span style="font-size: 1.1rem; line-height: 1;">💬</span>
+        <span>الدعم الفني المباشر</span>
+      </span>
+    </button>
+  </div>
+
+  <!-- Technical Support Interactive Modal -->
+  <div id="techSupportModal" style="display: none; position: fixed; inset: 0; z-index: 99999; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); align-items: center; justify-content: center; padding: 20px;">
+    <div class="tech-support-modal-box" style="background: #0b1320; border: 1.5px solid rgba(34, 197, 94, 0.4); border-radius: 20px; width: 100%; max-width: 580px; padding: 26px 24px; box-shadow: 0 25px 70px rgba(0,0,0,0.95), 0 0 40px rgba(34, 197, 94, 0.2); position: relative; animation: popInScale 0.28s cubic-bezier(0.16, 1, 0.3, 1); direction: rtl; text-align: right;">
+      
+      <!-- Modal Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(34, 197, 94, 0.15); border: 1.5px solid #22c55e; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #22c55e;">
+            💬
+          </div>
+          <div>
+            <h3 style="font-size: 1.25rem; font-weight: 900; color: #ffffff; margin: 0 0 2px 0;">
+              تواصل مع الدعم الفني المباشر
+            </h3>
+            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;">
+              م/ مصطفى دنيا — مطور النظام | هاتف وواتساب: <strong style="color: #22c55e; font-family: monospace;">01080922432</strong>
+            </span>
+          </div>
+        </div>
+        <button type="button" onclick="closeTechSupportModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer; line-height: 1; padding: 2px 6px;" title="إغلاق">✕</button>
+      </div>
+
+      <!-- Auto Diagnostics Card -->
+      <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
+        <div style="font-size: 0.78rem; font-weight: 800; color: #84cc16; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+          <span>🔍</span> بيانات التشخيص الآلي (تُرسل تلقائياً مع البلاغ):
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem;">
+          <div style="color: #cbd5e1;">🏢 الصالة: <strong id="supportGymName" style="color: #fff;">{{ gym_profile.gym_name|default:"غير محدد" }}</strong></div>
+          <div style="color: #cbd5e1;">👤 المستخدم: <strong id="supportUserName" style="color: #fff;">{{ user.first_name|default:user.username }} ({{ user.role_display_arabic|default:"المستخدم" }})</strong></div>
+          <div style="color: #cbd5e1;">📍 الفرع: <strong id="supportBranchName" style="color: #fff;">{{ active_branch_name|default:user.branch.name|default:"الفرع الرئيسي" }}</strong></div>
+          <div style="color: #cbd5e1;">🔑 HWID: <strong id="supportHwid" style="color: #94a3b8; font-family: monospace;">{{ license_info.machine_id|default:"-" }}</strong></div>
+        </div>
+      </div>
+
+      <!-- Topic Dropdown -->
+      <div style="margin-bottom: 12px;">
+        <label for="supportTopicSelect" style="display: block; font-size: 0.82rem; font-weight: 800; color: #e2e8f0; margin-bottom: 5px;">
+          نوع الطلب أو البلاغ:
+        </label>
+        <select id="supportTopicSelect" style="width: 100%; background: #070d17; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 9px 12px; color: #ffffff; font-size: 0.88rem; font-weight: 700; outline: none;">
+          <option value="عطل تقني أو مشكلة برمجية">🛠️ عطل تقني أو مشكلة في النظام</option>
+          <option value="كاميرا التعرف على الوجه أو البوابة">📷 كاميرا التعرف على الوجه أو بوابة الدخول</option>
+          <option value="الفروع الإضافية وتوزيع الصلاحيات">🏢 الفروع الإضافية وتوزيع الصلاحيات (Add-on)</option>
+          <option value="تجديد الاشتراك أو الترقية لباقة جديدة">💳 تجديد الاشتراك أو طلب باقة جديدة</option>
+          <option value="رسائل الواتساب وطابور الإرسال">💬 رسائل الواتساب وطابور الإرسال التلقائي</option>
+          <option value="استفسار أو مساعدة عامة">❓ استفسار أو مساعدة عامة</option>
+        </select>
+      </div>
+
+      <!-- Message Textarea -->
+      <div style="margin-bottom: 16px;">
+        <label for="supportMessageText" style="display: block; font-size: 0.82rem; font-weight: 800; color: #e2e8f0; margin-bottom: 5px;">
+          تفاصيل المشكلة أو الرسالة:
+        </label>
+        <textarea id="supportMessageText" rows="3" placeholder="اكتب تفاصيل طلبك أو العطل هنا ليتمكن المطور من مساعدتك فوراً..." style="width: 100%; background: #070d17; border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 10px 12px; color: #ffffff; font-size: 0.88rem; font-weight: 600; outline: none; resize: vertical;"></textarea>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 8px; flex-direction: column;">
+        <button type="button" id="btnSendTechSupportWhatsApp" onclick="submitAndSendSupportWhatsApp()" style="width: 100%; background: #25D366; color: #000; font-weight: 900; font-size: 0.98rem; border: none; padding: 12px 16px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 15px rgba(37,211,102,0.35);">
+          <span>إرسال للدعم الفني على واتساب مباشرة</span>
+          <span style="font-size: 1.2rem;">💬</span>
+        </button>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <a href="tel:01080922432" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; font-weight: 800; font-size: 0.85rem; padding: 9px 12px; border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>📞 اتصال هاتفي</span>
+            <span style="font-family: monospace;">01080922432</span>
+          </a>
+          <button type="button" onclick="closeTechSupportModal()" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; font-weight: 700; font-size: 0.85rem; padding: 9px 12px; border-radius: 10px; cursor: pointer;">
+            إغلاق
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function openTechSupportModal() {
+      var m = document.getElementById('techSupportModal');
+      if (m) {
+        m.style.display = 'flex';
+        var t = document.getElementById('supportMessageText');
+        if (t) setTimeout(function() { t.focus(); }, 100);
+      }
+    }
+
+    function closeTechSupportModal() {
+      var m = document.getElementById('techSupportModal');
+      if (m) m.style.display = 'none';
+    }
+
+    function submitAndSendSupportWhatsApp() {
+      var category = document.getElementById('supportTopicSelect') ? document.getElementById('supportTopicSelect').value : "دعم فني";
+      var msg = document.getElementById('supportMessageText') ? document.getElementById('supportMessageText').value.trim() : "";
+      var gymName = document.getElementById('supportGymName') ? document.getElementById('supportGymName').textContent.trim() : "";
+      var userName = document.getElementById('supportUserName') ? document.getElementById('supportUserName').textContent.trim() : "";
+      var branchName = document.getElementById('supportBranchName') ? document.getElementById('supportBranchName').textContent.trim() : "";
+      var hwid = document.getElementById('supportHwid') ? document.getElementById('supportHwid').textContent.trim() : "";
+
+      var lines = [
+        "*طلب دعم فني مباشر — Systemize Gym OS* 🚀",
+        "🏢 *اسم الصالة:* " + (gymName || "غير محدد"),
+        "🔑 *كود الجهاز (HWID):* " + (hwid || "-"),
+        "👤 *المستخدم:* " + (userName || "مستخدم النظام"),
+        "📍 *الفرع:* " + (branchName || "الرئيسي"),
+        "⚠️ *الموضوع:* " + category
+      ];
+      if (msg) {
+        lines.push("💬 *التفاصيل:* " + msg);
+      } else {
+        lines.push("💬 *التفاصيل:* أرجو المساعدة والتواصل بخصوص هذا الموضوع.");
+      }
+
+      var fullText = lines.join("\n");
+      var waUrl = "https://wa.me/201080922432?text=" + encodeURIComponent(fullText);
+
+      // Async log to backend ticket endpoint
+      try {
+        function getCsrfSupport() {
+          var cookies = document.cookie.split(';');
+          for (var i = 0; i < cookies.length; i++) {
+            var c = cookies[i].trim();
+            if (c.indexOf('csrftoken=') === 0) return c.substring(10);
+          }
+          return '';
+        }
+        fetch("{% url 'core:submit_support_ticket' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfSupport()
+          },
+          body: JSON.stringify({
+            category: category,
+            message: msg,
+            gym_name: gymName,
+            hwid: hwid,
+            branch: branchName,
+            sender_name: userName
+          })
+        }).catch(function() {});
+      } catch (e) {}
+
+      // Open WhatsApp directly
+      window.open(waUrl, "_blank");
+      closeTechSupportModal();
+    }
+  </script>
 
   {% if user.is_authenticated and gym_profile.face_camera_enabled %}
   <!-- Docked Mini Camera Preview (Toggleable via Navbar Status Pill) -->

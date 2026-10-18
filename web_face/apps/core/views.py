@@ -1604,3 +1604,49 @@ def license_status_api(request):
         "info": info,
     })
 
+
+@csrf_exempt
+def submit_support_ticket_api(request):
+    """
+    Receives support ticket details from web interface, logs an AuditLog event,
+    and returns a success confirmation.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "طلب POST مطلوب."}, status=405)
+
+    try:
+        if request.content_type == "application/json" and request.body:
+            data = json.loads(request.body.decode("utf-8"))
+        else:
+            data = request.POST.dict()
+    except Exception:
+        data = request.POST.dict()
+
+    category = data.get("category", "طلب دعم فني عام").strip()
+    user_message = data.get("message", "").strip()
+    gym_name = data.get("gym_name", "").strip()
+    hwid = data.get("hwid", "").strip()
+    active_branch = data.get("branch", "").strip()
+    sender_name = data.get("sender_name", "").strip() or (request.user.username if request.user.is_authenticated else "مجهول")
+
+    details_str = (
+        f"دعم فني - الصنف: {category} | المستخدم: {sender_name} | الجيم: {gym_name} | "
+        f"الفرع: {active_branch} | الرسالة: {user_message}"
+    )
+    try:
+        user_obj = request.user if request.user.is_authenticated else None
+        AuditLog.objects.create(
+            user=user_obj,
+            action="SUPPORT_TICKET",
+            details=details_str[:500]
+        )
+    except Exception:
+        pass
+
+    return JsonResponse({
+        "success": True,
+        "message": "تم تسجيل طلب الدعم الفني بنجاح وجارٍ التحويل إلى واتساب المطور.",
+        "developer_phone": "01080922432",
+    })
+
+

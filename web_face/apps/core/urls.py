@@ -15,5 +15,6 @@ urlpatterns = [
     path("license/activate/", views.license_activate_api, name="license_activate"),
     path("license/sync/", views.license_sync_remote_api, name="license_sync"),
     path("license/status/", views.license_status_api, name="license_status"),
+    path("support/ticket/", views.submit_support_ticket_api, name="submit_support_ticket"),
 ]
 
