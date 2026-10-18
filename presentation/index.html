@@ -751,6 +751,18 @@
       white-space: nowrap;
       border: 1px solid rgba(132, 204, 22, 0.35);
     }
+    .finger-dot.pinch-dot {
+      width: 22px;
+      height: 22px;
+      background: radial-gradient(circle, #84cc16 0%, #10b981 100%);
+      border: 3px solid #ffffff;
+      box-shadow: 0 0 20px #84cc16, 0 0 40px rgba(132, 204, 22, 0.6);
+      animation: pulsePinch 1.2s infinite alternate ease-in-out;
+    }
+    @keyframes pulsePinch {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      100% { transform: translate(-50%, -50%) scale(1.25); }
+    }
 
     .zoom-status-pill {
       position: absolute;
@@ -855,13 +867,13 @@
     <span id="waveText">تم التقليب بالتلويح!</span>
   </div>
 
-  <!-- 4-Finger L-Shape Viewfinder HUD Overlay -->
+  <!-- Pinch & Viewfinder HUD Overlay -->
   <div class="viewfinder-hud" id="viewfinderHud">
     <div class="zoom-status-pill">
-      <i class="fa fa-crosshairs text-lime-400"></i>
-      <span>وضع التكبير التفاعلي بالأصابع (L-Shape)</span>
+      <span style="font-size: 1.1rem;" id="hudZoomIcon">🤏</span>
+      <span id="hudZoomTitle">وضع التكبير: Pinch بالأيدي</span>
       <span class="zoom-badge" id="hudZoomFactor">2.2x</span>
-      <span style="color: #94a3b8; font-size: 0.75rem;">حرك اليدين للتجول | انزل أصابعك للعودة</span>
+      <span style="color: #94a3b8; font-size: 0.75rem;" id="hudZoomSubtext">باعد بين يديك للتكبير | قرّب للتصغير | افتح يدك للعودة</span>
     </div>
 
     <div class="viewfinder-box" id="viewfinderBox">
@@ -872,6 +884,11 @@
       <div class="vf-reticle"></div>
     </div>
 
+    <!-- Pinch Targets -->
+    <div class="finger-dot pinch-dot" id="fDotPinchL"><span class="finger-dot-label">🤏 يد يمين</span></div>
+    <div class="finger-dot pinch-dot" id="fDotPinchR"><span class="finger-dot-label">🤏 يد يسار</span></div>
+
+    <!-- 4-Finger L-Shape Fallback Dots -->
     <div class="finger-dot" id="fDotLIndex"><span class="finger-dot-label">سبابة 1</span></div>
     <div class="finger-dot" id="fDotLThumb"><span class="finger-dot-label">إبهام 1</span></div>
     <div class="finger-dot" id="fDotRIndex"><span class="finger-dot-label">سبابة 2</span></div>
@@ -1404,7 +1421,7 @@
 
     <div class="bottom-hint">
       <span>✋ لوّح للتقليب</span>
-      <span>✌️ تكبير بالـ L-Shape (سبابتين وإبهامين)</span>
+      <span>🤏 تكبير Pinch بالأيدي</span>
       <span>تكبير: <span class="kbd-badge">Z</span></span>
       <span>الملقّن: <span class="kbd-badge">N</span></span>
       <button onclick="toggleFullscreen()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.1rem; cursor: pointer; padding: 2px;" title="ملء الشاشة">⛶</button>
@@ -2129,8 +2146,32 @@
       waveDetectionAnimationId = requestAnimationFrame(processMotionFrames);
     }
 
-    /* Geometric L-Shape Finger Recognition:
-       Index pointed UP (tip < pip), Thumb extended ~90 deg, other 3 fingers folded */
+    /* 1. Pinch Gesture Recognition (Thumb Tip to Index Tip) */
+    function checkHandPinch(landmarks) {
+      if (!landmarks || landmarks.length < 9) return null;
+      const thumbTip = landmarks[4];
+      const indexTip = landmarks[8];
+
+      // Euclidean distance in normalized 2D camera coordinates
+      const dist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+
+      // Hysteresis threshold: 0.085 to enter pinch, 0.12 to maintain pinch
+      const threshold = isZoomActive ? 0.12 : 0.085;
+
+      if (dist <= threshold) {
+        return {
+          isPinch: true,
+          point: {
+            x: (thumbTip.x + indexTip.x) / 2,
+            y: (thumbTip.y + indexTip.y) / 2
+          },
+          dist: dist
+        };
+      }
+      return null;
+    }
+
+    /* 2. Geometric L-Shape Finger Recognition (Alternative Fallback) */
     function checkHandLShape(landmarks) {
       const wrist = landmarks[0];
       const thumbTip = landmarks[4];
@@ -2139,25 +2180,23 @@
       const indexMcp = landmarks[5];
       const indexPip = landmarks[6];
 
-      // 1. Index finger pointed UP (tip significantly above pip and mcp)
+      // Index finger pointed UP (tip significantly above pip and mcp)
       const isIndexUp = (indexTip.y < indexPip.y) && (indexTip.y < indexMcp.y - 0.03);
       if (!isIndexUp) return null;
 
-      // 2. Vectors for angle calculation
+      // Vectors for angle calculation
       const vIndex = { x: indexTip.x - indexMcp.x, y: indexTip.y - indexMcp.y };
       const vThumb = { x: thumbTip.x - thumbMcp.x, y: thumbTip.y - thumbMcp.y };
       const magIndex = Math.hypot(vIndex.x, vIndex.y);
       const magThumb = Math.hypot(vThumb.x, vThumb.y);
       if (magIndex < 0.04 || magThumb < 0.03) return null;
 
-      // 3. Angle between Index and Thumb
+      // Angle between Index and Thumb
       const dot = (vIndex.x * vThumb.x + vIndex.y * vThumb.y) / (magIndex * magThumb);
       const angleDeg = Math.acos(Math.max(-1, Math.min(1, dot))) * (180 / Math.PI);
 
-      // Ergonomic 90° L-shape window (50° to 135°)
       if (angleDeg < 50 || angleDeg > 135) return null;
 
-      // 4. Middle, Ring, Pinky retracted/folded down
       const midDist = Math.hypot(landmarks[12].x - wrist.x, landmarks[12].y - wrist.y);
       const ringDist = Math.hypot(landmarks[16].x - wrist.x, landmarks[16].y - wrist.y);
       const pinkyDist = Math.hypot(landmarks[20].x - wrist.x, landmarks[20].y - wrist.y);
@@ -2168,13 +2207,7 @@
 
       if (!areOtherFolded && !isIndexHigher) return null;
 
-      return {
-        indexTip,
-        thumbTip,
-        indexMcp,
-        wrist,
-        angleDeg
-      };
+      return { indexTip, thumbTip, indexMcp, wrist, angleDeg };
     }
 
     /* MediaPipe Hand Results Callback */
@@ -2183,12 +2216,113 @@
 
       const hands = results.multiHandLandmarks;
 
-      // Wave detection via Open Palm (when not zooming)
-      if (hands && hands.length === 1 && !isZoomActive) {
-        checkSingleHandWave(hands[0]);
+      // ==========================================
+      // A. PRIMARY: TWO-HANDED PINCH (Pinch بالايدين)
+      // ==========================================
+      if (hands && hands.length >= 2) {
+        const pinchA = checkHandPinch(hands[0]);
+        const pinchB = checkHandPinch(hands[1]);
+
+        if (pinchA && pinchB) {
+          consecutiveZoomFrames++;
+          consecutiveDropFrames = 0;
+
+          // Identify left pinch point vs right pinch point
+          const leftPinch = pinchA.point.x < pinchB.point.x ? pinchA : pinchB;
+          const rightPinch = pinchA.point.x < pinchB.point.x ? pinchB : pinchA;
+
+          const pL = leftPinch.point;
+          const pR = rightPinch.point;
+
+          // Distance between the two hands: moving apart zooms in, bringing closer zooms out!
+          const handsDist = Math.hypot(pR.x - pL.x, pR.y - pL.y);
+
+          // Calibrated range: 0.12 (close) to 0.58 (wide) maps to 1.4x - 4.0x zoom
+          const normDist = Math.max(0, Math.min(1, (handsDist - 0.12) / 0.46));
+          const calcScale = 1.4 + normDist * 2.6;
+
+          // Midpoint between hands controls pan offset (mirrored horizontally)
+          const midX = (pL.x + pR.x) / 2;
+          const midY = (pL.y + pR.y) / 2;
+
+          const normCenterX = (1 - midX) - 0.5;
+          const normCenterY = midY - 0.5;
+
+          const maxPanX = (calcScale - 1) * 380;
+          const maxPanY = (calcScale - 1) * 260;
+
+          const calcPanX = -normCenterX * maxPanX * 2.2;
+          const calcPanY = -normCenterY * maxPanY * 2.0;
+
+          // Viewfinder box bounding the two pinch points
+          const minX = Math.min(pL.x, pR.x);
+          const maxX = Math.max(pL.x, pR.x);
+          const minY = Math.min(pL.y, pR.y);
+          const maxY = Math.max(pL.y, pR.y);
+
+          const screenBox = {
+            x: (1 - maxX) * window.innerWidth - 30,
+            y: minY * window.innerHeight - 30,
+            w: Math.max((maxX - minX) * window.innerWidth + 60, 140),
+            h: Math.max((maxY - minY) * window.innerHeight + 60, 100)
+          };
+
+          const dots = {
+            pinchL: { x: (1 - pL.x) * window.innerWidth, y: pL.y * window.innerHeight },
+            pinchR: { x: (1 - pR.x) * window.innerWidth, y: pR.y * window.innerHeight },
+            lIndex: null, lThumb: null, rIndex: null, rThumb: null
+          };
+
+          if (consecutiveZoomFrames >= 2) {
+            enableGestureZoom(calcScale, calcPanX, calcPanY, screenBox, dots, 'pinch');
+          }
+          return;
+        }
       }
 
-      // Check 2-Hand L-Shape Viewfinder (4 fingers total)
+      // ==========================================
+      // B. SECONDARY: SINGLE-HAND PINCH
+      // ==========================================
+      if (hands && hands.length >= 1) {
+        const p1 = checkHandPinch(hands[0]);
+        const p2 = (hands.length >= 2) ? checkHandPinch(hands[1]) : null;
+        const activePinch = p1 || p2;
+
+        if (activePinch && (hands.length === 1 || isZoomActive)) {
+          consecutiveZoomFrames++;
+          consecutiveDropFrames = 0;
+
+          const p = activePinch.point;
+          const calcScale = 2.2;
+          const normCenterX = (1 - p.x) - 0.5;
+          const normCenterY = p.y - 0.5;
+
+          const calcPanX = -normCenterX * 350;
+          const calcPanY = -normCenterY * 240;
+
+          const screenBox = {
+            x: (1 - p.x) * window.innerWidth - 60,
+            y: p.y * window.innerHeight - 60,
+            w: 120,
+            h: 120
+          };
+
+          const dots = {
+            pinchL: { x: (1 - p.x) * window.innerWidth, y: p.y * window.innerHeight },
+            pinchR: null,
+            lIndex: null, lThumb: null, rIndex: null, rThumb: null
+          };
+
+          if (consecutiveZoomFrames >= 3) {
+            enableGestureZoom(calcScale, calcPanX, calcPanY, screenBox, dots, 'pinch');
+          }
+          return;
+        }
+      }
+
+      // ==========================================
+      // C. TERTIARY: 2-HAND L-SHAPE VIEWFINDER
+      // ==========================================
       if (hands && hands.length >= 2) {
         const handA = checkHandLShape(hands[0]);
         const handB = checkHandLShape(hands[1]);
@@ -2197,7 +2331,6 @@
           consecutiveZoomFrames++;
           consecutiveDropFrames = 0;
 
-          // Identify left hand vs right hand in camera coordinate
           const leftH = handA.indexTip.x < handB.indexTip.x ? handA : handB;
           const rightH = handA.indexTip.x < handB.indexTip.x ? handB : handA;
 
@@ -2206,16 +2339,13 @@
           const f3 = rightH.indexTip;
           const f4 = rightH.thumbTip;
 
-          // Centroid of the 4 fingers
           const cx = (f1.x + f2.x + f3.x + f4.x) / 4;
           const cy = (f1.y + f2.y + f3.y + f4.y) / 4;
 
-          // Hand distance controls zoom magnification (1.6x - 3.8x)
           const distHands = Math.hypot(rightH.indexTip.x - leftH.indexTip.x, rightH.indexTip.y - leftH.indexTip.y);
           const normDist = Math.max(0, Math.min(1, (distHands - 0.16) / 0.45));
           const calcScale = 1.6 + normDist * 2.2;
 
-          // Centroid relative to camera center (mirrored horizontally)
           const normCenterX = (1 - cx) - 0.5;
           const normCenterY = cy - 0.5;
 
@@ -2225,7 +2355,6 @@
           const calcPanX = -normCenterX * maxPanX * 2.2;
           const calcPanY = -normCenterY * maxPanY * 2.0;
 
-          // Bounding box in mirrored screen coordinates
           const minX = Math.min(f1.x, f2.x, f3.x, f4.x);
           const maxX = Math.max(f1.x, f2.x, f3.x, f4.x);
           const minY = Math.min(f1.y, f2.y, f3.y, f4.y);
@@ -2239,6 +2368,7 @@
           };
 
           const dots = {
+            pinchL: null, pinchR: null,
             lIndex: { x: (1 - leftH.indexTip.x) * window.innerWidth, y: leftH.indexTip.y * window.innerHeight },
             lThumb: { x: (1 - leftH.thumbTip.x) * window.innerWidth, y: leftH.thumbTip.y * window.innerHeight },
             rIndex: { x: (1 - rightH.indexTip.x) * window.innerWidth, y: rightH.indexTip.y * window.innerHeight },
@@ -2246,51 +2376,22 @@
           };
 
           if (consecutiveZoomFrames >= 2) {
-            enableGestureZoom(calcScale, calcPanX, calcPanY, screenBox, dots);
+            enableGestureZoom(calcScale, calcPanX, calcPanY, screenBox, dots, 'lshape');
           }
           return;
         }
       }
 
-      // Single-Hand L-Shape fallback
-      if (hands && hands.length === 1) {
-        const singleHand = checkHandLShape(hands[0]);
-        if (singleHand) {
-          consecutiveZoomFrames++;
-          consecutiveDropFrames = 0;
-
-          const f1 = singleHand.indexTip;
-          const f2 = singleHand.thumbTip;
-          const cx = (f1.x + f2.x) / 2;
-          const cy = (f1.y + f2.y) / 2;
-
-          const calcScale = 2.2;
-          const normCenterX = (1 - cx) - 0.5;
-          const normCenterY = cy - 0.5;
-
-          const calcPanX = -normCenterX * 320;
-          const calcPanY = -normCenterY * 220;
-
-          const screenX = (1 - Math.max(f1.x, f2.x)) * window.innerWidth;
-          const screenY = Math.min(f1.y, f2.y) * window.innerHeight;
-          const screenW = Math.abs(f1.x - f2.x) * window.innerWidth + 80;
-          const screenH = Math.abs(f1.y - f2.y) * window.innerHeight + 80;
-
-          const dots = {
-            lIndex: { x: (1 - f1.x) * window.innerWidth, y: f1.y * window.innerHeight },
-            lThumb: { x: (1 - f2.x) * window.innerWidth, y: f2.y * window.innerHeight },
-            rIndex: null,
-            rThumb: null
-          };
-
-          if (consecutiveZoomFrames >= 3) {
-            enableGestureZoom(calcScale, calcPanX, calcPanY, { x: screenX, y: screenY, w: screenW, h: screenH }, dots);
-          }
-          return;
-        }
+      // ==========================================
+      // D. WAVE SWIPE (Open Palm when not zooming)
+      // ==========================================
+      if (hands && hands.length === 1 && !isZoomActive) {
+        checkSingleHandWave(hands[0]);
       }
 
-      // If no L-shape detected -> Fingers LOWERED or hands lowered out of camera frame
+      // ==========================================
+      // E. RELEASE / EXIT (Fingers opened or hands lowered)
+      // ==========================================
       consecutiveDropFrames++;
       if (isZoomActive && consecutiveDropFrames >= 5) {
         disableGestureZoom();
@@ -2316,7 +2417,6 @@
         if (motionHistory.length >= 4) {
           const deltaX = motionHistory[motionHistory.length - 1].x - motionHistory[0].x;
           const duration = motionHistory[motionHistory.length - 1].time - motionHistory[0].time;
-          // In mirrored video, deltaX > 0 means moving right
           if (deltaX > 0.12 && duration > 70 && duration < 450) {
             lastHandWaveTime = now;
             triggerHandWaveAction('next');
@@ -2329,10 +2429,13 @@
     }
 
     /* Enable Gesture Zoom */
-    function enableGestureZoom(scale, panX, panY, box, dots) {
+    function enableGestureZoom(scale, panX, panY, box, dots, mode = 'pinch') {
       if (!isZoomActive) {
         isZoomActive = true;
-        showWaveToast('⌕ تم فتح التكبير بتتبع الأصابع الأربعة (L-Shape)');
+        const msg = (mode === 'pinch') 
+          ? '🤏 تم فتح التكبير بحركة Pinch — باعد بين يديك للتكبير'
+          : '⌕ تم فتح التكبير بتتبع الأصابع (L-Shape)';
+        showWaveToast(msg);
         hudPulse.style.background = '#a3e635';
         hudPulse.style.boxShadow = '0 0 18px #a3e635';
       }
@@ -2345,6 +2448,22 @@
 
       if (viewfinderHud && !viewfinderHud.classList.contains('active')) {
         viewfinderHud.classList.add('active');
+      }
+
+      const hudZoomTitle = document.getElementById('hudZoomTitle');
+      const hudZoomIcon = document.getElementById('hudZoomIcon');
+      const hudZoomSubtext = document.getElementById('hudZoomSubtext');
+
+      if (hudZoomTitle) {
+        if (mode === 'pinch') {
+          hudZoomTitle.innerText = 'وضع التكبير: Pinch بالأيدي 🤏';
+          if (hudZoomIcon) hudZoomIcon.innerText = '🤏';
+          if (hudZoomSubtext) hudZoomSubtext.innerText = 'باعد يديك للتكبير | قرّب للتصغير | افتح يدك للعودة';
+        } else {
+          hudZoomTitle.innerText = 'وضع التكبير: برواز الأصابع (L-Shape)';
+          if (hudZoomIcon) hudZoomIcon.innerText = '✌️';
+          if (hudZoomSubtext) hudZoomSubtext.innerText = 'حرك يديك للتجول | انزل أصابعك للعودة';
+        }
       }
 
       if (hudZoomFactor) {
@@ -2360,7 +2479,7 @@
       }
     }
 
-    /* Disable Gesture Zoom (Triggered when user LOWERS fingers) */
+    /* Disable Gesture Zoom (Triggered when user OPENS pinch or LOWERS hands) */
     function disableGestureZoom() {
       if (!isZoomActive) return;
       isZoomActive = false;
@@ -2400,7 +2519,7 @@
 
       hudPulse.style.background = '#84cc16';
       hudPulse.style.boxShadow = '0 0 10px #84cc16';
-      showWaveToast('تم إنزال الأصابع — العودة للشريحة العادية ↺');
+      showWaveToast('تم فك الـ Pinch — العودة للشريحة العادية ↺');
     }
 
     /* Keyboard / Mouse Zoom Toggle (Z Key) */
@@ -2414,7 +2533,7 @@
           y: window.innerHeight * 0.2,
           w: window.innerWidth * 0.5,
           h: window.innerHeight * 0.6
-        }, { lIndex: null, lThumb: null, rIndex: null, rThumb: null });
+        }, { pinchL: null, pinchR: null, lIndex: null, lThumb: null, rIndex: null, rThumb: null }, 'key');
         showWaveToast('⌕ وضع التكبير التفاعلي: حرّك الماوس للتجول | Esc للعودة');
       }
     }
@@ -2448,10 +2567,44 @@
           viewfinderBox.style.height = `${currentBox.h}px`;
         }
 
+        updateFingerDot('fDotPinchL', fingersPos.pinchL);
+        updateFingerDot('fDotPinchR', fingersPos.pinchR);
         updateFingerDot('fDotLIndex', fingersPos.lIndex);
         updateFingerDot('fDotLThumb', fingersPos.lThumb);
         updateFingerDot('fDotRIndex', fingersPos.rIndex);
         updateFingerDot('fDotRThumb', fingersPos.rThumb);
+
+        // Apply transform to active image
+        let targetImg = null;
+        if (document.getElementById('imageLightbox').classList.contains('open')) {
+          targetImg = document.getElementById('lightboxImg');
+        } else {
+          const activeSlide = slides[currentSlide];
+          if (activeSlide) {
+            const visual = activeSlide.querySelector('.visual-wrapper');
+            if (visual) targetImg = visual.querySelector('img');
+          }
+        }
+
+        if (targetImg) {
+          targetImg.style.transform = `translate(${currentPanX.toFixed(1)}px, ${currentPanY.toFixed(1)}px) scale(${currentZoomScale.toFixed(2)})`;
+        }
+      }
+
+      requestAnimationFrame(updateZoomTransformLoop);
+    }
+
+    function updateFingerDot(id, pos) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (pos) {
+        el.style.display = 'block';
+        el.style.left = `${pos.x}px`;
+        el.style.top = `${pos.y}px`;
+      } else {
+        el.style.display = 'none';
+      }
+    }
 
         // Apply transform to active image
         let targetImg = null;
