@@ -423,9 +423,71 @@
         </div>
         {% endif %}
 
+        {% if is_multi_branch_enabled %}
+          {% if user.is_owner %}
+          <!-- Owner Multi-Branch Interactive Switcher -->
+          <div class="branch-switcher-wrapper" style="position: relative; display: inline-block;">
+            <button type="button" id="branchDropdownBtn" onclick="toggleBranchDropdown(event)" 
+                    class="user-pill" 
+                    style="cursor: pointer; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(132, 204, 22, 0.4); background: rgba(132, 204, 22, 0.1); padding: 5px 14px; border-radius: 20px; transition: all 0.2s;"
+                    title="التبديل بين فروع الصالة">
+              <span style="font-size: 0.95rem;">🏢</span>
+              <span style="color: var(--hulk-primary, #84CC16); font-weight: 800; font-size: 0.82rem;">{{ active_branch_name }}</span>
+              <span style="font-size: 0.65rem; color: var(--hulk-primary, #84CC16); opacity: 0.8;">▼</span>
+            </button>
+            <div id="branchDropdownMenu" 
+                 style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 220px; background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 14px; box-shadow: 0 12px 30px rgba(0,0,0,0.6); z-index: 1000; overflow: hidden; padding: 6px;">
+              <a href="{% url 'accounts:switch_branch' 'all' %}" 
+                 style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 8px; color: {% if not active_branch %}#84CC16{% else %}#E2E8F0{% endif %}; font-weight: 700; font-size: 0.82rem; text-decoration: none; transition: background 0.15s;"
+                 onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span>🌐</span>
+                  <span>كافة الفروع (مجمّع)</span>
+                </div>
+                {% if not active_branch %}<span style="color: #84CC16; font-weight: 900;">✓</span>{% endif %}
+              </a>
+              <div style="height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0;"></div>
+              {% for b in all_branches %}
+              <a href="{% url 'accounts:switch_branch' b.id %}" 
+                 style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 8px; color: {% if active_branch.id == b.id %}#84CC16{% else %}#CBD5E1{% endif %}; font-weight: 700; font-size: 0.82rem; text-decoration: none; transition: background 0.15s;"
+                 onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span>📍</span>
+                  <span>{{ b.name }}</span>
+                </div>
+                {% if active_branch.id == b.id %}<span style="color: #84CC16; font-weight: 900;">✓</span>{% endif %}
+              </a>
+              {% empty %}
+              <div style="padding: 10px 12px; font-size: 0.78rem; color: #94A3B8; text-align: center;">لا توجد فروع مسجلة بعد</div>
+              {% endfor %}
+            </div>
+          </div>
+          <script>
+            function toggleBranchDropdown(e) {
+              if (e) e.stopPropagation();
+              var menu = document.getElementById('branchDropdownMenu');
+              if (menu) menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            }
+            document.addEventListener('click', function(e) {
+              var btn = document.getElementById('branchDropdownBtn');
+              var menu = document.getElementById('branchDropdownMenu');
+              if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+                menu.style.display = 'none';
+              }
+            });
+          </script>
+          {% else %}
+          <!-- Manager / Reception Locked Branch Badge -->
+          <div class="user-pill" style="border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.08); padding: 5px 12px; border-radius: 20px;" title="الفرع المحدد لحسابك">
+            <span style="font-size: 0.85rem;">🏢</span>
+            <span style="color: #93C5FD; font-size: 0.82rem; font-weight: 800;">{{ user.branch.name|default:"الفرع الرئيسي" }}</span>
+          </div>
+          {% endif %}
+        {% endif %}
+
         <div class="user-pill">
           <span class="user-pill-name">{{ user.first_name|default:user.username }}</span>
-          <span class="user-pill-role">{% if user.is_manager %}المدير{% else %}استقبال{% endif %}</span>
+          <span class="user-pill-role">{{ user.role_display_arabic|default:"المستخدم" }}</span>
         </div>
         <a href="{% url 'accounts:logout' %}" class="top-btn-logout" title="تسجيل خروج">
           خروج

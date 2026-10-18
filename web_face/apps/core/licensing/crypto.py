@@ -63,6 +63,7 @@ def generate_offline_license_token(
         "reports": bool(raw_ft.get("reports", True)),
         "barcode": bool(raw_ft.get("barcode", raw_ft.get("barcode_scanner", True))),
         "expenses": bool(raw_ft.get("expenses", True)),
+        "multi_branch": bool(raw_ft.get("multi_branch", False)),
     }
     payload = {
         "mid": machine_id.strip(),

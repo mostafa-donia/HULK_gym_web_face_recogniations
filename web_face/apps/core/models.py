@@ -3,6 +3,25 @@ from django.db import models
 from django.conf import settings
 
 
+class Branch(models.Model):
+    name = models.CharField(max_length=150, verbose_name="اسم الفرع")
+    code = models.CharField(max_length=50, unique=True, verbose_name="كود الفرع")
+    address = models.CharField(max_length=255, blank=True, default="", verbose_name="عنوان الفرع")
+    phone = models.CharField(max_length=30, blank=True, default="", verbose_name="هاتف الفرع")
+    manager_name = models.CharField(max_length=100, blank=True, default="", verbose_name="اسم مدير الفرع")
+    is_main = models.BooleanField(default=False, verbose_name="الفرع الرئيسي")
+    is_active = models.BooleanField(default=True, verbose_name="نشط")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
+
+    class Meta:
+        verbose_name = "فرع"
+        verbose_name_plural = "الفروع"
+        ordering = ["-is_main", "name"]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.code})"
+
+
 class GymProfile(models.Model):
     # Branding & Customization for ANY Gym
     gym_name = models.CharField(max_length=100, default="اسم الصالة الرياضية", verbose_name="اسم الصالة الرياضية")
@@ -243,6 +262,7 @@ class SystemLicense(models.Model):
     feature_reports = models.BooleanField(default=True, verbose_name="التقارير المالية المتقدمة")
     feature_barcode = models.BooleanField(default=True, verbose_name="قارئ الباركود والـ QR")
     feature_expenses = models.BooleanField(default=True, verbose_name="المصروفات وسندات الصرف")
+    feature_multi_branch = models.BooleanField(default=False, verbose_name="إدارة الفروع المتعددة (Multi-Branch Add-on)")
 
     # Anti-Tampering & Security
     tamper_hash = models.CharField(max_length=256, blank=True, default="", verbose_name="توقيع الأمان الرقمي")

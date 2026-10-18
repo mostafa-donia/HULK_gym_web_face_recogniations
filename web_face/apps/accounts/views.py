@@ -26,3 +26,30 @@ def logout_view(request):
     logout(request)
     messages.info(request, "تم تسجيل الخروج بنجاح.")
     return redirect("accounts:login")
+
+
+def switch_branch(request, branch_id):
+    """Allows Owner to switch between branches or 'all'."""
+    from apps.core.models import Branch
+    from apps.core.branch_context import is_multi_branch_active
+
+    if not is_multi_branch_active():
+        return redirect(request.META.get("HTTP_REFERER", "/"))
+
+    if not getattr(request.user, "is_owner", False):
+        messages.error(request, "عذراً، هذه الخاصية مخصصة للمالك فقط.")
+        return redirect(request.META.get("HTTP_REFERER", "/"))
+
+    target = str(branch_id).strip().lower()
+    if target in ["all", "0", "none"]:
+        request.session["active_branch_id"] = "all"
+        messages.success(request, "تم التبديل إلى عرض كافة الفروع (نظرة مجمّعة).")
+    else:
+        try:
+            branch = Branch.objects.get(id=branch_id, is_active=True)
+            request.session["active_branch_id"] = branch.id
+            messages.success(request, f"تم التبديل بنجاح إلى: {branch.name}")
+        except Branch.DoesNotExist:
+            messages.error(request, "الفرع المحدد غير موجود أو غير مفعل.")
+
+    return redirect(request.META.get("HTTP_REFERER", "/"))

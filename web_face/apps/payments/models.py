@@ -58,6 +58,14 @@ class Payment(models.Model):
         blank=True,
         verbose_name="المحصل",
     )
+    branch = models.ForeignKey(
+        "core.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payments",
+        verbose_name="الفرع",
+    )
 
     class Meta:
         verbose_name = "عملية دفع"
@@ -67,6 +75,14 @@ class Payment(models.Model):
     def __str__(self) -> str:
         name = self.member.name if self.member else "عميل بار / غير مسجل"
         return f"{self.invoice_no} - {name} ({self.amount} ج.م)"
+
+    def save(self, *args, **kwargs):
+        if not self.branch_id:
+            if self.member and getattr(self.member, "branch_id", None):
+                self.branch = self.member.branch
+            elif self.created_by and getattr(self.created_by, "branch_id", None):
+                self.branch = self.created_by.branch
+        super().save(*args, **kwargs)
 
 
 class BarProductCategory(models.TextChoices):

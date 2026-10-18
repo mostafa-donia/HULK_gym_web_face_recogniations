@@ -24,7 +24,21 @@ def gym_context(request):
         "telegram": True,
         "bar": True,
         "payroll": True,
+        "multi_branch": False,
     })
+
+    # Multi-branch context
+    from apps.core.branch_context import (
+        is_multi_branch_active,
+        get_active_branch,
+        get_active_branch_display,
+    )
+    from apps.core.models import Branch
+
+    is_mb = is_multi_branch_active()
+    active_b = get_active_branch(request) if is_mb else None
+    active_b_name = get_active_branch_display(request) if is_mb else "الفرع الافتراضي"
+    branches = Branch.objects.filter(is_active=True).order_by("-is_main", "name") if is_mb else []
 
     return {
         "gym_profile": profile,
@@ -34,4 +48,8 @@ def gym_context(request):
         "remaining_demo_days": license_info.get("remaining_demo_days", 0),
         "remaining_demo_hours": license_info.get("remaining_demo_hours", 0),
         "license_features": features,
+        "is_multi_branch_enabled": is_mb,
+        "active_branch": active_b,
+        "active_branch_name": active_b_name,
+        "all_branches": branches,
     }

@@ -51,8 +51,11 @@ def generate_next_payment_id() -> tuple[str, str]:
 
 @login_required
 def payment_list_view(request):
+    from apps.core.branch_context import filter_by_branch
+
     query = request.GET.get("q", "").strip()
     payments = Payment.objects.select_related("member").all().order_by("-created_at")
+    payments = filter_by_branch(payments, request)
 
     if query:
         payments = payments.filter(

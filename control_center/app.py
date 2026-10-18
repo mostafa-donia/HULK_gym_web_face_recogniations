@@ -129,7 +129,10 @@ def get_clients_api():
                 "reports": c.get("features", {}).get("reports", True),
                 "barcode": c.get("features", {}).get("barcode", True),
                 "expenses": c.get("features", {}).get("expenses", True),
+                "multi_branch": c.get("features", {}).get("multi_branch", False),
             },
+            "branches": c.get("branches", []),
+            "managed_users": c.get("managed_users", []),
             "developer_message": c.get("developer_message", ""),
             "created_at": c.get("created_at", ""),
             "last_seen": c.get("last_seen", ""),
@@ -173,6 +176,7 @@ def add_client_api():
         "reports": True,
         "barcode": True,
         "expenses": True,
+        "multi_branch": False,
     }
     features = req.get("features") or default_features
 
@@ -216,6 +220,8 @@ def add_client_api():
         "license_type": lic_type,
         "valid_until": valid_until,
         "features": features,
+        "branches": req.get("branches") or [],
+        "managed_users": req.get("managed_users") or [],
         "developer_message": req.get("developer_message", "شكراً لاشتراككم في نظام Systemize."),
         "created_at": now.isoformat(),
         "last_seen": None,
@@ -374,6 +380,12 @@ def update_client_api(hwid: str):
     if "features" in req and isinstance(req["features"], dict):
         client["features"] = req["features"]
 
+    # Branches & Managed Users update
+    if "branches" in req and isinstance(req["branches"], list):
+        client["branches"] = req["branches"]
+    if "managed_users" in req and isinstance(req["managed_users"], list):
+        client["managed_users"] = req["managed_users"]
+
     # Duration / Valid Until Update
     now = datetime.now(timezone.utc)
     if "valid_until" in req:
@@ -442,6 +454,135 @@ def delete_client_api(hwid: str):
         return jsonify({"success": True, "message": f"تم حذف العميل {deleted_name} بنجاح."})
 
     return jsonify({"success": False, "message": "العميل غير موجود."}), 404
+
+
+@app.route("/api/clients/<hwid>/branches/", methods=["GET", "POST"])
+def client_branches_api(hwid: str):
+    """Adds, updates, lists, or deletes branches for a specific client."""
+    hwid = hwid.strip().upper()
+    data = load_clients_data()
+    if hwid not in data["clients"]:
+        return jsonify({"success": False, "message": "العميل غير موجود."}), 404
+
+    client = data["clients"][hwid]
+    if "branches" not in client or not isinstance(client["branches"], list):
+        client["branches"] = []
+
+    if request.method == "GET":
+        return jsonify({"success": True, "branches": client["branches"]})
+
+    # POST: Add, update or delete branch
+    req = request.get_json() or {}
+    action = req.get("action", "save")
+    branch_code = (req.get("code") or "").strip().upper()
+
+    if action == "delete":
+        client["branches"] = [b for b in client["branches"] if b.get("code") != branch_code]
+        save_clients_data(data)
+        return jsonify({"success": True, "message": "تم حذف الفرع بنجاح.", "branches": client["branches"]})
+
+    branch_name = (req.get("name") or "").strip()
+    if not branch_name or not branch_code:
+        return jsonify({"success": False, "message": "اسم الفرع وكود الفرع مطلوبان."}), 400
+
+    existing = next((b for b in client["branches"] if b.get("code") == branch_code), None)
+    is_main = bool(req.get("is_main", False))
+
+    if is_main:
+        for b in client["branches"]:
+            b["is_main"] = False
+
+    if existing:
+        existing["name"] = branch_name
+        existing["phone"] = req.get("phone", "").strip()
+        existing["address"] = req.get("address", "").strip()
+        existing["manager_name"] = req.get("manager_name", "").strip()
+        existing["is_main"] = is_main
+        existing["is_active"] = bool(req.get("is_active", True))
+    else:
+        client["branches"].append({
+            "code": branch_code,
+            "name": branch_name,
+            "phone": req.get("phone", "").strip(),
+            "address": req.get("address", "").strip(),
+            "manager_name": req.get("manager_name", "").strip(),
+            "is_main": is_main or (len(client["branches"]) == 0),
+            "is_active": True,
+        })
+
+    save_clients_data(data)
+    return jsonify({"success": True, "message": f"تم حفظ الفرع '{branch_name}' بنجاح.", "branches": client["branches"]})
+
+
+@app.route("/api/clients/<hwid>/users/", methods=["GET", "POST"])
+def client_users_api(hwid: str):
+    """Adds, updates, changes password, or deletes managed users for a specific client."""
+    hwid = hwid.strip().upper()
+    data = load_clients_data()
+    if hwid not in data["clients"]:
+        return jsonify({"success": False, "message": "العميل غير موجود."}), 404
+
+    client = data["clients"][hwid]
+    if "managed_users" not in client or not isinstance(client["managed_users"], list):
+        client["managed_users"] = []
+
+    if request.method == "GET":
+        return jsonify({"success": True, "users": client["managed_users"]})
+
+    req = request.get_json() or {}
+    action = req.get("action", "save")
+    username = (req.get("username") or "").strip().lower()
+
+    if action == "delete":
+        client["managed_users"] = [u for u in client["managed_users"] if u.get("username", "").lower() != username]
+        save_clients_data(data)
+        return jsonify({"success": True, "message": "تم حذف حساب المستخدم بنجاح.", "users": client["managed_users"]})
+
+    if not username:
+        return jsonify({"success": False, "message": "اسم المستخدم مطلوب."}), 400
+
+    password = (req.get("password") or "").strip()
+    role = req.get("role", "RECEPTION").strip().upper()
+    if role not in ["OWNER", "MANAGER", "RECEPTION"]:
+        role = "RECEPTION"
+
+    branch_code = (req.get("branch_code") or "").strip().upper()
+    full_name = (req.get("full_name") or "").strip()
+    old_username = (req.get("old_username") or "").strip().lower()
+
+    # Find existing user entry by old_username or username
+    target_idx = None
+    for i, u in enumerate(client["managed_users"]):
+        u_uname = u.get("username", "").lower()
+        if (old_username and u_uname == old_username) or u_uname == username:
+            target_idx = i
+            break
+
+    user_entry = {
+        "username": username,
+        "role": role,
+        "branch_code": branch_code if role != "OWNER" else "",
+        "full_name": full_name or username,
+    }
+    if password:
+        user_entry["password"] = password
+
+    if target_idx is not None:
+        # If password wasn't changed, retain previous password
+        if not password and "password" in client["managed_users"][target_idx]:
+            user_entry["password"] = client["managed_users"][target_idx]["password"]
+        client["managed_users"][target_idx] = user_entry
+    else:
+        if not password:
+            return jsonify({"success": False, "message": "كلمة المرور مطلوبة لإنشاء مستخدم جديد."}), 400
+        client["managed_users"].append(user_entry)
+
+    save_clients_data(data)
+    return jsonify({
+        "success": True,
+        "message": f"تم حفظ المستخدم '{username}' وتحديث كلمة المرور والصلاحيات بنجاح.",
+        "users": client["managed_users"],
+    })
 
 
 @app.route("/api/license/sync/", methods=["GET", "POST"])

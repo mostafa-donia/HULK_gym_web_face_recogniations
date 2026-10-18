@@ -32,6 +32,14 @@ class Expense(models.Model):
         blank=True,
         verbose_name="المسجل",
     )
+    branch = models.ForeignKey(
+        "core.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="expenses",
+        verbose_name="الفرع",
+    )
 
     class Meta:
         verbose_name = "مصروف"

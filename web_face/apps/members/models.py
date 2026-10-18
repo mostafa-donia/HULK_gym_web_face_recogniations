@@ -88,6 +88,16 @@ class Member(models.Model):
     renewal_discount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), verbose_name="خصم التجديد المعتمد")
     discount_enabled = models.BooleanField(default=False, verbose_name="تفعيل خصم التجديد تلقائياً")
 
+    # Multi-branch support
+    branch = models.ForeignKey(
+        "core.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="members",
+        verbose_name="الفرع التابع له",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ التسجيل")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ التحديث")
 
@@ -332,8 +342,21 @@ class CheckInEvent(models.Model):
     status_snapshot = models.CharField(max_length=20, verbose_name="حالة الاشتراك وقت الدخول")
     days_left_snapshot = models.IntegerField(default=0, verbose_name="الأيام المتبقية")
     debt_snapshot = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), verbose_name="الديون وقت الدخول")
+    branch = models.ForeignKey(
+        "core.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="check_ins",
+        verbose_name="فرع الدخول",
+    )
 
     class Meta:
         verbose_name = "سجل حضور"
         verbose_name_plural = "سجلات الحضور"
         ordering = ["-checked_in_at"]
+
+    def save(self, *args, **kwargs):
+        if not self.branch_id and self.member and getattr(self.member, "branch_id", None):
+            self.branch = self.member.branch
+        super().save(*args, **kwargs)

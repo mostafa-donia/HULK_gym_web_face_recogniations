@@ -50,25 +50,31 @@ def dashboard_view(request):
     today = timezone.localdate()
     three_days_later = today + timedelta(days=3)
 
-    active_members_count = Member.objects.filter(last_subscription_end__gte=today).count()
-    expired_members_count = Member.objects.filter(
+    from apps.core.branch_context import filter_by_branch
+
+    base_members = filter_by_branch(Member.objects.all(), request)
+    base_payments = filter_by_branch(Payment.objects.all(), request)
+    base_checkins = filter_by_branch(CheckInEvent.objects.all(), request)
+
+    active_members_count = base_members.filter(last_subscription_end__gte=today).count()
+    expired_members_count = base_members.filter(
         Q(last_subscription_end__lt=today) | Q(last_subscription_end__isnull=True)
     ).count()
-    expiring_soon_count = Member.objects.filter(
+    expiring_soon_count = base_members.filter(
         last_subscription_end__gte=today, last_subscription_end__lte=three_days_later
     ).count()
 
     today_revenue = (
-        Payment.objects.filter(created_at__date=today).aggregate(Sum("amount"))["amount__sum"]
+        base_payments.filter(created_at__date=today).aggregate(Sum("amount"))["amount__sum"]
         or Decimal("0.00")
     )
     total_debt = (
-        Member.objects.filter(current_remaining__gt=0).aggregate(Sum("current_remaining"))["current_remaining__sum"]
+        base_members.filter(current_remaining__gt=0).aggregate(Sum("current_remaining"))["current_remaining__sum"]
         or Decimal("0.00")
     )
     pending_whatsapp_count = WhatsAppMessage.objects.filter(status="pending").count()
 
-    recent_checkins = CheckInEvent.objects.select_related("member").order_by("-checked_in_at")[:10]
+    recent_checkins = base_checkins.select_related("member").order_by("-checked_in_at")[:10]
 
     # Bar & Inventory Quick Actions
     from apps.payments.models import BarProduct, BarSale
@@ -292,34 +298,40 @@ def manager_mobile_dashboard_view(request):
     three_days_later = today + timedelta(days=3)
     month_start = today.replace(day=1)
 
+    from apps.core.branch_context import filter_by_branch
+
+    base_payments = filter_by_branch(Payment.objects.all(), request)
+    base_members = filter_by_branch(Member.objects.all(), request)
+    base_checkins = filter_by_branch(CheckInEvent.objects.all(), request)
+
     today_revenue = (
-        Payment.objects.filter(created_at__date=today).aggregate(Sum("amount"))["amount__sum"]
+        base_payments.filter(created_at__date=today).aggregate(Sum("amount"))["amount__sum"]
         or Decimal("0.00")
     )
     month_revenue = (
-        Payment.objects.filter(created_at__date__gte=month_start).aggregate(Sum("amount"))["amount__sum"]
+        base_payments.filter(created_at__date__gte=month_start).aggregate(Sum("amount"))["amount__sum"]
         or Decimal("0.00")
     )
-    today_ops_count = Payment.objects.filter(created_at__date=today).count()
+    today_ops_count = base_payments.filter(created_at__date=today).count()
 
-    active_members = Member.objects.filter(last_subscription_end__gte=today).count()
-    expired_members = Member.objects.filter(
+    active_members = base_members.filter(last_subscription_end__gte=today).count()
+    expired_members = base_members.filter(
         Q(last_subscription_end__lt=today) | Q(last_subscription_end__isnull=True)
     ).count()
-    expiring_soon = Member.objects.filter(
+    expiring_soon = base_members.filter(
         last_subscription_end__gte=today, last_subscription_end__lte=three_days_later
     ).count()
 
     total_debt = (
-        Member.objects.filter(current_remaining__gt=0).aggregate(Sum("current_remaining"))["current_remaining__sum"]
+        base_members.filter(current_remaining__gt=0).aggregate(Sum("current_remaining"))["current_remaining__sum"]
         or Decimal("0.00")
     )
-    debtors_count = Member.objects.filter(current_remaining__gt=0).count()
+    debtors_count = base_members.filter(current_remaining__gt=0).count()
 
-    today_checkins_count = CheckInEvent.objects.filter(checked_in_at__date=today).count()
+    today_checkins_count = base_checkins.filter(checked_in_at__date=today).count()
 
-    recent_checkins = CheckInEvent.objects.select_related("member").order_by("-checked_in_at")[:6]
-    recent_payments = Payment.objects.select_related("member").order_by("-created_at")[:6]
+    recent_checkins = base_checkins.select_related("member").order_by("-checked_in_at")[:6]
+    recent_payments = base_payments.select_related("member").order_by("-created_at")[:6]
 
     context = {
         "profile": profile,
@@ -359,35 +371,40 @@ def manager_dashboard_view(request):
     month_start = today.replace(day=1)
     gym_profile = GymProfile.get_solo()
 
+    from apps.core.branch_context import filter_by_branch
+
+    base_members = filter_by_branch(Member.objects.all(), request)
+    base_payments = filter_by_branch(Payment.objects.all(), request)
+
     # 1. Core 9 Metric Cards from Legacy Screen
-    total_members = Member.objects.count()
-    active_members = Member.objects.filter(last_subscription_end__gte=today).count()
+    total_members = base_members.count()
+    active_members = base_members.filter(last_subscription_end__gte=today).count()
     expired_members = total_members - active_members
 
     today_revenue = (
-        Payment.objects.filter(created_at__date=today).aggregate(Sum("amount"))["amount__sum"]
+        base_payments.filter(created_at__date=today).aggregate(Sum("amount"))["amount__sum"]
         or Decimal("0.00")
     )
     week_revenue = (
-        Payment.objects.filter(
+        base_payments.filter(
             created_at__date__gte=today - timedelta(days=6),
             created_at__date__lte=today,
         ).aggregate(Sum("amount"))["amount__sum"]
         or Decimal("0.00")
     )
     month_revenue = (
-        Payment.objects.filter(
+        base_payments.filter(
             created_at__date__gte=month_start,
             created_at__date__lte=today,
         ).aggregate(Sum("amount"))["amount__sum"]
         or Decimal("0.00")
     )
     total_remaining = (
-        Member.objects.filter(current_remaining__gt=0).aggregate(Sum("current_remaining"))["current_remaining__sum"]
+        base_members.filter(current_remaining__gt=0).aggregate(Sum("current_remaining"))["current_remaining__sum"]
         or Decimal("0.00")
     )
-    new_members_month = Member.objects.filter(created_at__date__gte=month_start).count()
-    today_ops_count = Payment.objects.filter(created_at__date=today).count()
+    new_members_month = base_members.filter(created_at__date__gte=month_start).count()
+    today_ops_count = base_payments.filter(created_at__date=today).count()
 
     # 2. Period Filter Selection ('today', 'week', 'month', 'compare')
     period = request.GET.get("period", "today")

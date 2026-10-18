@@ -241,6 +241,10 @@
                             <input type="checkbox" id="ftExpenses" checked class="accent-lime-500">
                             <span>تسجيل المصروفات وحسابات الخزينة</span>
                         </label>
+                        <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-amber-500/30 bg-amber-950/20 cursor-pointer col-span-2">
+                            <input type="checkbox" id="ftMultiBranch" class="accent-amber-500">
+                            <span class="text-amber-300 font-bold">🏢 إدارة الفروع المتعددة (Multi-Branch Add-on)</span>
+                        </label>
                     </div>
                 </div>
 
@@ -449,6 +453,14 @@
                         </span>
                         <input type="checkbox" id="editFeatExpenses" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
                     </label>
+
+                    <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-2 rounded-lg transition border border-amber-500/30 bg-amber-500/5">
+                        <span class="flex items-center gap-2">
+                            <i class="fa fa-building-user text-amber-400"></i>
+                            <span class="text-amber-300 font-bold">إدارة الفروع المتعددة (Multi-Branch Add-on)</span>
+                        </span>
+                        <input type="checkbox" id="editFeatMultiBranch" class="accent-amber-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
                 </div>
 
                 <div>
@@ -467,6 +479,173 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal: Manage Branches & Users -->
+    <div id="branchesUsersModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col p-6 sm:p-8 space-y-6 shadow-2xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl font-black border border-amber-500/30">
+                        <i class="fa fa-building-user"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-black text-white" id="buModalClientName">إدارة الفروع والمستخدمين</h3>
+                            <span id="buModalHwidBadge" class="code-font text-[11px] bg-slate-800 text-lime-400 px-2 py-0.5 rounded-lg border border-slate-700">HWID</span>
+                        </div>
+                        <p class="text-xs text-slate-400">إضافة الفروع، وتعيين المالك ومديري الفروع والاستقبال، وتغيير كلمات المرور</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('branchesUsersModal')" class="text-slate-400 hover:text-white transition"><i class="fa fa-times text-xl"></i></button>
+            </div>
+
+            <!-- Tab Navigation Buttons -->
+            <div class="flex items-center gap-2 border-b border-slate-800 pb-2 shrink-0">
+                <button type="button" id="tabBtnBranches" onclick="switchBuTab('branches')" class="bu-tab-btn active px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    <i class="fa fa-building"></i>
+                    <span>الفروع (<span id="buBranchesCount">0</span>)</span>
+                </button>
+                <button type="button" id="tabBtnUsers" onclick="switchBuTab('users')" class="bu-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-slate-200 border border-transparent">
+                    <i class="fa fa-users-gear"></i>
+                    <span>المستخدمين وكلمات المرور (<span id="buUsersCount">0</span>)</span>
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="overflow-y-auto flex-1 space-y-6 pr-1 pl-1">
+                
+                <!-- TAB 1: Branches Content -->
+                <div id="buTabContentBranches" class="space-y-6">
+                    <!-- Add Branch Sub-Form -->
+                    <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+                        <h4 class="text-xs font-black text-amber-400 flex items-center gap-2">
+                            <i class="fa fa-plus-circle"></i>
+                            <span>إضافة أو تحديث فرع لهذا العميل</span>
+                        </h4>
+                        <form id="addBranchForm" onsubmit="submitAddBranch(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">اسم الفرع *</label>
+                                <input type="text" id="branchInputName" required placeholder="مثال: فرع المعادي"
+                                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">كود الفرع (Branch Code) *</label>
+                                <input type="text" id="branchInputCode" required placeholder="مثال: MAADI أو B1" dir="ltr"
+                                       class="code-font uppercase w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-amber-400 placeholder-slate-600 focus:outline-none focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">هاتف الفرع</label>
+                                <input type="text" id="branchInputPhone" placeholder="010XXXXXXXX"
+                                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">عنوان الفرع</label>
+                                <input type="text" id="branchInputAddress" placeholder="الشارع، المنطقة، المدينة"
+                                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-500">
+                            </div>
+                            <div class="flex items-center justify-between sm:justify-start gap-4 pt-4 sm:pt-6">
+                                <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                                    <input type="checkbox" id="branchInputIsMain" class="accent-amber-500 w-4 h-4 rounded">
+                                    <span>الفرع الرئيسي (Main)</span>
+                                </label>
+                                <button type="submit" id="branchSubmitBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
+                                    <i class="fa fa-plus"></i>
+                                    <span>حفظ الفرع</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Branches Table / List -->
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-black text-slate-300 flex items-center justify-between">
+                            <span>الفروع المسجلة حالياً:</span>
+                            <span class="text-[11px] text-slate-500">تظهر تلقائياً في شاشات الجيم والقوائم المنسدلة</span>
+                        </h4>
+                        <div id="branchesListTable" class="space-y-2">
+                            <!-- Injected dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Users Content -->
+                <div id="buTabContentUsers" class="space-y-6 hidden">
+                    <!-- Add / Edit User Sub-Form -->
+                    <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-black text-indigo-400 flex items-center gap-2" id="userFormTitle">
+                                <i class="fa fa-user-plus"></i>
+                                <span>إضافة مستخدم جديد أو تعديل كلمة المرور</span>
+                            </h4>
+                            <button type="button" id="cancelUserEditBtn" onclick="resetUserForm()" class="text-xs text-slate-400 hover:text-white hidden">
+                                <i class="fa fa-times"></i> إلغاء التعديل
+                            </button>
+                        </div>
+
+                        <form id="addUserForm" onsubmit="submitAddUser(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <input type="hidden" id="userOldUsername" value="">
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">اسم المستخدم (Username) *</label>
+                                <input type="text" id="userInputUsername" required placeholder="مثال: owner_ahmed أو mgr_cairo" dir="ltr"
+                                       class="code-font w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1" id="userPasswordLabel">كلمة المرور الجديدة *</label>
+                                <input type="text" id="userInputPassword" placeholder="اكتب كلمة المرور..." dir="ltr"
+                                       class="code-font w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-lime-400 placeholder-slate-600 focus:outline-none focus:border-indigo-500">
+                                <p class="text-[10px] text-slate-500 mt-0.5" id="userPasswordHint">* عند التعديل، اتركها فارغة إذا لم ترغب في تغيير الباسورد.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">الاسم الكامل / المستعار</label>
+                                <input type="text" id="userInputFullName" placeholder="مثال: كابتن أحمد (المالك)"
+                                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">الدور والصلاحية *</label>
+                                <select id="userInputRole" onchange="onRoleChanged()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                                    <option value="OWNER">مالك النظام (OWNER - كافة الفروع والتبديل بينها)</option>
+                                    <option value="MANAGER" selected>مدير فرع واحد (MANAGER - مقيد بفرعه فقط)</option>
+                                    <option value="RECEPTION">موظف استقبال (RECEPTION - تسجيل واشتراكات الفرع فقط)</option>
+                                </select>
+                            </div>
+
+                            <div id="userBranchSelectContainer">
+                                <label class="block text-[11px] font-bold text-slate-300 mb-1">الفرع المخصص له *</label>
+                                <select id="userInputBranchCode" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+                                    <!-- Injected from client branches -->
+                                </select>
+                                <p class="text-[10px] text-slate-500 mt-0.5" id="userBranchHint">* مقيد بعمليات هذا الفرع فقط.</p>
+                            </div>
+
+                            <div class="flex items-end justify-start pt-2">
+                                <button type="submit" id="userSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/20">
+                                    <i class="fa fa-save"></i>
+                                    <span id="userSubmitBtnText">حفظ المستخدم / تحديث الباسورد</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Users Table / List -->
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-black text-slate-300 flex items-center justify-between">
+                            <span>المستخدمين المسجلين لهذا العميل:</span>
+                            <span class="text-[11px] text-slate-500">يتم مزامنة الصلاحيات وكلمة المرور فورياً مع النظام</span>
+                        </h4>
+                        <div id="usersListTable" class="space-y-2">
+                            <!-- Injected dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
@@ -632,11 +811,18 @@
                                 ${features.reports !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">التقارير ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">التقارير</span>'}
                                 ${features.barcode !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">باركود ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">باركود</span>'}
                                 ${features.expenses !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">المصروفات ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">المصروفات</span>'}
+                                ${features.multi_branch ? '<span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30 font-bold">فروع متعددة ✓</span>' : ''}
                             </div>
                         </div>
 
                         <!-- Action Buttons -->
                         <div class="flex items-center gap-2 flex-wrap">
+                            <!-- Branches & Users Management Button -->
+                            <button onclick="openBranchesUsersModal('${c.hwid}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-black px-3 py-2 rounded-xl transition flex items-center gap-1.5" title="إدارة فروع الجيم وحسابات المالك والمديرين والاستقبال وتغيير الباسورد">
+                                <i class="fa fa-building-user"></i>
+                                <span>الفروع والمستخدمين (${(c.branches || []).length} فرع / ${(c.managed_users || []).length} يوزر)</span>
+                            </button>
+
                             <!-- Edit Client & Features Button -->
                             <button onclick="openEditClientModal('${c.hwid}')" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-black px-3 py-2 rounded-xl transition flex items-center gap-1.5" title="تعديل الصلاحيات وبيانات العميل">
                                 <i class="fa fa-sliders"></i>
@@ -708,6 +894,7 @@
             document.getElementById('editFeatReports').checked = (ft.reports !== false);
             document.getElementById('editFeatBarcode').checked = (ft.barcode !== false);
             document.getElementById('editFeatExpenses').checked = (ft.expenses !== false);
+            document.getElementById('editFeatMultiBranch').checked = Boolean(ft.multi_branch);
 
             openModal('editClientModal');
         }
@@ -737,7 +924,8 @@
                     retention: document.getElementById('editFeatRetention').checked,
                     reports: document.getElementById('editFeatReports').checked,
                     barcode: document.getElementById('editFeatBarcode').checked,
-                    expenses: document.getElementById('editFeatExpenses').checked
+                    expenses: document.getElementById('editFeatExpenses').checked,
+                    multi_branch: document.getElementById('editFeatMultiBranch').checked,
                 }
             };
 
@@ -791,6 +979,7 @@
                     reports: document.getElementById('ftReports').checked,
                     barcode: document.getElementById('ftBarcode').checked,
                     expenses: document.getElementById('ftExpenses').checked,
+                    multi_branch: document.getElementById('ftMultiBranch').checked,
                 }
             };
 
@@ -805,17 +994,350 @@
                     closeModal('addClientModal');
                     document.getElementById('addClientForm').reset();
                     await fetchClients();
-                    if (data.token) {
-                        openTokenModal(payload.hwid, payload.name, payload.phone, data.token);
-                    }
+                    openTokenModal(payload.hwid, payload.name, payload.phone, data.token);
                 } else {
-                    alert('خطأ: ' + data.message);
+                    alert('خطأ: ' + (data.message || 'فشل إضافة العميل'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('فشل الاتصال بالخادم.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-check"></i> <span>حفظ وإصدار الترخيص فوراً</span>';
+            }
+        }
+
+        // ==========================================
+        // Multi-Branch & Managed Users Management JS
+        // ==========================================
+        let activeBuHwid = null;
+        let activeBuTab = 'branches';
+
+        async function openBranchesUsersModal(hwid) {
+            activeBuHwid = hwid;
+            const client = allClients.find(c => c.hwid === hwid);
+            if (!client) {
+                alert('العميل غير موجود!');
+                return;
+            }
+
+            document.getElementById('buModalClientName').innerText = `إدارة فروع ومستخدمي: ${client.name}`;
+            document.getElementById('buModalHwidBadge').innerText = client.hwid;
+
+            resetUserForm();
+            resetBranchForm();
+            switchBuTab('branches');
+            await refreshBranchesUsersData();
+            openModal('branchesUsersModal');
+        }
+
+        function switchBuTab(tab) {
+            activeBuTab = tab;
+            const btnBranches = document.getElementById('tabBtnBranches');
+            const btnUsers = document.getElementById('tabBtnUsers');
+            const contentBranches = document.getElementById('buTabContentBranches');
+            const contentUsers = document.getElementById('buTabContentUsers');
+
+            if (tab === 'branches') {
+                btnBranches.className = 'bu-tab-btn active px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-amber-500/20 text-amber-300 border border-amber-500/30';
+                btnUsers.className = 'bu-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-slate-200 border border-transparent';
+                contentBranches.classList.remove('hidden');
+                contentUsers.classList.add('hidden');
+            } else {
+                btnUsers.className = 'bu-tab-btn active px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30';
+                btnBranches.className = 'bu-tab-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 text-slate-400 hover:text-slate-200 border border-transparent';
+                contentUsers.classList.remove('hidden');
+                contentBranches.classList.add('hidden');
+            }
+        }
+
+        async function refreshBranchesUsersData() {
+            if (!activeBuHwid) return;
+            try {
+                const res = await fetch('/api/clients/');
+                const data = await res.json();
+                if (data.success) {
+                    allClients = data.clients;
+                    const c = allClients.find(item => item.hwid === activeBuHwid);
+                    if (c) {
+                        renderBranchesList(c.branches || []);
+                        renderUsersList(c.managed_users || [], c.branches || []);
+                        populateBranchSelect(c.branches || []);
+                        document.getElementById('buBranchesCount').innerText = (c.branches || []).length;
+                        document.getElementById('buUsersCount').innerText = (c.managed_users || []).length;
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function populateBranchSelect(branches) {
+            const select = document.getElementById('userInputBranchCode');
+            select.innerHTML = '';
+            if (!branches || branches.length === 0) {
+                select.innerHTML = '<option value="">(لا توجد فروع مسجلة - أضف فرعاً أولاً)</option>';
+                return;
+            }
+            branches.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.code;
+                opt.innerText = `${b.name} (${b.code})${b.is_main ? ' - الفرع الرئيسي' : ''}`;
+                select.appendChild(opt);
+            });
+        }
+
+        function onRoleChanged() {
+            const role = document.getElementById('userInputRole').value;
+            const container = document.getElementById('userBranchSelectContainer');
+            if (role === 'OWNER') {
+                container.style.opacity = '0.35';
+                container.style.pointerEvents = 'none';
+            } else {
+                container.style.opacity = '1';
+                container.style.pointerEvents = 'auto';
+            }
+        }
+
+        function renderBranchesList(branches) {
+            const container = document.getElementById('branchesListTable');
+            if (!branches || branches.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center text-slate-500 bg-slate-950/40 rounded-xl border border-slate-800">
+                        <i class="fa fa-building-circle-exclamation text-2xl mb-1 text-slate-600 block"></i>
+                        <span>لا توجد فروع مضافة لهذا العميل بعد. يمكنك إضافة الفرع الأول أعلاه.</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = branches.map(b => `
+                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-950 border ${b.is_main ? 'border-amber-500/40 bg-amber-950/10' : 'border-slate-800'}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg ${b.is_main ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-800 text-slate-300'} flex items-center justify-center text-xs font-black">
+                            ${b.is_main ? '★' : '🏢'}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-white">${b.name}</span>
+                                <span class="code-font text-[10px] bg-slate-800 text-amber-300 px-1.5 py-0.5 rounded border border-slate-700">${b.code}</span>
+                                ${b.is_main ? '<span class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded-full font-bold">الرئيسي</span>' : ''}
+                            </div>
+                            <div class="text-[11px] text-slate-400 flex items-center gap-3 mt-0.5">
+                                ${b.phone ? `<span><i class="fa fa-phone ml-1 text-slate-500"></i>${b.phone}</span>` : ''}
+                                ${b.address ? `<span><i class="fa fa-map-marker-alt ml-1 text-slate-500"></i>${b.address}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="deleteBranch('${b.code}')" class="text-slate-500 hover:text-rose-400 p-2 text-xs rounded-lg transition" title="حذف الفرع">
+                        <i class="fa fa-trash-can"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function renderUsersList(users, branches) {
+            const container = document.getElementById('usersListTable');
+            if (!users || users.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center text-slate-500 bg-slate-950/40 rounded-xl border border-slate-800">
+                        <i class="fa fa-user-slash text-2xl mb-1 text-slate-600 block"></i>
+                        <span>لا يوجد مستخدمون مخصصون عبر مركز التحكم لهذا العميل بعد.</span>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = users.map(u => {
+                let roleBadge = '';
+                if (u.role === 'OWNER') {
+                    roleBadge = '<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">مالك النظام (كافة الفروع)</span>';
+                } else if (u.role === 'MANAGER') {
+                    roleBadge = '<span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">مدير فرع</span>';
+                } else {
+                    roleBadge = '<span class="bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">موظف استقبال</span>';
+                }
+
+                const branchObj = branches ? branches.find(b => b.code === u.branch_code) : null;
+                const branchName = u.role === 'OWNER' ? 'كافة الفروع 🌐' : (branchObj ? branchObj.name : (u.branch_code || 'غير محدد'));
+
+                return `
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-black">
+                                <i class="fa ${u.role === 'OWNER' ? 'fa-crown text-amber-400' : (u.role === 'MANAGER' ? 'fa-user-tie text-indigo-400' : 'fa-headset text-sky-400')}"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="code-font text-xs font-bold text-lime-400">${u.username}</span>
+                                    <span class="text-xs text-slate-300">(${u.full_name || u.username})</span>
+                                    ${roleBadge}
+                                </div>
+                                <div class="text-[11px] text-slate-400 flex items-center gap-3 mt-0.5">
+                                    <span><i class="fa fa-building ml-1 text-slate-500"></i>الفرع: <strong class="text-slate-300">${branchName}</strong></span>
+                                    <span><i class="fa fa-key ml-1 text-slate-500"></i>الباسورد: <strong class="text-slate-300 font-mono">${u.password || '••••••••'}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1">
+                            <button onclick="populateUserForEdit('${u.username}')" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 text-xs px-2.5 py-1.5 rounded-lg transition" title="تعديل أو تغيير الباسورد">
+                                <i class="fa fa-key ml-1"></i> تعديل / تغيير الباسورد
+                            </button>
+                            <button onclick="deleteUser('${u.username}')" class="text-slate-500 hover:text-rose-400 p-2 text-xs rounded-lg transition" title="حذف المستخدم">
+                                <i class="fa fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function submitAddBranch(e) {
+            e.preventDefault();
+            if (!activeBuHwid) return;
+            const btn = document.getElementById('branchSubmitBtn');
+            btn.disabled = true;
+
+            const payload = {
+                action: 'save',
+                name: document.getElementById('branchInputName').value.trim(),
+                code: document.getElementById('branchInputCode').value.trim().toUpperCase(),
+                phone: document.getElementById('branchInputPhone').value.trim(),
+                address: document.getElementById('branchInputAddress').value.trim(),
+                is_main: document.getElementById('branchInputIsMain').checked,
+            };
+
+            try {
+                const res = await fetch(`/api/clients/${encodeURIComponent(activeBuHwid)}/branches/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    resetBranchForm();
+                    await refreshBranchesUsersData();
+                } else {
+                    alert(data.message || 'فشل حفظ الفرع');
                 }
             } catch (err) {
                 alert('فشل الاتصال بالخادم.');
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa fa-check"></i> <span>حفظ وإصدار الترخيص فوراً</span>';
+            }
+        }
+
+        async function deleteBranch(code) {
+            if (!confirm(`هل أنت متأكد من حذف الفرع "${code}"؟`)) return;
+            try {
+                const res = await fetch(`/api/clients/${encodeURIComponent(activeBuHwid)}/branches/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', code: code })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await refreshBranchesUsersData();
+                }
+            } catch (err) {
+                alert('فشل حذف الفرع.');
+            }
+        }
+
+        function resetBranchForm() {
+            document.getElementById('branchInputName').value = '';
+            document.getElementById('branchInputCode').value = '';
+            document.getElementById('branchInputPhone').value = '';
+            document.getElementById('branchInputAddress').value = '';
+            document.getElementById('branchInputIsMain').checked = false;
+        }
+
+        function populateUserForEdit(username) {
+            const client = allClients.find(c => c.hwid === activeBuHwid);
+            if (!client || !client.managed_users) return;
+            const u = client.managed_users.find(item => item.username.toLowerCase() === username.toLowerCase());
+            if (!u) return;
+
+            document.getElementById('userOldUsername').value = u.username;
+            document.getElementById('userInputUsername').value = u.username;
+            document.getElementById('userInputPassword').value = u.password || '';
+            document.getElementById('userInputFullName').value = u.full_name || '';
+            document.getElementById('userInputRole').value = u.role || 'RECEPTION';
+            document.getElementById('userInputBranchCode').value = u.branch_code || '';
+
+            onRoleChanged();
+
+            document.getElementById('userFormTitle').innerHTML = `<i class="fa fa-user-pen"></i> <span>تعديل المستخدم "${u.username}" وتغيير كلمة المرور</span>`;
+            document.getElementById('userSubmitBtnText').innerText = 'تحديث بيانات المستخدم وكلمة المرور';
+            document.getElementById('cancelUserEditBtn').classList.remove('hidden');
+
+            document.getElementById('userInputPassword').focus();
+        }
+
+        function resetUserForm() {
+            document.getElementById('userOldUsername').value = '';
+            document.getElementById('userInputUsername').value = '';
+            document.getElementById('userInputPassword').value = '';
+            document.getElementById('userInputFullName').value = '';
+            document.getElementById('userInputRole').value = 'MANAGER';
+            onRoleChanged();
+
+            document.getElementById('userFormTitle').innerHTML = `<i class="fa fa-user-plus"></i> <span>إضافة مستخدم جديد أو تعديل كلمة المرور</span>`;
+            document.getElementById('userSubmitBtnText').innerText = 'حفظ المستخدم / تحديث الباسورد';
+            document.getElementById('cancelUserEditBtn').classList.add('hidden');
+        }
+
+        async function submitAddUser(e) {
+            e.preventDefault();
+            if (!activeBuHwid) return;
+            const btn = document.getElementById('userSubmitBtn');
+            btn.disabled = true;
+
+            const payload = {
+                action: 'save',
+                old_username: document.getElementById('userOldUsername').value.trim(),
+                username: document.getElementById('userInputUsername').value.trim(),
+                password: document.getElementById('userInputPassword').value.trim(),
+                full_name: document.getElementById('userInputFullName').value.trim(),
+                role: document.getElementById('userInputRole').value,
+                branch_code: document.getElementById('userInputBranchCode').value,
+            };
+
+            try {
+                const res = await fetch(`/api/clients/${encodeURIComponent(activeBuHwid)}/users/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    resetUserForm();
+                    await refreshBranchesUsersData();
+                } else {
+                    alert(data.message || 'فشل حفظ المستخدم');
+                }
+            } catch (err) {
+                alert('فشل الاتصال بالخادم.');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteUser(username) {
+            if (!confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟`)) return;
+            try {
+                const res = await fetch(`/api/clients/${encodeURIComponent(activeBuHwid)}/users/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', username: username })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await refreshBranchesUsersData();
+                }
+            } catch (err) {
+                alert('فشل حذف المستخدم.');
             }
         }
 

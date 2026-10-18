@@ -58,11 +58,13 @@ def financial_report_view(request):
         end_date = today
         period = "this_month"
 
+    from apps.core.branch_context import filter_by_branch
+
     # Filter base querysets
-    payment_qs = Payment.objects.all()
-    expense_qs = Expense.objects.all()
-    subscription_qs = Subscription.objects.all()
-    checkin_qs = CheckInEvent.objects.all()
+    payment_qs = filter_by_branch(Payment.objects.all(), request)
+    expense_qs = filter_by_branch(Expense.objects.all(), request)
+    subscription_qs = filter_by_branch(Subscription.objects.all(), request, branch_field="member__branch")
+    checkin_qs = filter_by_branch(CheckInEvent.objects.all(), request)
 
     if start_date and end_date:
         payment_qs = payment_qs.filter(created_at__date__gte=start_date, created_at__date__lte=end_date)
@@ -226,7 +228,8 @@ def member_retention_report_view(request):
         if m_id not in first_sub_map:
             first_sub_map[m_id] = s["start_date"]
 
-    all_members = list(Member.objects.all())
+    from apps.core.branch_context import filter_by_branch
+    all_members = list(filter_by_branch(Member.objects.all(), request))
     for m in all_members:
         if m.id not in first_sub_map:
             first_sub_map[m.id] = m.last_subscription_start or m.created_at.date()

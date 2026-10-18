@@ -15,7 +15,10 @@ def expense_list_view(request):
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
 
+    from apps.core.branch_context import filter_by_branch, get_active_branch
+
     expenses = Expense.objects.select_related("category", "created_by").all().order_by("-expense_date", "-created_at")
+    expenses = filter_by_branch(expenses, request)
 
     if category_id:
         expenses = expenses.filter(category_id=category_id)
@@ -40,6 +43,8 @@ def expense_list_view(request):
 
 @login_required
 def expense_create_view(request):
+    from apps.core.branch_context import get_active_branch
+
     categories = ExpenseCategory.objects.filter(is_active=True)
     today = timezone.localdate()
 
@@ -60,12 +65,19 @@ def expense_create_view(request):
             messages.error(request, "مبلغ المصروف يجب أن يكون أكبر من الصفر.")
             return render(request, "expenses/expense_form.html", {"categories": categories, "today": today})
 
+        target_branch = None
+        if not getattr(request.user, "is_owner", False):
+            target_branch = getattr(request.user, "branch", None)
+        else:
+            target_branch = get_active_branch(request)
+
         expense = Expense.objects.create(
             category=category,
             amount=amount,
             description=description,
             expense_date=expense_date,
             created_by=request.user,
+            branch=target_branch,
         )
         messages.success(request, f"تم تسجيل مصروف {category.name} بمبلغ {amount} ج.م بنجاح.")
         return redirect("expenses:expense_list")

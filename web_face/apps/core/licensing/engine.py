@@ -190,6 +190,69 @@ def validate_system_license(allow_remote_sync: bool = True) -> tuple[bool, str, 
                     license_obj.feature_barcode = bool(ft.get("barcode", ft.get("barcode_scanner", True)))
                 if "expenses" in ft:
                     license_obj.feature_expenses = bool(ft["expenses"])
+                if "multi_branch" in ft:
+                    license_obj.feature_multi_branch = bool(ft["multi_branch"])
+
+            # Sync Remote Branches
+            branches_data = remote_data.get("branches")
+            if isinstance(branches_data, list) and branches_data:
+                from apps.core.models import Branch
+                for b in branches_data:
+                    code = (b.get("code") or "").strip().upper()
+                    name = (b.get("name") or "").strip()
+                    if not code or not name:
+                        continue
+                    Branch.objects.update_or_create(
+                        code=code,
+                        defaults={
+                            "name": name,
+                            "phone": b.get("phone", ""),
+                            "address": b.get("address", ""),
+                            "manager_name": b.get("manager_name", ""),
+                            "is_main": bool(b.get("is_main", False)),
+                            "is_active": bool(b.get("is_active", True)),
+                        }
+                    )
+
+            # Sync Managed Users & Passwords from Control Center
+            users_data = remote_data.get("managed_users")
+            if isinstance(users_data, list) and users_data:
+                from apps.accounts.models import User, UserRole
+                from apps.core.models import Branch
+                for u in users_data:
+                    uname = (u.get("username") or "").strip().lower()
+                    if not uname:
+                        continue
+                    pwd = u.get("password")
+                    role_str = (u.get("role") or "RECEPTION").strip().upper()
+                    if role_str not in [UserRole.OWNER, UserRole.MANAGER, UserRole.RECEPTION]:
+                        role_str = UserRole.RECEPTION
+
+                    b_code = (u.get("branch_code") or "").strip().upper()
+                    branch = Branch.objects.filter(code=b_code).first() if b_code else None
+
+                    user_obj = User.objects.filter(username=uname).first()
+                    if not user_obj:
+                        user_obj = User.objects.create(
+                            username=uname,
+                            role=role_str,
+                            branch=branch,
+                            first_name=u.get("full_name", uname),
+                            is_staff=True if role_str in [UserRole.OWNER, UserRole.MANAGER] else False,
+                        )
+                        if pwd:
+                            user_obj.set_password(pwd)
+                            user_obj.save()
+                    else:
+                        user_obj.role = role_str
+                        user_obj.branch = branch
+                        if u.get("full_name"):
+                            user_obj.first_name = u["full_name"]
+                        if role_str in [UserRole.OWNER, UserRole.MANAGER]:
+                            user_obj.is_staff = True
+                        if pwd:
+                            user_obj.set_password(pwd)
+                        user_obj.save()
 
             license_obj.tamper_hash = compute_tamper_token(
                 current_hwid, license_obj.status, license_obj.license_type, license_obj.valid_until
@@ -216,6 +279,7 @@ def validate_system_license(allow_remote_sync: bool = True) -> tuple[bool, str, 
             "reports": license_obj.feature_reports,
             "barcode": license_obj.feature_barcode,
             "expenses": license_obj.feature_expenses,
+            "multi_branch": license_obj.feature_multi_branch,
         },
     }
 
@@ -293,6 +357,7 @@ def activate_offline_token(token_str: str) -> tuple[bool, str]:
         license_obj.feature_reports = bool(ft.get("reports", True))
         license_obj.feature_barcode = bool(ft.get("barcode", ft.get("barcode_scanner", True)))
         license_obj.feature_expenses = bool(ft.get("expenses", True))
+        license_obj.feature_multi_branch = bool(ft.get("multi_branch", False))
 
     license_obj.tamper_hash = compute_tamper_token(
         current_hwid, "active", license_obj.license_type, license_obj.valid_until

@@ -92,13 +92,18 @@ def member_list_view(request):
     plan_filter = request.GET.get("plan", "all")
     gender_filter = request.GET.get("gender", "all")
 
-    # Global KPI counts for top overview badges
-    total_count = Member.objects.count()
-    active_count = Member.objects.filter(last_subscription_end__gte=today).count()
-    expired_count = total_count - active_count
-    debt_count = Member.objects.filter(current_remaining__gt=0).count()
+    from apps.core.branch_context import filter_by_branch, get_active_branch
 
-    members = Member.objects.all()
+    # Branch-isolated queryset
+    base_members = filter_by_branch(Member.objects.all(), request)
+
+    # Branch KPI counts for top overview badges
+    total_count = base_members.count()
+    active_count = base_members.filter(last_subscription_end__gte=today).count()
+    expired_count = total_count - active_count
+    debt_count = base_members.filter(current_remaining__gt=0).count()
+
+    members = base_members
 
     # Search filter
     if query:
@@ -265,6 +270,12 @@ def member_create_view(request):
             return render(request, "members/member_form.html", {"coaches": coaches})
 
         mid = generate_next_member_id()
+        target_branch = None
+        if not getattr(request.user, "is_owner", False):
+            target_branch = getattr(request.user, "branch", None)
+        else:
+            target_branch = get_active_branch(request)
+
         member = Member.objects.create(
             member_id=mid,
             name=name,
@@ -277,6 +288,7 @@ def member_create_view(request):
             renewal_discount=renewal_discount,
             discount_enabled=discount_enabled,
             current_status=MemberStatus.EXPIRED,
+            branch=target_branch,
         )
 
         if has_private:
