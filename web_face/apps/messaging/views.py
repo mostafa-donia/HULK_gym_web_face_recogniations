@@ -649,3 +649,126 @@ def telegram_send_test_message_view(request):
     )
     return JsonResponse(res)
 
+
+@login_required
+def whatsapp_message_bank_view(request):
+    """
+    Message Bank Management View:
+    Displays all categories, variations list, live random dice preview,
+    and supports adding new custom variations or resetting to defaults.
+    """
+    from apps.messaging.models import WhatsAppMessageBank
+    from apps.messaging.message_bank import MASTER_MESSAGE_BANK, seed_default_bank, get_random_message
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        category = request.POST.get("category", "").strip()
+
+        if action == "reset_defaults":
+            seed_default_bank(force=True)
+            messages.success(request, "✓ تم استعادة جميع الصياغات المصرية الافتراضية بنجاح (250 صيغة متنوعة لمنع الحظر)!")
+            return redirect("messaging:whatsapp_message_bank")
+
+        elif action == "add_variation" and category:
+            new_text = request.POST.get("new_variation", "").strip()
+            if new_text:
+                bank_obj, _ = WhatsAppMessageBank.objects.get_or_create(category=category)
+                variations = list(bank_obj.variations or [])
+                variations.insert(0, new_text)
+                bank_obj.variations = variations
+                bank_obj.save()
+                messages.success(request, f"✓ تمت إضافة الصياغة الجديدة بنجاح إلى قسم ({category})!")
+            return redirect("messaging:whatsapp_message_bank")
+
+        elif action == "delete_variation" and category:
+            try:
+                idx = int(request.POST.get("index", -1))
+                bank_obj = WhatsAppMessageBank.objects.filter(category=category).first()
+                if bank_obj and 0 <= idx < len(bank_obj.variations):
+                    variations = list(bank_obj.variations)
+                    variations.pop(idx)
+                    bank_obj.variations = variations
+                    bank_obj.save()
+                    messages.info(request, "تم حذف الصياغة المحددة.")
+            except (ValueError, TypeError):
+                pass
+            return redirect("messaging:whatsapp_message_bank")
+
+    # Fetch banks or seed if empty
+    banks = list(WhatsAppMessageBank.objects.all().order_by("category"))
+    if not banks:
+        seed_default_bank()
+        banks = list(WhatsAppMessageBank.objects.all().order_by("category"))
+
+    category_labels = {
+        "expired": {"title": "⚠️ انتهاء الاشتراك (Expired)", "badge": "#ef4444", "desc": "يتم اختيار صيغة عشوائية لكل عضو انتهى اشتراكه لدعوته للتجديد"},
+        "reminder_1": {"title": "⏳ تنبيه قبل يوم واحد (1 Day Before)", "badge": "#f59e0b", "desc": "يتم اختيار صيغة عشوائية لكل عضو ينتهي اشتراكه غداً لحثه على التجديد"},
+        "reminder_3": {"title": "🔔 تنبيه قبل 3 أيام (3 Days Before)", "badge": "#3b82f6", "desc": "تنبيه ودي مبكر قبل انتهاء الاشتراك بثلاثة أيام"},
+        "receipt": {"title": "📄 إيصالات السداد والفواتير (Payment Receipts)", "badge": "#10b981", "desc": "صيغ متغيرة وودودة لإيصالات الدفع ترفق مع الفاتورة المصورة"},
+        "general": {"title": "💪 الترحيب والتحفيز والمتابعة (General / Motivation)", "badge": "#8b5cf6", "desc": "رسائل تحفيزية وترحيبية متنوعة للأعضاء"},
+    }
+
+    total_variations = sum(len(b.variations or []) for b in banks)
+    profile = GymProfile.get_solo()
+
+    # Build categories list with metadata
+    categories_data = []
+    for b in banks:
+        meta = category_labels.get(b.category, {"title": b.category, "badge": "#64748b", "desc": ""})
+        categories_data.append({
+            "category": b.category,
+            "title": meta["title"],
+            "badge_color": meta["badge"],
+            "description": meta["desc"],
+            "count": len(b.variations or []),
+            "variations": b.variations or [],
+            "sample": get_random_message(b.category, {
+                "name": "أحمد مصطفى",
+                "gym_name": profile.gym_name or "HULK GYM",
+                "end_date": timezone.localdate().strftime("%Y-%m-%d"),
+                "date": timezone.localdate().strftime("%Y-%m-%d"),
+                "amount": "600",
+                "currency": profile.currency or "جنيه",
+                "invoice_no": "INV-2026-0042",
+                "remaining_text": "الحساب: خالص السداد بالكامل ✓",
+                "days_left": "3",
+            }),
+        })
+
+    context = {
+        "categories_data": categories_data,
+        "total_variations": total_variations,
+        "profile": profile,
+    }
+    return render(request, "messaging/whatsapp_message_bank.html", context)
+
+
+@login_required
+def whatsapp_message_bank_preview_api(request):
+    """
+    AJAX endpoint for testing random message selection with live mock data.
+    """
+    from apps.messaging.message_bank import get_random_message
+    category = request.GET.get("category", "expired")
+    profile = GymProfile.get_solo()
+
+    ctx = {
+        "name": request.GET.get("name") or "كابتن أحمد",
+        "gym_name": profile.gym_name or "HULK GYM",
+        "end_date": request.GET.get("end_date") or timezone.localdate().strftime("%Y-%m-%d"),
+        "date": timezone.localdate().strftime("%Y-%m-%d"),
+        "amount": request.GET.get("amount") or "550",
+        "currency": profile.currency or "جنيه",
+        "invoice_no": "INV-" + timezone.now().strftime("%y%m%d") + "-012",
+        "remaining_text": "الحساب: خالص السداد بالكامل ✓",
+        "days_left": "1",
+        "plan": "اشتراك شهري حديد ولياقة",
+    }
+    msg = get_random_message(category, ctx)
+    return JsonResponse({
+        "success": True,
+        "category": category,
+        "message": msg,
+    })
+
+

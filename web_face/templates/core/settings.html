@@ -175,9 +175,26 @@
           </div>
         </div>
 
-        <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+        <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
           <input type="checkbox" id="whatsapp_enabled" name="whatsapp_enabled" {% if profile.whatsapp_enabled %}checked{% endif %} style="width: 20px; height: 20px; accent-color: #7ED321; cursor: pointer;">
           <label for="whatsapp_enabled" class="form-label" style="margin: 0; color: var(--text-secondary); font-weight: 700; cursor: pointer;">تفعيل إرسال رسائل وتنبيهات الواتساب التلقائية</label>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; background: rgba(132, 204, 22, 0.08); border: 1px dashed rgba(132, 204, 22, 0.3); padding: 10px 14px; border-radius: 8px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="whatsapp_randomize_templates" name="whatsapp_randomize_templates" {% if profile.whatsapp_randomize_templates %}checked{% endif %} style="width: 20px; height: 20px; accent-color: #7ED321; cursor: pointer;">
+            <div>
+              <label for="whatsapp_randomize_templates" class="form-label" style="margin: 0; color: #84cc16; font-weight: 800; cursor: pointer; font-size: 0.88rem;">
+                🎲 تنويع واختيار صياغات عشوائية تلقائياً من بنك الرسائل (Anti-Spam)
+              </label>
+              <span style="display: block; font-size: 0.75rem; color: var(--text-muted);">
+                يختار البرنامج صياغة مختلفة من أصل 50 صياغة مصرية لكل عضو (انتهاء اشتراك، تذكير، إيصالات) لحماية رقمك من الحظر.
+              </span>
+            </div>
+          </div>
+          <a href="{% url 'messaging:whatsapp_message_bank' %}" target="_blank" style="font-size: 0.78rem; font-weight: bold; color: #38bdf8; text-decoration: underline; white-space: nowrap;">
+            عرض الـ 250 صياغة ↗
+          </a>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">

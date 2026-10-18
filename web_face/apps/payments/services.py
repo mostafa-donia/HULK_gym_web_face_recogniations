@@ -270,19 +270,42 @@ def queue_payment_receipt_whatsapp(payment: Payment, subscription=None) -> Optio
     else:
         sub_info = ""
 
-    remaining_info = f"\nالمتبقي دين: {member.current_remaining} {profile.currency}" if member.current_remaining > 0 else "\nالحساب: خالص السداد بالكامل ✓"
+    remaining_info = f"المتبقي دين: {member.current_remaining} {profile.currency}" if member.current_remaining > 0 else "الحساب: خالص السداد بالكامل ✓"
 
-    receipt_text = (
-        f"إيصال مالي رسمي من {profile.gym_name}\n"
-        f"أهلاً كابتن {member.name} 👋\n"
-        f"نوع العملية: {op_name}\n"
-        f"رقم الفاتورة: {payment.invoice_no}\n"
-        f"المبلغ المدفوع: {payment.amount} {profile.currency}"
-        f"{remaining_info}"
-        f"{sub_info}\n"
-        f"مرفق الفاتورة الإلكترونية الرسمية 📄\n"
-        f"شكراً لاختيارك {profile.gym_name} 💪"
-    )
+    if getattr(profile, "whatsapp_randomize_templates", True):
+        from apps.messaging.message_bank import get_random_message
+        ctx = {
+            "name": member.name,
+            "gym_name": profile.gym_name or "Systemize Gym",
+            "amount": f"{payment.amount}",
+            "amount_paid": f"{payment.amount}",
+            "currency": profile.currency or "جنيه",
+            "invoice_no": payment.invoice_no,
+            "remaining": f"{member.current_remaining}",
+            "remaining_amount": f"{member.current_remaining}",
+            "remaining_text": remaining_info,
+            "date": payment.created_at.strftime("%Y-%m-%d"),
+            "today": payment.created_at.strftime("%Y-%m-%d"),
+            "plan": subscription.plan_name if subscription else op_name,
+            "plan_name": subscription.plan_name if subscription else op_name,
+            "phone": member.mobile,
+        }
+        receipt_text = get_random_message("receipt", ctx)
+        if sub_info:
+            receipt_text += f"\n{sub_info}"
+        receipt_text += "\nمرفق الفاتورة الإلكترونية الرسمية 📄"
+    else:
+        receipt_text = (
+            f"إيصال مالي رسمي من {profile.gym_name}\n"
+            f"أهلاً كابتن {member.name} 👋\n"
+            f"نوع العملية: {op_name}\n"
+            f"رقم الفاتورة: {payment.invoice_no}\n"
+            f"المبلغ المدفوع: {payment.amount} {profile.currency}\n"
+            f"{remaining_info}"
+            f"{sub_info}\n"
+            f"مرفق الفاتورة الإلكترونية الرسمية 📄\n"
+            f"شكراً لاختيارك {profile.gym_name} 💪"
+        )
 
     clean_invoice_no = payment.invoice_no.replace("/", "_").replace("\\", "_")
     dedup_key = f"receipt:{member.mobile}:{clean_invoice_no}"

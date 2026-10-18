@@ -363,15 +363,28 @@ def prepare_due_reminders() -> dict:
 
         days_diff = (end_date - today).days
 
+        from apps.messaging.message_bank import get_random_message, format_template_safely
+
         # 1. Reminder 3 days before
         if days_diff == 3:
             dedup = f"{m.phone}_rem3_{end_date.isoformat()}"
-            msg_text = (
-                f"🏋️‍♂️ تذكير من {gym_name}\n"
-                f"أهلاً كابتن {m.name} 👋\n"
-                f"اشتراكك في الجيم هينتهي بعد 3 أيام (بتاريخ: {end_date.strftime('%Y-%m-%d')}).\n"
-                f"جاهزين لتجديدك في أي وقت للاستمرار في فورمتك! 💪"
-            )
+            ctx = {
+                "name": m.name,
+                "gym_name": gym_name,
+                "end_date": end_date.strftime("%Y-%m-%d"),
+                "days_left": 3,
+                "plan": m.last_subscription_type or "الاشتراك",
+                "phone": m.phone,
+            }
+            if getattr(profile, "whatsapp_randomize_templates", True):
+                msg_text = get_random_message("reminder_3", ctx)
+            else:
+                msg_text = (
+                    f"🏋️‍♂️ تذكير من {gym_name}\n"
+                    f"أهلاً كابتن {m.name} 👋\n"
+                    f"اشتراكك في الجيم هينتهي بعد 3 أيام (بتاريخ: {end_date.strftime('%Y-%m-%d')}).\n"
+                    f"جاهزين لتجديدك في أي وقت للاستمرار في فورمتك! 💪"
+                )
             created = enqueue_message(
                 mobile=m.phone,
                 message=msg_text,
@@ -385,12 +398,23 @@ def prepare_due_reminders() -> dict:
         # 2. Reminder 1 day before
         elif days_diff == 1:
             dedup = f"{m.phone}_rem1_{end_date.isoformat()}"
-            msg_text = (
-                f"🏋️‍♂️ تذكير هام من {gym_name}\n"
-                f"أهلاً كابتن {m.name} 👋\n"
-                f"اشتراكك في الجيم هينتهي غداً (بتاريخ: {end_date.strftime('%Y-%m-%d')}).\n"
-                f"تقدر تجدد مع كابتن الاستقبال اليوم عشان بوابتك تفضل شغالة بدون توقف! 🚀"
-            )
+            ctx = {
+                "name": m.name,
+                "gym_name": gym_name,
+                "end_date": end_date.strftime("%Y-%m-%d"),
+                "days_left": 1,
+                "plan": m.last_subscription_type or "الاشتراك",
+                "phone": m.phone,
+            }
+            if getattr(profile, "whatsapp_randomize_templates", True):
+                msg_text = get_random_message("reminder_1", ctx)
+            else:
+                msg_text = (
+                    f"🏋️‍♂️ تذكير هام من {gym_name}\n"
+                    f"أهلاً كابتن {m.name} 👋\n"
+                    f"اشتراكك في الجيم هينتهي غداً (بتاريخ: {end_date.strftime('%Y-%m-%d')}).\n"
+                    f"تقدر تجدد مع كابتن الاستقبال اليوم عشان بوابتك تفضل شغالة بدون توقف! 🚀"
+                )
             created = enqueue_message(
                 mobile=m.phone,
                 message=msg_text,
@@ -401,18 +425,30 @@ def prepare_due_reminders() -> dict:
             if created and created.status == MessageStatus.PENDING:
                 queued_count += 1
 
-        # 3. Already expired
+        # 3. Already expired (50 diverse Egyptian Arabic variations)
         elif days_diff <= 0:
             dedup = f"{m.phone}_exp_{end_date.isoformat()}"
-            template = profile.expired_message_template or (
-                "تنبيه من {gym_name}\nأهلاً {name}\nاشتراكك انتهى بتاريخ: {end_date}\nنورتنا في أي وقت للتجديد والرجوع للتمرين 💪"
-            )
-            msg_text = template.format(
-                gym_name=gym_name,
-                name=m.name,
-                end_date=end_date.strftime("%Y-%m-%d"),
-                days_left=abs(days_diff),
-            )
+            ctx = {
+                "name": m.name,
+                "gym_name": gym_name,
+                "end_date": end_date.strftime("%Y-%m-%d"),
+                "days_left": abs(days_diff),
+                "plan": m.last_subscription_type or "الاشتراك",
+                "phone": m.phone,
+            }
+            custom_tmpl = (profile.expired_message_template or "").strip()
+            # If randomizing is enabled (default True), pick from the 50 variations
+            if getattr(profile, "whatsapp_randomize_templates", True):
+                msg_text = get_random_message("expired", ctx)
+            elif custom_tmpl and "---" in custom_tmpl:
+                # Support multi-line variations separated by '---'
+                choices = [c.strip() for c in custom_tmpl.split("---") if c.strip()]
+                msg_text = format_template_safely(random.choice(choices), ctx)
+            elif custom_tmpl:
+                msg_text = format_template_safely(custom_tmpl, ctx)
+            else:
+                msg_text = get_random_message("expired", ctx)
+
             created = enqueue_message(
                 mobile=m.phone,
                 message=msg_text,
@@ -797,13 +833,31 @@ def prepare_bulk_campaign(
         end_date_str = m.last_subscription_end.strftime("%Y-%m-%d") if m.last_subscription_end else "غير محدد"
         days_diff = (m.last_subscription_end - today).days if m.last_subscription_end else 0
 
-        # Replace tags
-        text = message_template.replace("{name}", m.name or "كابتن")
-        text = text.replace("{gym_name}", gym_name)
-        text = text.replace("{end_date}", end_date_str)
-        text = text.replace("{days_left}", str(abs(days_diff)))
-        text = text.replace("{remaining}", str(m.current_remaining))
-        text = text.replace("{plan}", m.last_subscription_type or "الاشتراك")
+        from apps.messaging.message_bank import get_random_message, format_template_safely
+
+        ctx = {
+            "name": m.name or "كابتن",
+            "gym_name": gym_name,
+            "end_date": end_date_str,
+            "days_left": abs(days_diff),
+            "remaining": str(m.current_remaining),
+            "remaining_amount": str(m.current_remaining),
+            "plan": m.last_subscription_type or "الاشتراك",
+            "plan_name": m.last_subscription_type or "الاشتراك",
+            "phone": m.phone,
+        }
+
+        raw_template = message_template.strip()
+        if raw_template in ["__RANDOM_BANK__", "__AUTO_VARIATION__"]:
+            # Pick from bank based on target category
+            bank_cat = "expired" if category == "non_sub" else ("reminder_1" if category == "expiring_soon" else "general")
+            text = get_random_message(bank_cat, ctx)
+        elif "---" in raw_template:
+            # Multi-variation separated by '---'
+            sub_templates = [st.strip() for st in raw_template.split("---") if st.strip()]
+            text = format_template_safely(random.choice(sub_templates), ctx)
+        else:
+            text = format_template_safely(raw_template, ctx)
 
         dedup = f"{m.phone}_{batch_tag}"
         msg = enqueue_message(

@@ -1166,6 +1166,7 @@ def settings_view(request):
 
             if "form_whatsapp" in request.POST or "whatsapp_send_mode" in request.POST:
                 profile.whatsapp_enabled = "whatsapp_enabled" in request.POST
+                profile.whatsapp_randomize_templates = "whatsapp_randomize_templates" in request.POST
                 profile.whatsapp_send_mode = request.POST.get("whatsapp_send_mode", profile.whatsapp_send_mode)
                 profile.expired_message_template = request.POST.get("expired_message_template", profile.expired_message_template)
 

@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}بنك الصياغات العشوائية للواتساب - {{ profile.gym_name }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 1350px; margin: 0 auto; padding: 0.5rem 1rem 2rem;">
+
+  <!-- Header Banner -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <div style="width: 52px; height: 52px; border-radius: 14px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); display: flex; align-items: center; justify-content: center; font-size: 1.7rem;">
+        🎲
+      </div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <h1 style="font-size: 1.4rem; font-weight: 800; margin: 0; color: var(--text-main);">
+            بنك الصياغات العشوائية لرسائل الواتساب
+          </h1>
+          <span style="background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #4ade80; font-size: 0.78rem; font-weight: 800; padding: 3px 10px; border-radius: 20px;">
+            {{ total_variations }} صياغة مصرية جاهزة لمنع الحظر
+          </span>
+          <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid #0284c7; color: #38bdf8; font-size: 0.78rem; font-weight: 800; padding: 3px 10px; border-radius: 20px;">
+            ● التنويع التلقائي الذكي نشط ✓
+          </span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.84rem; margin: 0.25rem 0 0;">
+          يقوم النظام باختيار صياغة مصرية ودودة ومختلفة عشوائياً لكل عضو حتى لا تتطابق الرسائل ولا يتم تصنيف رقمك كـ Spam من خوارزميات واتساب.
+        </p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <form method="POST" onsubmit="return confirm('هل أنت متأكد من استعادة كافة الصياغات الافتراضية (250 صيغة مصرية)؟ سيتم تحديث البنك للأصل.');">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reset_defaults">
+        <button type="submit" class="btn btn-secondary" style="font-size: 0.85rem; font-weight: 700; color: #f59e0b; border-color: rgba(245, 158, 11, 0.3);">
+          🔄 استعادة الصياغات الافتراضية (250 صيغة)
+        </button>
+      </form>
+
+      <a href="{% url 'messaging:whatsapp_queue' %}" class="btn btn-primary" style="background: #22c55e; color: #052e16; font-weight: 800; border: none; font-size: 0.85rem;">
+        🔙 العودة لطابور الواتساب
+      </a>
+    </div>
+  </div>
+
+  <!-- Live Interactive Dice Test Simulator Card -->
+  <div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95)); border: 1px solid #334155; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 8px;">
+        <span>🎯 تجربة حية لاختيار صياغة عشوائية بالرمية (Live Randomizer Simulator)</span>
+      </h3>
+      <span style="font-size: 0.78rem; color: #94a3b8;">اضغط على الزر لاختبار كيف يختار البرنامج صيغة مختلفة في كل مرة</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: center; margin-bottom: 14px;">
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">اختر نوع الرسالة للاختبار:</label>
+        <select id="simCategory" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-weight: 700; font-size: 0.86rem;">
+          <option value="expired">⚠️ انتهاء الاشتراك (Expired) - 50 صيغة</option>
+          <option value="reminder_1">⏳ تنبيه قبل يوم واحد (1 Day Before) - 50 صيغة</option>
+          <option value="reminder_3">🔔 تنبيه قبل 3 أيام (3 Days Before) - 50 صيغة</option>
+          <option value="receipt">📄 إيصال سداد وفاتورة (Receipts) - 50 صيغة</option>
+          <option value="general">💪 تحفيز وترحيب (Motivation/Welcome) - 50 صيغة</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">اسم العضو التجريبي:</label>
+        <input type="text" id="simName" value="كابتن أحمد مصطفى" placeholder="اسم العضو" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-size: 0.86rem; font-weight: bold;">
+      </div>
+
+      <div style="padding-top: 18px;">
+        <button type="button" onclick="rollDiceRandomPreview()" style="background: #2563eb; color: #ffffff; border: none; font-weight: 800; font-size: 0.9rem; padding: 9px 18px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);">
+          <span>🎲 سحب صيغة عشوائية الآن</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Result Preview Bubble -->
+    <div style="background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(56, 189, 248, 0.4); border-radius: 12px; padding: 14px 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 800;">💬 شكل الرسالة المجهزة كما ستصل للعميل على واتساب:</span>
+        <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('simResultBox').innerText); this.innerText='تم النسخ ✓'; setTimeout(()=>this.innerText='نسخ النص', 1500);" style="background: transparent; border: 1px solid #475569; color: #94a3b8; font-size: 0.74rem; padding: 2px 8px; border-radius: 4px; cursor: pointer;">
+          نسخ النص
+        </button>
+      </div>
+      <div id="simResultBox" style="color: #f1f5f9; font-size: 0.92rem; white-space: pre-wrap; line-height: 1.6; font-family: system-ui, -apple-system, sans-serif;">
+        اضغط على "🎲 سحب صيغة عشوائية الآن" لتوليد صياغة جديدة وتجربة التنوع الحي.
+      </div>
+    </div>
+  </div>
+
+  <!-- Available Placeholders Reference Strip -->
+  <div style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.25); border-radius: 12px; padding: 10px 16px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+    <span style="font-size: 0.8rem; font-weight: 800; color: #38bdf8;">📌 المتغيرات التلقائية المتاحة لكتابة الصياغات:</span>
+    <code style="background: rgba(0,0,0,0.3); color: #84cc16; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem;">{name}</code> <span style="font-size: 0.75rem; color: #94a3b8;">اسم العضو</span>
+    <code style="background: rgba(0,0,0,0.3); color: #84cc16; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem;">{gym_name}</code> <span style="font-size: 0.75rem; color: #94a3b8;">اسم الجيم</span>
+    <code style="background: rgba(0,0,0,0.3); color: #84cc16; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem;">{end_date}</code> <span style="font-size: 0.75rem; color: #94a3b8;">تاريخ الانتهاء</span>
+    <code style="background: rgba(0,0,0,0.3); color: #84cc16; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem;">{amount}</code> <span style="font-size: 0.75rem; color: #94a3b8;">المبلغ</span>
+    <code style="background: rgba(0,0,0,0.3); color: #84cc16; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem;">{invoice_no}</code> <span style="font-size: 0.75rem; color: #94a3b8;">رقم الفاتورة</span>
+    <code style="background: rgba(0,0,0,0.3); color: #84cc16; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem;">{remaining_text}</code> <span style="font-size: 0.75rem; color: #94a3b8;">بيان المتبقي</span>
+    <code style="background: rgba(0,0,0,0.3); color: #84cc16; padding: 2px 6px; border-radius: 4px; font-size: 0.78rem;">{plan}</code> <span style="font-size: 0.75rem; color: #94a3b8;">اسم الباقة</span>
+  </div>
+
+  <!-- Categories Tabs & Accordions -->
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    {% for cat in categories_data %}
+      <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; overflow: hidden;">
+        
+        <!-- Category Header -->
+        <div style="padding: 1rem 1.25rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h2 style="font-size: 1.15rem; font-weight: 800; margin: 0; color: var(--text-main);">
+                {{ cat.title }}
+              </h2>
+              <span style="background: rgba(255,255,255,0.08); border: 1px solid {{ cat.badge_color }}; color: {{ cat.badge_color }}; font-size: 0.78rem; font-weight: 800; padding: 2px 10px; border-radius: 20px;">
+                {{ cat.count }} صياغة
+              </span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin: 3px 0 0;">{{ cat.description }}</p>
+          </div>
+
+          <div style="display: flex; gap: 8px;">
+            <button type="button" onclick="toggleCategoryList('{{ cat.category }}')" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.82rem; font-weight: 700; padding: 6px 14px; border-radius: 8px; cursor: pointer;">
+              <span id="btnText_{{ cat.category }}">عرض كل الصياغات ({{ cat.count }}) ▼</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sample preview strip -->
+        <div style="padding: 10px 1.25rem; background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.82rem;">
+          <div style="color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+            <strong style="color: {{ cat.badge_color }}; margin-left: 6px;">نموذج عشوائي:</strong> {{ cat.sample }}
+          </div>
+          <button type="button" onclick="testCategoryApi('{{ cat.category }}')" style="background: transparent; border: 1px solid #475569; color: #94a3b8; font-size: 0.74rem; padding: 3px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap;">
+            🎲 سحب صيغة أخرى
+          </button>
+        </div>
+
+        <!-- Collapsible Content: Add Form + Full List -->
+        <div id="container_{{ cat.category }}" style="display: none; padding: 1.25rem;">
+          
+          <!-- Add Form for this category -->
+          <form method="POST" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 16px; margin-bottom: 1.25rem;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_variation">
+            <input type="hidden" name="category" value="{{ cat.category }}">
+            
+            <label style="display: block; font-size: 0.82rem; font-weight: 800; color: #38bdf8; margin-bottom: 6px;">
+              ➕ إضافة صياغة مصرية جديدة إلى هذا القسم:
+            </label>
+            <div style="display: flex; gap: 8px;">
+              <textarea name="new_variation" rows="2" placeholder="اكتب صياغتك هنا بالعامية المصرية واستخدم {name} و {gym_name}..." required
+                        style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; resize: vertical;"></textarea>
+              <button type="submit" style="background: #10b981; color: #022c22; font-weight: 800; font-size: 0.85rem; border: none; padding: 0 18px; border-radius: 8px; cursor: pointer; white-space: nowrap;">
+                حفظ الصياغة
+              </button>
+            </div>
+          </form>
+
+          <!-- Variations List -->
+          <div style="display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow-y: auto; padding-left: 4px;">
+            {% for item in cat.variations %}
+              <div style="background: var(--bg-surface-subtle); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                <div style="display: flex; gap: 10px; align-items: flex-start; flex: 1;">
+                  <span style="color: var(--text-muted); font-size: 0.75rem; font-family: monospace; font-weight: bold; padding-top: 2px;">#{{ forloop.counter }}</span>
+                  <div style="color: var(--text-main); font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap;">{{ item }}</div>
+                </div>
+
+                <div style="display: flex; gap: 6px;">
+                  <button type="button" onclick="navigator.clipboard.writeText('{{ item|escapejs }}'); this.innerText='✓'; setTimeout(()=>this.innerText='نسخ', 1000);"
+                          style="background: transparent; border: 1px solid #475569; color: #94a3b8; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; cursor: pointer;">
+                    نسخ
+                  </button>
+                  <form method="POST" onsubmit="return confirm('هل تريد بالتأكيد حذف هذه الصياغة؟');" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_variation">
+                    <input type="hidden" name="category" value="{{ cat.category }}">
+                    <input type="hidden" name="index" value="{{ forloop.counter0 }}">
+                    <button type="submit" style="background: transparent; border: 1px solid rgba(239,68,68,0.4); color: #f87171; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; cursor: pointer;">
+                      ✕
+                    </button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+
+        </div>
+
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<script>
+function toggleCategoryList(cat) {
+  const container = document.getElementById('container_' + cat);
+  const btnText = document.getElementById('btnText_' + cat);
+  if (container.style.display === 'none') {
+    container.style.display = 'block';
+    btnText.textContent = 'إخفاء الصياغات ▲';
+  } else {
+    container.style.display = 'none';
+    btnText.textContent = 'عرض كل الصياغات ▼';
+  }
+}
+
+async function rollDiceRandomPreview() {
+  const cat = document.getElementById('simCategory').value;
+  const name = document.getElementById('simName').value.trim() || 'كابتن أحمد';
+  const box = document.getElementById('simResultBox');
+  box.style.opacity = '0.5';
+  box.innerText = '⏳ جاري اختيار صيغة عشوائية جديدة...';
+
+  try {
+    const res = await fetch(`{% url 'messaging:whatsapp_message_bank_preview' %}?category=${encodeURIComponent(cat)}&name=${encodeURIComponent(name)}`);
+    const data = await res.json();
+    box.style.opacity = '1';
+    if (data.success) {
+      box.innerText = data.message;
+    } else {
+      box.innerText = 'حدث خطأ أثناء سحب الرسالة.';
+    }
+  } catch (err) {
+    box.style.opacity = '1';
+    box.innerText = 'خطأ في الاتصال بالخادم.';
+  }
+}
+
+async function testCategoryApi(cat) {
+  document.getElementById('simCategory').value = cat;
+  await rollDiceRandomPreview();
+  window.scrollTo({ top: 120, behavior: 'smooth' });
+}
+
+// Initial roll on page load
+document.addEventListener('DOMContentLoaded', () => {
+  rollDiceRandomPreview();
+});
+</script>
+{% endblock %}

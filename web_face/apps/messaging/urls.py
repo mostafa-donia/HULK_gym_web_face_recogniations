@@ -20,6 +20,8 @@ urlpatterns = [
     path("batch-action/", views.whatsapp_batch_action_view, name="whatsapp_batch_action"),
     path("<int:message_id>/retry/", views.whatsapp_retry_view, name="whatsapp_retry"),
     path("<int:message_id>/delete/", views.whatsapp_delete_view, name="whatsapp_delete"),
+    path("message-bank/", views.whatsapp_message_bank_view, name="whatsapp_message_bank"),
+    path("api/message-bank/preview/", views.whatsapp_message_bank_preview_api, name="whatsapp_message_bank_preview"),
 
     # Telegram Bot Routes
     path("telegram/webhook/", views.telegram_webhook_view, name="telegram_webhook"),

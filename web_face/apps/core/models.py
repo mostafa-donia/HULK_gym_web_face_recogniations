@@ -77,6 +77,10 @@ class GymProfile(models.Model):
         default="تنبيه من {gym_name}\nأهلاً {name}\nاشتراكك انتهى بتاريخ: {end_date}\nنورتنا في أي وقت للتجديد والرجوع للتمرين 💪",
         verbose_name="قالب رسالة انتهاء الاشتراك",
     )
+    whatsapp_randomize_templates = models.BooleanField(
+        default=True,
+        verbose_name="تنويع واختيار صياغات عشوائية تلقائياً من بنك الرسائل لمنع الحظر",
+    )
     
     # Trainers Page Security
     trainers_page_password = models.CharField(

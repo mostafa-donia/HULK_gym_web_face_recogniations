@@ -50,6 +50,10 @@
         🔔 تجهيز التذكيرات
       </a>
 
+      <a href="{% url 'messaging:whatsapp_message_bank' %}" class="btn" style="background: rgba(168, 85, 247, 0.16); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.35); font-weight: 700; padding: 0.52rem 1rem; border-radius: 10px; font-size: 0.86rem;" title="عرض وإدارة بنك الصياغات العشوائية الـ 250 واختبار الرمية">
+        🎲 بنك الصياغات (250 صيغة)
+      </a>
+
       <a href="{% url 'messaging:whatsapp_compose' %}" class="btn btn-secondary" style="font-weight: 700; padding: 0.52rem 0.95rem; border-radius: 10px; font-size: 0.85rem;">
         ✉️ رسالة فردية
       </a>
@@ -476,6 +480,7 @@
           <button type="button" onclick="insertTag('{end_date}')" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #38bdf8; font-size: 0.76rem; padding: 2px 7px; border-radius: 4px; cursor: pointer;">+ تاريخ الانتهاء {end_date}</button>
           <button type="button" onclick="insertTag('{gym_name}')" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #38bdf8; font-size: 0.76rem; padding: 2px 7px; border-radius: 4px; cursor: pointer;">+ اسم الصالة {gym_name}</button>
           <button type="button" onclick="insertTag('{plan}')" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #38bdf8; font-size: 0.76rem; padding: 2px 7px; border-radius: 4px; cursor: pointer;">+ اسم الباقة {plan}</button>
+          <button type="button" onclick="document.getElementById('bulkMessageTextarea').value='__RANDOM_BANK__';" style="background: rgba(168, 85, 247, 0.18); border: 1px solid rgba(192, 132, 252, 0.4); color: #c084fc; font-size: 0.76rem; padding: 2px 9px; border-radius: 4px; cursor: pointer; font-weight: 700;">🎲 اختيار عشوائي من بنك الصياغات لكل عضو (Anti-Ban)</button>
         </div>
 
         <textarea 
@@ -488,6 +493,10 @@
         >أهلاً كابتن {name} 
 وحشتنا في {gym_name} 
 عندنا عروض وتجديدات قوية في الصالة، وبنستناك تنورنا في أي وقت ترجع لفورمتك وتمرينك!</textarea>
+        <div style="font-size: 0.73rem; color: #94a3b8; margin-top: 4px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
+          <span>💡 نصيحة لحماية رقمك من الحظر: استخدم <code>__RANDOM_BANK__</code> لاختيار صيغة عشوائية لكل عضو، أو افصل بين الصياغات بـ <code>---</code></span>
+          <a href="{% url 'messaging:whatsapp_message_bank' %}" target="_blank" style="color: #38bdf8; text-decoration: underline;">فتح بنك الـ 250 صياغة ↗</a>
+        </div>
       </div>
 
       <!-- 4. Link & Attachment (Requested by user) -->
