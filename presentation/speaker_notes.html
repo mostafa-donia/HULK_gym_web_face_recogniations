@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Systemize Gym OS — نوتة المبيعات الخاصة بمقدم العرض</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --lime: #84cc16;
+      --lime-glow: rgba(132, 204, 22, 0.2);
+      --cyan: #38bdf8;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 90px;
+    }
+
+    /* Top Sticky Bar */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(17, 24, 39, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .top-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--lime);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .secret-badge {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      color: #fda4af;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    /* Presentation Stopwatch */
+    .timer-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #030712;
+      border: 1px solid var(--card-border);
+      padding: 4px 10px;
+      border-radius: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      color: #e5e7eb;
+    }
+
+    .timer-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.82rem;
+      padding: 2px 4px;
+      transition: color 0.2s;
+    }
+    .timer-btn:hover { color: var(--text); }
+
+    /* Slide Pills Scroller */
+    .slide-pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: 2px;
+    }
+    .slide-pills::-webkit-scrollbar { display: none; }
+
+    .pill-btn {
+      flex: 0 0 auto;
+      background: #1f2937;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .pill-btn.active {
+      background: var(--lime);
+      color: #052e16;
+      border-color: var(--lime);
+      box-shadow: 0 0 12px var(--lime-glow);
+    }
+
+    /* Content Container */
+    main {
+      flex: 1;
+      padding: 16px;
+      max-width: 760px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .slide-section {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .slide-section.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .note-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .note-card.screen-view {
+      border-left: 4px solid var(--cyan);
+      background: rgba(15, 23, 42, 0.65);
+    }
+
+    .note-card.speech {
+      border-left: 4px solid var(--lime);
+      background: rgba(22, 33, 21, 0.35);
+    }
+
+    .note-card.tactics {
+      border-left: 4px solid var(--amber);
+      background: rgba(30, 24, 15, 0.35);
+    }
+
+    .note-card.objections {
+      border-left: 4px solid var(--rose);
+      background: rgba(34, 18, 24, 0.35);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .screen-view .card-header { color: var(--cyan); }
+    .speech .card-header { color: var(--lime); }
+    .tactics .card-header { color: var(--amber); }
+    .objections .card-header { color: #fb7185; }
+
+    .card-body {
+      font-size: 0.98rem;
+      line-height: 1.7;
+      color: #e5e7eb;
+    }
+
+    .card-body strong {
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .speech .card-body {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: #f3f4f6;
+    }
+
+    .highlight-speech {
+      background: rgba(132, 204, 22, 0.18);
+      color: #bef264;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    .highlight-warn {
+      background: rgba(244, 63, 94, 0.18);
+      color: #fda4af;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 800;
+    }
+
+    .meta-tag {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: #1f2937;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-family: var(--font-mono);
+    }
+
+    /* Fixed Bottom Nav Controls */
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(17, 24, 39, 0.97);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--card-border);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      z-index: 50;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .nav-btn {
+      flex: 1;
+      height: 48px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: #1f2937;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .nav-btn:active { transform: scale(0.98); }
+    .nav-btn.primary {
+      background: var(--lime);
+      color: #052e16;
+      border-color: var(--lime);
+    }
+
+    .slide-counter {
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      min-width: 60px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Header -->
+  <header>
+    <div class="top-meta">
+      <div class="brand-title">
+        <span>⚡ Systemize</span>
+        <span class="secret-badge">نوتة المبيعات السرية</span>
+      </div>
+      <div class="timer-box">
+        <span id="timerDisplay">00:00</span>
+        <button class="timer-btn" id="timerToggle" title="تشغيل / إيقاف">▶</button>
+        <button class="timer-btn" id="timerReset" title="إعادة ضبط">↺</button>
+      </div>
+    </div>
+
+    <!-- Slide Quick Pills -->
+    <div class="slide-pills" id="slidePills">
+      <!-- Generated via JS -->
+    </div>
+  </header>
+
+  <!-- Slide Notes Content -->
+  <main>
+
+    <!-- Slide 1 -->
+    <section class="slide-section active" data-slide="0">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقة ونصف | الشريحة 1 من 13</div>
+      
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          عنوان صادم: <strong>"إنت متأكد إن جيمك مش بيخسّرك فلوس من غير ما تاخد بالك؟"</strong><br>
+          3 كروت واضحة: اشتراكات كان ممكن تتجدد، أخطاء الدروج، وقت المتابعة الضائع + زر أخضر مشع <strong>"احسب خسارتك المحتملة"</strong>.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية (طبيعي وواثق)</div>
+        <div class="card-body">
+          "صباح الفل يا كابتن (أو مساء الخير).. قبل ما أوريك أي شاشات أو أجهزة، حابب أسألك سؤال مهم بسأله دايماً لأصحاب الجيمات الشاطرين:<br><br>
+          <span class="highlight-speech">إنت متأكد بنسبة 100% إن صالتك مش بتنزف فلوس كل شهر وإنت مش واخد بالك؟</span><br><br>
+          بص معايا على التلات أرقام دول على الشاشة: دي مش اشتراكات جديدة ولا مصاريف كهربا وإيجار.. دي اشتراكات لاعبين كان المفروض يجددوا الشهر ده ومحدش تابعهم فكسلوا.. وفروق دروج كاش وحسابات مش مطابقة.. وساعات طويلة موظفينك بيقضوها في الدفاتر بدل ما يركزوا في خدمة المتدربين.<br><br>
+          إيه رأيك نحسب مع بعض في دقيقة جيمك هنا ممكن يكون بيسرب كام شهرياً؟"
+        </div>
+      </div>
+
+      <div class="note-card tactics">
+        <div class="card-header">🎯 حركتك وتفاعلك الذكي</div>
+        <div class="card-body">
+          • اضغط على زر <strong>"احسب خسارتك المحتملة"</strong> على الشاشة.<br>
+          • اسأله: <em>"عندك كام لاعب تقريباً يا كابتن؟ ومتوسط الاشتراك كام؟"</em><br>
+          • اكتب الأرقام قدامه وسيبه يقرأ رقم الخسارة الشهرية والسنوية بنفسه.. متتكلمش واستنى ردة فعله!
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 2 -->
+    <section class="slide-section" data-slide="1">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقة | الشريحة 2 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          3 كروت لأسباب التسريب الخفي: عضو انتهى اشتراكه، عضو داخل والجيم مش متأكد، صاحب الجيم مش عارف يراجع الأرقام بسرعة.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية</div>
+        <div class="card-body">
+          "المشكلة في أغلب الجيمات مش إن مفيش ناس بتدخل تشترك.. الجيم بيبقى مليان ما شاء الله، بس فيه <span class="highlight-warn">3 ثغرات خفية بتسرب الإيراد في الهوا:</span><br><br>
+          <strong>1.</strong> متدرب اشتراكه خلص، محدش فكره ولا كلمه، فكسل ومجاش.. والاشتراك ضاع.<br>
+          <strong>2.</strong> متدرب داخل في وسط زحمة المغربية، الريسبشن مكسوف يوقفه، أو هو نفسه ناسي إنه المفروض يدفع.. فدخل اتمرن ببلاش.<br>
+          <strong>3.</strong> وحضرتك كصاحب مكان، لما تحب تعرف دخلت كام النهاردة وصرفت كام وصفيت كام، بتضطر تقعد تجمع وتطرح من كذا ورقة وشيت."
+        </div>
+      </div>
+
+      <div class="note-card objections">
+        <div class="card-header">🛡️ لو قالك: "أنا الريسبشن عندي شاطر وبياخد باله من كل واحد"</div>
+        <div class="card-body">
+          <strong>الرد:</strong> "الريسبشن بتاعك فوق راسي وإنسان شاطر ومحترم جداً.. بس مهما كان شاطر، ساعة الذروة لما 15 واحد يدخلوا في دقيقتين ووراهم تليفون بيرن وواحد بيسأل على اشتراك، مفيش بشر يقدر يفتكر تواريخ انتهاء 300 ولا 500 لاعب! الكمبيوتر معمول عشان يشيل الحرج والنسيان عن الموظف."
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 3 -->
+    <section class="slide-section" data-slide="2">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقة | الشريحة 3 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          مخطط خطي من 4 خطوات: (الموظف يسجل -> يراجع -> يفتكر يتابع -> المالك يسأل) + تنبيه أحمر: "كل خطوة زيادة ممكن تكون فرصة لخطأ أو تأخير".
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية</div>
+        <div class="card-body">
+          "ليه الثغرات دي بتحصل دايماً؟ لأن السيستم التقليدي كله معتمد على إن <span class="highlight-speech">شخص يفتكر!</span><br><br>
+          الموظف يسجل بالدفتر، بعدين يفتكر يراجع الأسماء، بعدين يفتكر يمسك التليفون يكلمهم واحد واحد، بعدين حضرتك تيجي تسأل.. كل خطوة معتمدة على الذاكرة، والذاكرة في الشغل بتخون.. إحنا هدفنا نحول الدورة دي من 'افتكرت ومفتكرتش' إلى 'سيستم شغال لوحده'."
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 4 -->
+    <section class="slide-section" data-slide="3">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقة | الشريحة 4 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          شعار النظام مع 4 أركان ذكية مترابطة: البوابات والوجه، إدارة الصالة والبار، المتابعة التلقائية، الرقابة والتقارير.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية</div>
+        <div class="card-body">
+          "هنا بييجي دور <strong>Systemize Gym OS</strong>.. ده مش مجرد برنامج بتنزله على الكمبيوتر وتسجل عليه أسامي.. ده <span class="highlight-speech">عقل إلكتروني متكامل بيدير الصالة</span>.<br><br>
+          البوابة بتفتح تلقائي بوش اللاعب أو الباركود.. الاشتراك بيتسجل لحظي.. رسالة الواتساب بتروح للاعب بفاتورته وموعد انتهاء اشتراكه في نفس الثانية.. وحضرتك التقارير بتجيلك على تليفونك وأنت قاعد في بيتك."
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 5 -->
+    <section class="slide-section" data-slide="4">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقة ونصف | الشريحة 5 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          صورة عالية الجودة لشاشة التعرف على الوجه + محاكي البوابة الإلكترونية Turnstile + إحصائيات: فحص في 0.2 ثانية، إحراج 0%.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية</div>
+        <div class="card-body">
+          "أول خط دفاع في الجيم هو الباب.. اللاعب بيدخل يبص للكاميرا أقل من ربع ثانية:<br>
+          لو اشتراكه ساري: <span class="highlight-speech">البوابة بتفتح أوتوماتيك ويسمع ترحيب بصوته واسمه.</span><br>
+          لو اشتراكه منتهي: البوابة مبتفتحش، وتظهر له رسالة شيك إن اشتراكه محتاج تجديد.<br><br>
+          كده شيلت الحرج تماماً عن موظف الاستقبال.. مفيش متدرب يقدر يزعل من موظف، لأن السيستم هو اللي قافل البوابة مش الشخص!"
+        </div>
+      </div>
+
+      <div class="note-card tactics">
+        <div class="card-header">🎯 حركتك وتفاعلك الذكي</div>
+        <div class="card-body">
+          اضغط بإصبعك على شاشة التعرف على الوجه لعمل Zoom وتكبير، ووضح له دقة الألوان وسرعة التعرف حتى مع الإضاءة المنخفضة.
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 6 -->
+    <section class="slide-section" data-slide="5">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقتان (أهم شريحة للمبيعات!) | الشريحة 6 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          تقرير تفصيلي لحركة واستمرارية الأعضاء (Retention):<br>
+          • كارت أحمر: المنقطعون (الخسارة المهدرة).<br>
+          • كارت أخضر: المستمرون من الشهر الماضي (أرباح التجديد).<br>
+          • كارت أزرق: المشتركون الجدد (إيراد إضافي).<br>
+          + جدول تفاعلي بالأسماء وزر تجديد مباشر لكل اسم.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية</div>
+        <div class="card-body">
+          "دي بقى الشاشة اللي بتفرق بين الجيم اللي بيكسب والجيم اللي مش عارف فلوسه فين!<br><br>
+          أغلب البرامج بتقولك عندك كام عضو وخلاص.. إحنا بنقولك كل أول شهر بالقرش:<br>
+          <span class="highlight-warn">1. مين اللي انقطع ومجددش؟</span> وسببه إيه؟ وخسّرك كام ألف الشهر ده؟ وزرار تتصل بيه أو تبعتله واتساب مباشرة.<br>
+          <span class="highlight-speech">2. مين اللي مستمر معاك ومجدد؟</span> ودول مكسبك الصافي الثابت.<br>
+          <strong>3. مين الجدد اللي دخلوا لأول مرة؟</strong><br><br>
+          لما تتابع الـ 3 أرقام دول شهرياً، هتعرف بالظبط إنت بتكبر ولا بتنكمش من غير أي مفاجآت!"
+        </div>
+      </div>
+
+      <div class="note-card tactics">
+        <div class="card-header">🎯 تفاعل حي</div>
+        <div class="card-body">
+          اضغط على زر التاب "المنقطعون (الخسارة المهدرة)" واضغط زر "تجديد / تواصل" قدامه عشان يقتنع إن كل زرار في السيستم بيجيب فلوس.
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 7 -->
+    <section class="slide-section" data-slide="6">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقة | الشريحة 7 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          شاشة الخزينة والأمان: قفل الإيرادات برمز PIN للمدير، جرد الدرج، وتطابق الكاش وفودافون كاش وانستاباي.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية</div>
+        <div class="card-body">
+          "خزينة الجيم خط أحمر.. موظف الريسبشن بيقبض ويسجل، بس ملوش يشوف إجمالي إيراد اليوم ولا يسحب مليم بدون إذن.<br><br>
+          <span class="highlight-speech">الأرقام الحساسة مقفولة برمز PIN بتاع حضرتك بس..</span> وفي آخر الوردية، موظف الاستقبال بيعمل تسليم شفت، السيستم بيطابق له الكاش والفيزا والمحافظ الإلكترونية، وأي مليم ناقص أو زيادة بيظهر في التقرير في ساعتها."
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 8 -->
+    <section class="slide-section" data-slide="7">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقة | الشريحة 8 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          إدارة المدربين، حصص البرايفت (PT)، حساب نسب العمولات تلقائياً، والخصومات والسلفيات بدون لخبطة.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية</div>
+        <div class="card-body">
+          "وجع دماغ حسابات الكباتن والمدربين انتهى!<br><br>
+          كل كابتن متسجل ليه نسبة معينة في البرايفت أو حصة ثابتة.. لما اللاعب يدخل ويتمرن السيستم بيخصم الحصة تلقائياً، ويحسب عمولة الكابتن بالسحتوت، ويخصم سلفه ومرتبه، وفي آخر الشهر بضغطة زر كشف حساب جاهز للمدرب يوقّع عليه بدون أي جدال."
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 9 -->
+    <section class="slide-section" data-slide="8">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقة | الشريحة 9 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          أتمتة رسائل الواتساب: تنبيه انتهاء الاشتراك، إيصال الدفع، ورسائل ترحيب وتشجيع للمنقطعين.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية</div>
+        <div class="card-body">
+          "تخيل موظف مبيعات شغال عندك 24 ساعة ومبيطلبش مرتب!<br><br>
+          السيستم بيبعت للمتدرب رسالة واتساب باسمه قبل انتهاء اشتراكه بـ 3 أيام: <em>'يا كابتن أحمد، اشتراكك هينتهي يوم الخميس، منتظرينك تجدد علشان تحافظ على مستواك فورمتك'</em>.<br>
+          واللاعب اللي غايب 10 أيام بتجيله رسالة تشجيع.. <span class="highlight-speech">المعدل ده بيرفع نسبة تجديد الاشتراكات أكتر من 35% لوحده!</span>"
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 10 -->
+    <section class="slide-section" data-slide="9">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقة ونصف | الشريحة 10 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          لوحة تحكم المدير وتقارير القرارات: مقارنة الإيرادات شهرياً، أرباح البار، تقرير الاشتراكات النشطة والمعلقة.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية</div>
+        <div class="card-body">
+          "حضرتك مش محتاج تكون موجود في الصالة 24 ساعة عشان تطمن على شغلك.. تفتح تليفونك وأنت مسافر أو قاعد في بيتك، تشوف كام واحد اتمرن، كام اشتراك اتجدد، البار باع بكام، وصافي ربحك النهاردة كام بالقرش.<br><br>
+          <span class="highlight-speech">شغلك كله في جيبك، وإدارتك بقت رقمية محترفة.</span>"
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 11 -->
+    <section class="slide-section" data-slide="10">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقة ونصف (حسم الاعتراض الشهير) | الشريحة 11 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          جدول مقارنة حاسم: شيتات الإكسيل والورق vs نظام Systemize Gym OS.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية</div>
+        <div class="card-body">
+          "ساعات كابتن يقولي: <em>'طب ما أنا مسجل المشتركين على Excel والدنيا ماشية!'</em><br><br>
+          بقوله بحب: الإكسيل جدول أرقام أعمى.. هل الإكسيل يقدر يقفل الباب قدام لاعب اشتراكه منتهي؟ هل بيبعت رسالة واتساب لوحده للمتدرب؟ هل يقدر يمنع الريسبشن إنه يعدل أو يمسح اشتراك كاش؟<br><br>
+          <span class="highlight-warn">الإكسيل بيسجل اللي بتفتكر تدخله، لكن Systemize بيحمي فلوسك وبيمنع الخطأ قبل ما يحصل!</span>"
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 12 -->
+    <section class="slide-section" data-slide="11">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقة | الشريحة 12 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          مقارنة التكلفة بالقيمة: استرداد قيمة النظام من أول أسبوعين من الاشتراكات المحمية ومبيعات البار.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية</div>
+        <div class="card-body">
+          "أنا مبطلبش منك تدفع تكلفة إضافية.. <span class="highlight-speech">السيستم ده بيسدد تمنه بنفسه من أول شهر!</span><br><br>
+          لو الجيم رجعلك 5 لاعبين بس من اللي كانوا بيضيعوا كل شهر، أو منع 3 أشخاص كانوا بيدخلوا ببلاش.. ثمن السيستم رجع لجيبك بالكامل، وكل اللي بعد كده هو أرباح صافية وأمان وراحة بال لصالتك."
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 13 -->
+    <section class="slide-section" data-slide="12">
+      <div class="meta-tag">⏱ الوقت المقترح: دقيقتان (الإغلاق والاتفاق) | الشريحة 13 من 13</div>
+
+      <div class="note-card screen-view">
+        <div class="card-header">🖥️ ما يراه العميل على الشاشة الكبيرة</div>
+        <div class="card-body">
+          باقات الأسعار (شهري / سنوي / مدى الحياة)، إضافات الهاردوير (كاميرا ذكية، قارئ باركود، بوابة تحكم)، وحاسبة مقايسة فورية.
+        </div>
+      </div>
+
+      <div class="note-card speech">
+        <div class="card-header">🗣️ ما تقوله بالعامية المصرية (سؤال الإغلاق)</div>
+        <div class="card-body">
+          "إحنا مجهزين باقات مرنة جداً تناسب حجم صالتك بالظبط، وتقدر تبدأ باشتراك شهري وتجرب بنفسك، أو تختار باقة مدى الحياة ونركبلك السيستم بالكامل بدون أي مصاريف شهرية.<br><br>
+          <span class="highlight-speech">تحب نبدأ نركب النسخة التجريبية عندك النهاردة، ولا نجهز المقايسة بالبوابة من بكرة؟</span>"
+        </div>
+      </div>
+
+      <div class="note-card tactics">
+        <div class="card-header">🎯 حركتك وتفاعلك الذكي</div>
+        <div class="card-body">
+          • اضغط على تبويبات الأسعار على الشاشة ووضح له توفير الباقة السنوية أو مدى الحياة.<br>
+          • افتح حاسبة المقايسة واختار معاه الهاردوير اللي عنده أو اللي محتاجه، واديله الرقم الإجمالي فوراً!
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Sticky Bottom Bar -->
+  <footer>
+    <button class="nav-btn" id="prevBtn">
+      <span>السابق ➡</span>
+    </button>
+    
+    <div class="slide-counter" id="slideCounter">1 / 13</div>
+
+    <button class="nav-btn primary" id="nextBtn">
+      <span>التالي ⬅</span>
+    </button>
+  </footer>
+
+  <script>
+    const slideTitles = [
+      "1. الصدمة والتسريب",
+      "2. أسباب التسريب",
+      "3. الدورة اليدوية",
+      "4. عقل Systemize",
+      "5. بوابات الوجه",
+      "6. حركة الأعضاء",
+      "7. الخزينة والأمان",
+      "8. المدربين والـPT",
+      "9. أتمتة الواتساب",
+      "10. تقارير المدير",
+      "11. رد على الإكسيل",
+      "12. استرداد التكلفة",
+      "13. الباقات والتعاقد"
+    ];
+
+    let currentSlide = 0;
+    const totalSlides = slideTitles.length;
+
+    // Elements
+    const pillsContainer = document.getElementById('slidePills');
+    const sections = document.querySelectorAll('.slide-section');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const slideCounter = document.getElementById('slideCounter');
+
+    // Build Pills
+    slideTitles.forEach((title, idx) => {
+      const btn = document.createElement('button');
+      btn.className = `pill-btn ${idx === 0 ? 'active' : ''}`;
+      btn.innerText = title;
+      btn.addEventListener('click', () => goToSlide(idx));
+      pillsContainer.appendChild(btn);
+    });
+
+    const pills = document.querySelectorAll('.pill-btn');
+
+    function goToSlide(idx) {
+      if (idx < 0) idx = 0;
+      if (idx >= totalSlides) idx = totalSlides - 1;
+      currentSlide = idx;
+
+      // Update Sections
+      sections.forEach(s => s.classList.remove('active'));
+      const activeSection = document.querySelector(`.slide-section[data-slide="${idx}"]`);
+      if (activeSection) activeSection.classList.add('active');
+
+      // Update Pills
+      pills.forEach((p, i) => {
+        if (i === idx) {
+          p.classList.add('active');
+          p.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+          p.classList.remove('active');
+        }
+      });
+
+      // Update Counter & Buttons
+      slideCounter.innerText = `${idx + 1} / ${totalSlides}`;
+      prevBtn.disabled = (idx === 0);
+      nextBtn.disabled = (idx === totalSlides - 1);
+      if (idx === totalSlides - 1) {
+        nextBtn.innerText = "تم العرض بنجاح ✓";
+      } else {
+        nextBtn.innerHTML = "التالي ⬅";
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    prevBtn.addEventListener('click', () => goToSlide(currentSlide - 1));
+    nextBtn.addEventListener('click', () => {
+      if (currentSlide < totalSlides - 1) goToSlide(currentSlide + 1);
+    });
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'PageDown' || e.key === ' ') {
+        if (currentSlide < totalSlides - 1) goToSlide(currentSlide + 1);
+      } else if (e.key === 'ArrowRight' || e.key === 'PageUp') {
+        if (currentSlide > 0) goToSlide(currentSlide - 1);
+      }
+    });
+
+    // Timer Logic
+    let timerSec = 0;
+    let timerInterval = null;
+    const timerDisplay = document.getElementById('timerDisplay');
+    const timerToggle = document.getElementById('timerToggle');
+    const timerReset = document.getElementById('timerReset');
+
+    function formatTime(s) {
+      const m = Math.floor(s / 60);
+      const rem = s % 60;
+      return `${String(m).padStart(2, '0')}:${String(rem).padStart(2, '0')}`;
+    }
+
+    timerToggle.addEventListener('click', () => {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerToggle.innerText = '▶';
+      } else {
+        timerInterval = setInterval(() => {
+          timerSec++;
+          timerDisplay.innerText = formatTime(timerSec);
+        }, 1000);
+        timerToggle.innerText = '⏸';
+      }
+    });
+
+    timerReset.addEventListener('click', () => {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerSec = 0;
+      timerDisplay.innerText = '00:00';
+      timerToggle.innerText = '▶';
+    });
+
+    // Initialize
+    goToSlide(0);
+  </script>
+</body>
+</html>

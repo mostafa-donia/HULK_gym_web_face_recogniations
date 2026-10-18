@@ -480,62 +480,6 @@
       font-size: 0.7rem;
       color: #ffffff;
     }
-
-    /* ==========================================
-       PRESENTER SCRIPT BOTTOM DRAWER (Prompter)
-       ========================================== */
-    #presenterScriptDrawer {
-      position: fixed;
-      bottom: 54px;
-      left: 50%;
-      transform: translateX(-50%) translateY(120%);
-      width: 90%;
-      max-width: 980px;
-      background: rgba(11, 17, 32, 0.96);
-      border: 1px solid #84cc16;
-      box-shadow: 0 -15px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(132, 204, 22, 0.25);
-      border-radius: 20px 20px 0 0;
-      backdrop-filter: blur(20px);
-      padding: 18px 24px;
-      z-index: 50;
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    #presenterScriptDrawer.open {
-      transform: translateX(-50%) translateY(0);
-    }
-    .drawer-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 10px;
-      margin-bottom: 12px;
-    }
-    .drawer-title {
-      font-size: 0.9rem;
-      font-weight: 900;
-      color: #bef264;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .drawer-script-body {
-      font-size: 1.05rem;
-      line-height: 1.65;
-      color: #ffffff;
-      font-weight: 600;
-    }
-    .drawer-script-body strong {
-      color: #84cc16;
-    }
-    .drawer-close-btn {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
-
     /* Modals & Popups */
     .modal-overlay {
       position: fixed;
@@ -833,13 +777,6 @@
     </div>
 
     <div class="header-actions">
-      <!-- Presenter Script Prompter Toggle -->
-      <button class="action-icon-btn" id="prompterToggleBtn" onclick="togglePresenterScript()" title="فتح اسكريبت الكلام لمقدم العرض (N)">
-        <i class="fa fa-microphone-lines text-lime-400"></i>
-        <span>اسكريبت الكلام</span>
-        <span class="kbd-badge">N</span>
-      </button>
-
       <!-- Hand Gesture HUD Widget -->
       <div class="gesture-hud">
         <div class="camera-circle" id="cameraCircle">
@@ -1450,22 +1387,6 @@
 
   </main>
 
-  <!-- ==========================================
-       PRESENTER SCRIPT FLOATING PROMPTER (Toggle N)
-       ========================================== -->
-  <aside id="presenterScriptDrawer">
-    <div class="drawer-header">
-      <div class="drawer-title">
-        <i class="fa fa-microphone-lines"></i>
-        <span>اسكريبت الكلام لمقدم العرض — <span id="prompterSlideName">الشريحة 1</span></span>
-      </div>
-      <button class="drawer-close-btn" onclick="togglePresenterScript()"><i class="fa fa-times"></i></button>
-    </div>
-    <div class="drawer-script-body" id="prompterScriptText">
-      <!-- Dynamic Script Injected Here -->
-    </div>
-  </aside>
-
   <!-- Footer Navigation -->
   <footer>
     <div class="slide-counter">
@@ -1478,7 +1399,6 @@
       <span>✋ لوّح للتقليب</span>
       <span>🤏 تكبير Pinch بالأيدي</span>
       <span>تكبير: <span class="kbd-badge">Z</span></span>
-      <span>الملقّن: <span class="kbd-badge">N</span></span>
       <a href="https://wa.me/201080922432?text=مرحباً، أود التواصل مع الدعم الفني لمطور Systemize" target="_blank" style="color: #4ade80; text-decoration: none; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; background: rgba(34, 197, 94, 0.12); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.3);" title="الدعم الفني المباشر">
         <i class="fa-brands fa-whatsapp"></i>
         <span>الدعم الفني: 01080922432</span>
@@ -1906,49 +1826,7 @@
        JAVASCRIPT LOGIC + PRESENTER TALKING SCRIPTS
        ========================================== -->
   <script>
-    /* 1. Presenter Spoken Scripts per Slide (بالعامية المصرية الصميمة) */
-    const PRESENTER_SCRIPTS = [
-      /* Slide 1 */
-      `<strong>الافتتاحية:</strong> "صباح الفل يا كابتن.. سؤال مهم بسأل بيه دايماً أصحاب الجيمات الشاطرين: إنت متأكد إن صالتك مش بتنزف فلوس وإنت مش واخد بالك؟ بص معايا على التلات أرقام دول: دي مش اشتراكات جديدة، دي اشتراكات كان المفروض تتجدد وعدت، وفروق دروج بتتنسي، وساعات ضايعة موظفينك بيقضوها في الدفاتر بدل ما يخدموا المتدربين. تحب نحسب مع بعض جيمك ممكن يكون بيسرب كام شهرياً؟"`,
-      
-      /* Slide 2 */
-      `<strong>التسريب الخفي:</strong> "المشكلة في الجيم مش إن مفيش ناس بتدخل تشترك.. المشكلة إن في 3 حاجات بتحصل كل يوم بتسرب إيرادات في الهوا: متدرب وقته خلص ومحدش كلمه فكسل يجي.. متدرب داخل في الزحمة ومحدش عارف حسابه ساري ولا لأ.. وإنت كصاحب جيم لو حبيت تعرف كسبت كام النهاردة محتاج تقعد تسأل وتجمع وتراجع ورقة ورقة!"`,
-
-      /* Slide 3 */
-      `<strong>الدورة اليدوية:</strong> "ليه ده بيحصل؟ لأن الروتين كله معتمد على إن شخص يفتكر! الموظف يسجل في الدفتر، وبعدين يفتكر يراجع، وبعدين يفتكر يبعت أو يكلم، وبعدين إنت تيجي تسأل.. كل خطوة من دول فرصة لخطأ وتأخير وكسل، ومع زيادة المشتركين الشغل اليدوي بيبقى حمل تقيل بيخسر فلوس."`,
-
-      /* Slide 4 */
-      `<strong>تقديم Systemize:</strong> "وده بالظبط اللي اتعمل علشانه سيستم Systemize.. مش برنامج معقد، ده عقل إلكتروني بيدير صالتك ويربط الأطراف ببعضها: المشترك يدخل من الباب، اشتراكه يتفحص، يخصم من حسابه، الخزينة تسمع، وتقريرك يوصلك.. كل ده في شاشة واحدة وبضغطة زر."`,
-
-      /* Slide 5 */
-      `<strong>بوابات الدخول:</strong> "أول خطوة: نقفل باب الحرج.. اللاعب يدخل قدام الكاميرا، بصمة الوجه تفحصه في أقل من ثانية، لو اشتراكه ساري البوابة تفتح وترحب بيه.. لو اشتراكه خلصان، السيستم ينبه الريسبشن في لحظتها. مفيش حد هيدخل ببلاش، ومفيش حد هيقول 'نسيت الكارت في البيت'!"`,
-
-      /* Slide 6 */
-      `<strong>فرص التجديد واستمرارية الأعضاء:</strong> "بدل ما تستنى المتدرب يقطع ويختفي، السيستم مش بس بيفرزلك المشتركين اللي باقي لهم أيام ويتبعتلهم واتساب.. ده كمان بيعملك فرز فوري لكل شهر: مين كمل معانا من الشهر اللي فات، مين غادر وانقطع، ومين اشترك جديد.. وكل فئة منهم السيستم بيحسبلك قيمتها المالية كأرباح استمرارية أو خسارة مفقودة وتقدر بضغطة زر واحدة تبعت رسالة واتساب استرجاع للمنقطعين تررجعهم للصالة!"`,
-
-      /* Slide 7 */
-      `<strong>الخزينة والأموال:</strong> "الفلوس.. كل قرش يدخل بيطلع بيه إيصال رسمي للمتدرب، وكل مصروف بيسجله الريسبشن متصنف.. وميزة الأمان: أرقام أرباحك الصافية وإجمالي الخزينة مقفولة برمز سري ليك إنت كمدير فقط، الموظف يسجل بس ميعرفش إجمالي دخل الجيم."`,
-
-      /* Slide 8 */
-      `<strong>المدربين والبرايفت:</strong> "مفيش خناقات آخر الشهر مع الكباتن.. نسب البرايفت بتتحسب بالسحتوت أول ما اللاعب يسدد، وسجل السُلف والخصومات والغياب موجود لكل كابتن وموظف بتقرير شفاف يطبع في ثانية."`,
-
-      /* Slide 9 */
-      `<strong>أتمتة المتابعة:</strong> "بدل ما الموظف يضيع ساعتين يومياً على التليفون، روبوت الواتساب والتليجرام بيبعت فواتير السداد وترحيب المشتركين الجدد وتذكير المتبقي أوتوماتيك.. الموظف يتفرغ لصالة الجيم وخدمة اللاعبين."`,
-
-      /* Slide 10 */
-      `<strong>تقارير الإدارة وتحليل الاستمرارية:</strong> "شاشة التقارير المالية والإدارية الحقيقية.. بنظرة واحدة على موبايلك أو لابتوبك مش بس بتعرف إيراد ومصروف.. السيستم بيفصلك تقرير حركة واستمرارية الأعضاء (Retention & Churn): كام واحد كمل معاك من الشهر اللي فات وأرباحهم كام، كام واحد غادر وانقطع وخسارتك فيهم كام بالجنيه عشان تسترجعهم، وكام واحد جديد دخل الصالة.. بياناتك دقيقة وبالأسماء والتفاصيل بدون تخمين."`,
-
-      /* Slide 11 */
-      `<strong>الرد على اعتراض Excel:</strong> "ناس كتير بتسألني: طب ما أنا ممكن أعمل شيت Excel؟ وأنا بقولك بصراحة: طبعاً تقدر.. لو عندك وقت تصمم وتدخل كل رقم بإيدك! بس إكسيل مش هيربط بكاميرا الباب، ولا هيبعت واتساب للمشتركين تلقائي، ولا هيقفل الصلاحيات على الموظفين.. المهم مش اسم البرنامج، المهم هل هيوفر وقتك ويقفل ثغرات صالتك بجد؟"`,
-
-      /* Slide 12 */
-      `<strong>مقارنة القيمة بالتكلفة:</strong> "تعالى نقارن مع بعض: اشتراك البرنامج بـ 350 جنيه في الشهر.. في المقابل السيستم بيحمي لك آلاف الجنيهات في ساعات متابعة موظفينك، والاشتراكات اللي كانت بتضيع، وفروق الخزينة.. يعني البرنامج مش تكلفة، دي أداة بتجيب تمنها من أول أسبوع."`,
-
-      /* Slide 13 */
-      `<strong>الأسعار وبناء الباقة:</strong> "باقاتنا واضحة ومباشرة: تقدر تبدأ شهري بـ 350 جنيه، أو تاخد السنوي بـ 3,500 وتوفر شهرين، أو رخصة مدى الحياة بـ 6,000 جنيه.. وأي إضافة جهاز زي بصمة الوش أو الباركود بتدفع تمنها مرة واحدة وتفضل ملكك على طول. يلا نحسب الباقة اللي تناسب جيمك دلوقتي؟"`
-    ];
-
-    /* 2. Configuration State */
+    /* 1. Configuration State */
     const DEFAULT_CONFIG = {
       currency: "ج",
       whatsappPhone: "01080922432",
@@ -2051,10 +1929,6 @@
 
       const dots = slideDotsContainer.querySelectorAll('.dot');
       dots.forEach((d, idx) => d.classList.toggle('active', idx === currentSlide));
-
-      // Update Prompter text
-      prompterSlideName.innerText = `الشريحة ${currentSlide + 1}`;
-      prompterScriptText.innerHTML = PRESENTER_SCRIPTS[currentSlide] || "اسكريبت هذه الشريحة قيد الإعداد.";
     }
 
     function nextSlide() {
@@ -2076,16 +1950,6 @@
       }
     }
 
-    /* Presenter Script Prompter Toggle */
-    let isPrompterOpen = false;
-    function togglePresenterScript() {
-      isPrompterOpen = !isPrompterOpen;
-      const drawer = document.getElementById('presenterScriptDrawer');
-      const btn = document.getElementById('prompterToggleBtn');
-      drawer.classList.toggle('open', isPrompterOpen);
-      btn.classList.toggle('active', isPrompterOpen);
-    }
-
     // Keyboard Controls
     window.addEventListener('keydown', (e) => {
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
@@ -2098,8 +1962,6 @@
         goToSlide(0);
       } else if (e.key === 'End') {
         goToSlide(totalSlides - 1);
-      } else if (e.key === 'n' || e.key === 'N' || e.key === 's' || e.key === 'S') {
-        togglePresenterScript();
       } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
       } else if ((e.ctrlKey || e.metaKey) && (e.key === 'e' || e.key === 'E')) {
@@ -2110,7 +1972,6 @@
       } else if (e.key === 'Escape') {
         closeAllModals();
         closeLightbox();
-        if (isPrompterOpen) togglePresenterScript();
         if (isZoomActive) disableGestureZoom();
       }
     });
