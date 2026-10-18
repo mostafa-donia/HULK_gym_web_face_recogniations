@@ -60,3 +60,10 @@ class User(AbstractUser):
         if self.branch:
             return self.branch.name
         return "الفرع الرئيسي"
+
+
+# Patch AnonymousUser so template lookups never fail for non-logged-in visitors
+from django.contrib.auth.models import AnonymousUser
+
+AnonymousUser.branch_name = property(lambda self: "الفرع الرئيسي")
+AnonymousUser.role_display_arabic = property(lambda self: "زائر")

@@ -596,8 +596,8 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem;">
           <div style="color: #cbd5e1;">🏢 الصالة: <strong id="supportGymName" style="color: #fff;">{{ gym_profile.gym_name|default:"غير محدد" }}</strong></div>
-          <div style="color: #cbd5e1;">👤 المستخدم: <strong id="supportUserName" style="color: #fff;">{{ user.first_name|default:user.username }} ({{ user.role_display_arabic|default:"المستخدم" }})</strong></div>
-          <div style="color: #cbd5e1;">📍 الفرع: <strong id="supportBranchName" style="color: #fff;">{{ active_branch_name|default:user.branch_name }}</strong></div>
+          <div style="color: #cbd5e1;">👤 المستخدم: <strong id="supportUserName" style="color: #fff;">{% if user.is_authenticated %}{{ user.first_name|default:user.username }} ({{ user.role_display_arabic|default:"المستخدم" }}){% else %}زائر (تسجيل الدخول){% endif %}</strong></div>
+          <div style="color: #cbd5e1;">📍 الفرع: <strong id="supportBranchName" style="color: #fff;">{{ active_branch_name|default:"الفرع الرئيسي" }}</strong></div>
           <div style="color: #cbd5e1;">🔑 HWID: <strong id="supportHwid" style="color: #94a3b8; font-family: monospace;">{{ license_info.machine_id|default:"-" }}</strong></div>
         </div>
       </div>
