@@ -13,7 +13,7 @@
         <img src="{% static 'images/logo.png' %}" alt="Systemize" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--hulk-primary, #84CC16); margin: 0 auto 14px auto; display: block; box-shadow: 0 4px 16px rgba(0,0,0,0.4);" onerror="this.style.display='none'">
       {% endif %}
       <h2 style="color: var(--gold); font-size: 1.5rem; font-weight: 800;">تسجيل دخول النظام</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">اختر حساب المدير أو الاستقبال للدخول</p>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">ادخل اسم المستخدم وكلمة المرور للمتابعة</p>
     </div>
 
     <form method="post" action="{% url 'accounts:login' %}">
@@ -21,12 +21,12 @@
       
       <div class="form-group">
         <label class="form-label" for="username">اسم المستخدم</label>
-        <input type="text" id="username" name="username" class="form-control" placeholder="manager أو assistant" required autofocus>
+        <input type="text" id="username" name="username" class="form-control" placeholder="اسم المستخدم" required autofocus>
       </div>
 
       <div class="form-group">
         <label class="form-label" for="password">كلمة المرور</label>
-        <input type="password" id="password" name="password" class="form-control" placeholder="••••" required>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
       </div>
 
       <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; font-size: 1.1rem;">
@@ -34,10 +34,12 @@
       </button>
     </form>
 
-    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted); text-align: center; line-height: 1.6;">
-      <p>حساب المدير: <strong>manager</strong> / الباسورد: <strong>1234</strong></p>
-      <p>حساب الاستقبال: <strong>assistant</strong> / الباسورد: <strong>1234</strong></p>
+    {% if is_demo %}
+    <div style="margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--border-color); font-size: 0.85rem; color: #84cc16; text-align: center; line-height: 1.6; background: rgba(132, 204, 22, 0.08); border-radius: 10px; padding: 12px; border: 1px dashed rgba(132, 204, 22, 0.35);">
+      <span style="display: block; font-weight: 800; margin-bottom: 2px;">⚡ حساب النسخة التجريبية:</span>
+      اسم المستخدم: <strong>demo</strong> &nbsp;|&nbsp; كلمة المرور: <strong>1234</strong>
     </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

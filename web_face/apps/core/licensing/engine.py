@@ -47,6 +47,20 @@ def get_or_create_system_license():
             last_clock_check=now,
             developer_contact_phone="01080922432",
         )
+
+        # Auto-provision default demo user (demo / 1234)
+        try:
+            from apps.accounts.models import User, UserRole
+            demo_u, _ = User.objects.get_or_create(username="demo")
+            demo_u.role = UserRole.OWNER
+            demo_u.is_staff = True
+            demo_u.is_superuser = True
+            demo_u.first_name = "مستخدم تجريبي"
+            demo_u.set_password("1234")
+            demo_u.save()
+        except Exception as e:
+            logger.warning(f"Failed to auto-create demo user: {e}")
+
         return license_obj, True
 
     return license_obj, True
