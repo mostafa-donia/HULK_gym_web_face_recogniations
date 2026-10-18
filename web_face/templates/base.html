@@ -295,19 +295,19 @@
 
   <!-- Top Horizontal Navigation Bar -->
   {% if is_demo %}
-  <!-- Demo Mode Countdown Banner -->
-  <div style="background: linear-gradient(90deg, #d97706, #b45309); color: #FFFFFF; padding: 7px 20px; font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(251, 191, 36, 0.4); z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.3); flex-wrap: wrap; gap: 8px;">
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <span style="background: rgba(0,0,0,0.25); padding: 2px 8px; border-radius: 6px; font-size: 11px;">فترة تجريبية مجانية</span>
-      <span>متبقي على انتهاء التجربة: <strong>{{ remaining_demo_days }} يوم</strong> و <strong>{{ remaining_demo_hours }} ساعة</strong></span>
-      <span style="opacity: 0.85; font-size: 11px; font-family: monospace; font-weight: 700; margin-right: 6px;">(كود جهازك: {{ license_info.machine_id }})</span>
+  <!-- Demo Mode Countdown Banner (Slim Compact) -->
+  <div style="background: linear-gradient(90deg, #d97706, #b45309); color: #FFFFFF; padding: 2px 14px; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(251, 191, 36, 0.4); z-index: 9999; flex-wrap: nowrap; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+      <span style="background: rgba(0,0,0,0.25); padding: 1px 6px; border-radius: 4px; font-size: 10px;">فترة تجريبية</span>
+      <span>متبقي: <strong>{{ remaining_demo_days }} يوم</strong> و <strong>{{ remaining_demo_hours }} ساعة</strong></span>
+      <span style="opacity: 0.85; font-size: 10px; font-family: monospace; font-weight: 700;">(كود: {{ license_info.machine_id }})</span>
     </div>
-    <div style="display: flex; align-items: center; gap: 10px;">
+    <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
       {% with phone=license_info.phone|default:"01080922432" %}
       <a href="https://wa.me/2{{ phone }}?text=مرحباً، أود تفعيل ترخيص Systemize لجهازي، كود جهازي هو: {{ license_info.machine_id }}"
          target="_blank"
-         style="background: #10B981; color: #FFFFFF; padding: 4px 12px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: 900; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
-        <i class="fa fa-whatsapp"></i> تفعيل النسخة الآن
+         style="background: #10B981; color: #FFFFFF; padding: 2px 8px; border-radius: 6px; text-decoration: none; font-size: 10px; font-weight: 900; display: inline-flex; align-items: center; gap: 4px;">
+        <i class="fa fa-whatsapp"></i> تفعيل الترخيص
       </a>
       {% endwith %}
     </div>
@@ -384,14 +384,14 @@
       <!-- User Profile, Face Camera Indicator & Logout on Left (RTL) -->
       <div class="top-navbar-user">
         <!-- Circular Theme Switcher Button Matching User Reference -->
-        <button type="button" id="themeToggleBtn" class="theme-toggle-compact-btn" onclick="toggleTheme()" title="الوضع الليلي نشط (انقر للتبديل إلى الوضع النهاري)" aria-label="تبديل المظهر"
-          style="display: inline-flex; align-items: center; justify-content: center; width: 40px; min-width: 40px; max-width: 40px; height: 40px; min-height: 40px; max-height: 40px; border-radius: 50% !important; cursor: pointer; padding: 0; margin: 0; outline: none; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.22); transition: all 0.2s ease; border: 1px solid rgba(255,255,255,0.16); background: #252B3B; color: #FFFFFF;">
+        <button type="button" id="themeToggleBtn" class="theme-toggle-compact-btn" onclick="toggleTheme()" title="تبديل المظهر" aria-label="تبديل المظهر"
+          style="display: inline-flex; align-items: center; justify-content: center; width: 28px !important; min-width: 28px !important; max-width: 28px !important; height: 28px !important; min-height: 28px !important; max-height: 28px !important; border-radius: 50% !important; cursor: pointer; padding: 0; margin: 0; outline: none; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.16); background: #252B3B; color: #FFFFFF;">
           <!-- Solid Filled Crescent Moon (Active in Dark mode) -->
-          <svg class="theme-icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="#FFFFFF" style="width: 20px; height: 20px; display: inline-block;">
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" width="14" height="14" fill="#FFFFFF" style="width: 14px; height: 14px; display: inline-block;">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
           <!-- Solid Sun with Rays (Active in Light mode) -->
-          <svg class="theme-icon-sun" viewBox="0 0 24 24" width="20" height="20" fill="#D97706" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; display: none;">
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" width="14" height="14" fill="#D97706" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; display: none;">
             <circle cx="12" cy="12" r="5" fill="#D97706"></circle>
             <line x1="12" y1="1" x2="12" y2="3"></line>
             <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -430,9 +430,9 @@
         </script>
 
         {% if gym_profile.face_camera_enabled %}
-        <div id="globalCameraStatusPill" class="user-pill" onclick="toggleCameraDockPreview()" style="cursor: pointer; display: flex; align-items: center; gap: 7px; border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08); padding: 4px 12px; border-radius: 20px;" title="كاميرا التعرف على الوجه الذكية (انقر للمعاينة المباشرة)">
-          <span id="globalCamDot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
-          <span id="globalCamText" style="font-size: 0.8rem; color: #10b981; font-weight: 800;">كاميرا الوجه نشطة</span>
+        <div id="globalCameraStatusPill" class="user-pill" onclick="toggleCameraDockPreview()" style="cursor: pointer; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08); padding: 2px 7px; border-radius: 12px;" title="كاميرا التعرف على الوجه الذكية (انقر للمعاينة المباشرة)">
+          <span id="globalCamDot" style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
+          <span id="globalCamText" style="font-size: 0.72rem; color: #10b981; font-weight: 800; white-space: nowrap;">كاميرا الوجه</span>
         </div>
         {% endif %}
 
@@ -442,36 +442,36 @@
           <div class="branch-switcher-wrapper" style="position: relative; display: inline-block;">
             <button type="button" id="branchDropdownBtn" onclick="toggleBranchDropdown(event)" 
                     class="user-pill" 
-                    style="cursor: pointer; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(132, 204, 22, 0.4); background: rgba(132, 204, 22, 0.1); padding: 5px 14px; border-radius: 20px; transition: all 0.2s;"
+                    style="cursor: pointer; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(132, 204, 22, 0.4); background: rgba(132, 204, 22, 0.1); padding: 2px 8px; border-radius: 12px; transition: all 0.2s; white-space: nowrap;"
                     title="التبديل بين فروع الصالة">
-              <span style="font-size: 0.95rem;">🏢</span>
-              <span style="color: var(--hulk-primary, #84CC16); font-weight: 800; font-size: 0.82rem;">{{ active_branch_name }}</span>
-              <span style="font-size: 0.65rem; color: var(--hulk-primary, #84CC16); opacity: 0.8;">▼</span>
+              <span style="font-size: 0.80rem;">🏢</span>
+              <span style="color: var(--hulk-primary, #84CC16); font-weight: 800; font-size: 0.74rem;">{{ active_branch_name }}</span>
+              <span style="font-size: 0.60rem; color: var(--hulk-primary, #84CC16); opacity: 0.8;">▼</span>
             </button>
             <div id="branchDropdownMenu" 
-                 style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 220px; background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 14px; box-shadow: 0 12px 30px rgba(0,0,0,0.6); z-index: 1000; overflow: hidden; padding: 6px;">
+                 style="display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 200px; background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); z-index: 1000; overflow: hidden; padding: 4px;">
               <a href="{% url 'accounts:switch_branch' 'all' %}" 
-                 style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 8px; color: {% if not active_branch %}#84CC16{% else %}#E2E8F0{% endif %}; font-weight: 700; font-size: 0.82rem; text-decoration: none; transition: background 0.15s;"
+                 style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 6px; color: {% if not active_branch %}#84CC16{% else %}#E2E8F0{% endif %}; font-weight: 700; font-size: 0.78rem; text-decoration: none; transition: background 0.15s;"
                  onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
-                <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
                   <span>🌐</span>
                   <span>كافة الفروع (مجمّع)</span>
                 </div>
                 {% if not active_branch %}<span style="color: #84CC16; font-weight: 900;">✓</span>{% endif %}
               </a>
-              <div style="height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0;"></div>
+              <div style="height: 1px; background: rgba(255,255,255,0.08); margin: 3px 0;"></div>
               {% for b in all_branches %}
               <a href="{% url 'accounts:switch_branch' b.id %}" 
-                 style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 8px; color: {% if active_branch.id == b.id %}#84CC16{% else %}#CBD5E1{% endif %}; font-weight: 700; font-size: 0.82rem; text-decoration: none; transition: background 0.15s;"
+                 style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 6px; color: {% if active_branch.id == b.id %}#84CC16{% else %}#CBD5E1{% endif %}; font-weight: 700; font-size: 0.78rem; text-decoration: none; transition: background 0.15s;"
                  onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
-                <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
                   <span>📍</span>
                   <span>{{ b.name }}</span>
                 </div>
                 {% if active_branch.id == b.id %}<span style="color: #84CC16; font-weight: 900;">✓</span>{% endif %}
               </a>
               {% empty %}
-              <div style="padding: 10px 12px; font-size: 0.78rem; color: #94A3B8; text-align: center;">لا توجد فروع مسجلة بعد</div>
+              <div style="padding: 8px 10px; font-size: 0.75rem; color: #94A3B8; text-align: center;">لا توجد فروع مسجلة بعد</div>
               {% endfor %}
             </div>
           </div>
@@ -491,9 +491,9 @@
           </script>
           {% else %}
           <!-- Manager / Reception Locked Branch Badge -->
-          <div class="user-pill" style="border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.08); padding: 5px 12px; border-radius: 20px;" title="الفرع المحدد لحسابك">
-            <span style="font-size: 0.85rem;">🏢</span>
-            <span style="color: #93C5FD; font-size: 0.82rem; font-weight: 800;">{{ user.branch_name }}</span>
+          <div class="user-pill" style="border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.08); padding: 2px 7px; border-radius: 12px; white-space: nowrap;" title="الفرع المحدد لحسابك">
+            <span style="font-size: 0.75rem;">🏢</span>
+            <span style="color: #93C5FD; font-size: 0.72rem; font-weight: 800;">{{ user.branch_name }}</span>
           </div>
           {% endif %}
         {% endif %}
@@ -524,27 +524,27 @@
     {% block content %}{% endblock %}
 
     <!-- Global Systemize Bottom Footer -->
-    <footer class="systemize-global-footer" style="margin-top: 45px; padding: 22px 0 12px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 0.85rem; color: #94a3b8;">
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <span style="font-weight: 800; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
-          <span style="width: 8px; height: 8px; border-radius: 50%; background: #84cc16; display: inline-block; box-shadow: 0 0 6px #84cc16;"></span>
-          Systemize Gym OS
+    <footer class="systemize-global-footer" style="margin-top: 12px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 12px; font-size: 0.74rem; color: #94a3b8;">
+      <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+        <span style="font-weight: 800; color: #cbd5e1; display: flex; align-items: center; gap: 5px;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: #84cc16; display: inline-block; box-shadow: 0 0 5px #84cc16;"></span>
+          Systemize OS
         </span>
         <span style="color: #64748b;">|</span>
-        <span>نظام إدارة الصالات الرياضية الذكي والتعرف على الوجه</span>
+        <span>نظام إدارة الصالات الرياضية الذكي</span>
         {% if license_info.machine_id %}
-        <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 6px; font-family: monospace; font-size: 0.78rem; color: #94a3b8;" title="كود ترخيص هذا الجهاز (HWID)">
+        <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 0.70rem; color: #94a3b8;" title="كود ترخيص هذا الجهاز (HWID)">
           HWID: {{ license_info.machine_id }}
         </span>
         {% endif %}
       </div>
 
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <button type="button" onclick="openTechSupportModal()" style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.35); color: #4ade80; padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
-          <span>🛠️ تواصل مع الدعم الفني</span>
+      <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+        <button type="button" onclick="openTechSupportModal()" style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.35); color: #4ade80; padding: 3px 10px; border-radius: 14px; font-weight: 800; font-size: 0.72rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+          <span>🛠️ الدعم الفني</span>
           <span style="font-family: monospace; font-weight: 900; color: #fff;">01080922432</span>
         </button>
-        <a href="https://wa.me/201080922432?text=مرحباً، أود التواصل المباشر مع الدعم الفني ومطور نظام Systemize" target="_blank" style="background: #25D366; color: #000; padding: 6px 14px; border-radius: 20px; font-weight: 900; font-size: 0.82rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(37,211,102,0.3);">
+        <a href="https://wa.me/201080922432?text=مرحباً، أود التواصل المباشر مع الدعم الفني ومطور نظام Systemize" target="_blank" style="background: #25D366; color: #000; padding: 3px 10px; border-radius: 14px; font-weight: 900; font-size: 0.72rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
           <span>واتساب المطور</span>
           <span>💬</span>
         </a>
@@ -553,16 +553,16 @@
   </main>
 
   <!-- Floating Technical Support CTA Pill (Fixed Bottom Right) -->
-  <div id="floatingTechSupportBtn" style="position: fixed; bottom: 24px; right: 24px; z-index: 9995;">
+  <div id="floatingTechSupportBtn" style="position: fixed; bottom: 12px; right: 12px; z-index: 9995;">
     <button type="button" onclick="openTechSupportModal()" title="تواصل مع الدعم الفني المباشر (01080922432)"
-      style="background: #0f172a; border: 1.5px solid #22c55e; color: #ffffff; padding: 9px 16px; border-radius: 30px; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 9px; box-shadow: 0 10px 25px rgba(0,0,0,0.65), 0 0 20px rgba(34, 197, 94, 0.35); transition: all 0.25s ease;">
-      <span style="position: relative; display: inline-flex; width: 10px; height: 10px;">
+      style="background: #0f172a; border: 1px solid #22c55e; color: #ffffff; padding: 5px 11px; border-radius: 20px; font-weight: 800; font-size: 0.76rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: all 0.2s ease;">
+      <span style="position: relative; display: inline-flex; width: 7px; height: 7px;">
         <span style="animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; position: absolute; display: inline-flex; height: 100%; width: 100%; border-radius: 50%; background-color: #4ade80; opacity: 0.75;"></span>
         <span style="position: relative; display: inline-flex; border-radius: 50%; height: 100%; width: 100%; background-color: #22c55e;"></span>
       </span>
-      <span style="display: flex; align-items: center; gap: 6px;">
-        <span style="font-size: 1.1rem; line-height: 1;">💬</span>
-        <span>الدعم الفني المباشر</span>
+      <span style="display: flex; align-items: center; gap: 4px;">
+        <span style="font-size: 0.90rem; line-height: 1;">💬</span>
+        <span>الدعم الفني</span>
       </span>
     </button>
   </div>
