@@ -49,7 +49,7 @@ class Command(BaseCommand):
         profile.manager_mobile = "01080922432"
         profile.daily_report_time = "22:00"
         profile.face_camera_enabled = True
-        profile.face_match_threshold = 0.363
+        profile.face_match_threshold = 65.0
         profile.face_min_confidence = 0.55
         profile.face_debounce_seconds = 60
         profile.gate_relay_enabled = True

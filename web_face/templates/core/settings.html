@@ -1013,23 +1013,52 @@
           <input type="hidden" name="action" value="save_profile">
           <input type="hidden" name="form_face" value="1">
 
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px;">
-            <div class="form-group">
-              <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">حساسية مطابقة الوجه (Cosine Threshold)</label>
-              <input type="number" step="0.01" name="face_match_threshold" class="form-control" value="{{ profile.face_match_threshold|default:'0.363' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
-              <small style="color: #64748b; font-size: 0.75rem;">الافتراضي: 0.363</small>
+          <!-- Single Unified Face Threshold Control (0 - 100%) -->
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 18px 20px; margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <label class="form-label" style="color: #ffffff; font-weight: 800; font-size: 1.05rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 1.25rem;">🎯</span> المعيار الموحد لدقة مطابقة الوجه (من 0 إلى 100)
+                </label>
+                <small style="color: #94a3b8; font-size: 0.8rem; display: block; margin-top: 3px;">
+                  تحكم مباشر بنسبة التطابق المطلوبة لمنع الخلط بين المشتركين وضمان دقة التعرف 100%
+                </small>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="faceAccuracyBadge" style="background: rgba(225, 29, 72, 0.2); border: 1px solid #E11D48; color: #fff; padding: 5px 14px; border-radius: 8px; font-weight: 900; font-size: 1.2rem; font-family: monospace;">
+                  {{ profile.face_match_threshold_percent }}%
+                </span>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">دقة كشف الوجه (Min Confidence)</label>
-              <input type="number" step="0.05" name="face_min_confidence" class="form-control" value="{{ profile.face_min_confidence|default:'0.55' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
-              <small style="color: #64748b; font-size: 0.75rem;">الافتراضي: 0.55</small>
+            <!-- Slider + Number Input row -->
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+              <input type="range" id="faceThresholdRange" min="30" max="95" step="1" 
+                     value="{{ profile.face_match_threshold_percent }}" 
+                     style="flex: 1; accent-color: #E11D48; height: 10px; cursor: pointer; border-radius: 5px;">
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <input type="number" id="faceThresholdInput" name="face_match_threshold" min="0" max="100" step="1" 
+                       value="{{ profile.face_match_threshold_percent }}" required 
+                       style="width: 75px; text-align: center; font-weight: 900; font-size: 1.1rem; background: var(--bg-surface-subtle); border: 1px solid #E11D48; color: #fff; height: 42px; border-radius: 8px; outline: none;">
+                <span style="color: #94a3b8; font-weight: 800; font-size: 1rem;">%</span>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">فترة منع تكرار التسجيل (بالثواني)</label>
-              <input type="number" name="face_debounce_seconds" class="form-control" value="{{ profile.face_debounce_seconds|default:'60' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 12px; width: 100%;">
-              <small style="color: #64748b; font-size: 0.75rem;">الافتراضي: 60 ثانية</small>
+            <!-- Dynamic explanation text -->
+            <div id="faceThresholdHint" style="padding: 10px 14px; border-radius: 8px; background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.25); color: #fecdd3; font-size: 0.84rem; line-height: 1.5;">
+              جاري تحميل إعدادات الدقة...
+            </div>
+
+            <!-- Second row: debounce & hidden detection min confidence -->
+            <input type="hidden" name="face_min_confidence" value="0.55">
+            <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <label for="face_debounce_seconds" style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 700; margin: 0;">
+                ⏱️ مهلة منع تكرار تسجيل الحضور لنفس العضو:
+              </label>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <input type="number" id="face_debounce_seconds" name="face_debounce_seconds" class="form-control" value="{{ profile.face_debounce_seconds|default:'60' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 36px; border-radius: 8px; padding: 0 10px; width: 80px; text-align: center; font-weight: 700;">
+                <span style="color: #94a3b8; font-size: 0.82rem;">ثانية</span>
+              </div>
             </div>
           </div>
 
@@ -1978,8 +2007,50 @@ async function testGateTriggerSignal() {
     if (badge) {
       badge.style.color = '#f87171';
       badge.textContent = '❌ خطأ في الاتصال بالخادم الداخلي.';
+// ==========================================
+// Face Threshold Range & Input Interactive Sync
+// ==========================================
+(function initFaceThresholdSync() {
+  const range = document.getElementById('faceThresholdRange');
+  const input = document.getElementById('faceThresholdInput');
+  const badge = document.getElementById('faceAccuracyBadge');
+  const hint = document.getElementById('faceThresholdHint');
+
+  function updateFaceThresholdUI(val) {
+    val = Math.max(0, Math.min(100, parseInt(val) || 65));
+    if (range) range.value = val;
+    if (input) input.value = val;
+    if (badge) badge.textContent = val + '%';
+    if (hint) {
+      if (val >= 75) {
+        hint.style.background = 'rgba(59, 130, 246, 0.12)';
+        hint.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+        hint.style.color = '#93c5fd';
+        hint.innerHTML = '🔒 <strong>أمان فائق (75% فأعلى):</strong> دقة صارمة جداً — لا يفتح إلا عند التطابق التام وفي نفس الإضاءة. يمنع أي خطأ تماماً.';
+      } else if (val >= 60) {
+        hint.style.background = 'rgba(16, 185, 129, 0.12)';
+        hint.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+        hint.style.color = '#6ee7b7';
+        hint.innerHTML = '🎯 <strong>المستوى المثالي الموصى به (60% - 74%):</strong> دقة ممتازة بنسبة 100%، يمنع نهائياً التعرف على أشخاص مختلفين بنفس الوجه، مع سرعة التقاط فورية.';
+      } else if (val >= 50) {
+        hint.style.background = 'rgba(245, 158, 11, 0.12)';
+        hint.style.borderColor = 'rgba(245, 158, 11, 0.3)';
+        hint.style.color = '#fde68a';
+        hint.innerHTML = '⚖️ <strong>مستوى مرن (50% - 59%):</strong> سريع ومرن مع الإضاءة، ولكن يُفضل رفعه إلى 65% لتجنب الخلط في حال وجود أشخاص متقاربي الملامح.';
+      } else {
+        hint.style.background = 'rgba(239, 68, 68, 0.15)';
+        hint.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+        hint.style.color = '#fca5a5';
+        hint.innerHTML = '⚠️ <strong>تحذير (أقل من 50%):</strong> دقة منخفضة جداً قد تؤدي إلى الخلط بين الأشخاص واعتبار غير المسجلين كأعضاء.';
+      }
     }
   }
-}
+
+  if (range && input) {
+    range.addEventListener('input', function() { updateFaceThresholdUI(this.value); });
+    input.addEventListener('input', function() { updateFaceThresholdUI(this.value); });
+    updateFaceThresholdUI(input.value || 65);
+  }
+})();
 </script>
 {% endblock %}

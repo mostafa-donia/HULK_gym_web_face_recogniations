@@ -58,7 +58,11 @@ class GymProfile(models.Model):
         verbose_name="تشغيل كاميرا التعرف على الوجه التلقائية في النظام",
         help_text="عند التفعيل، تعمل الكاميرا تلقائياً في خلفية الموقع لإظهار إشعار الدخول أو انتهاء الاشتراك فوراً فور اقتراب المشترك.",
     )
-    face_match_threshold = models.FloatField(default=0.363, verbose_name="حساسية التعرف بالوجه (Cosine Threshold)")
+    face_match_threshold = models.FloatField(
+        default=65.0,
+        verbose_name="دقة مطابقة الوجه المطلوبة (0 - 100%)",
+        help_text="المعيار الموحد لدقة التعرف بالوجه: 65% هي النسبة الموصى بها لمنع الخلط بين الأشخاص نهائياً.",
+    )
     face_min_confidence = models.FloatField(default=0.55, verbose_name="حساسية كشف الوجه (Detection Threshold)")
     face_debounce_seconds = models.PositiveIntegerField(default=60, verbose_name="مهلة منع تكرار التسجيل (ثوانٍ)")
     # Electronic Gate & Turnstile Network / Relay Settings
@@ -155,6 +159,28 @@ class GymProfile(models.Model):
     def get_solo(cls) -> "GymProfile":
         profile, _ = cls.objects.get_or_create(id=1)
         return profile
+
+    @property
+    def face_match_threshold_ratio(self) -> float:
+        """Returns normalized 0.0 - 1.0 cosine threshold for internal facial vector matching."""
+        try:
+            val = float(self.face_match_threshold if self.face_match_threshold is not None else 65.0)
+        except (ValueError, TypeError):
+            val = 65.0
+        if val > 1.0:
+            return max(0.0, min(1.0, val / 100.0))
+        return max(0.0, min(1.0, val))
+
+    @property
+    def face_match_threshold_percent(self) -> int:
+        """Returns 0 - 100 integer percentage for UI display and slider control."""
+        try:
+            val = float(self.face_match_threshold if self.face_match_threshold is not None else 65.0)
+        except (ValueError, TypeError):
+            val = 65.0
+        if val <= 1.0:
+            return int(round(val * 100))
+        return int(round(val))
 
     @property
     def primary_contrast_color(self) -> str:

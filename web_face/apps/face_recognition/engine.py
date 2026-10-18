@@ -307,13 +307,16 @@ class FaceEngine:
     def match_face_vector(
         self,
         query_embedding: List[float],
-        cosine_threshold: float = 0.363
+        cosine_threshold: float = 0.65
     ) -> Tuple[Optional[int], float]:
         """
         Calculates cosine similarity with two-phase fast-path optimization:
         Phase 1: Search ACTIVE members first using vectorized BLAS dot product. If matched >= threshold, return IMMEDIATELY.
         Phase 2: If no active match found, search INACTIVE/EXPIRED members (to trigger expired entry alerts).
+        Supports cosine_threshold passed as decimal (e.g. 0.65) or percentage integer (e.g. 65).
         """
+        if cosine_threshold > 1.0:
+            cosine_threshold = cosine_threshold / 100.0
         self.refresh_cache()
         q_vec = np.array(query_embedding, dtype=np.float32)
         q_norm = np.linalg.norm(q_vec)
@@ -591,8 +594,8 @@ class FaceEngine:
                 self.annotated_frame = frame
                 return
 
-            det_thresh = max(float(profile.face_min_confidence or 0.68), 0.65)
-            thresh = max(float(profile.face_match_threshold or 0.45), 0.42)
+            det_thresh = max(float(getattr(profile, "face_min_confidence", 0.55) or 0.55), 0.50)
+            thresh = profile.face_match_threshold_ratio
             debounce_sec = max(int(profile.face_debounce_seconds or 60), 60)
 
             faces = self.detect_faces(frame, score_threshold=det_thresh)
@@ -700,9 +703,13 @@ class FaceEngine:
 
                         with self.event_lock:
                             self.latest_event = event_data
-                            self.last_event_time = now_ts
                 else:
-                    cv2.rectangle(annotated, (x, y), (x + w, y + h), (160, 160, 160), 1)
+                    color = (0, 0, 230)
+                    cv2.rectangle(annotated, (x, y), (x + w, y + h), color, 2)
+                    score_pct = round(match_score * 100)
+                    status_txt = f"غير مسجل ({score_pct}%)"
+                    cv2.putText(annotated, status_txt, (x, max(25, y - 10)),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.65, color, 2, cv2.LINE_AA)
 
             self.annotated_frame = annotated
         except Exception as e:

@@ -1149,7 +1149,8 @@ def settings_view(request):
             # Face recognition & gate settings
             if "face_match_threshold" in request.POST:
                 try:
-                    profile.face_match_threshold = float(request.POST.get("face_match_threshold", profile.face_match_threshold or 0.363))
+                    raw_thresh = float(request.POST.get("face_match_threshold", 65.0))
+                    profile.face_match_threshold = max(0.0, min(100.0, raw_thresh))
                 except (ValueError, TypeError):
                     pass
             if "face_min_confidence" in request.POST:

@@ -55,8 +55,8 @@ def api_face_verify(request):
         return JsonResponse({"success": False, "message": "نماذج الذكاء الاصطناعي غير محملة."}, status=503)
 
     profile = GymProfile.get_solo()
-    thresh = float(profile.face_match_threshold or 0.363)
-    det_thresh = float(profile.face_min_confidence or 0.55)
+    thresh = profile.face_match_threshold_ratio
+    det_thresh = max(float(profile.face_min_confidence or 0.55), 0.50)
 
     success, emb, crop_bytes, msg = engine.extract_embedding_and_crop(image_b64, score_threshold=det_thresh)
     if not success or not emb:
@@ -68,7 +68,8 @@ def api_face_verify(request):
             "success": True,
             "matched": False,
             "score": round(score * 100, 1),
-            "message": "وجه غير مسجل في النظام.",
+            "required_score": profile.face_match_threshold_percent,
+            "message": f"وجه غير مسجل في النظام (نسبة التطابق {round(score * 100)}% أقل من المعيار المطلوب {profile.face_match_threshold_percent}%).",
         })
 
     member = Member.objects.filter(id=member_id).first()

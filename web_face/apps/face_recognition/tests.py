@@ -18,7 +18,7 @@ class FaceRecognitionTests(TestCase):
         )
         self.profile = GymProfile.get_solo()
         self.profile.gym_name = "Face Test Gym"
-        self.profile.face_match_threshold = 0.363
+        self.profile.face_match_threshold = 65.0
         self.profile.save()
 
         self.member = Member.objects.create(
