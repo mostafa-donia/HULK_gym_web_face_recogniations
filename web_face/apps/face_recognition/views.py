@@ -101,7 +101,7 @@ def api_face_verify(request):
 
         # Trigger physical turnstile / magnetic lock gate relay
         if profile.gate_relay_enabled:
-            engine.trigger_gate_relay(port=profile.gate_relay_port or "COM3")
+            engine.trigger_gate_relay(profile=profile)
 
     today = timezone.localdate()
     expired_days = (today - member.last_subscription_end).days if (member.last_subscription_end and not member.is_active) else 0
@@ -365,4 +365,45 @@ def independent_camera_window_view(request):
         "enrolled_count": Member.objects.filter(has_face_enrolled=True).count(),
     }
     return render(request, "face_recognition/camera_window.html", context)
+
+
+@csrf_exempt
+@login_required
+def api_test_gate_trigger(request):
+    """
+    Test trigger endpoint for the electronic gate relay (LAN Local IP / Serial).
+    Allows managers to test the gate connection from Settings or Kiosk.
+    """
+    profile = GymProfile.get_solo()
+    engine = get_face_engine()
+
+    if request.method == "POST":
+        try:
+            body = json.loads(request.body.decode("utf-8")) if request.body else {}
+        except Exception:
+            body = {}
+        ip_override = body.get("gate_ip_address") or request.POST.get("gate_ip_address")
+        if ip_override:
+            profile.gate_ip_address = ip_override.strip()
+        port_override = body.get("gate_ip_port") or request.POST.get("gate_ip_port")
+        if port_override:
+            try:
+                profile.gate_ip_port = int(port_override)
+            except Exception:
+                pass
+        type_override = body.get("gate_relay_type") or request.POST.get("gate_relay_type")
+        if type_override:
+            profile.gate_relay_type = type_override.strip()
+        path_override = body.get("gate_http_path") or request.POST.get("gate_http_path")
+        if path_override:
+            profile.gate_http_path = path_override.strip()
+
+    success, msg = engine.trigger_gate_relay(profile=profile, sync_execute=True)
+    return JsonResponse({
+        "success": success,
+        "message": msg,
+        "gate_relay_type": profile.gate_relay_type,
+        "gate_ip": f"{profile.gate_ip_address}:{profile.gate_ip_port}",
+    })
+
 

@@ -199,27 +199,47 @@
 
                 <!-- Features Checklist -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-2">الميزات المسموحة في باقته:</label>
+                    <label class="block text-xs font-bold text-slate-300 mb-2">الميزات المسموحة في باقته (10 ميزات):</label>
                     <div class="grid grid-cols-2 gap-2 text-xs">
-                        <label class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                        <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 cursor-pointer">
                             <input type="checkbox" id="ftFace" checked class="accent-lime-500">
                             <span>بصمة الوجه والكاميرا</span>
                         </label>
-                        <label class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                        <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="ftGateRelay" checked class="accent-lime-500">
+                            <span>بوابات الدخول (Turnstile Relay)</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 cursor-pointer">
                             <input type="checkbox" id="ftWhatsApp" checked class="accent-lime-500">
                             <span>رسائل الواتساب الذكية</span>
                         </label>
-                        <label class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                        <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 cursor-pointer">
                             <input type="checkbox" id="ftTelegram" checked class="accent-lime-500">
                             <span>بوت التليجرام التفاعلي</span>
                         </label>
-                        <label class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 cursor-pointer">
+                        <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 cursor-pointer">
                             <input type="checkbox" id="ftBar" checked class="accent-lime-500">
                             <span>مخزون ومبيعات البار</span>
                         </label>
-                        <label class="flex items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800 cursor-pointer col-span-2">
+                        <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 cursor-pointer">
                             <input type="checkbox" id="ftPayroll" checked class="accent-lime-500">
-                            <span>إدارة المدربين ومسيرات الرواتب والبرايفت</span>
+                            <span>المدربين ونسب الكومشن والرواتب</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="ftRetention" checked class="accent-lime-500">
+                            <span>تتبع المشتركين والاستمرارية والتسرب</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="ftReports" checked class="accent-lime-500">
+                            <span>التقارير المالية والتحليلات</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="ftBarcode" checked class="accent-lime-500">
+                            <span>قارئ الباركود والـ QR Code</span>
+                        </label>
+                        <label class="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 cursor-pointer">
+                            <input type="checkbox" id="ftExpenses" checked class="accent-lime-500">
+                            <span>تسجيل المصروفات وحسابات الخزينة</span>
                         </label>
                     </div>
                 </div>
@@ -347,7 +367,7 @@
                 <!-- Feature Permissions Toggles -->
                 <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2.5">
                     <span class="block text-xs font-black text-slate-300 border-b border-slate-800 pb-2">
-                        <i class="fa fa-shield-halved text-indigo-400 ml-1"></i> الصلاحيات والميزات المفتوحة للعميل:
+                        <i class="fa fa-shield-halved text-indigo-400 ml-1"></i> الصلاحيات والميزات المفتوحة للعميل (10 ميزات):
                     </span>
                     
                     <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
@@ -356,6 +376,14 @@
                             <span>التعرف على الوجه الذكي (Face Recognition)</span>
                         </span>
                         <input type="checkbox" id="editFeatFace" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa fa-door-open text-emerald-400"></i>
+                            <span>بوابات الدخول والريليه الإلكتروني (Gate Relay)</span>
+                        </span>
+                        <input type="checkbox" id="editFeatGateRelay" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
                     </label>
 
                     <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
@@ -385,9 +413,41 @@
                     <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
                         <span class="flex items-center gap-2">
                             <i class="fa fa-users-gear text-purple-400"></i>
-                            <span>إدارة المدربين والنسب والرواتب</span>
+                            <span>إدارة المدربين والنسب والرواتب (Payroll)</span>
                         </span>
                         <input type="checkbox" id="editFeatPayroll" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa fa-chart-line text-lime-400"></i>
+                            <span>تتبع الاستمرارية والتسرب والأعضاء الجدد (Retention)</span>
+                        </span>
+                        <input type="checkbox" id="editFeatRetention" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa fa-file-invoice-dollar text-cyan-400"></i>
+                            <span>التقارير المالية والتحليلات المتقدمة (Reports)</span>
+                        </span>
+                        <input type="checkbox" id="editFeatReports" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa fa-qrcode text-yellow-400"></i>
+                            <span>ماسح الباركود والـ QR Code (Barcode / QR)</span>
+                        </span>
+                        <input type="checkbox" id="editFeatBarcode" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
+
+                    <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:bg-slate-900/60 p-1.5 rounded-lg transition">
+                        <span class="flex items-center gap-2">
+                            <i class="fa fa-money-bill-wave text-rose-400"></i>
+                            <span>المصروفات اليومية وحسابات الخزينة (Expenses)</span>
+                        </span>
+                        <input type="checkbox" id="editFeatExpenses" class="accent-indigo-500 w-4 h-4 rounded cursor-pointer">
                     </label>
                 </div>
 
@@ -562,11 +622,16 @@
                             <!-- Features List -->
                             <div class="flex items-center gap-1.5 pt-1 text-[11px] flex-wrap">
                                 <span class="text-slate-500 text-[10px]">الميزات:</span>
-                                ${features.face_recognition ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">الوجه ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">الوجه</span>'}
-                                ${features.whatsapp ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">واتساب ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">واتساب</span>'}
-                                ${features.telegram ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">تليجرام ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">تليجرام</span>'}
-                                ${features.bar ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">البار ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">البار</span>'}
-                                ${features.payroll ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">المدربين والرواتب ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">المدربين</span>'}
+                                ${features.face_recognition !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">الوجه ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">الوجه</span>'}
+                                ${features.gate_relay !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">البوابة ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">البوابة</span>'}
+                                ${features.whatsapp !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">واتساب ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">واتساب</span>'}
+                                ${features.telegram !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">تليجرام ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">تليجرام</span>'}
+                                ${features.bar !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">البار ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">البار</span>'}
+                                ${features.payroll !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">الرواتب ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">الرواتب</span>'}
+                                ${features.retention !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">الاستمرارية ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">الاستمرارية</span>'}
+                                ${features.reports !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">التقارير ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">التقارير</span>'}
+                                ${features.barcode !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">باركود ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">باركود</span>'}
+                                ${features.expenses !== false ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">المصروفات ✓</span>' : '<span class="opacity-40 text-slate-600 line-through">المصروفات</span>'}
                             </div>
                         </div>
 
@@ -634,10 +699,15 @@
 
             const ft = client.features || {};
             document.getElementById('editFeatFace').checked = (ft.face !== false && ft.face_recognition !== false);
+            document.getElementById('editFeatGateRelay').checked = (ft.gate_relay !== false);
             document.getElementById('editFeatWhatsapp').checked = (ft.whatsapp !== false);
             document.getElementById('editFeatTelegram').checked = (ft.telegram !== false);
             document.getElementById('editFeatBar').checked = (ft.bar !== false);
             document.getElementById('editFeatPayroll').checked = (ft.payroll !== false);
+            document.getElementById('editFeatRetention').checked = (ft.retention !== false);
+            document.getElementById('editFeatReports').checked = (ft.reports !== false);
+            document.getElementById('editFeatBarcode').checked = (ft.barcode !== false);
+            document.getElementById('editFeatExpenses').checked = (ft.expenses !== false);
 
             openModal('editClientModal');
         }
@@ -659,10 +729,15 @@
                 features: {
                     face_recognition: document.getElementById('editFeatFace').checked,
                     face: document.getElementById('editFeatFace').checked,
+                    gate_relay: document.getElementById('editFeatGateRelay').checked,
                     whatsapp: document.getElementById('editFeatWhatsapp').checked,
                     telegram: document.getElementById('editFeatTelegram').checked,
                     bar: document.getElementById('editFeatBar').checked,
-                    payroll: document.getElementById('editFeatPayroll').checked
+                    payroll: document.getElementById('editFeatPayroll').checked,
+                    retention: document.getElementById('editFeatRetention').checked,
+                    reports: document.getElementById('editFeatReports').checked,
+                    barcode: document.getElementById('editFeatBarcode').checked,
+                    expenses: document.getElementById('editFeatExpenses').checked
                 }
             };
 
@@ -706,10 +781,16 @@
                 duration: document.getElementById('addDuration').value,
                 features: {
                     face_recognition: document.getElementById('ftFace').checked,
+                    face: document.getElementById('ftFace').checked,
+                    gate_relay: document.getElementById('ftGateRelay').checked,
                     whatsapp: document.getElementById('ftWhatsApp').checked,
                     telegram: document.getElementById('ftTelegram').checked,
                     bar: document.getElementById('ftBar').checked,
                     payroll: document.getElementById('ftPayroll').checked,
+                    retention: document.getElementById('ftRetention').checked,
+                    reports: document.getElementById('ftReports').checked,
+                    barcode: document.getElementById('ftBarcode').checked,
+                    expenses: document.getElementById('ftExpenses').checked,
                 }
             };
 

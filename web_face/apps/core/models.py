@@ -42,8 +42,25 @@ class GymProfile(models.Model):
     face_match_threshold = models.FloatField(default=0.363, verbose_name="حساسية التعرف بالوجه (Cosine Threshold)")
     face_min_confidence = models.FloatField(default=0.55, verbose_name="حساسية كشف الوجه (Detection Threshold)")
     face_debounce_seconds = models.PositiveIntegerField(default=60, verbose_name="مهلة منع تكرار التسجيل (ثوانٍ)")
+    # Electronic Gate & Turnstile Network / Relay Settings
     gate_relay_enabled = models.BooleanField(default=False, verbose_name="تفعيل فتح البوابة تلقائياً عند التعرف بالوجه")
-    gate_relay_port = models.CharField(max_length=50, default="COM3", blank=True, verbose_name="منفذ تحكم البوابة (COM Port / IP)")
+    gate_relay_type = models.CharField(
+        max_length=20,
+        choices=[
+            ("lan_http", "شبكة محلية - رابط IP (HTTP GET/POST)"),
+            ("lan_tcp", "شبكة محلية - مقبس مباشر (TCP Socket)"),
+            ("serial_com", "منفذ تسلسلي USB (COM Port)"),
+        ],
+        default="lan_http",
+        verbose_name="نوع اتصال البوابة",
+    )
+    gate_ip_address = models.CharField(max_length=100, default="192.168.1.50", blank=True, verbose_name="عنوان IP الثابت للبوابة (Fixed Local IP)")
+    gate_ip_port = models.PositiveIntegerField(default=80, verbose_name="منفذ الاتصال (Port)")
+    gate_http_path = models.CharField(max_length=200, default="/open", blank=True, verbose_name="مسار فتح البوابة (HTTP Endpoint)")
+    gate_http_method = models.CharField(max_length=10, choices=[("GET", "GET"), ("POST", "POST")], default="GET", verbose_name="طريقة الإرسال (Method)")
+    gate_tcp_payload = models.CharField(max_length=100, default="OPEN", blank=True, verbose_name="أمر الفتح (TCP Payload)")
+    gate_pulse_seconds = models.FloatField(default=2.5, verbose_name="مدة فتح البوابة بالثواني")
+    gate_relay_port = models.CharField(max_length=50, default="COM3", blank=True, verbose_name="منفذ تحكم البوابة (COM Port / Legacy)")
 
     # WhatsApp Configuration
     whatsapp_enabled = models.BooleanField(default=True, verbose_name="تفعيل إرسال الواتساب")
@@ -211,12 +228,17 @@ class SystemLicense(models.Model):
     first_run_date = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ أول تشغيل")
     valid_until = models.DateTimeField(null=True, blank=True, verbose_name="صالح حتى تاريخ")
     
-    # Feature Flags
+    # Feature Flags (Every Little Option Access)
     feature_face_recognition = models.BooleanField(default=True, verbose_name="بصمة الوجه الذكية")
-    feature_whatsapp = models.BooleanField(default=True, verbose_name="رسائل الواتساب")
+    feature_gate_relay = models.BooleanField(default=True, verbose_name="بوابات الدخول ومتحكم الريليه")
+    feature_whatsapp = models.BooleanField(default=True, verbose_name="رسائل وتنبيهات الواتساب")
     feature_telegram = models.BooleanField(default=True, verbose_name="بوت تليجرام")
     feature_bar = models.BooleanField(default=True, verbose_name="مخزون ومبيعات البار")
     feature_payroll = models.BooleanField(default=True, verbose_name="المدربين ومسيرات الرواتب")
+    feature_retention = models.BooleanField(default=True, verbose_name="تتبع حركة واستمرارية الأعضاء")
+    feature_reports = models.BooleanField(default=True, verbose_name="التقارير المالية المتقدمة")
+    feature_barcode = models.BooleanField(default=True, verbose_name="قارئ الباركود والـ QR")
+    feature_expenses = models.BooleanField(default=True, verbose_name="المصروفات وسندات الصرف")
 
     # Anti-Tampering & Security
     tamper_hash = models.CharField(max_length=256, blank=True, default="", verbose_name="توقيع الأمان الرقمي")

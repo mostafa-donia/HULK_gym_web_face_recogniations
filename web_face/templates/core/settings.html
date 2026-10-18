@@ -1016,22 +1016,106 @@
             </div>
           </div>
 
-          <!-- Relay Hardware Control -->
-          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 8px; padding: 14px; margin-bottom: 18px;">
-            <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-              <input type="checkbox" id="gate_relay_enabled" name="gate_relay_enabled" {% if profile.gate_relay_enabled %}checked{% endif %} style="width: 20px; height: 20px; accent-color: #10b981; cursor: pointer;">
-              <label for="gate_relay_enabled" class="form-label" style="margin: 0; color: var(--text-secondary); font-weight: 700; cursor: pointer;">تفعيل إشارة فتح البوابة الإلكترونية (Turnstile Relay Trigger)</label>
+          <!-- Relay & LAN Network Gate Trigger Control -->
+          <div style="background: var(--bg-input); border: 1px solid #162A3B; border-radius: 10px; padding: 16px; margin-bottom: 18px;">
+            <div class="form-group" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; border-bottom: 1px solid #1E374D; padding-bottom: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="gate_relay_enabled" name="gate_relay_enabled" {% if profile.gate_relay_enabled %}checked{% endif %} style="width: 20px; height: 20px; accent-color: #10b981; cursor: pointer;">
+                <label for="gate_relay_enabled" class="form-label" style="margin: 0; color: #10b981; font-weight: 800; cursor: pointer; font-size: 0.95rem;">
+                  🚪 تفعيل إشارة فتح البوابة الإلكترونية فور التعرف على الوجه (Automatic Gate / Turnstile Trigger)
+                </label>
+              </div>
+              <span style="font-size: 0.78rem; color: #94a3b8; background: #0f172a; padding: 3px 8px; border-radius: 6px; border: 1px solid #334155;">
+                يدعم IP الشبكة المحلية (Fixed IP) ومنفذ السيريال COM
+              </span>
             </div>
 
-            <div class="form-group">
-              <label class="form-label" style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700; margin-bottom: 4px; display: block;">منفذ الاتصال التسلسلي (Serial / COM Port)</label>
-              <input type="text" name="gate_relay_port" class="form-control" value="{{ profile.gate_relay_port|default:'COM3' }}" placeholder="COM3 أو /dev/ttyUSB0" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace;">
+            <!-- Mode selector -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+              <div>
+                <label class="form-label" style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; display: block;">
+                  طريقة ربط البوابة (Gate Trigger Protocol)
+                </label>
+                <select name="gate_relay_type" id="gate_relay_type_select" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 10px; width: 100%; font-weight: 700;">
+                  <option value="lan_http" {% if profile.gate_relay_type == 'lan_http' %}selected{% endif %}>🌐 شبكة محلية LAN (أمر HTTP على Fixed IP)</option>
+                  <option value="lan_tcp" {% if profile.gate_relay_type == 'lan_tcp' %}selected{% endif %}>⚡ شبكة محلية LAN (منفذ TCP Socket مباشر)</option>
+                  <option value="serial_com" {% if profile.gate_relay_type == 'serial_com' %}selected{% endif %}>🔌 منفذ تسلسلي USB/Serial (COM Port)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label" style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; display: block;">
+                  عنوان آي بي البوابة الثابت (Fixed LAN IP)
+                </label>
+                <input type="text" name="gate_ip_address" id="gate_ip_address" class="form-control" value="{{ profile.gate_ip_address|default:'192.168.1.50' }}" placeholder="192.168.1.50" style="background: var(--bg-card); border: 1px solid #1E374D; color: #38bdf8; height: 40px; border-radius: 8px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace; font-weight: bold;">
+              </div>
+
+              <div>
+                <label class="form-label" style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; display: block;">
+                  منفذ الشبكة (Port)
+                </label>
+                <input type="number" name="gate_ip_port" id="gate_ip_port" class="form-control" value="{{ profile.gate_ip_port|default:'80' }}" placeholder="80" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 40px; border-radius: 8px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace;">
+              </div>
+            </div>
+
+            <!-- HTTP & TCP details -->
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+              <div>
+                <label class="form-label" style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; display: block;">
+                  مسار أمر الـ HTTP (URL Path)
+                </label>
+                <input type="text" name="gate_http_path" id="gate_http_path" class="form-control" value="{{ profile.gate_http_path|default:'/open' }}" placeholder="/open أو /relay/on" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace; font-size: 0.85rem;">
+              </div>
+
+              <div>
+                <label class="form-label" style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; display: block;">
+                  طريقة الإرسال (HTTP Method)
+                </label>
+                <select name="gate_http_method" id="gate_http_method" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; font-size: 0.85rem;">
+                  <option value="GET" {% if profile.gate_http_method == 'GET' %}selected{% endif %}>GET</option>
+                  <option value="POST" {% if profile.gate_http_method == 'POST' %}selected{% endif %}>POST</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label" style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; display: block;">
+                  أمر TCP (Payload)
+                </label>
+                <input type="text" name="gate_tcp_payload" id="gate_tcp_payload" class="form-control" value="{{ profile.gate_tcp_payload|default:'OPEN' }}" placeholder="OPEN" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace; font-size: 0.85rem;">
+              </div>
+
+              <div>
+                <label class="form-label" style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; display: block;">
+                  مدة النبضة (ثواني)
+                </label>
+                <input type="number" step="0.5" name="gate_pulse_seconds" id="gate_pulse_seconds" class="form-control" value="{{ profile.gate_pulse_seconds|default:'2.5' }}" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; font-family: monospace; font-size: 0.85rem;">
+              </div>
+            </div>
+
+            <!-- Serial COM details -->
+            <div style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 14px;">
+              <div>
+                <label class="form-label" style="color: var(--text-muted); font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; display: block;">
+                  منفذ السيريال (Serial COM Port) - يُستخدم في حال اختيار نوع الربط USB/Serial:
+                </label>
+                <input type="text" name="gate_relay_port" id="gate_relay_port" class="form-control" value="{{ profile.gate_relay_port|default:'COM3' }}" placeholder="COM3 أو /dev/ttyUSB0" style="background: var(--bg-card); border: 1px solid #1E374D; color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; direction: ltr; font-family: monospace; font-size: 0.85rem;">
+              </div>
+            </div>
+
+            <!-- Instant Test Button Strip -->
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 10px; border-top: 1px dashed #1E374D;">
+              <button type="button" onclick="testGateTriggerSignal()" style="background: #064e3b; border: 1px solid #10b981; color: #a7f3d0; font-weight: 800; font-size: 0.85rem; padding: 8px 16px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <span>🚪 اختبار إرسال إشارة فتح البوابة الآن (Test Gate Signal)</span>
+              </button>
+              <span id="gateTestFeedback" style="font-size: 0.85rem; font-weight: bold;"></span>
             </div>
           </div>
 
           <button type="submit" class="btn btn-primary" style="background: #1C3347; border: 1px solid #4DB3FF; color: #4DB3FF; font-weight: 800; padding: 10px 18px; border-radius: 8px; width: 100%; cursor: pointer;">
-            حفظ معايرة خوارزميات الوجه والبوابة
+            حفظ معايرة خوارزميات الوجه وإعدادات البوابة
           </button>
+        </form>
+      </div>
       <!-- Dev Card: WhatsApp Desktop Calibration & Search Coordinates (X, Y) -->
       <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
         <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px;">
@@ -1302,15 +1386,116 @@
           </div>
         </div>
 
-        <!-- Section C: Remote Control Center Configuration -->
+        <!-- Section C: Remote Control Center & Granular Feature Permissions -->
         <form method="post" action="{% url 'core:settings' %}" style="margin-bottom: 20px;">
           {% csrf_token %}
           <input type="hidden" name="action" value="save_license_settings">
 
-          <h4 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin: 0 0 10px 0;">
-            إعدادات مركز التحكم السحابي للمطور (Developer Cloud Control Center)
-          </h4>
+          <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+            <h4 style="color: var(--text-main); font-size: 1.05rem; font-weight: 800; margin: 0 0 6px 0; display: flex; align-items: center; gap: 8px;">
+              <span>🎛️ إدارة ترخيص وصلاحيات وميزات هذا العميل (Granular Access Control)</span>
+            </h4>
+            <span style="color: var(--text-muted); font-size: 0.8rem;">
+              يمكنك هنا تفعيل أو حجب أي ميزة من الـ 10 ميزات للعميل مباشرة، وتغيير باقته أو حالته، وربطه بمركز التحكم السحابي.
+            </span>
+          </div>
 
+          <!-- Client Info & Status Row -->
+          <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div>
+              <label style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">
+                اسم الجيم / العميل (Client Name):
+              </label>
+              <input type="text" name="license_client_name" value="{{ system_license.client_name }}" placeholder="مثال: Hulk Gym - فرع النزهة" required
+                     style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 9px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: bold;">
+            </div>
+
+            <div>
+              <label style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">
+                حالة الترخيص (License Status):
+              </label>
+              <select name="license_status" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 9px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: bold;">
+                <option value="active" {% if system_license.status == 'active' %}selected{% endif %}>🟢 نشط ومفعل (Active)</option>
+                <option value="demo" {% if system_license.status == 'demo' %}selected{% endif %}>🟡 تجريبي (Demo)</option>
+                <option value="suspended" {% if system_license.status == 'suspended' %}selected{% endif %}>🔴 معلق / موقوف لعدم السداد (Suspended)</option>
+                <option value="expired" {% if system_license.status == 'expired' %}selected{% endif %}>⚪ منتهي الصلاحية (Expired)</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">
+                نوع الباقة (License Type):
+              </label>
+              <select name="license_type" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 9px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: bold;">
+                <option value="monthly" {% if system_license.license_type == 'monthly' %}selected{% endif %}>شهري (Monthly)</option>
+                <option value="yearly" {% if system_license.license_type == 'yearly' %}selected{% endif %}>سنوي (Yearly)</option>
+                <option value="lifetime" {% if system_license.license_type == 'lifetime' %}selected{% endif %}>مدى الحياة (Lifetime)</option>
+                <option value="demo" {% if system_license.license_type == 'demo' %}selected{% endif %}>تجريبي (Demo)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 10 Granular Feature Toggles Grid -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
+            <label style="color: #4DB3FF; font-size: 0.85rem; font-weight: 800; display: block; margin-bottom: 10px;">
+              🛡️ الميزات المتاحة لهذا العميل (حدد أو ألغِ أي ميزة بدقة):
+            </label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px;">
+              
+              <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                <input type="checkbox" name="feature_face_recognition" {% if system_license.feature_face_recognition %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #10b981;">
+                <span style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">📷 بصمة الوجه والكاميرا</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                <input type="checkbox" name="feature_gate_relay" {% if system_license.feature_gate_relay %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #10b981;">
+                <span style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">🚪 بوابات الدخول والريليه الإلكتروني</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                <input type="checkbox" name="feature_whatsapp" {% if system_license.feature_whatsapp %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #10b981;">
+                <span style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">💬 إشعارات ورسائل الواتساب</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                <input type="checkbox" name="feature_telegram" {% if system_license.feature_telegram %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #10b981;">
+                <span style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">🤖 بوت التليجرام التفاعلي</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                <input type="checkbox" name="feature_bar" {% if system_license.feature_bar %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #10b981;">
+                <span style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">☕ مخزون ومبيعات البار والآجل</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                <input type="checkbox" name="feature_payroll" {% if system_license.feature_payroll %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #10b981;">
+                <span style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">👥 المدربين والنسب ومسير الرواتب</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                <input type="checkbox" name="feature_retention" {% if system_license.feature_retention %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #10b981;">
+                <span style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">📈 تتبع الاستمرارية والتسرب (Retention)</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                <input type="checkbox" name="feature_reports" {% if system_license.feature_reports %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #10b981;">
+                <span style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">📊 التقارير المالية المتقدمة</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                <input type="checkbox" name="feature_barcode" {% if system_license.feature_barcode %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #10b981;">
+                <span style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">🏷️ ماسح الباركود والـ QR Code</span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer;">
+                <input type="checkbox" name="feature_expenses" {% if system_license.feature_expenses %}checked{% endif %} style="width: 18px; height: 18px; accent-color: #10b981;">
+                <span style="font-size: 0.84rem; font-weight: 700; color: var(--text-main);">💵 المصروفات اليومية وبنود الخزينة</span>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- Central Cloud & Phone Settings -->
           <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: flex-end;">
             <div>
               <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 4px;">
@@ -1329,8 +1514,8 @@
             </div>
 
             <div style="display: flex; gap: 8px;">
-              <button type="submit" class="btn btn-primary" style="background: #2563eb; color: #fff; border: none; font-weight: 800; font-size: 0.85rem; padding: 10px 16px; border-radius: 8px; cursor: pointer; flex: 1;">
-                حفظ الرابط
+              <button type="submit" class="btn btn-primary" style="background: #2563eb; color: #fff; border: none; font-weight: 800; font-size: 0.88rem; padding: 10px 16px; border-radius: 8px; cursor: pointer; flex: 1;">
+                💾 حفظ الإعدادات والصلاحيات
               </button>
             </div>
           </div>
@@ -1749,6 +1934,33 @@ async function sendTelegramTestMsg() {
     if (resSpan) {
       resSpan.style.color = '#f87171';
       resSpan.textContent = 'خطأ في الاتصال بالخادم.';
+  }
+}
+
+async function testGateTriggerSignal() {
+  const badge = document.getElementById('gateTestFeedback');
+  if (badge) {
+    badge.style.color = '#38bdf8';
+    badge.textContent = '⏳ جاري إرسال إشارة فتح البوابة...';
+  }
+  try {
+    const res = await fetch("{% url 'face_recognition:test_gate_trigger' %}");
+    const data = await res.json();
+    if (data.status === 'ok') {
+      if (badge) {
+        badge.style.color = '#4ade80';
+        badge.textContent = `✓ ${data.message || 'تم إرسال إشارة الفتح بنجاح'}`;
+      }
+    } else {
+      if (badge) {
+        badge.style.color = '#f87171';
+        badge.textContent = `⚠️ فشل: ${data.message || 'تعذر الاتصال بالبوابة'}`;
+      }
+    }
+  } catch (err) {
+    if (badge) {
+      badge.style.color = '#f87171';
+      badge.textContent = '❌ خطأ في الاتصال بالخادم الداخلي.';
     }
   }
 }

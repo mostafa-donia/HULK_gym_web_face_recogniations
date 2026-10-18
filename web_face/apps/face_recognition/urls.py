@@ -30,4 +30,5 @@ urlpatterns = [
     path("api/live_events/", views.api_live_events_view),
     path("api/capture-frame/", views.api_capture_frame_view, name="api_capture_frame"),
     path("api/capture_frame/", views.api_capture_frame_view),
+    path("gate/test-trigger/", views.api_test_gate_trigger, name="test_gate_trigger"),
 ]

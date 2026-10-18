@@ -118,13 +118,18 @@ def get_clients_api():
             "valid_until": exp_str,
             "remaining_days": remaining_days,
             "is_expired": is_expired,
-            "features": c.get("features", {
-                "face_recognition": True,
-                "whatsapp": True,
-                "telegram": True,
-                "bar": True,
-                "payroll": True,
-            }),
+            "features": {
+                "face_recognition": c.get("features", {}).get("face_recognition", True),
+                "gate_relay": c.get("features", {}).get("gate_relay", True),
+                "whatsapp": c.get("features", {}).get("whatsapp", True),
+                "telegram": c.get("features", {}).get("telegram", True),
+                "bar": c.get("features", {}).get("bar", True),
+                "payroll": c.get("features", {}).get("payroll", True),
+                "retention": c.get("features", {}).get("retention", True),
+                "reports": c.get("features", {}).get("reports", True),
+                "barcode": c.get("features", {}).get("barcode", True),
+                "expenses": c.get("features", {}).get("expenses", True),
+            },
             "developer_message": c.get("developer_message", ""),
             "created_at": c.get("created_at", ""),
             "last_seen": c.get("last_seen", ""),
@@ -157,13 +162,19 @@ def add_client_api():
     name = (req.get("name") or "").strip()
     phone = (req.get("phone") or "").strip()
     duration = req.get("duration", "30")  # 7, 30, 90, 365, lifetime
-    features = req.get("features") or {
+    default_features = {
         "face_recognition": True,
+        "gate_relay": True,
         "whatsapp": True,
         "telegram": True,
         "bar": True,
         "payroll": True,
+        "retention": True,
+        "reports": True,
+        "barcode": True,
+        "expenses": True,
     }
+    features = req.get("features") or default_features
 
     if not hwid or not name:
         return jsonify({"success": False, "message": "اسم العميل وكود الجهاز (HWID) مطلوبان."}), 400

@@ -170,8 +170,10 @@ def validate_system_license(allow_remote_sync: bool = True) -> tuple[bool, str, 
             # Remote Features Toggle
             ft = remote_data.get("features", {})
             if isinstance(ft, dict):
-                if "face_recognition" in ft:
-                    license_obj.feature_face_recognition = bool(ft["face_recognition"])
+                if "face_recognition" in ft or "face" in ft:
+                    license_obj.feature_face_recognition = bool(ft.get("face_recognition", ft.get("face", True)))
+                if "gate_relay" in ft:
+                    license_obj.feature_gate_relay = bool(ft["gate_relay"])
                 if "whatsapp" in ft:
                     license_obj.feature_whatsapp = bool(ft["whatsapp"])
                 if "telegram" in ft:
@@ -180,6 +182,14 @@ def validate_system_license(allow_remote_sync: bool = True) -> tuple[bool, str, 
                     license_obj.feature_bar = bool(ft["bar"])
                 if "payroll" in ft:
                     license_obj.feature_payroll = bool(ft["payroll"])
+                if "retention" in ft:
+                    license_obj.feature_retention = bool(ft["retention"])
+                if "reports" in ft:
+                    license_obj.feature_reports = bool(ft["reports"])
+                if "barcode" in ft or "barcode_scanner" in ft:
+                    license_obj.feature_barcode = bool(ft.get("barcode", ft.get("barcode_scanner", True)))
+                if "expenses" in ft:
+                    license_obj.feature_expenses = bool(ft["expenses"])
 
             license_obj.tamper_hash = compute_tamper_token(
                 current_hwid, license_obj.status, license_obj.license_type, license_obj.valid_until
@@ -197,10 +207,15 @@ def validate_system_license(allow_remote_sync: bool = True) -> tuple[bool, str, 
         "developer_notes": license_obj.developer_notes,
         "features": {
             "face_recognition": license_obj.feature_face_recognition,
+            "gate_relay": license_obj.feature_gate_relay,
             "whatsapp": license_obj.feature_whatsapp,
             "telegram": license_obj.feature_telegram,
             "bar": license_obj.feature_bar,
             "payroll": license_obj.feature_payroll,
+            "retention": license_obj.feature_retention,
+            "reports": license_obj.feature_reports,
+            "barcode": license_obj.feature_barcode,
+            "expenses": license_obj.feature_expenses,
         },
     }
 
@@ -269,10 +284,15 @@ def activate_offline_token(token_str: str) -> tuple[bool, str]:
     ft = payload.get("ft", {})
     if isinstance(ft, dict):
         license_obj.feature_face_recognition = bool(ft.get("face_recognition", ft.get("face", True)))
+        license_obj.feature_gate_relay = bool(ft.get("gate_relay", True))
         license_obj.feature_whatsapp = bool(ft.get("whatsapp", True))
         license_obj.feature_telegram = bool(ft.get("telegram", True))
         license_obj.feature_bar = bool(ft.get("bar", True))
         license_obj.feature_payroll = bool(ft.get("payroll", True))
+        license_obj.feature_retention = bool(ft.get("retention", True))
+        license_obj.feature_reports = bool(ft.get("reports", True))
+        license_obj.feature_barcode = bool(ft.get("barcode", ft.get("barcode_scanner", True)))
+        license_obj.feature_expenses = bool(ft.get("expenses", True))
 
     license_obj.tamper_hash = compute_tamper_token(
         current_hwid, "active", license_obj.license_type, license_obj.valid_until

@@ -54,10 +54,15 @@ def generate_offline_license_token(
     clean_ft = {
         "face": bool(raw_ft.get("face", raw_ft.get("face_recognition", True))),
         "face_recognition": bool(raw_ft.get("face_recognition", raw_ft.get("face", True))),
+        "gate_relay": bool(raw_ft.get("gate_relay", raw_ft.get("gate", True))),
         "whatsapp": bool(raw_ft.get("whatsapp", True)),
         "telegram": bool(raw_ft.get("telegram", True)),
         "bar": bool(raw_ft.get("bar", True)),
         "payroll": bool(raw_ft.get("payroll", True)),
+        "retention": bool(raw_ft.get("retention", True)),
+        "reports": bool(raw_ft.get("reports", True)),
+        "barcode": bool(raw_ft.get("barcode", raw_ft.get("barcode_scanner", True))),
+        "expenses": bool(raw_ft.get("expenses", True)),
     }
     payload = {
         "mid": machine_id.strip(),

@@ -358,22 +358,111 @@ class FaceEngine:
         top_score = max(best_active_score, best_inactive_score, 0.0)
         return None, top_score
 
-    def trigger_gate_relay(self, port: str = "COM3"):
-        """Triggers turnstile / door electric lock relay pulse for automatic gate entry."""
-        def _relay_worker():
+    def trigger_gate_relay(self, profile=None, sync_execute: bool = False) -> tuple[bool, str]:
+        """
+        Triggers turnstile / door electronic lock relay pulse for automatic gate entry.
+        Supports:
+          1. LAN Local IP via HTTP GET/POST (e.g. http://192.168.1.50:80/open or http://192.168.1.50/relay/0?turn=on)
+          2. LAN Local IP via raw TCP Socket (e.g. 192.168.1.50:5000 with payload 'OPEN' or hex bytes)
+          3. Legacy Serial USB COM Port (e.g. COM3)
+        When called during face verification, runs asynchronously in a daemon thread.
+        When sync_execute=True (e.g. test button), executes and returns (success, message).
+        """
+        if profile is None:
             try:
-                import serial
-                with serial.Serial(port, 9600, timeout=1) as ser:
-                    # Standard USB Relay ON command (Channel 1 ON)
-                    ser.write(b"\xA0\x01\x01\xA2")
-                    time.sleep(2.5)  # Open turnstile for 2.5 seconds
-                    # Standard USB Relay OFF command (Channel 1 OFF)
-                    ser.write(b"\xA0\x01\x00\xA1")
-            except Exception as e:
-                # Silently catch if serial hardware is simulated or not plugged in
-                print(f"[Gate Relay Signal] Turnstile trigger on {port} (Hardware message: {e})")
+                from apps.core.models import GymProfile
+                profile = GymProfile.get_solo()
+            except Exception:
+                profile = None
 
-        threading.Thread(target=_relay_worker, daemon=True).start()
+        relay_type = getattr(profile, "gate_relay_type", "lan_http") if profile else "lan_http"
+        ip_addr = (getattr(profile, "gate_ip_address", "") or "192.168.1.50").strip() if profile else "192.168.1.50"
+        port_num = getattr(profile, "gate_ip_port", 80) if profile else 80
+        http_path = (getattr(profile, "gate_http_path", "") or "/open").strip() if profile else "/open"
+        http_method = getattr(profile, "gate_http_method", "GET") if profile else "GET"
+        tcp_payload = (getattr(profile, "gate_tcp_payload", "") or "OPEN").strip() if profile else "OPEN"
+        pulse_sec = float(getattr(profile, "gate_pulse_seconds", 2.5) or 2.5) if profile else 2.5
+        com_port = (getattr(profile, "gate_relay_port", "") or "COM3").strip() if profile else "COM3"
+
+        def _do_trigger() -> tuple[bool, str]:
+            # 1. LAN HTTP Trigger
+            if relay_type == "lan_http" or (ip_addr and not ip_addr.upper().startswith("COM")):
+                clean_ip = ip_addr
+                if not clean_ip.startswith("http://") and not clean_ip.startswith("https://"):
+                    path = http_path if http_path.startswith("/") else f"/{http_path}"
+                    target_url = f"http://{clean_ip}:{port_num}{path}"
+                else:
+                    target_url = clean_ip
+
+                print(f"[Gate Trigger LAN] Sending {http_method} request to gate at: {target_url}")
+                try:
+                    import urllib.request
+                    data_bytes = b"" if http_method.upper() == "POST" else None
+                    req = urllib.request.Request(
+                        target_url,
+                        data=data_bytes,
+                        headers={"User-Agent": "Systemize-AccessGate/2.0"},
+                        method=http_method.upper()
+                    )
+                    with urllib.request.urlopen(req, timeout=2.5) as resp:
+                        code = resp.getcode()
+                        msg = f"تم إرسال إشارة فتح البوابة عبر الشبكة المحلية إلى ({target_url}) بنجاح (كود الاستجابة: {code})."
+                        print(f"[Gate Trigger LAN] SUCCESS: {msg}")
+                        return True, msg
+                except Exception as ex:
+                    msg = f"تعذر الاتصال بالبوابة على العنوان {target_url} ({ex})"
+                    print(f"[Gate Trigger LAN Error] {msg}")
+                    return False, msg
+
+            # 2. LAN TCP Direct Socket Trigger
+            elif relay_type == "lan_tcp":
+                print(f"[Gate Trigger TCP] Connecting to gate socket at {ip_addr}:{port_num}...")
+                try:
+                    import socket
+                    with socket.create_connection((ip_addr, int(port_num)), timeout=2.5) as s:
+                        if tcp_payload.startswith("0x") or "\\x" in tcp_payload or " " in tcp_payload:
+                            try:
+                                hex_clean = tcp_payload.replace("0x", "").replace("\\x", "").replace(" ", "")
+                                p_bytes = bytes.fromhex(hex_clean)
+                            except Exception:
+                                p_bytes = tcp_payload.encode("utf-8")
+                        else:
+                            p_bytes = (tcp_payload + "\r\n").encode("utf-8")
+
+                        s.sendall(p_bytes)
+                        msg = f"تم إرسال أمر الفتح عبر مقبس TCP إلى {ip_addr}:{port_num} بنجاح ({len(p_bytes)} بايت)."
+                        print(f"[Gate Trigger TCP] SUCCESS: {msg}")
+                        if pulse_sec > 0:
+                            time.sleep(pulse_sec)
+                        return True, msg
+                except Exception as ex:
+                    msg = f"فشل الاتصال بمقبس TCP للبوابة على {ip_addr}:{port_num} ({ex})"
+                    print(f"[Gate Trigger TCP Error] {msg}")
+                    return False, msg
+
+            # 3. Serial USB Relay (COM Port)
+            elif relay_type == "serial_com" or com_port.upper().startswith("COM"):
+                try:
+                    import serial
+                    with serial.Serial(com_port, 9600, timeout=1) as ser:
+                        ser.write(b"\xA0\x01\x01\xA2")
+                        time.sleep(pulse_sec)
+                        ser.write(b"\xA0\x01\x00\xA1")
+                    msg = f"تم إرسال نبضة فتح البوابة عبر منفذ السيريال {com_port} بنجاح."
+                    print(f"[Gate Relay Serial] SUCCESS: {msg}")
+                    return True, msg
+                except Exception as ex:
+                    msg = f"خطأ في منفذ السيريال {com_port} ({ex})"
+                    print(f"[Gate Relay Serial Error] {msg}")
+                    return False, msg
+
+            return False, "نوع اتصال البوابة غير محدد."
+
+        if sync_execute:
+            return _do_trigger()
+        else:
+            threading.Thread(target=_do_trigger, daemon=True).start()
+            return True, "جاري إرسال إشارة فتح البوابة في الخلفية."
 
     def start_camera(self, camera_index: int = 0):
         """Starts the persistent independent camera capture thread."""
@@ -573,7 +662,7 @@ class FaceEngine:
 
                         gate_opened = bool(access_allowed and profile.gate_relay_enabled)
                         if gate_opened:
-                            self.trigger_gate_relay(port=profile.gate_relay_port or "COM3")
+                            self.trigger_gate_relay(profile=profile)
 
                         today = timezone.localdate()
                         expired_days = (today - member.last_subscription_end).days if (member.last_subscription_end and not member.is_active) else 0

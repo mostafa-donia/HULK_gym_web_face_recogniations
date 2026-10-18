@@ -1146,9 +1146,22 @@ def settings_view(request):
                 except (ValueError, TypeError):
                     pass
 
-            if "form_face" in request.POST or "face_match_threshold" in request.POST:
+            if "form_face" in request.POST or "gate_relay_type" in request.POST or "face_match_threshold" in request.POST:
                 profile.face_camera_enabled = "face_camera_enabled" in request.POST
                 profile.gate_relay_enabled = "gate_relay_enabled" in request.POST
+                profile.gate_relay_type = request.POST.get("gate_relay_type", profile.gate_relay_type or "lan_http").strip()
+                profile.gate_ip_address = request.POST.get("gate_ip_address", profile.gate_ip_address or "192.168.1.50").strip()
+                try:
+                    profile.gate_ip_port = int(request.POST.get("gate_ip_port", profile.gate_ip_port or 80))
+                except (ValueError, TypeError):
+                    pass
+                profile.gate_http_path = request.POST.get("gate_http_path", profile.gate_http_path or "/open").strip()
+                profile.gate_http_method = request.POST.get("gate_http_method", profile.gate_http_method or "GET").strip().upper()
+                profile.gate_tcp_payload = request.POST.get("gate_tcp_payload", profile.gate_tcp_payload or "OPEN").strip()
+                try:
+                    profile.gate_pulse_seconds = float(request.POST.get("gate_pulse_seconds", profile.gate_pulse_seconds or 2.5))
+                except (ValueError, TypeError):
+                    pass
                 profile.gate_relay_port = request.POST.get("gate_relay_port", profile.gate_relay_port or "COM3").strip()
 
             if "form_whatsapp" in request.POST or "whatsapp_send_mode" in request.POST:
@@ -1401,10 +1414,28 @@ def settings_view(request):
             lic.remote_control_url = request.POST.get("remote_control_url", "").strip()
             lic.developer_contact_phone = request.POST.get("developer_contact_phone", "01080922432").strip()
             lic.client_name = request.POST.get("license_client_name", lic.client_name).strip()
+
+            # Save all 10 feature flags directly
+            lic.feature_face_recognition = "feature_face_recognition" in request.POST
+            lic.feature_gate_relay = "feature_gate_relay" in request.POST
+            lic.feature_whatsapp = "feature_whatsapp" in request.POST
+            lic.feature_telegram = "feature_telegram" in request.POST
+            lic.feature_bar = "feature_bar" in request.POST
+            lic.feature_payroll = "feature_payroll" in request.POST
+            lic.feature_retention = "feature_retention" in request.POST
+            lic.feature_reports = "feature_reports" in request.POST
+            lic.feature_barcode = "feature_barcode" in request.POST
+            lic.feature_expenses = "feature_expenses" in request.POST
+
+            if "license_status" in request.POST and request.POST["license_status"] in ["demo", "active", "suspended", "expired"]:
+                lic.status = request.POST["license_status"]
+            if "license_type" in request.POST and request.POST["license_type"] in ["demo", "monthly", "yearly", "lifetime"]:
+                lic.license_type = request.POST["license_type"]
+
             exp_iso = lic.valid_until.isoformat() if lic.valid_until else "NONE"
             lic.tamper_hash = compute_tamper_token(lic.machine_id, lic.status, lic.license_type, exp_iso)
             lic.save()
-            messages.success(request, "✓ تم حفظ إعدادات مركز التحكم والترخيص بنجاح.")
+            messages.success(request, "✓ تم حفظ إعدادات الترخيص وتخصيص صلاحيات الميزات بنجاح.")
             return redirect("core:settings")
 
         elif action == "activate_license_key":
