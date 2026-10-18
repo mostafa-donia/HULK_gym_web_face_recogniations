@@ -354,6 +354,10 @@
         {% endif %}
 
         {% if user.is_manager %}
+        <a href="{% url 'reports:member_retention' %}" class="top-nav-item {% if 'retention' in request.path %}active{% endif %}" title="تقرير حركة واحتفاظ الأعضاء وميزان الأرباح والخسائر">
+          <span>حركة الأعضاء</span>
+        </a>
+
         <a href="{% url 'core:settings' %}" class="top-nav-item {% if 'settings' in request.path %}active{% endif %}">
           <span>الإعدادات</span>
         </a>

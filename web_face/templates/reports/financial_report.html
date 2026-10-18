@@ -9,8 +9,11 @@
       <h1 class="page-title" style="margin: 0;">📊 التقارير المالية والإدارية</h1>
       <p style="color: var(--text-muted); margin-top: 0.25rem;">ملخص الإيرادات والمصروفات والرواتب وصافي الأرباح</p>
     </div>
-    <div style="display: flex; gap: 0.5rem;">
-      <button onclick="window.print()" class="btn btn-secondary">
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <a href="{% url 'reports:member_retention' %}" class="btn btn-primary" style="height: 42px; display: inline-flex; align-items: center; gap: 6px;">
+        🔄 تقرير حركة واحتفاظ الأعضاء
+      </a>
+      <button onclick="window.print()" class="btn btn-secondary" style="height: 42px; display: inline-flex; align-items: center; gap: 6px;">
         🖨️ طباعة التقرير
       </button>
     </div>

@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}لوحة المدير — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
@@ -39,6 +39,10 @@
 
         <a href="{% url 'reports:financial_report' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
           📑 التقارير المالية
+        </a>
+
+        <a href="{% url 'reports:member_retention' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; border-color: #10B981; color: #10B981;">
+          🔄 حركة واحتفاظ الأعضاء
         </a>
       </div>
     </div>
