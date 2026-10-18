@@ -14,8 +14,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <!-- MediaPipe Hands & Camera Utils for 4-Finger Gesture Tracking -->
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.4/camera_utils.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
   <style>
     :root {
@@ -1110,21 +1110,68 @@
             <span>وتابع في الوقت المناسب.</span>
           </h2>
 
-          <!-- WhatsApp Renewal Reminder Bubble -->
-          <div style="background: #054640; border: 1px solid #005d4b; border-radius: 16px 16px 4px 16px; padding: 14px 18px; max-width: 380px; margin: 18px 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-            <div style="font-size: 0.75rem; color: #a7f3d0; font-weight: 800; margin-bottom: 4px;">
-              <i class="fa-brands fa-whatsapp"></i> رسالة تذكير تجديد تلقائية
+          <!-- Interactive Retention & Movement Financial Strip -->
+          <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 16px; padding: 14px 16px; max-width: 440px; margin: 16px 0 12px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;">
+              <span style="font-size: 0.82rem; font-weight: 800; color: #a3e635;"><i class="fa fa-chart-pie"></i> حركة واستمرارية الأعضاء (الشهر الحالي)</span>
+              <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">معدل استمرارية: <strong style="color: #10b981;">84%</strong></span>
             </div>
-            <div style="font-size: 0.95rem; color: #ffffff; line-height: 1.5; font-weight: 600;">
-              "كابتن أحمد.. اشتراكك هينتهي بعد يومين (20 أكتوبر). مستنينك تجدد عشان تستمر في فورمتك! 💪"
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center;">
+              <!-- 1. Continuing -->
+              <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 8px 4px;">
+                <div style="font-size: 0.68rem; color: #a7f3d0; font-weight: 700;">المستمرون</div>
+                <div style="font-size: 1.15rem; font-weight: 900; color: #10b981; font-family: var(--font-mono);">142</div>
+                <div style="font-size: 0.72rem; color: #10b981; font-weight: 800; font-family: var(--font-mono);">+49,700 ج</div>
+                <div style="font-size: 0.62rem; color: #6ee7b7;">أرباح التجديد</div>
+              </div>
+
+              <!-- 2. Left / Churned -->
+              <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 10px; padding: 8px 4px;">
+                <div style="font-size: 0.68rem; color: #fecdd3; font-weight: 700;">المغادرون</div>
+                <div style="font-size: 1.15rem; font-weight: 900; color: #f43f5e; font-family: var(--font-mono);">28</div>
+                <div style="font-size: 0.72rem; color: #f43f5e; font-weight: 800; font-family: var(--font-mono);">-9,800 ج</div>
+                <div style="font-size: 0.62rem; color: #fda4af;">خسارة مفقودة</div>
+              </div>
+
+              <!-- 3. New -->
+              <div style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 8px 4px;">
+                <div style="font-size: 0.68rem; color: #bae6fd; font-weight: 700;">المشتركون الجدد</div>
+                <div style="font-size: 1.15rem; font-weight: 900; color: #38bdf8; font-family: var(--font-mono);">35</div>
+                <div style="font-size: 0.72rem; color: #38bdf8; font-weight: 800; font-family: var(--font-mono);">+12,250 ج</div>
+                <div style="font-size: 0.62rem; color: #7dd3fc;">إيراد اشتراكات</div>
+              </div>
             </div>
-            <div style="font-size: 0.7rem; color: #6ee7b7; text-align: left; margin-top: 4px; direction: ltr;">10:30 AM ✓✓</div>
+
+            <!-- Net Balance bar + Action Button -->
+            <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.35); border-radius: 8px; padding: 6px 10px;">
+              <div style="font-size: 0.74rem; color: #cbd5e1; font-weight: 700;">
+                الميزان المالي: <span style="color: #84cc16; font-weight: 900; font-family: var(--font-mono);">+52,150 ج</span> (صافي نمو <strong style="color: #10b981;">+7</strong>)
+              </div>
+              <button type="button" onclick="openModal('retentionModal')" style="background: rgba(132, 204, 22, 0.2); border: 1px solid #84cc16; color: #a3e635; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; cursor: pointer; transition: all 0.2s;">
+                <i class="fa fa-list-check"></i> عرض الكشف بالأسماء
+              </button>
+            </div>
+          </div>
+
+          <!-- WhatsApp Renewal & Winback Reminder Bubble -->
+          <div style="background: #054640; border: 1px solid #005d4b; border-radius: 14px 14px 4px 14px; padding: 10px 14px; max-width: 440px; margin-bottom: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 1.6rem; color: #25d366;"><i class="fa-brands fa-whatsapp"></i></div>
+            <div style="flex: 1;">
+              <div style="font-size: 0.72rem; color: #a7f3d0; font-weight: 800;">
+                استرجاع تلقائي للمنقطعين (Win-Back)
+              </div>
+              <div style="font-size: 0.85rem; color: #ffffff; font-weight: 600; line-height: 1.4;">
+                "كابتن أحمد.. وحشتنا في الجيم! مجهزينلك عرض مميز ترجع تكمل فورمتك بيه! 💪"
+              </div>
+            </div>
+            <div style="font-size: 0.65rem; color: #6ee7b7; direction: ltr;">10:30 AM ✓✓</div>
           </div>
 
           <div class="pills-row">
-            <span class="pill-item"><i class="fa fa-arrows-spin" style="color: #10B981;"></i> حركة الأعضاء (مستمر • غادر • جديد)</span>
+            <span class="pill-item" onclick="openModal('retentionModal')" style="cursor: pointer;"><i class="fa fa-arrows-spin" style="color: #10B981;"></i> كشف الأعضاء (مستمر • غادر • جديد)</span>
             <span class="pill-item"><i class="fa fa-calculator" style="color: #38bdf8;"></i> أرباح التجديد vs خسارة الانقطاع</span>
-            <span class="pill-item"><i class="fa fa-paper-plane"></i> استعادة العميل بواتساب فوري</span>
+            <span class="pill-item"><i class="fa fa-paper-plane"></i> استرجاع فوري بضغطة زر</span>
           </div>
         </div>
 
@@ -1223,7 +1270,7 @@
 
           <div class="pills-row" style="margin-top: 24px;">
             <span class="pill-item"><i class="fa fa-users"></i> الأعضاء النشطين vs المنتهيين</span>
-            <span class="pill-item"><i class="fa fa-user-check"></i> حركة الأعضاء (مستمر • غادر • جديد)</span>
+            <span class="pill-item" onclick="openModal('retentionModal')" style="cursor: pointer; background: rgba(132, 204, 22, 0.15); border-color: #84cc16; color: #a3e635;"><i class="fa fa-chart-pie"></i> حركة واستمرارية الأعضاء (Retention & Churn) ↗</span>
             <span class="pill-item"><i class="fa fa-money-bill-wave"></i> صافي الإيراد الحقيقي والأرباح</span>
             <span class="pill-item"><i class="fa fa-clock"></i> تسجيلات الحضور اليومية</span>
           </div>
@@ -1611,6 +1658,231 @@
       <div style="display: flex; gap: 10px; justify-content: flex-end; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);">
         <button class="btn-secondary" onclick="closeModal('presenterSettingsModal')">إلغاء</button>
         <button class="btn-primary" onclick="savePresenterSettings()"><i class="fa fa-floppy-disk"></i> حفظ التعديلات</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Member Retention & Financial Churn Breakdown (Slide 6 & 10) -->
+  <div class="modal-overlay" id="retentionModal">
+    <div class="modal-container" style="max-width: 940px; max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px; margin-bottom: 16px;">
+        <div>
+          <div style="font-size: 0.8rem; color: #a3e635; font-weight: 800; text-transform: uppercase;">تحليل حركة المشتركين المالي • Systemize Intelligence</div>
+          <h3 style="font-size: 1.35rem; font-weight: 900; color: #ffffff; margin-top: 2px;">
+            <i class="fa fa-chart-pie text-lime-400"></i> كشف حركة واستمرارية الأعضاء والأثر المالي (أكتوبر 2026)
+          </h3>
+        </div>
+        <button onclick="closeModal('retentionModal')" style="background: transparent; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;"><i class="fa fa-times"></i></button>
+      </div>
+
+      <!-- 4 Hero Impact KPIs -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px;">
+        <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 12px 10px; text-align: center;">
+          <div style="font-size: 0.72rem; color: #a7f3d0; font-weight: 700;">المستمرون من الشهر الماضي</div>
+          <div style="font-size: 1.4rem; font-weight: 900; color: #10b981; font-family: var(--font-mono);">142 عضو</div>
+          <div style="font-size: 0.8rem; color: #10b981; font-weight: 800; font-family: var(--font-mono);">+49,700 ج.م</div>
+          <div style="font-size: 0.68rem; color: #6ee7b7;">أرباح التجديد</div>
+        </div>
+
+        <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 12px; padding: 12px 10px; text-align: center;">
+          <div style="font-size: 0.72rem; color: #fecdd3; font-weight: 700;">المغادرون والمنقطعون</div>
+          <div style="font-size: 1.4rem; font-weight: 900; color: #f43f5e; font-family: var(--font-mono);">28 عضو</div>
+          <div style="font-size: 0.8rem; color: #f43f5e; font-weight: 800; font-family: var(--font-mono);">-9,800 ج.م</div>
+          <div style="font-size: 0.68rem; color: #fda4af;">خسارة مالية مفقودة</div>
+        </div>
+
+        <div style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 12px 10px; text-align: center;">
+          <div style="font-size: 0.72rem; color: #bae6fd; font-weight: 700;">المشتركون الجدد</div>
+          <div style="font-size: 1.4rem; font-weight: 900; color: #38bdf8; font-family: var(--font-mono);">35 عضو</div>
+          <div style="font-size: 0.8rem; color: #38bdf8; font-weight: 800; font-family: var(--font-mono);">+12,250 ج.م</div>
+          <div style="font-size: 0.68rem; color: #7dd3fc;">إيراد اشتراكات جديدة</div>
+        </div>
+
+        <div style="background: rgba(132, 204, 22, 0.12); border: 1px solid rgba(132, 204, 22, 0.35); border-radius: 12px; padding: 12px 10px; text-align: center;">
+          <div style="font-size: 0.72rem; color: #d9f99d; font-weight: 700;">صافي الميزان المالي للحركة</div>
+          <div style="font-size: 1.4rem; font-weight: 900; color: #a3e635; font-family: var(--font-mono);">+52,150 ج.م</div>
+          <div style="font-size: 0.8rem; color: #a3e635; font-weight: 800;">صافي نمو: +7 أعضاء</div>
+          <div style="font-size: 0.68rem; color: #bef264;">استمرارية: 83.5% • تسرب: 16.5%</div>
+        </div>
+      </div>
+
+      <!-- Cohort Switcher Tabs & Live Search -->
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="retention-tab-btn active" onclick="switchRetentionTab('left', this)" style="background: #f43f5e; color: #fff; border: none; font-size: 0.82rem; font-weight: 800; padding: 7px 14px; border-radius: 20px; cursor: pointer;">
+            <i class="fa fa-user-xmark"></i> المنقطعون (28) — استرجاع
+          </button>
+          <button type="button" class="retention-tab-btn" onclick="switchRetentionTab('continuing', this)" style="background: rgba(255,255,255,0.08); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.15); font-size: 0.82rem; font-weight: 800; padding: 7px 14px; border-radius: 20px; cursor: pointer;">
+            <i class="fa fa-user-check"></i> المستمرون (142)
+          </button>
+          <button type="button" class="retention-tab-btn" onclick="switchRetentionTab('new', this)" style="background: rgba(255,255,255,0.08); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.15); font-size: 0.82rem; font-weight: 800; padding: 7px 14px; border-radius: 20px; cursor: pointer;">
+            <i class="fa fa-user-plus"></i> الجدد (35)
+          </button>
+        </div>
+
+        <div style="position: relative; width: 260px;">
+          <input type="text" id="retentionFilterInput" placeholder="بحث بالاسم أو التليفون أو الكود..." oninput="filterRetentionRows()" style="width: 100%; background: #030712; border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 7px 12px 7px 30px; font-size: 0.82rem; color: #fff; outline: none;">
+          <i class="fa fa-search" style="position: absolute; left: 10px; top: 10px; color: #64748b; font-size: 0.8rem;"></i>
+        </div>
+      </div>
+
+      <!-- Member Tables Container -->
+      <div style="background: rgba(3, 7, 18, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; overflow: hidden; max-height: 380px; overflow-y: auto;">
+        
+        <!-- Table 1: Left / Churned (Active Tab by default so presenter can show winback immediately) -->
+        <table id="retentionTableLeft" style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: right;">
+          <thead>
+            <tr style="background: rgba(244, 63, 94, 0.15); color: #fecdd3; border-bottom: 1px solid rgba(244, 63, 94, 0.3);">
+              <th style="padding: 10px 12px;">الكود</th>
+              <th style="padding: 10px 12px;">الاسم</th>
+              <th style="padding: 10px 12px;">الموبايل</th>
+              <th style="padding: 10px 12px;">آخر اشتراك</th>
+              <th style="padding: 10px 12px;">الخسارة المفقودة</th>
+              <th style="padding: 10px 12px;">تاريخ الانتهاء</th>
+              <th style="padding: 10px 12px; text-align: center;">إجراء الاسترجاع (Win-Back)</th>
+            </tr>
+          </thead>
+          <tbody id="retentionTbodyLeft">
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #94a3b8;">#1042</td>
+              <td style="padding: 10px 12px; font-weight: 800; color: #ffffff;">إسلام محمود عبد الفتاح</td>
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #cbd5e1;">01012345678</td>
+              <td style="padding: 10px 12px; color: #cbd5e1;">باقة شهر حديد</td>
+              <td style="padding: 10px 12px; color: #f43f5e; font-weight: 900; font-family: var(--font-mono);">-350 ج</td>
+              <td style="padding: 10px 12px; color: #f87171;">5 أكتوبر 2026</td>
+              <td style="padding: 10px 12px; text-align: center;">
+                <a href="https://wa.me/201012345678?text=%D9%83%D8%A7%D8%A8%D8%AA%D9%86%20%D8%A5%D8%B3%D9%84%D8%A7%D9%85%D8%8C%20%D9%88%D8%AD%D8%B4%D8%AA%D9%86%D8%A7%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AC%D9%8A%D9%85%21%20%D8%A8%D9%82%D8%A7%D9%84%D9%83%20%D9%81%D8%AA%D8%B1%D8%A9%20%D9%85%D8%B4%20%D8%A8%D8%A7%D9%8A%D9%86%D8%8C%20%D9%85%D8%AC%D9%87%D8%B2%D9%8A%D9%86%D9%84%D9%83%20%D8%B9%D8%B1%D8%B6%20%D8%AA%D8%B4%D8%AC%D9%8A%D8%B9%D9%8A%20%D8%AA%D8%B1%D8%AC%D8%B9%20%D8%AA%D9%83%D9%85%D9%84%20%D9%81%D9%88%D8%B1%D9%85%D8%AA%D9%83%20%D8%A8%D9%8A%D9%87%21" target="_blank" style="background: #25d366; color: #030712; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                  <i class="fa-brands fa-whatsapp"></i> استرجاع واتساب
+                </a>
+              </td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #94a3b8;">#1088</td>
+              <td style="padding: 10px 12px; font-weight: 800; color: #ffffff;">مصطفى طارق السيد</td>
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #cbd5e1;">01198765432</td>
+              <td style="padding: 10px 12px; color: #cbd5e1;">باقة 3 شهور تدريب</td>
+              <td style="padding: 10px 12px; color: #f43f5e; font-weight: 900; font-family: var(--font-mono);">-950 ج</td>
+              <td style="padding: 10px 12px; color: #f87171;">8 أكتوبر 2026</td>
+              <td style="padding: 10px 12px; text-align: center;">
+                <a href="https://wa.me/201198765432?text=%D9%83%D8%A7%D8%A8%D8%AA%D9%86%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%D8%8C%20%D9%88%D8%AD%D8%B4%D8%AA%D9%86%D8%A7%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AC%D9%8A%D9%85%21%20%D8%AD%D8%A7%D8%A8%D9%8A%D9%86%20%D9%86%D8%B7%D9%85%D9%86%20%D8%B9%D9%84%D9%8A%D9%83%20%D9%88%D9%85%D8%AC%D9%87%D8%B2%D9%8A%D9%86%D9%84%D9%83%20%D8%B9%D8%B1%D8%B6%20%D8%AE%D8%A7%D8%B5%20%D8%AA%D8%AC%D8%AF%D8%AF%20%D8%A8%D9%8A%D9%87%21" target="_blank" style="background: #25d366; color: #030712; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                  <i class="fa-brands fa-whatsapp"></i> استرجاع واتساب
+                </a>
+              </td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #94a3b8;">#1115</td>
+              <td style="padding: 10px 12px; font-weight: 800; color: #ffffff;">خالد عبد الرحمن نور</td>
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #cbd5e1;">01234567890</td>
+              <td style="padding: 10px 12px; color: #cbd5e1;">باقة شهر شامل كلاسات</td>
+              <td style="padding: 10px 12px; color: #f43f5e; font-weight: 900; font-family: var(--font-mono);">-450 ج</td>
+              <td style="padding: 10px 12px; color: #f87171;">11 أكتوبر 2026</td>
+              <td style="padding: 10px 12px; text-align: center;">
+                <a href="https://wa.me/201234567890?text=%D9%83%D8%A7%D8%A8%D8%AA%D9%86%20%D8%AE%D8%A7%D9%84%D8%AF%D8%8C%20%D9%88%D8%AD%D8%B4%D8%AA%D9%86%D8%A7%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AC%D9%8A%D9%85%21%20%D9%85%D8%B3%D8%AA%D9%86%D9%8A%D9%86%D9%83%20%D8%AA%D8%B1%D8%AC%D8%B9%20%D8%AA%D9%83%D9%85%D9%84%20%D9%81%D9%88%D8%B1%D9%85%D8%AA%D9%83%21" target="_blank" style="background: #25d366; color: #030712; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                  <i class="fa-brands fa-whatsapp"></i> استرجاع واتساب
+                </a>
+              </td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #94a3b8;">#1140</td>
+              <td style="padding: 10px 12px; font-weight: 800; color: #ffffff;">عمر سعيد النجار</td>
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #cbd5e1;">01555554433</td>
+              <td style="padding: 10px 12px; color: #cbd5e1;">باقة شهر حديد</td>
+              <td style="padding: 10px 12px; color: #f43f5e; font-weight: 900; font-family: var(--font-mono);">-350 ج</td>
+              <td style="padding: 10px 12px; color: #f87171;">13 أكتوبر 2026</td>
+              <td style="padding: 10px 12px; text-align: center;">
+                <a href="https://wa.me/201555554433?text=%D9%83%D8%A7%D8%A8%D8%AA%D9%86%20%D8%B9%D9%85%D8%B1%D8%8C%20%D9%88%D8%AD%D8%B4%D8%AA%D9%86%D8%A7%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AC%D9%8A%D9%85%21%20%D9%85%D8%AC%D9%87%D8%B2%D9%8A%D9%86%D9%84%D9%83%20%D8%AE%D8%B5%D9%85%20%D8%AE%D8%A7%D8%B5%20%D8%AA%D8%B1%D8%AC%D8%B9%20%D8%A8%D9%8A%D9%87%21" target="_blank" style="background: #25d366; color: #030712; font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                  <i class="fa-brands fa-whatsapp"></i> استرجاع واتساب
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Table 2: Continuing (Hidden by default) -->
+        <table id="retentionTableContinuing" style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: right; display: none;">
+          <thead>
+            <tr style="background: rgba(16, 185, 129, 0.15); color: #a7f3d0; border-bottom: 1px solid rgba(16, 185, 129, 0.3);">
+              <th style="padding: 10px 12px;">الكود</th>
+              <th style="padding: 10px 12px;">الاسم</th>
+              <th style="padding: 10px 12px;">الموبايل</th>
+              <th style="padding: 10px 12px;">الباقة المجددة</th>
+              <th style="padding: 10px 12px;">أرباح التجديد</th>
+              <th style="padding: 10px 12px;">تاريخ التجديد</th>
+              <th style="padding: 10px 12px; text-align: center;">الحالة</th>
+            </tr>
+          </thead>
+          <tbody id="retentionTbodyContinuing">
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #94a3b8;">#1003</td>
+              <td style="padding: 10px 12px; font-weight: 800; color: #ffffff;">أحمد محمد البدري</td>
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #cbd5e1;">01065432100</td>
+              <td style="padding: 10px 12px; color: #cbd5e1;">اشتراك شهري حديد</td>
+              <td style="padding: 10px 12px; color: #10b981; font-weight: 900; font-family: var(--font-mono);">+350 ج</td>
+              <td style="padding: 10px 12px; color: #10b981;">2 أكتوبر 2026</td>
+              <td style="padding: 10px 12px; text-align: center;"><span style="background: rgba(16,185,129,0.2); color: #34d399; font-size: 0.72rem; padding: 3px 8px; border-radius: 10px; font-weight: 800;">ساري ومستمر ✓</span></td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #94a3b8;">#1015</td>
+              <td style="padding: 10px 12px; font-weight: 800; color: #ffffff;">كريم علاء الدين</td>
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #cbd5e1;">01211122233</td>
+              <td style="padding: 10px 12px; color: #cbd5e1;">باقة 3 شهور تدريب</td>
+              <td style="padding: 10px 12px; color: #10b981; font-weight: 900; font-family: var(--font-mono);">+950 ج</td>
+              <td style="padding: 10px 12px; color: #10b981;">4 أكتوبر 2026</td>
+              <td style="padding: 10px 12px; text-align: center;"><span style="background: rgba(16,185,129,0.2); color: #34d399; font-size: 0.72rem; padding: 3px 8px; border-radius: 10px; font-weight: 800;">ساري ومستمر ✓</span></td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #94a3b8;">#1022</td>
+              <td style="padding: 10px 12px; font-weight: 800; color: #ffffff;">يوسف شريف حسن</td>
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #cbd5e1;">01099887766</td>
+              <td style="padding: 10px 12px; color: #cbd5e1;">اشتراك شهري شامل</td>
+              <td style="padding: 10px 12px; color: #10b981; font-weight: 900; font-family: var(--font-mono);">+450 ج</td>
+              <td style="padding: 10px 12px; color: #10b981;">7 أكتوبر 2026</td>
+              <td style="padding: 10px 12px; text-align: center;"><span style="background: rgba(16,185,129,0.2); color: #34d399; font-size: 0.72rem; padding: 3px 8px; border-radius: 10px; font-weight: 800;">ساري ومستمر ✓</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Table 3: New Members (Hidden by default) -->
+        <table id="retentionTableNew" style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: right; display: none;">
+          <thead>
+            <tr style="background: rgba(56, 189, 248, 0.15); color: #bae6fd; border-bottom: 1px solid rgba(56, 189, 248, 0.3);">
+              <th style="padding: 10px 12px;">الكود</th>
+              <th style="padding: 10px 12px;">الاسم</th>
+              <th style="padding: 10px 12px;">الموبايل</th>
+              <th style="padding: 10px 12px;">نوع الاشتراك</th>
+              <th style="padding: 10px 12px;">إيراد الانضمام</th>
+              <th style="padding: 10px 12px;">تاريخ التسجيل</th>
+              <th style="padding: 10px 12px; text-align: center;">الحالة</th>
+            </tr>
+          </thead>
+          <tbody id="retentionTbodyNew">
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #94a3b8;">#1241</td>
+              <td style="padding: 10px 12px; font-weight: 800; color: #ffffff;">حسام ممدوح إبراهيم</td>
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #cbd5e1;">01122334455</td>
+              <td style="padding: 10px 12px; color: #cbd5e1;">اشتراك 3 شهور جديد</td>
+              <td style="padding: 10px 12px; color: #38bdf8; font-weight: 900; font-family: var(--font-mono);">+950 ج</td>
+              <td style="padding: 10px 12px; color: #38bdf8;">1 أكتوبر 2026</td>
+              <td style="padding: 10px 12px; text-align: center;"><span style="background: rgba(56,189,248,0.2); color: #38bdf8; font-size: 0.72rem; padding: 3px 8px; border-radius: 10px; font-weight: 800;">مشترك جديد ⭐</span></td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #94a3b8;">#1242</td>
+              <td style="padding: 10px 12px; font-weight: 800; color: #ffffff;">محمود عادل الشناوي</td>
+              <td style="padding: 10px 12px; font-family: var(--font-mono); color: #cbd5e1;">01088776655</td>
+              <td style="padding: 10px 12px; color: #cbd5e1;">اشتراك شهري حديد</td>
+              <td style="padding: 10px 12px; color: #38bdf8; font-weight: 900; font-family: var(--font-mono);">+350 ج</td>
+              <td style="padding: 10px 12px; color: #38bdf8;">3 أكتوبر 2026</td>
+              <td style="padding: 10px 12px; text-align: center;"><span style="background: rgba(56,189,248,0.2); color: #38bdf8; font-size: 0.72rem; padding: 3px 8px; border-radius: 10px; font-weight: 800;">مشترك جديد ⭐</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="font-size: 0.75rem; color: #94a3b8;">
+          * الحسابات الفعلية مستخرجة آلياً من قاعدة بيانات واشتراكات الجيم عبر نظام <strong>Systemize</strong>
+        </div>
+        <button class="btn-primary" onclick="closeModal('retentionModal')">إغلاق والرجوع للعرض</button>
       </div>
     </div>
   </div>
@@ -2033,7 +2305,7 @@
       }
       try {
         mpHands = new Hands({
-          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
         });
         mpHands.setOptions({
           maxNumHands: 2,
@@ -2052,6 +2324,9 @@
     async function initWebcamGesture() {
       try {
         hudStatus.innerText = 'طلب الكاميرا...';
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('الكاميرا مقيدة في مسار file:// — يرجى تشغيل RUN_PRESENTATION.bat');
+        }
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 320, height: 240, frameRate: { ideal: 30 } },
           audio: false
@@ -2065,16 +2340,22 @@
           initMediaPipe();
         }
 
-        hudStatus.innerText = 'لوّح ✋ أو L-Shape ✌️';
+        hudStatus.innerText = 'لوّح ✋ أو Pinch 🤏 للتكبير';
         hudPulse.style.background = '#84cc16';
         hudPulse.style.boxShadow = '0 0 10px #84cc16';
         toggleGestureBtn.innerHTML = '<i class="fa fa-video"></i> إيقاف';
         processMotionFrames();
-        showWaveToast('الكاميرا نشطة: لوّح للتقليب، أو ارفع سبابتين وإبهامين للتكبير والتجول!');
+        showWaveToast('الكاميرا نشطة: لوّح للتقليب، أو اعمل Pinch 🤏 للتكبير والتجول!');
       } catch (err) {
-        hudStatus.innerText = 'الكاميرا غير مفعلة';
+        console.warn("Camera access error:", err);
+        hudStatus.innerText = 'الكاميرا غير مفعلة (أو مقيدة)';
         hudPulse.style.background = '#f59e0b';
         isCameraActive = false;
+        if (window.location.protocol === 'file:') {
+          showWaveToast('لتفعيل الكاميرا تلقائياً، شغّل ملف RUN_PRESENTATION.bat، أو استخدم مفتاح Z للتكبير!');
+        } else {
+          showWaveToast('الكاميرا تحتاج إذن المتصفح، أو استخدم مفتاح Z للتكبير والأسهم للتقليب!');
+        }
       }
     }
 
@@ -2608,38 +2889,6 @@
       }
     }
 
-        // Apply transform to active image
-        let targetImg = null;
-        if (document.getElementById('imageLightbox').classList.contains('open')) {
-          targetImg = document.getElementById('lightboxImg');
-        } else {
-          const activeSlide = slides[currentSlide];
-          if (activeSlide) {
-            const visual = activeSlide.querySelector('.visual-wrapper');
-            if (visual) targetImg = visual.querySelector('img');
-          }
-        }
-
-        if (targetImg) {
-          targetImg.style.transform = `translate(${currentPanX.toFixed(1)}px, ${currentPanY.toFixed(1)}px) scale(${currentZoomScale.toFixed(2)})`;
-        }
-      }
-
-      requestAnimationFrame(updateZoomTransformLoop);
-    }
-
-    function updateFingerDot(id, pos) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (pos) {
-        el.style.display = 'block';
-        el.style.left = `${pos.x}px`;
-        el.style.top = `${pos.y}px`;
-      } else {
-        el.style.display = 'none';
-      }
-    }
-
     function triggerHandWaveAction(direction) {
       isGestureCoolingDown = true;
       motionHistory = [];
@@ -2667,6 +2916,46 @@
     function closeModal(id) { document.getElementById(id).classList.remove('open'); }
     function closeAllModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open')); }
 
+    function switchRetentionTab(tab, btn) {
+      document.querySelectorAll('.retention-tab-btn').forEach(b => {
+        b.style.background = 'rgba(255,255,255,0.08)';
+        b.style.color = '#cbd5e1';
+        b.style.border = '1px solid rgba(255,255,255,0.15)';
+      });
+      const tLeft = document.getElementById('retentionTableLeft');
+      const tCont = document.getElementById('retentionTableContinuing');
+      const tNew = document.getElementById('retentionTableNew');
+      if (tab === 'left') {
+        btn.style.background = '#f43f5e'; btn.style.color = '#fff'; btn.style.border = 'none';
+        if (tLeft) tLeft.style.display = 'table';
+        if (tCont) tCont.style.display = 'none';
+        if (tNew) tNew.style.display = 'none';
+      } else if (tab === 'continuing') {
+        btn.style.background = '#10b981'; btn.style.color = '#fff'; btn.style.border = 'none';
+        if (tLeft) tLeft.style.display = 'none';
+        if (tCont) tCont.style.display = 'table';
+        if (tNew) tNew.style.display = 'none';
+      } else {
+        btn.style.background = '#38bdf8'; btn.style.color = '#030712'; btn.style.border = 'none';
+        if (tLeft) tLeft.style.display = 'none';
+        if (tCont) tCont.style.display = 'none';
+        if (tNew) tNew.style.display = 'table';
+      }
+    }
+
+    function filterRetentionRows() {
+      const input = document.getElementById('retentionFilterInput');
+      const q = input ? (input.value || '').trim().toLowerCase() : '';
+      ['retentionTbodyLeft', 'retentionTbodyContinuing', 'retentionTbodyNew'].forEach(tbodyId => {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
+          const text = tr.innerText.toLowerCase();
+          tr.style.display = text.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       loadSavedConfig();
       initDots();
@@ -2675,6 +2964,14 @@
       saveAndApplyLoss();
       goToSlide(0);
       requestAnimationFrame(updateZoomTransformLoop);
+
+      // Auto-attempt webcam gesture initialization
+      initWebcamGesture();
+      document.body.addEventListener('click', () => {
+        if (!isCameraActive && !cameraStream) {
+          initWebcamGesture();
+        }
+      }, { once: true });
     });
   </script>
 </body>
