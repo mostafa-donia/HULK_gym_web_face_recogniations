@@ -1,24 +1,25 @@
 @echo off
-chcp 65001 >nul
-title Systemize — Sales Presentation Runner
+title Systemize - Interactive Sales Presentation
+color 0A
+
+cd /d "%~dp0"
 
 echo ========================================================
-echo       Systemize Interactive Gym Sales Presentation
+echo   SYSTEMIZE GYM OS - SALES PRESENTATION
 echo ========================================================
 echo.
-echo [1/2] جار تشغيل سيرفر العرض المحلي (Local Server)...
-echo       يضمن هذا تشغيل الكاميرا وإشارات اليد (Pinch & Wave)
-echo       بأعلى أداء وبدون أي قيود أمان للمتصفح.
+echo [*] Starting local presentation server...
+echo [*] Opening presentation in your default browser...
 echo.
 
-cd /d "%~dp0\.."
+start "" "http://localhost:8080/index.html"
 
-start "" http://localhost:8080/presentation/
-
-echo [2/2] السيرفر يعمل الآن على الرابط: http://localhost:8080/presentation/
+echo [*] Presentation URL: http://localhost:8080/index.html
+echo [*] Hand gestures (Pinch and Wave) are active.
+echo [*] Press [Z] to Zoom. Press [N] for speaker script.
 echo.
-echo ملاحظة: اضغط مفتاح Z للتكبير الفوري، أو استخدم إشارة Pinch 🤏 بالأيدي.
-echo اترك هذه النافذة مفتوحة طوال فترة العرض.
+echo Keep this window open during your presentation.
 echo ========================================================
+echo.
 python -m http.server 8080
 pause

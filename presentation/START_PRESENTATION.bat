@@ -1,23 +1,22 @@
 @echo off
-chcp 65001 > nul
-title Systemize — Interactive Presentation (Hand Wave + 4-Finger L-Shape Zoom)
+title Systemize - Interactive Presentation (Hand Wave + Pinch Zoom)
 color 0A
 
 cd /d "%~dp0"
 
 echo ===================================================================
-echo   SYSTEMIZE — INTERACTIVE SALES PRESENTATION
-echo   [+] 4-Finger L-Shape Framing Zoom & Pan
-echo   [+] Hand Wave Slide Switching
-echo   [+] Presenter Prompter (N) & Loss Calculator
+echo   SYSTEMIZE - INTERACTIVE SALES PRESENTATION
+echo   [+] Hand Gestures (Pinch and Wave)
+echo   [+] Presenter Prompter (N) and Loss Calculator
+echo   [+] High Performance Local Server
 echo ===================================================================
 echo.
 
 where python >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
-    echo [*] Starting local presentation server for webcam & AI gestures...
+    echo [*] Starting local presentation server for webcam and AI gestures...
     start /b python -m http.server 8420 --directory "%~dp0" >nul 2>nul
-    timeout /t 1 >nul
+    ping 127.0.0.1 -n 2 >nul
     start "" "http://localhost:8420/index.html"
 ) else (
     echo [*] Opening presentation directly in default browser...
@@ -27,8 +26,6 @@ if %ERRORLEVEL% EQU 0 (
 echo.
 echo [*] Presentation is running!
 echo [*] Controls:
-echo     - 4-Finger L-Shape: 2 Index + 2 Thumbs up to Zoom & Pan
-echo     - Lower fingers: Smoothly return to normal slide
-echo     - Wave hand: Left/Right to flip slides
+echo     - Hand Gestures: Pinch or Wave to switch slides
 echo     - Keyboard: Arrows (Navigate), Z (Zoom), N (Presenter Prompter)
 echo.

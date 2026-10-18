@@ -6,7 +6,7 @@ color 0B
 cd /d "%~dp0"
 
 echo ===================================================================
-echo     SYSTEMIZE — DEVELOPER COMMAND & CONTROL CENTER (PORT 9000)
+echo     SYSTEMIZE — DEVELOPER COMMAND AND CONTROL CENTER (PORT 9000)
 echo ===================================================================
 echo.
 
