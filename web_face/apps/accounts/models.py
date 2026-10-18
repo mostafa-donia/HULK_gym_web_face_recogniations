@@ -54,3 +54,9 @@ class User(AbstractUser):
         elif self.role == UserRole.MANAGER:
             return "مدير فرع"
         return "استقبال"
+
+    @property
+    def branch_name(self) -> str:
+        if self.branch:
+            return self.branch.name
+        return "الفرع الرئيسي"

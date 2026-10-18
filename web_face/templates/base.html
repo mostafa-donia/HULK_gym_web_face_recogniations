@@ -493,7 +493,7 @@
           <!-- Manager / Reception Locked Branch Badge -->
           <div class="user-pill" style="border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.08); padding: 5px 12px; border-radius: 20px;" title="الفرع المحدد لحسابك">
             <span style="font-size: 0.85rem;">🏢</span>
-            <span style="color: #93C5FD; font-size: 0.82rem; font-weight: 800;">{{ user.branch.name|default:"الفرع الرئيسي" }}</span>
+            <span style="color: #93C5FD; font-size: 0.82rem; font-weight: 800;">{{ user.branch_name }}</span>
           </div>
           {% endif %}
         {% endif %}
@@ -597,7 +597,7 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem;">
           <div style="color: #cbd5e1;">🏢 الصالة: <strong id="supportGymName" style="color: #fff;">{{ gym_profile.gym_name|default:"غير محدد" }}</strong></div>
           <div style="color: #cbd5e1;">👤 المستخدم: <strong id="supportUserName" style="color: #fff;">{{ user.first_name|default:user.username }} ({{ user.role_display_arabic|default:"المستخدم" }})</strong></div>
-          <div style="color: #cbd5e1;">📍 الفرع: <strong id="supportBranchName" style="color: #fff;">{{ active_branch_name|default:user.branch.name|default:"الفرع الرئيسي" }}</strong></div>
+          <div style="color: #cbd5e1;">📍 الفرع: <strong id="supportBranchName" style="color: #fff;">{{ active_branch_name|default:user.branch_name }}</strong></div>
           <div style="color: #cbd5e1;">🔑 HWID: <strong id="supportHwid" style="color: #94a3b8; font-family: monospace;">{{ license_info.machine_id|default:"-" }}</strong></div>
         </div>
       </div>
