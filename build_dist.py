@@ -1,6 +1,6 @@
 """
-Automated Standalone Distribution Packager for HULK GYM
-Builds a 100% self-contained portable distribution in 'dist/HULK_GYM'
+Automated Standalone Distribution Packager for Systemize Gym OS
+Builds a 100% self-contained portable distribution in 'dist/Systemize'
 that can be copied and run on ANY Windows laptop without Python or pip installed.
 """
 
@@ -148,7 +148,7 @@ def build_portable_runtime():
 
 
 def copy_web_app():
-    log("Copying HULK GYM application into standalone dist folder...")
+    log("Copying Systemize application into standalone dist folder...")
 
     # Folders to copy
     dirs_to_copy = ["apps", "config", "models", "static", "templates", "data"]
@@ -210,7 +210,7 @@ echo [*] Starting Systemize server at http://127.0.0.1:8000 ...
 "runtime\\python.exe" manage.py runserver 0.0.0.0:8000
 pause
 """
-    for fname in ["START_SYSTEMIZE.bat", "START_GYM_SYSTEM.bat", "تشغيل_النظام.bat"]:
+    for fname in ["START_SYSTEMIZE.bat", "تشغيل_النظام.bat"]:
         with open(os.path.join(OUTPUT_DIR, fname), "w", encoding="utf-8") as f:
             f.write(start_bat_content)
 
@@ -239,7 +239,7 @@ echo ===================================================================
 echo.
 pause
 """
-    for fname in ["UPDATE_SYSTEMIZE.bat", "UPDATE_HULK_GYM.bat", "تحديث_النظام.bat"]:
+    for fname in ["UPDATE_SYSTEMIZE.bat", "تحديث_النظام.bat"]:
         with open(os.path.join(OUTPUT_DIR, fname), "w", encoding="utf-8") as f:
             f.write(update_bat_content)
 
@@ -292,7 +292,7 @@ def verify_dist():
 
 def main():
     start_time = time.time()
-    log("Starting standalone build process for HULK GYM...")
+    log("Starting standalone build process for Systemize...")
     os.makedirs(DIST_ROOT, exist_ok=True)
 
     build_portable_runtime()

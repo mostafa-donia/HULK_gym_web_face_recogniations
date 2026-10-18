@@ -27,7 +27,7 @@ class Command(BaseCommand):
             pass
 
         self.stdout.write(self.style.MIGRATE_HEADING("=================================================================="))
-        self.stdout.write(self.style.MIGRATE_HEADING("   HULK / SYSTEMIZE GYM - FULL DEMO DATA SEEDING ENGINE           "))
+        self.stdout.write(self.style.MIGRATE_HEADING("   SYSTEMIZE GYM OS - FULL DEMO DATA SEEDING ENGINE               "))
         self.stdout.write(self.style.MIGRATE_HEADING("=================================================================="))
 
         today = timezone.localdate()
@@ -38,7 +38,7 @@ class Command(BaseCommand):
         # -------------------------------------------------------------
         self.stdout.write("[1/10] Initializing Gym Profile & Branding...")
         profile = GymProfile.get_solo()
-        profile.gym_name = "هالك فيتنس كلوب | HULK FITNESS CLUB"
+        profile.gym_name = "سيستمايز فيتنس كلوب | SYSTEMIZE FITNESS CLUB"
         profile.gym_tagline = "المنظومة الذكية المتكاملة لإدارة الصالات الرياضية بالذكاء الاصطناعي وبصمة الوجه"
         profile.primary_color = "#84CC16"
         profile.secondary_color = "#121723"
@@ -72,7 +72,7 @@ class Command(BaseCommand):
         if not lic:
             lic = SystemLicense.objects.create(
                 machine_id="DEMO-SYSTEM-MACHINE-HWID-001",
-                client_name="Hulk Fitness Club (Demo Mode)",
+                client_name="Systemize Fitness Club (Demo Mode)",
             )
         lic.status = "demo"
         lic.license_type = "demo"

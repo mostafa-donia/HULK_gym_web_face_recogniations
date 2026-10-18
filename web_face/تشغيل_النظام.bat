@@ -1,11 +1,11 @@
 @echo off
 chcp 65001 >nul
-title HULK GYM - نظام إدارة الصالة وبوابة الوجه الذكية
+title Systemize - نظام إدارة الصالات الرياضية وبصمة الوجه الذكية
 
 cd /d "%~dp0"
 
 echo ===================================================================
-echo     HULK GYM MANAGEMENT SYSTEM - FACE RECOGNITION EDITION
+echo     SYSTEMIZE GYM OS - FACE RECOGNITION ENTERPRISE EDITION
 echo ===================================================================
 echo.
 
