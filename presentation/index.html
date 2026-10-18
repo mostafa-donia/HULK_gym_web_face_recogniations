@@ -617,13 +617,11 @@
       inset: 0;
       pointer-events: none;
       z-index: 80;
-      display: none;
+      display: none !important;
       opacity: 0;
-      transition: opacity 0.2s ease-out;
     }
     .viewfinder-hud.active {
-      display: block;
-      opacity: 1;
+      display: none !important;
     }
     .viewfinder-box {
       position: absolute;
@@ -2446,12 +2444,12 @@
           initMediaPipe();
         }
 
-        hudStatus.innerText = 'برواز الأصابع ✌️ للتكبير';
+        hudStatus.innerText = 'لوّح باليد 👋 للتقليب';
         hudPulse.style.background = '#84cc16';
         hudPulse.style.boxShadow = '0 0 10px #84cc16';
         toggleGestureBtn.innerHTML = '<i class="fa fa-video"></i> إيقاف';
         processMotionFrames();
-        showWaveToast('الكاميرا نشطة: شكّل برواز التكبير بيديك ✌️ أو لوّح للتقليب!');
+        showWaveToast('الكاميرا نشطة: لوّح بيدك 👋 لتقليب الشرائح بسهولة!');
       } catch (err) {
         console.warn("Camera access error:", err);
         hudStatus.innerText = 'الكاميرا غير مفعلة (أو مقيدة)';
@@ -2513,7 +2511,7 @@
             }
           }
 
-          if (motionPixels > 180 && !isZoomActive) {
+          if (motionPixels > 180) {
             const centroidX = sumX / motionPixels;
             const now = Date.now();
             motionHistory.push({ x: centroidX, time: now });
@@ -2535,271 +2533,53 @@
       waveDetectionAnimationId = requestAnimationFrame(processMotionFrames);
     }
 
-    /* 1. L-Shape Framing Hand Recognition (The Exact Gesture Shown by User) */
-    function checkHandLShape(landmarks) {
-      if (!landmarks || landmarks.length < 21) return null;
-      const wrist = landmarks[0];
-      const thumbTip = landmarks[4];
-      const thumbMcp = landmarks[2];
-      const indexTip = landmarks[8];
-      const indexPip = landmarks[6];
-      const indexMcp = landmarks[5];
-
-      // 1. Index finger extended (distance from wrist to tip is clearly greater than to pip)
-      const distIndexTip = Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y);
-      const distIndexPip = Math.hypot(indexPip.x - wrist.x, indexPip.y - wrist.y);
-      if (distIndexTip <= distIndexPip * 1.05) return null;
-
-      // 2. Thumb extended and separated from index (not a closed pinch)
-      const distThumbTip = Math.hypot(thumbTip.x - wrist.x, thumbTip.y - wrist.y);
-      const distThumbMcp = Math.hypot(thumbMcp.x - wrist.x, thumbMcp.y - wrist.y);
-      const distThumbIndex = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
-
-      // In pinch, thumb and index touch (dist < 0.07). In L-frame, they are open!
-      if (distThumbIndex < 0.065) return null;
-
-      // 3. Middle, Ring, Pinky folded/curled (at least 2 out of 3 folded or lower than index)
-      const distMid = Math.hypot(landmarks[12].x - wrist.x, landmarks[12].y - wrist.y);
-      const distRing = Math.hypot(landmarks[16].x - wrist.x, landmarks[16].y - wrist.y);
-      const distPinky = Math.hypot(landmarks[20].x - wrist.x, landmarks[20].y - wrist.y);
-
-      let foldedCount = 0;
-      if (distMid < distIndexTip * 0.94 || landmarks[12].y > indexTip.y + 0.02) foldedCount++;
-      if (distRing < distIndexTip * 0.94 || landmarks[16].y > indexTip.y + 0.02) foldedCount++;
-      if (distPinky < distIndexTip * 0.94 || landmarks[20].y > indexTip.y + 0.02) foldedCount++;
-
-      if (foldedCount < 2) return null;
-
-      return { indexTip, thumbTip, indexMcp, wrist, distIndexTip };
-    }
-
-    /* 2. Pinch Gesture Recognition (Thumb Tip to Index Tip) */
-    function checkHandPinch(landmarks) {
-      if (!landmarks || landmarks.length < 9) return null;
-      const thumbTip = landmarks[4];
-      const indexTip = landmarks[8];
-      const dist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
-      const threshold = isZoomActive ? 0.12 : 0.085;
-
-      if (dist <= threshold) {
-        return {
-          isPinch: true,
-          point: {
-            x: (thumbTip.x + indexTip.x) / 2,
-            y: (thumbTip.y + indexTip.y) / 2
-          },
-          dist: dist
-        };
-      }
-      return null;
-    }
-
-    /* MediaPipe Hand Results Callback */
+    /* MediaPipe Hand Results Callback — Dedicated to Hand-Wave Slide Navigation */
     function onHandResults(results) {
       if (!isCameraActive) return;
 
       const hands = results.multiHandLandmarks;
-
-      // ==========================================
-      // A. PRIMARY: TWO-HAND L-SHAPE FRAMING (برواز التكبير بالإيدين)
-      // ==========================================
-      if (hands && hands.length >= 2) {
-        const handA = checkHandLShape(hands[0]);
-        const handB = checkHandLShape(hands[1]);
-
-        if (handA && handB) {
-          consecutiveZoomFrames++;
-          consecutiveDropFrames = 0;
-
-          const leftH = handA.indexTip.x < handB.indexTip.x ? handA : handB;
-          const rightH = handA.indexTip.x < handB.indexTip.x ? handB : handA;
-
-          const f1 = leftH.indexTip;
-          const f2 = leftH.thumbTip;
-          const f3 = rightH.indexTip;
-          const f4 = rightH.thumbTip;
-
-          const cx = (f1.x + f2.x + f3.x + f4.x) / 4;
-          const cy = (f1.y + f2.y + f3.y + f4.y) / 4;
-
-          // Distance between hands: moving apart zooms in, closer zooms out
-          const distHands = Math.hypot(rightH.indexTip.x - leftH.indexTip.x, rightH.indexTip.y - leftH.indexTip.y);
-          // Calibrated range: 0.14 (close) to 0.60 (wide) maps to 1.3x - 3.7x zoom
-          const normDist = Math.max(0, Math.min(1, (distHands - 0.14) / 0.46));
-          const calcScale = 1.3 + normDist * 2.4;
-
-          const normCenterX = (1 - cx) - 0.5;
-          const normCenterY = cy - 0.5;
-
-          const maxPanX = (calcScale - 1) * 420;
-          const maxPanY = (calcScale - 1) * 280;
-
-          const calcPanX = -normCenterX * maxPanX * 2.0;
-          const calcPanY = -normCenterY * maxPanY * 1.8;
-
-          const minX = Math.min(f1.x, f2.x, f3.x, f4.x);
-          const maxX = Math.max(f1.x, f2.x, f3.x, f4.x);
-          const minY = Math.min(f1.y, f2.y, f3.y, f4.y);
-          const maxY = Math.max(f1.y, f2.y, f3.y, f4.y);
-
-          const screenBox = {
-            x: (1 - maxX) * window.innerWidth - 20,
-            y: minY * window.innerHeight - 20,
-            w: Math.max((maxX - minX) * window.innerWidth + 40, 160),
-            h: Math.max((maxY - minY) * window.innerHeight + 40, 120)
-          };
-
-          const dots = {
-            pinchL: null, pinchR: null,
-            lIndex: { x: (1 - leftH.indexTip.x) * window.innerWidth, y: leftH.indexTip.y * window.innerHeight },
-            lThumb: { x: (1 - leftH.thumbTip.x) * window.innerWidth, y: leftH.thumbTip.y * window.innerHeight },
-            rIndex: { x: (1 - rightH.indexTip.x) * window.innerWidth, y: rightH.indexTip.y * window.innerHeight },
-            rThumb: { x: (1 - rightH.thumbTip.x) * window.innerWidth, y: rightH.thumbTip.y * window.innerHeight }
-          };
-
-          if (consecutiveZoomFrames >= 2) {
-            enableGestureZoom(calcScale, calcPanX, calcPanY, screenBox, dots, 'lshape');
-          }
-          return;
+      if (hands && hands.length > 0) {
+        for (let i = 0; i < hands.length; i++) {
+          checkSingleHandWave(hands[i]);
         }
-      }
-
-      // ==========================================
-      // B. SECONDARY: TWO-HANDED PINCH
-      // ==========================================
-      if (hands && hands.length >= 2) {
-        const pinchA = checkHandPinch(hands[0]);
-        const pinchB = checkHandPinch(hands[1]);
-
-        if (pinchA && pinchB) {
-          consecutiveZoomFrames++;
-          consecutiveDropFrames = 0;
-
-          const leftPinch = pinchA.point.x < pinchB.point.x ? pinchA : pinchB;
-          const rightPinch = pinchA.point.x < pinchB.point.x ? pinchB : pinchA;
-
-          const pL = leftPinch.point;
-          const pR = rightPinch.point;
-          const handsDist = Math.hypot(pR.x - pL.x, pR.y - pL.y);
-
-          const normDist = Math.max(0, Math.min(1, (handsDist - 0.12) / 0.46));
-          const calcScale = 1.4 + normDist * 2.6;
-
-          const midX = (pL.x + pR.x) / 2;
-          const midY = (pL.y + pR.y) / 2;
-          const normCenterX = (1 - midX) - 0.5;
-          const normCenterY = midY - 0.5;
-
-          const maxPanX = (calcScale - 1) * 380;
-          const maxPanY = (calcScale - 1) * 260;
-          const calcPanX = -normCenterX * maxPanX * 2.0;
-          const calcPanY = -normCenterY * maxPanY * 1.8;
-
-          const minX = Math.min(pL.x, pR.x);
-          const maxX = Math.max(pL.x, pR.x);
-          const minY = Math.min(pL.y, pR.y);
-          const maxY = Math.max(pL.y, pR.y);
-
-          const screenBox = {
-            x: (1 - maxX) * window.innerWidth - 30,
-            y: minY * window.innerHeight - 30,
-            w: Math.max((maxX - minX) * window.innerWidth + 60, 140),
-            h: Math.max((maxY - minY) * window.innerHeight + 60, 100)
-          };
-
-          const dots = {
-            pinchL: { x: (1 - pL.x) * window.innerWidth, y: pL.y * window.innerHeight },
-            pinchR: { x: (1 - pR.x) * window.innerWidth, y: pR.y * window.innerHeight },
-            lIndex: null, lThumb: null, rIndex: null, rThumb: null
-          };
-
-          if (consecutiveZoomFrames >= 2) {
-            enableGestureZoom(calcScale, calcPanX, calcPanY, screenBox, dots, 'pinch');
-          }
-          return;
-        }
-      }
-
-      // ==========================================
-      // C. TERTIARY: SINGLE-HAND PINCH
-      // ==========================================
-      if (hands && hands.length >= 1) {
-        const p1 = checkHandPinch(hands[0]);
-        const p2 = (hands.length >= 2) ? checkHandPinch(hands[1]) : null;
-        const activePinch = p1 || p2;
-
-        if (activePinch && (hands.length === 1 || isZoomActive)) {
-          consecutiveZoomFrames++;
-          consecutiveDropFrames = 0;
-
-          const p = activePinch.point;
-          const calcScale = 2.2;
-          const normCenterX = (1 - p.x) - 0.5;
-          const normCenterY = p.y - 0.5;
-
-          const calcPanX = -normCenterX * 350;
-          const calcPanY = -normCenterY * 240;
-
-          const screenBox = {
-            x: (1 - p.x) * window.innerWidth - 60,
-            y: p.y * window.innerHeight - 60,
-            w: 120,
-            h: 120
-          };
-
-          const dots = {
-            pinchL: { x: (1 - p.x) * window.innerWidth, y: p.y * window.innerHeight },
-            pinchR: null,
-            lIndex: null, lThumb: null, rIndex: null, rThumb: null
-          };
-
-          if (consecutiveZoomFrames >= 3) {
-            enableGestureZoom(calcScale, calcPanX, calcPanY, screenBox, dots, 'pinch');
-          }
-          return;
-        }
-      }
-
-      // ==========================================
-      // D. WAVE SWIPE (Open Palm when not zooming)
-      // ==========================================
-      if (hands && hands.length === 1 && !isZoomActive) {
-        checkSingleHandWave(hands[0]);
-      }
-
-      // ==========================================
-      // E. RELEASE / EXIT (Fingers opened or hands lowered)
-      // ==========================================
-      consecutiveDropFrames++;
-      if (isZoomActive && consecutiveDropFrames >= 5) {
-        disableGestureZoom();
       }
     }
 
     /* Open Palm Swipe Detection */
     let lastHandWaveTime = 0;
     function checkSingleHandWave(landmarks) {
+      if (!landmarks || landmarks.length < 21) return;
       const wrist = landmarks[0];
       const now = Date.now();
-      if (now - lastHandWaveTime < 900) return;
+      if (now - lastHandWaveTime < 750) return;
 
       const isIndexOpen = landmarks[8].y < landmarks[6].y;
       const isMiddleOpen = landmarks[12].y < landmarks[10].y;
       const isRingOpen = landmarks[16].y < landmarks[14].y;
       const isPinkyOpen = landmarks[20].y < landmarks[18].y;
 
-      if (isIndexOpen && isMiddleOpen && isRingOpen && isPinkyOpen) {
+      let openFingers = 0;
+      if (isIndexOpen) openFingers++;
+      if (isMiddleOpen) openFingers++;
+      if (isRingOpen) openFingers++;
+      if (isPinkyOpen) openFingers++;
+
+      // When open palm (at least 3 fingers extended)
+      if (openFingers >= 3) {
         motionHistory.push({ x: wrist.x, time: now });
         motionHistory = motionHistory.filter(p => now - p.time < 420);
 
-        if (motionHistory.length >= 4) {
+        if (motionHistory.length >= 3) {
           const deltaX = motionHistory[motionHistory.length - 1].x - motionHistory[0].x;
           const duration = motionHistory[motionHistory.length - 1].time - motionHistory[0].time;
-          if (deltaX > 0.12 && duration > 70 && duration < 450) {
+
+          if (deltaX > 0.08 && duration > 50 && duration < 500) {
             lastHandWaveTime = now;
+            motionHistory = [];
             triggerHandWaveAction('next');
-          } else if (deltaX < -0.12 && duration > 70 && duration < 450) {
+          } else if (deltaX < -0.08 && duration > 50 && duration < 500) {
             lastHandWaveTime = now;
+            motionHistory = [];
             triggerHandWaveAction('prev');
           }
         }
