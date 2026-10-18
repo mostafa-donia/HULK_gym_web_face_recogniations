@@ -30,7 +30,7 @@
         --hulk-primary: {{ gym_profile.primary_color }};
         --hulk-hover: {{ gym_profile.primary_color }};
         --lime-btn-bg: {{ gym_profile.primary_color }};
-        --lime-btn-text: {{ gym_profile.primary_contrast_color|default:"#081104" }};
+        --lime-btn-text: {{ gym_profile.primary_contrast_color|default:"#FFFFFF" }};
         --accent-green: {{ gym_profile.primary_color }};
         --hulk-text: {{ gym_profile.primary_color }};
         --nav-active-text: {{ gym_profile.primary_color }};
@@ -42,14 +42,14 @@
     {% if gym_profile.primary_color %}
     .btn-lime {
       background-color: {{ gym_profile.primary_color }} !important;
-      background: linear-gradient(135deg, {{ gym_profile.primary_color }} 0%, color-mix(in srgb, {{ gym_profile.primary_color }} 75%, #000) 100%) !important;
-      color: {{ gym_profile.primary_contrast_color|default:"#081104" }} !important;
-      border: 1px solid color-mix(in srgb, {{ gym_profile.primary_color }} 85%, #fff) !important;
+      background: linear-gradient(135deg, {{ gym_profile.primary_color }} 0%, color-mix(in srgb, {{ gym_profile.primary_color }} 70%, #000) 100%) !important;
+      color: {{ gym_profile.primary_contrast_color|default:"#FFFFFF" }} !important;
+      border: 1px solid color-mix(in srgb, {{ gym_profile.primary_color }} 80%, #fff) !important;
       box-shadow: 0 4px 18px color-mix(in srgb, {{ gym_profile.primary_color }} 30%, transparent) !important;
     }
     .btn-lime:hover {
       background: linear-gradient(135deg, color-mix(in srgb, {{ gym_profile.primary_color }} 88%, #fff) 0%, {{ gym_profile.primary_color }} 100%) !important;
-      color: {{ gym_profile.primary_contrast_color|default:"#081104" }} !important;
+      color: {{ gym_profile.primary_contrast_color|default:"#FFFFFF" }} !important;
     }
     {% endif %}
     [data-theme="dark"] {
@@ -430,45 +430,44 @@
         </script>
 
         {% if gym_profile.face_camera_enabled %}
-        <div id="globalCameraStatusPill" class="user-pill" onclick="toggleCameraDockPreview()" style="cursor: pointer; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08); padding: 2px 7px; border-radius: 12px;" title="كاميرا التعرف على الوجه الذكية (انقر للمعاينة المباشرة)">
+        <div id="globalCameraStatusPill" onclick="toggleCameraDockPreview()" style="cursor: pointer; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 8px; border: 1px solid rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.08); border-radius: 6px; white-space: nowrap;" title="كاميرا التعرف على الوجه الذكية (انقر للمعاينة المباشرة)">
           <span id="globalCamDot" style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
-          <span id="globalCamText" style="font-size: 0.72rem; color: #10b981; font-weight: 800; white-space: nowrap;">كاميرا الوجه</span>
+          <span id="globalCamText" style="font-size: 0.72rem; color: #10b981; font-weight: 800; white-space: nowrap; line-height: 1;">كاميرا الوجه</span>
         </div>
         {% endif %}
 
         {% if is_multi_branch_enabled %}
           {% if user.is_owner %}
           <!-- Owner Multi-Branch Interactive Switcher -->
-          <div class="branch-switcher-wrapper" style="position: relative; display: inline-block;">
+          <div class="branch-switcher-wrapper" style="position: relative; display: inline-flex; align-items: center;">
             <button type="button" id="branchDropdownBtn" onclick="toggleBranchDropdown(event)" 
-                    class="user-pill" 
-                    style="cursor: pointer; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(132, 204, 22, 0.4); background: rgba(132, 204, 22, 0.1); padding: 2px 8px; border-radius: 12px; transition: all 0.2s; white-space: nowrap;"
+                    style="cursor: pointer; display: inline-flex; flex-direction: row; align-items: center; gap: 5px; height: 26px; padding: 0 8px; border: 1px solid color-mix(in srgb, var(--hulk-primary, #E11D48) 45%, transparent); background: color-mix(in srgb, var(--hulk-primary, #E11D48) 12%, transparent); border-radius: 6px; transition: all 0.2s; white-space: nowrap; outline: none; margin: 0;"
                     title="التبديل بين فروع الصالة">
-              <span style="font-size: 0.80rem;">🏢</span>
-              <span style="color: var(--hulk-primary, #84CC16); font-weight: 800; font-size: 0.74rem;">{{ active_branch_name }}</span>
-              <span style="font-size: 0.60rem; color: var(--hulk-primary, #84CC16); opacity: 0.8;">▼</span>
+              <span style="font-size: 0.78rem; line-height: 1;">🏢</span>
+              <span style="color: var(--hulk-primary, #E11D48); font-weight: 800; font-size: 0.74rem; line-height: 1;">{{ active_branch_name }}</span>
+              <span style="font-size: 0.55rem; color: var(--hulk-primary, #E11D48); opacity: 0.85; line-height: 1;">▼</span>
             </button>
             <div id="branchDropdownMenu" 
                  style="display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 200px; background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); z-index: 1000; overflow: hidden; padding: 4px;">
               <a href="{% url 'accounts:switch_branch' 'all' %}" 
-                 style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 6px; color: {% if not active_branch %}#84CC16{% else %}#E2E8F0{% endif %}; font-weight: 700; font-size: 0.78rem; text-decoration: none; transition: background 0.15s;"
+                 style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 6px; color: {% if not active_branch %}var(--hulk-primary, #E11D48){% else %}#E2E8F0{% endif %}; font-weight: 700; font-size: 0.78rem; text-decoration: none; transition: background 0.15s;"
                  onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span>🌐</span>
-                  <span>كافة الفروع (مجمّع)</span>
-                </div>
-                {% if not active_branch %}<span style="color: #84CC16; font-weight: 900;">✓</span>{% endif %}
+                 <div style="display: flex; align-items: center; gap: 6px;">
+                   <span>🌐</span>
+                   <span>كافة الفروع (مجمّع)</span>
+                 </div>
+                 {% if not active_branch %}<span style="color: var(--hulk-primary, #E11D48); font-weight: 900;">✓</span>{% endif %}
               </a>
               <div style="height: 1px; background: rgba(255,255,255,0.08); margin: 3px 0;"></div>
               {% for b in all_branches %}
               <a href="{% url 'accounts:switch_branch' b.id %}" 
-                 style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 6px; color: {% if active_branch.id == b.id %}#84CC16{% else %}#CBD5E1{% endif %}; font-weight: 700; font-size: 0.78rem; text-decoration: none; transition: background 0.15s;"
+                 style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 6px; color: {% if active_branch.id == b.id %}var(--hulk-primary, #E11D48){% else %}#CBD5E1{% endif %}; font-weight: 700; font-size: 0.78rem; text-decoration: none; transition: background 0.15s;"
                  onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <span>📍</span>
-                  <span>{{ b.name }}</span>
-                </div>
-                {% if active_branch.id == b.id %}<span style="color: #84CC16; font-weight: 900;">✓</span>{% endif %}
+                 <div style="display: flex; align-items: center; gap: 6px;">
+                   <span>📍</span>
+                   <span>{{ b.name }}</span>
+                 </div>
+                 {% if active_branch.id == b.id %}<span style="color: var(--hulk-primary, #E11D48); font-weight: 900;">✓</span>{% endif %}
               </a>
               {% empty %}
               <div style="padding: 8px 10px; font-size: 0.75rem; color: #94A3B8; text-align: center;">لا توجد فروع مسجلة بعد</div>
@@ -491,7 +490,7 @@
           </script>
           {% else %}
           <!-- Manager / Reception Locked Branch Badge -->
-          <div class="user-pill" style="border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.08); padding: 2px 7px; border-radius: 12px; white-space: nowrap;" title="الفرع المحدد لحسابك">
+          <div style="display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 8px; border: 1px solid rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.08); border-radius: 6px; white-space: nowrap;" title="الفرع المحدد لحسابك">
             <span style="font-size: 0.75rem;">🏢</span>
             <span style="color: #93C5FD; font-size: 0.72rem; font-weight: 800;">{{ user.branch_name }}</span>
           </div>
@@ -512,7 +511,7 @@
   {% endif %}
 
   <!-- Main Full-Width Content Container -->
-  <main class="main-wrapper">
+  <main class="main-wrapper" style="display: flex; flex-direction: column; min-height: calc(100vh - 54px); box-sizing: border-box; padding: 12px 18px 6px 18px;">
     {% if messages %}
       {% for message in messages %}
         <div class="alert alert-{{ message.tags }}">
@@ -524,10 +523,10 @@
     {% block content %}{% endblock %}
 
     <!-- Global Systemize Bottom Footer -->
-    <footer class="systemize-global-footer" style="margin-top: 12px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 12px; font-size: 0.74rem; color: #94a3b8;">
+    <footer class="systemize-global-footer" style="margin-top: auto; padding: 8px 0 4px 0; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 12px; font-size: 0.74rem; color: #94a3b8;">
       <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
         <span style="font-weight: 800; color: #cbd5e1; display: flex; align-items: center; gap: 5px;">
-          <span style="width: 6px; height: 6px; border-radius: 50%; background: #84cc16; display: inline-block; box-shadow: 0 0 5px #84cc16;"></span>
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--hulk-primary, #E11D48); display: inline-block; box-shadow: 0 0 5px var(--hulk-primary, #E11D48);"></span>
           Systemize OS
         </span>
         <span style="color: #64748b;">|</span>
