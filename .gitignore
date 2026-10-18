@@ -26,8 +26,7 @@ media/
 web_face/data/
 data/
 
-# Distribution builds, results and legacy folders
-results/
+# Distribution builds and legacy folders
 dist/
 old/
 v1/
