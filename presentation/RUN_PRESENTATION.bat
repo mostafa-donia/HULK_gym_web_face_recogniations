@@ -16,8 +16,8 @@ start "" "http://localhost:8080/index.html"
 
 echo [*] Presentation URL:  http://localhost:8080/index.html
 echo [*] Speaker Notes URL: http://localhost:8080/speaker_notes.html
-echo [*] Hand gestures (Pinch and Wave) are active on presentation screen.
-echo [*] Press [Z] on presentation to Zoom / Inspect details.
+echo [*] Hand slide gestures (Right: Next, Left: Prev) are active.
+echo [*] Use Left/Right arrows or hand wave to navigate slides.
 echo.
 echo Keep this window open during your presentation.
 echo ========================================================

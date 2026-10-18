@@ -324,7 +324,7 @@
       border: 1px solid rgba(255, 255, 255, 0.12);
       overflow: hidden;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 50px rgba(132, 204, 22, 0.14);
-      cursor: zoom-in;
+      cursor: pointer;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       align-items: center;
@@ -609,197 +609,6 @@
     }
     #waveNotification.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ==========================================
-       4-FINGER VIEW FINDER & INTERACTIVE ZOOM HUD
-       ========================================== */
-    .viewfinder-hud {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 80;
-      display: none !important;
-      opacity: 0;
-    }
-    .viewfinder-hud.active {
-      display: none !important;
-    }
-    .viewfinder-box {
-      position: absolute;
-      border: 1.5px dashed rgba(132, 204, 22, 0.65);
-      border-radius: 16px;
-      box-shadow: 0 0 35px rgba(132, 204, 22, 0.25), inset 0 0 30px rgba(132, 204, 22, 0.08);
-      pointer-events: none;
-      transition: all 0.04s ease-out;
-    }
-    .vf-corner {
-      position: absolute;
-      width: 26px;
-      height: 26px;
-      border-color: #84cc16;
-      border-style: solid;
-      filter: drop-shadow(0 0 8px #84cc16);
-    }
-    .vf-corner.tl { top: -3px; right: -3px; border-width: 3.5px 3.5px 0 0; border-top-right-radius: 12px; }
-    .vf-corner.tr { top: -3px; left: -3px; border-width: 3.5px 0 0 3.5px; border-top-left-radius: 12px; }
-    .vf-corner.bl { bottom: -3px; right: -3px; border-width: 0 3.5px 3.5px 0; border-bottom-right-radius: 12px; }
-    .vf-corner.br { bottom: -3px; left: -3px; border-width: 0 0 3.5px 3.5px; border-bottom-left-radius: 12px; }
-
-    .vf-reticle {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 22px;
-      height: 22px;
-      border: 1.5px solid rgba(132, 204, 22, 0.75);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .vf-reticle::after {
-      content: '';
-      width: 5px;
-      height: 5px;
-      background: #84cc16;
-      border-radius: 50%;
-      box-shadow: 0 0 8px #84cc16;
-    }
-
-    .finger-dot {
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      background: rgba(132, 204, 22, 0.95);
-      border: 2px solid #ffffff;
-      border-radius: 50%;
-      box-shadow: 0 0 16px #84cc16;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      transition: all 0.04s ease-out;
-      z-index: 85;
-    }
-    .finger-dot-label {
-      position: absolute;
-      top: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(3, 7, 18, 0.92);
-      color: #bef264;
-      font-size: 0.68rem;
-      font-weight: 800;
-      padding: 1px 6px;
-      border-radius: 4px;
-      white-space: nowrap;
-      border: 1px solid rgba(132, 204, 22, 0.35);
-    }
-    .finger-dot.pinch-dot {
-      width: 22px;
-      height: 22px;
-      background: radial-gradient(circle, #84cc16 0%, #10b981 100%);
-      border: 3px solid #ffffff;
-      box-shadow: 0 0 20px #84cc16, 0 0 40px rgba(132, 204, 22, 0.6);
-      animation: pulsePinch 1.2s infinite alternate ease-in-out;
-    }
-    @keyframes pulsePinch {
-      0% { transform: translate(-50%, -50%) scale(1); }
-      100% { transform: translate(-50%, -50%) scale(1.25); }
-    }
-
-    .zoom-status-pill {
-      position: absolute;
-      top: 76px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(11, 17, 32, 0.94);
-      border: 1px solid #84cc16;
-      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8), 0 0 30px rgba(132, 204, 22, 0.35);
-      border-radius: 30px;
-      padding: 6px 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.85rem;
-      font-weight: 800;
-      color: #ffffff;
-      backdrop-filter: blur(14px);
-      z-index: 90;
-      direction: rtl;
-    }
-    .zoom-status-pill .zoom-badge {
-      background: #84cc16;
-      color: #030712;
-      padding: 2px 9px;
-      border-radius: 12px;
-      font-family: var(--font-mono);
-      font-weight: 900;
-      font-size: 0.8rem;
-    }
-
-    /* Target Image Gesture Zoom State */
-    .visual-wrapper.gesture-zoomed {
-      border-color: #84cc16 !important;
-      box-shadow: 0 0 60px rgba(132, 204, 22, 0.5), 0 35px 90px rgba(0,0,0,0.95) !important;
-      transform: scale(1.02);
-      z-index: 40;
-    }
-    .visual-wrapper.gesture-zoomed img {
-      border-radius: 16px;
-      cursor: grab;
-      will-change: transform;
-    }
-
-    /* Floating On-Screen Zoom Controller */
-    .floating-zoom-bar {
-      position: fixed;
-      bottom: 24px;
-      left: 32px;
-      z-index: 45;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 30px;
-      padding: 4px 8px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-      transition: all 0.2s ease;
-    }
-    .floating-zoom-bar:hover {
-      border-color: rgba(132, 204, 22, 0.45);
-      box-shadow: 0 10px 30px rgba(132, 204, 22, 0.25);
-    }
-    .floating-zoom-bar .zoom-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.06);
-      color: #cbd5e1;
-      font-size: 0.82rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s;
-    }
-    .floating-zoom-bar .zoom-btn:hover {
-      background: #84cc16;
-      color: #030712;
-      border-color: #84cc16;
-    }
-    .floating-zoom-bar .zoom-val {
-      font-family: var(--font-mono);
-      font-size: 0.84rem;
-      font-weight: 800;
-      color: #84cc16;
-      padding: 0 6px;
-      cursor: pointer;
-      min-width: 44px;
-      text-align: center;
-    }
-
     /* Editable Price Live Inputs */
     .price-input-live {
       background: rgba(3, 7, 18, 0.95);
@@ -909,48 +718,12 @@
     <span id="waveText">تم التقليب بالتلويح!</span>
   </div>
 
-  <!-- Pinch & Viewfinder HUD Overlay -->
-  <div class="viewfinder-hud" id="viewfinderHud">
-    <div class="zoom-status-pill">
-      <span style="font-size: 1.1rem;" id="hudZoomIcon">🤏</span>
-      <span id="hudZoomTitle">وضع التكبير: Pinch بالأيدي</span>
-      <span class="zoom-badge" id="hudZoomFactor">2.2x</span>
-      <span style="color: #94a3b8; font-size: 0.75rem;" id="hudZoomSubtext">باعد بين يديك للتكبير | قرّب للتصغير | افتح يدك للعودة</span>
-    </div>
-
-    <div class="viewfinder-box" id="viewfinderBox">
-      <div class="vf-corner tl"></div>
-      <div class="vf-corner tr"></div>
-      <div class="vf-corner bl"></div>
-      <div class="vf-corner br"></div>
-      <div class="vf-reticle"></div>
-    </div>
-
-    <!-- Pinch Targets -->
-    <div class="finger-dot pinch-dot" id="fDotPinchL"><span class="finger-dot-label">🤏 يد يمين</span></div>
-    <div class="finger-dot pinch-dot" id="fDotPinchR"><span class="finger-dot-label">🤏 يد يسار</span></div>
-
-    <!-- 4-Finger L-Shape Fallback Dots -->
-    <div class="finger-dot" id="fDotLIndex"><span class="finger-dot-label">سبابة 1</span></div>
-    <div class="finger-dot" id="fDotLThumb"><span class="finger-dot-label">إبهام 1</span></div>
-    <div class="finger-dot" id="fDotRIndex"><span class="finger-dot-label">سبابة 2</span></div>
-    <div class="finger-dot" id="fDotRThumb"><span class="finger-dot-label">إبهام 2</span></div>
-  </div>
-
   <!-- Floating Nav Arrows -->
   <div class="nav-arrow next" onclick="nextSlide()" title="الشريحة التالية (سهم يسار / مسافة)">
     <i class="fa fa-chevron-left"></i>
   </div>
   <div class="nav-arrow prev" onclick="prevSlide()" title="الشريحة السابقة (سهم يمين)">
     <i class="fa fa-chevron-right"></i>
-  </div>
-
-  <!-- Floating On-Screen Zoom Controller -->
-  <div class="floating-zoom-bar" id="floatingZoomBar">
-    <button class="zoom-btn" onclick="zoomStep(-0.25)" title="تصغير (-)"><i class="fa fa-minus"></i></button>
-    <div class="zoom-val" id="floatingZoomVal" onclick="toggleKeyboardZoom()" title="اضغط لتكبير 2.2x / إلغاء التكبير">1.0x</div>
-    <button class="zoom-btn" onclick="zoomStep(0.25)" title="تكبير (+)"><i class="fa fa-plus"></i></button>
-    <button class="zoom-btn reset-btn" onclick="resetZoom()" title="إعادة ضبط (1x)"><i class="fa fa-rotate-left"></i></button>
   </div>
 
   <!-- ==========================================
@@ -1525,9 +1298,7 @@
     <div class="slide-dots" id="slideDots"></div>
 
     <div class="bottom-hint">
-      <span>✋ لوّح للتقليب</span>
-      <span>🤏 تكبير Pinch بالأيدي</span>
-      <span>تكبير: <span class="kbd-badge">Z</span></span>
+      <span>✋ لوّح بيدك للتقليب (يمين ➡️ التالي | يسار ⬅️ السابق)</span>
       <a href="https://wa.me/201080922432?text=مرحباً، أود التواصل مع الدعم الفني لمطور Systemize" target="_blank" style="color: #4ade80; text-decoration: none; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; background: rgba(34, 197, 94, 0.12); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.3);" title="الدعم الفني المباشر">
         <i class="fa-brands fa-whatsapp"></i>
         <span>الدعم الفني: 01080922432</span>
@@ -2199,12 +1970,9 @@
       } else if ((e.ctrlKey || e.metaKey) && (e.key === 'e' || e.key === 'E')) {
         e.preventDefault();
         openPresenterSettings();
-      } else if (e.key === 'z' || e.key === 'Z') {
-        toggleKeyboardZoom();
       } else if (e.key === 'Escape') {
         closeAllModals();
         closeLightbox();
-        if (isZoomActive) disableGestureZoom();
       }
     });
 
@@ -2370,9 +2138,6 @@
     const toggleGestureBtn = document.getElementById('toggleGestureBtn');
     const waveToast = document.getElementById('waveNotification');
     const waveText = document.getElementById('waveText');
-    const viewfinderHud = document.getElementById('viewfinderHud');
-    const viewfinderBox = document.getElementById('viewfinderBox');
-    const hudZoomFactor = document.getElementById('hudZoomFactor');
 
     let isCameraActive = false;
     let cameraStream = null;
@@ -2381,25 +2146,10 @@
     let isGestureCoolingDown = false;
     let waveDetectionAnimationId = null;
 
-    // MediaPipe Hands & Zoom State
+    // MediaPipe Hands State (Slide Navigation Only)
     let mpHands = null;
     let isMediaPipeReady = false;
     let isMediaPipeProcessing = false;
-    let isZoomActive = false;
-    let isKeyboardZoomActive = false;
-    let consecutiveZoomFrames = 0;
-    let consecutiveDropFrames = 0;
-
-    let targetZoomScale = 1.0;
-    let currentZoomScale = 1.0;
-    let targetPanX = 0;
-    let targetPanY = 0;
-    let currentPanX = 0;
-    let currentPanY = 0;
-
-    let targetBox = { x: 0, y: 0, w: 0, h: 0 };
-    let currentBox = { x: 0, y: 0, w: 0, h: 0 };
-    let fingersPos = { lIndex: null, lThumb: null, rIndex: null, rThumb: null, pinchL: null, pinchR: null };
 
     // Initialize MediaPipe Hands if available
     function initMediaPipe() {
@@ -2586,229 +2336,7 @@
       }
     }
 
-    /* Enable Gesture Zoom */
-    function enableGestureZoom(scale, panX, panY, box, dots, mode = 'lshape') {
-      if (!isZoomActive) {
-        isZoomActive = true;
-        const msg = (mode === 'lshape')
-          ? '📸 تم تفعيل برواز التكبير بالإيدين (L-Frame) — باعد للتكبير | قرّب للتصغير'
-          : '🤏 تم فتح التكبير بحركة Pinch';
-        showWaveToast(msg);
-        hudPulse.style.background = '#a3e635';
-        hudPulse.style.boxShadow = '0 0 18px #a3e635';
-      }
 
-      targetZoomScale = scale;
-      targetPanX = panX;
-      targetPanY = panY;
-      targetBox = box;
-      fingersPos = dots;
-
-      if (viewfinderHud && !viewfinderHud.classList.contains('active')) {
-        viewfinderHud.classList.add('active');
-      }
-
-      const hudZoomTitle = document.getElementById('hudZoomTitle');
-      const hudZoomIcon = document.getElementById('hudZoomIcon');
-      const hudZoomSubtext = document.getElementById('hudZoomSubtext');
-
-      if (hudZoomTitle) {
-        if (mode === 'lshape') {
-          hudZoomTitle.innerText = 'وضع التكبير: برواز الأصابع (L-Frame) 📸';
-          if (hudZoomIcon) hudZoomIcon.innerText = '✌️';
-          if (hudZoomSubtext) hudZoomSubtext.innerText = 'باعد بين يديك للتكبير | قرّب للتصغير | أنزل يديك للعودة';
-        } else if (mode === 'pinch') {
-          hudZoomTitle.innerText = 'وضع التكبير: Pinch بالأيدي 🤏';
-          if (hudZoomIcon) hudZoomIcon.innerText = '🤏';
-          if (hudZoomSubtext) hudZoomSubtext.innerText = 'باعد يديك للتكبير | قرّب للتصغير | افتح يدك للعودة';
-        } else {
-          hudZoomTitle.innerText = 'وضع التكبير التفاعلي 🔍';
-          if (hudZoomIcon) hudZoomIcon.innerText = '🔍';
-          if (hudZoomSubtext) hudZoomSubtext.innerText = 'استخدم شريط التكبير أو الماوس | Esc للعودة';
-        }
-      }
-
-      if (hudZoomFactor) {
-        hudZoomFactor.innerText = `${scale.toFixed(1)}x`;
-      }
-      updateFloatingZoomDisplay(scale);
-
-      const activeSlide = slides[currentSlide];
-      if (activeSlide) {
-        const visual = activeSlide.querySelector('.visual-wrapper');
-        if (visual && !visual.classList.contains('gesture-zoomed')) {
-          visual.classList.add('gesture-zoomed');
-        }
-      }
-    }
-
-    /* Disable Gesture Zoom (Smooth return to 1x) */
-    function disableGestureZoom() {
-      if (!isZoomActive) return;
-      isZoomActive = false;
-      isKeyboardZoomActive = false;
-      consecutiveZoomFrames = 0;
-
-      targetZoomScale = 1.0;
-      targetPanX = 0;
-      targetPanY = 0;
-
-      if (viewfinderHud) {
-        viewfinderHud.classList.remove('active');
-      }
-
-      // Smoothly restore any elements on active slide
-      const activeSlide = slides[currentSlide];
-      if (activeSlide) {
-        const visual = activeSlide.querySelector('.visual-wrapper');
-        if (visual) visual.classList.remove('gesture-zoomed');
-
-        const elementsToReset = [
-          activeSlide.querySelector('.visual-wrapper img'),
-          activeSlide.querySelector('.slide-center'),
-          activeSlide.querySelector('.slide-2col'),
-          activeSlide
-        ];
-        elementsToReset.forEach(el => {
-          if (el && el.style.transform) {
-            el.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-            el.style.transform = '';
-            setTimeout(() => { if (!isZoomActive && el) el.style.transition = ''; }, 450);
-          }
-        });
-      }
-
-      // Reset lightbox image if open
-      const lightboxImg = document.getElementById('lightboxImg');
-      if (lightboxImg) {
-        lightboxImg.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-        lightboxImg.style.transform = '';
-        setTimeout(() => { if (!isZoomActive && lightboxImg) lightboxImg.style.transition = ''; }, 450);
-      }
-
-      updateFloatingZoomDisplay(1.0);
-      hudPulse.style.background = '#84cc16';
-      hudPulse.style.boxShadow = '0 0 10px #84cc16';
-      showWaveToast('العودة للشريحة العادية ↺');
-    }
-
-    /* Floating Zoom Controls & Keyboard Toggle */
-    function zoomStep(delta) {
-      let newScale = currentZoomScale + delta;
-      if (newScale < 1.0) newScale = 1.0;
-      if (newScale > 3.6) newScale = 3.6;
-
-      if (newScale <= 1.05) {
-        resetZoom();
-        return;
-      }
-
-      targetZoomScale = newScale;
-      if (!isZoomActive) {
-        enableGestureZoom(newScale, 0, 0, {
-          x: window.innerWidth * 0.2,
-          y: window.innerHeight * 0.15,
-          w: window.innerWidth * 0.6,
-          h: window.innerHeight * 0.7
-        }, { pinchL: null, pinchR: null, lIndex: null, lThumb: null, rIndex: null, rThumb: null }, 'manual');
-      }
-      updateFloatingZoomDisplay(newScale);
-    }
-
-    function resetZoom() {
-      disableGestureZoom();
-    }
-
-    function updateFloatingZoomDisplay(scale) {
-      const el = document.getElementById('floatingZoomVal');
-      if (el) el.innerText = `${(Number(scale) || 1).toFixed(1)}x`;
-    }
-
-    /* Keyboard Zoom Toggle (Z Key) */
-    function toggleKeyboardZoom() {
-      if (isZoomActive) {
-        disableGestureZoom();
-      } else {
-        isKeyboardZoomActive = true;
-        enableGestureZoom(2.2, 0, 0, {
-          x: window.innerWidth * 0.25,
-          y: window.innerHeight * 0.2,
-          w: window.innerWidth * 0.5,
-          h: window.innerHeight * 0.6
-        }, { pinchL: null, pinchR: null, lIndex: null, lThumb: null, rIndex: null, rThumb: null }, 'key');
-        showWaveToast('⌕ وضع التكبير التفاعلي: حرّك الماوس للتجول | اضغط Z أو Esc للعودة');
-      }
-    }
-
-    // Mouse movement panning during keyboard zoom
-    window.addEventListener('mousemove', (e) => {
-      if (!isKeyboardZoomActive && !isZoomActive) return;
-      if (isKeyboardZoomActive) {
-        const normX = (e.clientX / window.innerWidth) - 0.5;
-        const normY = (e.clientY / window.innerHeight) - 0.5;
-        targetPanX = -normX * 420;
-        targetPanY = -normY * 280;
-      }
-    });
-
-    /* Continuous Buttery 60FPS LERP Loop */
-    function updateZoomTransformLoop() {
-      if (isZoomActive) {
-        currentZoomScale += (targetZoomScale - currentZoomScale) * 0.16;
-        currentPanX += (targetPanX - currentPanX) * 0.16;
-        currentPanY += (targetPanY - currentPanY) * 0.16;
-
-        currentBox.x += (targetBox.x - currentBox.x) * 0.22;
-        currentBox.y += (targetBox.y - currentBox.y) * 0.22;
-        currentBox.w += (targetBox.w - currentBox.w) * 0.22;
-        currentBox.h += (targetBox.h - currentBox.h) * 0.22;
-
-        if (viewfinderBox) {
-          viewfinderBox.style.left = `${currentBox.x}px`;
-          viewfinderBox.style.top = `${currentBox.y}px`;
-          viewfinderBox.style.width = `${currentBox.w}px`;
-          viewfinderBox.style.height = `${currentBox.h}px`;
-        }
-
-        updateFingerDot('fDotPinchL', fingersPos.pinchL);
-        updateFingerDot('fDotPinchR', fingersPos.pinchR);
-        updateFingerDot('fDotLIndex', fingersPos.lIndex);
-        updateFingerDot('fDotLThumb', fingersPos.lThumb);
-        updateFingerDot('fDotRIndex', fingersPos.rIndex);
-        updateFingerDot('fDotRThumb', fingersPos.rThumb);
-
-        // Apply zoom transform to active slide content or image
-        let targetEl = null;
-        if (document.getElementById('imageLightbox').classList.contains('open')) {
-          targetEl = document.getElementById('lightboxImg');
-        } else {
-          const activeSlide = slides[currentSlide];
-          if (activeSlide) {
-            const visualImg = activeSlide.querySelector('.visual-wrapper img');
-            targetEl = visualImg || activeSlide.querySelector('.slide-center') || activeSlide.querySelector('.slide-2col') || activeSlide;
-          }
-        }
-
-        if (targetEl) {
-          targetEl.style.transformOrigin = 'center center';
-          targetEl.style.transform = `translate(${currentPanX.toFixed(1)}px, ${currentPanY.toFixed(1)}px) scale(${currentZoomScale.toFixed(2)})`;
-        }
-      }
-
-      requestAnimationFrame(updateZoomTransformLoop);
-    }
-
-    function updateFingerDot(id, pos) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      if (pos) {
-        el.style.display = 'block';
-        el.style.left = `${pos.x}px`;
-        el.style.top = `${pos.y}px`;
-      } else {
-        el.style.display = 'none';
-      }
-    }
 
     function triggerHandWaveAction(direction) {
       isGestureCoolingDown = true;
@@ -2884,30 +2412,6 @@
       calculateLoss();
       saveAndApplyLoss();
       goToSlide(0);
-      requestAnimationFrame(updateZoomTransformLoop);
-
-      // Double click to zoom / reset zoom on any slide
-      const deck = document.getElementById('deckContainer');
-      if (deck) {
-        deck.addEventListener('dblclick', (e) => {
-          if (['INPUT', 'BUTTON', 'A', 'SELECT'].includes(e.target.tagName)) return;
-          if (isZoomActive) {
-            resetZoom();
-          } else {
-            const normX = (e.clientX / window.innerWidth) - 0.5;
-            const normY = (e.clientY / window.innerHeight) - 0.5;
-            targetPanX = -normX * 420;
-            targetPanY = -normY * 280;
-            targetZoomScale = 2.2;
-            enableGestureZoom(2.2, targetPanX, targetPanY, {
-              x: e.clientX - 150,
-              y: e.clientY - 100,
-              w: 300,
-              h: 200
-            }, { pinchL: null, pinchR: null, lIndex: null, lThumb: null, rIndex: null, rThumb: null }, 'click');
-          }
-        });
-      }
 
       // Auto-attempt webcam gesture initialization
       initWebcamGesture();

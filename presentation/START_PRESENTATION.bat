@@ -1,12 +1,12 @@
 @echo off
-title Systemize - Interactive Presentation (Hand Wave + Pinch Zoom)
+title Systemize - Interactive Presentation (Hand Wave Slide Navigation)
 color 0A
 
 cd /d "%~dp0"
 
 echo ===================================================================
 echo   SYSTEMIZE - INTERACTIVE SALES PRESENTATION
-echo   [+] Hand Gestures (Pinch and Wave)
+echo   [+] Hand Slide Navigation (Next / Prev)
 echo   [+] Presenter Prompter (N) and Loss Calculator
 echo   [+] High Performance Local Server
 echo ===================================================================
@@ -26,6 +26,6 @@ if %ERRORLEVEL% EQU 0 (
 echo.
 echo [*] Presentation is running!
 echo [*] Controls:
-echo     - Hand Gestures: Pinch or Wave to switch slides
-echo     - Keyboard: Arrows (Navigate), Z (Zoom), N (Presenter Prompter)
+echo     - Hand Gestures: Wave hand right for Next, left for Previous
+echo     - Keyboard: Arrows (Navigate), Space (Next), N (Presenter Prompter)
 echo.
