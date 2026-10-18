@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#030712">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Systemize Gym OS — عرض المبيعات التفاعلي للهاتف</title>
+  
+  <!-- Online Fonts with Clean Offline Fallbacks -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900;1000&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #030712;
+      --surface: #0b1329;
+      --card: rgba(15, 23, 42, 0.82);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --lime: #84cc16;
+      --lime-glow: rgba(132, 204, 22, 0.3);
+      --cyan: #38bdf8;
+      --cyan-glow: rgba(56, 189, 248, 0.25);
+      --rose: #f43f5e;
+      --amber: #f59e0b;
+      --emerald: #10b981;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-main: 'Cairo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-main);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      touch-action: pan-y;
+    }
+
+    /* Ambient Glow background */
+    .ambient-glow {
+      position: fixed;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.25;
+    }
+    .glow-1 { top: -60px; right: -60px; background: var(--lime); }
+    .glow-2 { bottom: 80px; left: -60px; background: var(--cyan); }
+
+    /* Top App Header */
+    header {
+      height: 52px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(16px);
+      z-index: 40;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--lime), #4d7c0f);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px var(--lime-glow);
+    }
+    .brand-icon svg { width: 16px; height: 16px; fill: #000; }
+    .brand-title {
+      font-size: 1.05rem;
+      font-weight: 900;
+      letter-spacing: -0.3px;
+      color: #fff;
+    }
+    .brand-title span { color: var(--lime); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-chip {
+      background: rgba(132, 204, 22, 0.15);
+      border: 1px solid var(--lime);
+      color: #bef264;
+      font-size: 0.76rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .btn-chip:active { transform: scale(0.96); }
+
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .btn-icon svg { width: 16px; height: 16px; fill: currentColor; }
+
+    /* Progress Bar */
+    .progress-container {
+      height: 3px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.08);
+      position: relative;
+      z-index: 41;
+      flex-shrink: 0;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 7.7%;
+      background: linear-gradient(90deg, var(--lime), var(--cyan));
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Main Slides Slider Container */
+    main {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    .slides-wrapper {
+      display: flex;
+      width: 1300vw;
+      height: 100%;
+      transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+      will-change: transform;
+    }
+
+    .slide {
+      width: 100vw;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px 16px 84px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Slide Typography & Elements */
+    .slide-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(132, 204, 22, 0.12);
+      border: 1px solid rgba(132, 204, 22, 0.35);
+      color: #bef264;
+      font-size: 0.76rem;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    .slide-badge.rose {
+      background: rgba(244, 63, 94, 0.12);
+      border-color: rgba(244, 63, 94, 0.35);
+      color: #fda4af;
+    }
+    .slide-badge.cyan {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.35);
+      color: #7dd3fc;
+    }
+
+    .slide-title {
+      font-size: 1.55rem;
+      font-weight: 900;
+      line-height: 1.35;
+      text-align: center;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+    .slide-title span {
+      background: linear-gradient(135deg, var(--lime), #bef264);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-desc {
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 480px;
+      margin-bottom: 16px;
+    }
+
+    /* Cards & Components */
+    .glass-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+      width: 100%;
+      max-width: 500px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      margin-bottom: 12px;
+    }
+    .glass-card.highlight {
+      border-color: var(--lime);
+      background: linear-gradient(180deg, rgba(132, 204, 22, 0.12) 0%, rgba(15, 23, 42, 0.9) 100%);
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 14px;
+    }
+    .kpi-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .kpi-num {
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: var(--lime);
+      font-family: var(--font-mono);
+      display: block;
+      margin-bottom: 2px;
+    }
+    .kpi-num.rose { color: var(--rose); }
+    .kpi-num.cyan { color: var(--cyan); }
+    .kpi-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: #cbd5e1;
+      line-height: 1.3;
+    }
+
+    /* Feature Item Row */
+    .feat-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .feat-row:last-child { border-bottom: none; }
+    .feat-icon-wrap {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(132, 204, 22, 0.12);
+      border: 1px solid rgba(132, 204, 22, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--lime);
+    }
+    .feat-icon-wrap.rose {
+      background: rgba(244, 63, 94, 0.12);
+      border-color: rgba(244, 63, 94, 0.3);
+      color: var(--rose);
+    }
+    .feat-icon-wrap.cyan {
+      background: rgba(56, 189, 248, 0.12);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--cyan);
+    }
+    .feat-text h4 {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .feat-text p {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Interactive UI Simulation Mockups */
+    .ui-mockup {
+      width: 100%;
+      max-width: 500px;
+      background: #070d19;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .mock-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #cbd5e1;
+    }
+    .mock-dots {
+      display: flex;
+      gap: 5px;
+    }
+    .mock-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #eab308; }
+    .dot-green { background: #22c55e; }
+
+    /* Price Cards for Mobile */
+    .price-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 14px;
+    }
+    .price-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    .price-card.featured {
+      border-color: var(--lime);
+      background: linear-gradient(90deg, rgba(132, 204, 22, 0.14) 0%, rgba(15, 23, 42, 0.9) 100%);
+    }
+    .price-meta h4 {
+      font-size: 0.92rem;
+      font-weight: 900;
+      color: #fff;
+    }
+    .price-meta span {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+    .price-figure {
+      text-align: left;
+    }
+    .price-val {
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: var(--lime);
+      font-family: var(--font-mono);
+      cursor: pointer;
+      border-bottom: 1px dashed rgba(132, 204, 22, 0.5);
+    }
+    .price-unit {
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      margin-right: 4px;
+    }
+
+    /* Addons Strip */
+    .addon-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      width: 100%;
+      max-width: 500px;
+      margin-bottom: 14px;
+      justify-content: center;
+    }
+    .addon-chip {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .addon-chip strong {
+      color: var(--lime);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+    }
+
+    /* Buttons */
+    .btn-main {
+      width: 100%;
+      max-width: 500px;
+      background: linear-gradient(135deg, var(--lime), #65a30d);
+      color: #000;
+      font-size: 0.95rem;
+      font-weight: 900;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px var(--lime-glow);
+      margin-bottom: 8px;
+    }
+    .btn-main:active { transform: scale(0.98); }
+
+    .btn-outline {
+      width: 100%;
+      max-width: 500px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 800;
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .btn-outline:active { background: rgba(255, 255, 255, 0.1); }
+
+    /* Sticky Bottom Mobile Navigation Bar */
+    .bottom-dock {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      padding: 0 12px;
+      background: rgba(3, 7, 18, 0.92);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 50;
+    }
+
+    .dock-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dock-btn {
+      height: 42px;
+      padding: 0 14px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      font-size: 0.84rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .dock-btn.primary {
+      background: var(--lime);
+      color: #000;
+      border-color: var(--lime);
+    }
+    .dock-btn:active { transform: scale(0.95); }
+
+    .slide-indicator {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #94a3b8;
+      padding: 0 8px;
+    }
+    .slide-indicator strong { color: #fff; }
+
+    /* Bottom Sheets & Modals */
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 99;
+      display: none;
+      align-items: flex-end;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .sheet-overlay.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .sheet-container {
+      background: #090e1e;
+      border-top: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 18px 16px 28px 16px;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sheet-overlay.active .sheet-container {
+      transform: translateY(0);
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .sheet-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sheet-close {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: #94a3b8;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Form Inputs in Sheet */
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-label {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #cbd5e1;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .input-box {
+      width: 100%;
+      background: rgba(3, 7, 18, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      outline: none;
+    }
+    .input-box:focus {
+      border-color: var(--lime);
+      box-shadow: 0 0 10px var(--lime-glow);
+    }
+
+    /* Quote Feature Checkbox */
+    .quote-check-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .quote-check-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--lime);
+    }
+
+    /* Quick Jump Drawer */
+    .slide-jump-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .jump-item {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #cbd5e1;
+      text-align: right;
+      cursor: pointer;
+    }
+    .jump-item strong {
+      color: var(--lime);
+      display: block;
+      margin-bottom: 2px;
+      font-family: var(--font-mono);
+    }
+    .jump-item.active {
+      border-color: var(--lime);
+      background: rgba(132, 204, 22, 0.15);
+      color: #fff;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      top: 64px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--lime);
+      color: #bef264;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Light -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Toast -->
+  <div class="toast" id="toastMsg">تم التحديث بنجاح!</div>
+
+  <!-- Top Header -->
+  <header>
+    <a href="javascript:void(0)" onclick="goToSlide(0)" class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="brand-title">SYSTEMIZE <span>OS</span></div>
+    </a>
+
+    <div class="header-actions">
+      <!-- Edit Prices Quick Button -->
+      <button class="btn-chip" onclick="openPriceEditorSheet()" title="تعديل الأسعار">
+        <span>✏️ الأسعار</span>
+      </button>
+
+      <!-- Calculator Quick Button -->
+      <button class="btn-icon" onclick="openQuoteSheet()" title="حاسبة المقايسة">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5 0h-3v-2h3v2zm0-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+      </button>
+
+      <!-- Slide Jump Drawer -->
+      <button class="btn-icon" onclick="openJumpSheet()" title="فهرس الشرائح">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <!-- Main Slides Slider -->
+  <main id="mainContainer">
+    <div class="slides-wrapper" id="slidesWrapper">
+
+      <!-- SLIDE 1: The Hook: Loss Leakage -->
+      <section class="slide" data-index="0">
+        <div class="slide-badge rose">⚠️ السؤال الأهم لكل صاحب جيم</div>
+        <h2 class="slide-title">
+          متأكد إن جيمك مش بيسرب فلوس<br><span>من غير ما تاخد بالك؟</span>
+        </h2>
+        <p class="slide-desc">
+          مشكلة أغلب الصالات مش قلة المشتركين، المشكلة في الاشتراكات اللي بتخلص ومحدش بيتابعها وفروق الكاش وضياع الوقت في الدفاتر!
+        </p>
+
+        <div class="kpi-row">
+          <div class="kpi-box">
+            <span class="kpi-num rose" id="kpiLoss1">٦٬٧٥٠</span>
+            <span class="kpi-label">اشتراكات كان ممكن تتجدد</span>
+          </div>
+          <div class="kpi-box">
+            <span class="kpi-num rose" id="kpiLoss2">١٬٠٠٠</span>
+            <span class="kpi-label">فروق درج وأخطاء كاش</span>
+          </div>
+          <div class="kpi-box">
+            <span class="kpi-num cyan" id="kpiLoss3">٦٠ ساعة</span>
+            <span class="kpi-label">تفريغ دفاتر وتدوير يدوي</span>
+          </div>
+        </div>
+
+        <div class="glass-card highlight" style="text-align: center;">
+          <div style="font-size: 0.82rem; color: #bef264; font-weight: 800; margin-bottom: 4px;">إجمالي التسريب المحتمل شهرياً</div>
+          <div style="font-size: 2.2rem; font-weight: 900; color: #fff; font-family: var(--font-mono); margin-bottom: 4px;" id="kpiLossTotal">
+            ٩٬٥٥٠ <span style="font-size: 0.9rem; font-family: var(--font-main);">ج/شهر</span>
+          </div>
+          <div style="font-size: 0.74rem; color: #cbd5e1;">يعادل أكثر من <strong>١١٤٬٠٠٠ ج</strong> سنوياً تضيع هباءً!</div>
+        </div>
+
+        <button class="btn-main" onclick="openLossCalcSheet()">
+          <span>🧮 احسب خسارة جيمك التقديرية</span>
+        </button>
+        <button class="btn-outline" onclick="nextSlide()">
+          <span>التالي: كيف بيحصل التسريب؟ ⬅️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 2: The Hidden Leak -->
+      <section class="slide" data-index="1">
+        <div class="slide-badge rose">🔍 التسريب الصامت</div>
+        <h2 class="slide-title">
+          المشكلة مش قلة الناس…<br><span>المشكلة في الـ 3 ثغرات دول:</span>
+        </h2>
+        <p class="slide-desc">ثلاثة أبواب خفية تبتلع مجهودك وأرباحك كل يوم</p>
+
+        <div class="glass-card">
+          <div class="feat-row">
+            <div class="feat-icon-wrap rose">⏳</div>
+            <div class="feat-text">
+              <h4>عضو اشتراكه انتهى ومحدش كلمه</h4>
+              <p>محدش فكره بالواتساب، فكسل يجدد والاشتراك ضاع عليك تماماً.</p>
+            </div>
+          </div>
+          <div class="feat-row">
+            <div class="feat-icon-wrap rose">🚪</div>
+            <div class="feat-text">
+              <h4>عضو داخل في الزحمة وبيتمرن ببلاش</h4>
+              <p>الريسبشن مكسوف يوقفه ويسأله، أو العضو نفسه ناسي إنه المفروض يدفع.</p>
+            </div>
+          </div>
+          <div class="feat-row">
+            <div class="feat-icon-wrap rose">📊</div>
+            <div class="feat-text">
+              <h4>صاحب الجيم مش عارف يراجع أرقامه</h4>
+              <p>تضطر تقعد ساعات تجمع وتطرح من ورق وشيتات Excel متفرقة.</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-main" onclick="nextSlide()">
+          <span>التالي: عيب الاعتماد على الذاكرة ⬅️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 3: The Manual Trap -->
+      <section class="slide" data-index="2">
+        <div class="slide-badge">📝 الدورة اليدوية القديمة</div>
+        <h2 class="slide-title">
+          عيب السيستم التقليدي:<br><span>معتمد على إن موظف يفتكر!</span>
+        </h2>
+        <p class="slide-desc">كل خطوة تزيد معتمدة على الذاكرة = فرصة مؤكدة لخطأ أو تأخير</p>
+
+        <div class="glass-card" style="padding: 18px;">
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; border-right: 3px solid var(--rose);">
+              <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 800;">خطوة 1:</span>
+              <div style="font-size: 0.85rem; font-weight: 800; color: #fff;">الموظف يفتكر يسجل في الدفتر</div>
+            </div>
+            <div style="text-align: center; color: var(--rose); font-size: 0.8rem;">⬇️ تأخير ونسيان</div>
+            <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; border-right: 3px solid var(--rose);">
+              <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 800;">خطوة 2:</span>
+              <div style="font-size: 0.85rem; font-weight: 800; color: #fff;">الموظف يفتكر يراجع تاريخ الانتهاء</div>
+            </div>
+            <div style="text-align: center; color: var(--rose); font-size: 0.8rem;">⬇️ إحراج مع اللاعب</div>
+            <div style="background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px; border-right: 3px solid var(--rose);">
+              <span style="font-size: 0.74rem; color: #94a3b8; font-weight: 800;">خطوة 3:</span>
+              <div style="font-size: 0.85rem; font-weight: 800; color: #fff;">الموظف يفتكر يكلم المشترك للمتابعة</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-main" onclick="nextSlide()">
+          <span>الحل: عقل Systemize الذكي ⬅️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 4: The Solution: Systemize Gym OS -->
+      <section class="slide" data-index="3">
+        <div class="slide-badge cyan">⚡ الحل المتكامل</div>
+        <h2 class="slide-title">
+          عقل مترابط لجيمك…<br><span>Systemize Gym OS</span>
+        </h2>
+        <p class="slide-desc">سيستم سحابي وهجين يشتغل أوفلاين وأونلاين بدون توقف ثانية واحدة</p>
+
+        <div class="ui-mockup">
+          <div class="mock-header">
+            <span>🖥️ لوحة التحكم الشاملة</span>
+            <div class="mock-dots">
+              <div class="mock-dot dot-red"></div>
+              <div class="mock-dot dot-yellow"></div>
+              <div class="mock-dot dot-green"></div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="background: rgba(132,204,22,0.15); border: 1px solid var(--lime); border-radius: 8px; padding: 10px; text-align: center;">
+              <span style="font-size: 1.2rem;">👤</span>
+              <div style="font-size: 0.76rem; font-weight: 900; color: #fff;">بصمة وجه فورية</div>
+            </div>
+            <div style="background: rgba(56,189,248,0.15); border: 1px solid var(--cyan); border-radius: 8px; padding: 10px; text-align: center;">
+              <span style="font-size: 1.2rem;">💬</span>
+              <div style="font-size: 0.76rem; font-weight: 900; color: #fff;">واتساب آلي ذكي</div>
+            </div>
+            <div style="background: rgba(245,158,11,0.15); border: 1px solid var(--amber); border-radius: 8px; padding: 10px; text-align: center;">
+              <span style="font-size: 1.2rem;">💰</span>
+              <div style="font-size: 0.76rem; font-weight: 900; color: #fff;">خزينة مقفولة برمز</div>
+            </div>
+            <div style="background: rgba(244,63,94,0.15); border: 1px solid var(--rose); border-radius: 8px; padding: 10px; text-align: center;">
+              <span style="font-size: 1.2rem;">📈</span>
+              <div style="font-size: 0.76rem; font-weight: 900; color: #fff;">تقارير نسبة الاحتفاظ</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-main" onclick="nextSlide()">
+          <span>التالي: بصمة الوجه وسرعة الدخول ⬅️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 5: Face Recognition Kiosk -->
+      <section class="slide" data-index="4">
+        <div class="slide-badge">👤 بوابة الحضور الذكية</div>
+        <h2 class="slide-title">
+          بصمة الوجه تمنع الإحراج…<br><span>وتنهي الدخول العشوائي!</span>
+        </h2>
+        <p class="slide-desc">التعرف على المشترك في أقل من 0.3 ثانية بكاميرا عادية، بدون لمس وبدون كروت بتضيع</p>
+
+        <div class="glass-card" style="border-color: var(--lime);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <div style="font-size: 0.85rem; font-weight: 900; color: #bef264;">شاشة الكشك المباشرة</div>
+            <span style="background: rgba(34,197,94,0.2); color: #4ade80; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 800;">مفعل الآن ✓</span>
+          </div>
+          <div style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 12px; text-align: center; border: 1px dashed rgba(132,204,22,0.4); margin-bottom: 10px;">
+            <div style="font-size: 2.2rem; margin-bottom: 4px;">📸 ➜ 🟢</div>
+            <div style="font-size: 0.88rem; font-weight: 900; color: #fff;">أهلاً بك يا كابتن أحمد!</div>
+            <div style="font-size: 0.75rem; color: #4ade80; font-weight: 800;">الاشتراك ساري — متبقي ٢٤ يوماً</div>
+          </div>
+          <div style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4;">
+            * إذا كان الاشتراك منتهي، الشاشة تنبه المشترك بلباقة وتوجهه فوراً للريسبشن للتجديد بدون إحراج الموظف!
+          </div>
+        </div>
+
+        <button class="btn-main" onclick="nextSlide()">
+          <span>التالي: إدارة الأعضاء والتجديدات ⬅️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 6: Members & Retention Tracking -->
+      <section class="slide" data-index="5">
+        <div class="slide-badge cyan">👥 التجديد والأعضاء</div>
+        <h2 class="slide-title">
+          عضو منقطع = إيراد ضائع…<br><span>إزاي ترجعهم بصغطة زر؟</span>
+        </h2>
+        <p class="slide-desc">فلترة ذكية فورية للأعضاء المنتهين والمعلقين والنشطين مع حركة التجديد الشهرية</p>
+
+        <div class="glass-card">
+          <div class="feat-row">
+            <div class="feat-icon-wrap">📊</div>
+            <div class="feat-text">
+              <h4>معدل الاحتفاظ (Retention Rate)</h4>
+              <p>مؤشر يقيس لك نسبة استمرار الأعضاء شهرياً لاكتشاف أسباب الانقطاع ومعالجتها.</p>
+            </div>
+          </div>
+          <div class="feat-row">
+            <div class="feat-icon-wrap cyan">🔒</div>
+            <div class="feat-text">
+              <h4>حماية التقارير برمز سري</h4>
+              <p>صفحة حركة الأعضاء مقفولة برمز حماية خاص بالمدير لمنع تطلع الموظفين.</p>
+            </div>
+          </div>
+          <div class="feat-row">
+            <div class="feat-icon-wrap">📲</div>
+            <div class="feat-text">
+              <h4>حملات إعادة التنشيط بالواتساب</h4>
+              <p>ضغطة واحدة ترسل رسائل تشجيعية وعروض خاصة لكل المنقطعين في نفس اللحظة.</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-main" onclick="nextSlide()">
+          <span>التالي: الخزينة ونقاط بيع البار ⬅️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 7: Cash & POS -->
+      <section class="slide" data-index="6">
+        <div class="slide-badge rose">💰 الخزينة والكاش</div>
+        <h2 class="slide-title">
+          كل جنيه محسوب بالسحتوت…<br><span>من غير لغبطة ولا شكوك!</span>
+        </h2>
+        <p class="slide-desc">فصل دقيق بين كاش الاشتراكات، مبيعات البار والمكملات، والمصروفات اليومية</p>
+
+        <div class="glass-card">
+          <div class="kpi-row" style="margin-bottom: 8px;">
+            <div class="kpi-box">
+              <span class="kpi-num">٤٬٢٠٠</span>
+              <span class="kpi-label">اشتراكات اليوم</span>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-num cyan">٨٥٠</span>
+              <span class="kpi-label">مبيعات البار</span>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-num rose">٣٥٠</span>
+              <span class="kpi-label">مصروفات الصالة</span>
+            </div>
+          </div>
+          <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; font-size: 0.78rem; color: #cbd5e1;">
+            🔒 <strong>إغلاق وردية بضغطة زر:</strong> تصفية الدرج وحساب العجز أو الزيادة فورياً مع إشعار للمدير.
+          </div>
+        </div>
+
+        <button class="btn-main" onclick="nextSlide()">
+          <span>التالي: رواتب المدربين والـ PT ⬅️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 8: Trainers & Payroll -->
+      <section class="slide" data-index="7">
+        <div class="slide-badge">🏋️ المدربين والبرايفت</div>
+        <h2 class="slide-title">
+          حساب عمولات وسُلف المدربين<br><span>بمنتهى الدقة والشفافية</span>
+        </h2>
+        <p class="slide-desc">متابعة حصص الـ Personal Training وعمولات الاشتراكات بدون جدال ولا أخطاء حسابية</p>
+
+        <div class="glass-card">
+          <div class="feat-row">
+            <div class="feat-icon-wrap">🎯</div>
+            <div class="feat-text">
+              <h4>نظام عمولات مخصص لكل كابتن</h4>
+              <p>نسبة مئوية من الاشتراكات أو مبلغ ثابت لكل جلسة برايفت تتدرب.</p>
+            </div>
+          </div>
+          <div class="feat-row">
+            <div class="feat-icon-wrap rose">💳</div>
+            <div class="feat-text">
+              <h4>متابعة السُلف والخصومات</h4>
+              <p>تسجيل أي سلفة واستقطاعها آلياً وقت تصفية مسير الرواتب الشهري.</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-main" onclick="nextSlide()">
+          <span>التالي: بوت الواتساب الآلي ⬅️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 9: WhatsApp Automation -->
+      <section class="slide" data-index="8">
+        <div class="slide-badge" style="background: rgba(34,197,94,0.15); border-color: #22c55e; color: #4ade80;">💬 أتمتة الواتساب</div>
+        <h2 class="slide-title">
+          موظف خدمة عملاء شغال ٢٤ ساعة…<br><span>بدون مرتب ولا إجازات!</span>
+        </h2>
+        <p class="slide-desc">إرسال تنبيهات تلقائية باسم المشترك فوراً بدون الحاجة لحفظ رقمه يدوياً</p>
+
+        <div class="glass-card" style="border-color: #22c55e;">
+          <div style="background: rgba(15,23,42,0.9); border-radius: 8px; padding: 12px; font-size: 0.8rem; border-right: 4px solid #22c55e;">
+            <div style="font-weight: 800; color: #4ade80; margin-bottom: 4px;">نموذج رسالة تلقائية للمشترك:</div>
+            <div style="color: #f1f5f9; line-height: 1.4;">
+              "أهلاً كابتن محمد 👋، حابين نفكرك إن اشتراكك هينتهي بعد ٣ أيام. جهزنالك خصم ١٠٪ لو جددت قبل المعاد! مستنينك في صالتك سينا سبا 🏋️"
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-main" onclick="nextSlide()">
+          <span>التالي: لوحة تقارير المدير ⬅️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 10: Reports & Executive Dashboards -->
+      <section class="slide" data-index="9">
+        <div class="slide-badge cyan">📈 رؤية المدير الاستراتيجية</div>
+        <h2 class="slide-title">
+          كل تقارير جيمك في جيبك…<br><span>بلمسة واحدة من موبايلك!</span>
+        </h2>
+        <p class="slide-desc">إحصائيات الإيراد، أوقات الذروة، الاشتراكات الأكثر مبيعاً، ومعدل دوران اللاعبين</p>
+
+        <div class="glass-card">
+          <div class="feat-row">
+            <div class="feat-icon-wrap cyan">⏱️</div>
+            <div class="feat-text">
+              <h4>ساعات الذروة (Peak Hours)</h4>
+              <p>تعرف مواعيد الزحمة لتوزيع المدربين وعمال النظافة بأعلى كفاءة.</p>
+            </div>
+          </div>
+          <div class="feat-row">
+            <div class="feat-icon-wrap">🥇</div>
+            <div class="feat-text">
+              <h4>أكثر الباقات ربحية</h4>
+              <p>اكتشف أي اشتراك يدخل لك كاش أعلى وركز عليه في حملاتك التسويقية.</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-main" onclick="nextSlide()">
+          <span>التالي: المقارنة بالأرقام ⬅️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 11: Shock Comparison -->
+      <section class="slide" data-index="10">
+        <div class="slide-badge rose">⚖️ المقارنة الحاسمة</div>
+        <h2 class="slide-title">
+          الدفاتر والـ Excel<br><span>مقابل Systemize OS</span>
+        </h2>
+        <p class="slide-desc">الفرق بين إدارة بتضيع وقت وفلوس، وإدارة بتوفر وتكبر</p>
+
+        <div class="glass-card">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3); border-radius: 8px; padding: 10px; font-size: 0.74rem;">
+              <strong style="color: var(--rose); display: block; margin-bottom: 4px;">❌ الدفاتر القديمة</strong>
+              • كروت بتضيع وتتبدل<br>
+              • تسريب اشتراكات منتهية<br>
+              • أخطاء حسابية في الدرج<br>
+              • صعوبة معرفة الأرباح
+            </div>
+            <div style="background: rgba(132,204,22,0.1); border: 1px solid rgba(132,204,22,0.3); border-radius: 8px; padding: 10px; font-size: 0.74rem;">
+              <strong style="color: var(--lime); display: block; margin-bottom: 4px;">✓ Systemize OS</strong>
+              • بصمة وجه مستحيل تتزور<br>
+              • تذكير واتساب تلقائي<br>
+              • تقفيل كاش بالسحتوت<br>
+              • تقارير استراتيجية فورية
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-main" onclick="nextSlide()">
+          <span>التالي: العائد على الاستثمار ⬅️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 12: ROI & Recovery -->
+      <section class="slide" data-index="11">
+        <div class="slide-badge">💎 العائد على الاستثمار</div>
+        <h2 class="slide-title">
+          تمن السيستم بيرجعلك<br><span>من أول أسبوعين تشغيل!</span>
+        </h2>
+        <p class="slide-desc">السيستم مش مصروف إضافي.. السيستم ماكينة بتسد الثغرات وتضاعف التجديدات</p>
+
+        <div class="glass-card highlight" style="text-align: center;">
+          <div style="font-size: 0.85rem; color: #bef264; font-weight: 800; margin-bottom: 6px;">
+            لو السيستم رجعلك فقط ٨ أعضاء مكنوش هيجددوا:
+          </div>
+          <div style="font-size: 1.8rem; font-weight: 900; color: #fff; font-family: var(--font-mono); margin-bottom: 4px;">
+            ٨ × ٤٥٠ ج = ٣٬٦٠٠ ج
+          </div>
+          <div style="font-size: 0.78rem; color: #cbd5e1;">
+            غطيت تمن اشتراك السيستم وزاد معاك أرباح كمان!
+          </div>
+        </div>
+
+        <button class="btn-main" onclick="nextSlide()">
+          <span>التالي: الأسعار والباقات 🏷️</span>
+        </button>
+      </section>
+
+      <!-- SLIDE 13: Pricing & Custom Quotes (PRICES CAN BE CHANGED) -->
+      <section class="slide" data-index="12">
+        <div class="slide-badge">🏷️ الأسعار والباقات المرنة</div>
+        <h2 class="slide-title">
+          باقات واضحة ومباشرة…<br><span>اختار اللي يناسب صالتك!</span>
+        </h2>
+        <p class="slide-desc">يمكنك تعديل الأسعار مباشرة أو حساب مقايسة مخصصة للعميل</p>
+
+        <!-- Edit Prices Toolbar Button -->
+        <div style="display: flex; gap: 8px; margin-bottom: 12px; width: 100%; max-width: 500px;">
+          <button class="btn-chip" style="flex: 1; justify-content: center; padding: 8px;" onclick="openPriceEditorSheet()">
+            <span>✏️ تعديل الأسعار والإضافات</span>
+          </button>
+          <button class="btn-chip" style="background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.2); color: #cbd5e1;" onclick="resetPricesToDefault()">
+            <span>↺ الافتراضي</span>
+          </button>
+        </div>
+
+        <!-- 3 Base Pricing Cards -->
+        <div class="price-grid">
+          <!-- Monthly -->
+          <div class="price-card" onclick="openPriceEditorSheet()">
+            <div class="price-meta">
+              <h4>اشتراك شهري مرن</h4>
+              <span>البرنامج الأساسي الكامل ✓</span>
+            </div>
+            <div class="price-figure">
+              <span class="price-val" id="dispPriceMonthly">٣٥٠</span>
+              <span class="price-unit">ج / شهر</span>
+            </div>
+          </div>
+
+          <!-- Yearly Featured -->
+          <div class="price-card featured" onclick="openPriceEditorSheet()">
+            <div class="price-meta">
+              <h4 style="color: #bef264;">اشتراك سنوي (توفير شهرين)</h4>
+              <span style="color: #fff;">البرنامج الأساسي الكامل ✓</span>
+            </div>
+            <div class="price-figure">
+              <span class="price-val" id="dispPriceYearly">٣٬٥٠٠</span>
+              <span class="price-unit">ج / سنة</span>
+            </div>
+          </div>
+
+          <!-- Lifetime -->
+          <div class="price-card" onclick="openPriceEditorSheet()">
+            <div class="price-meta">
+              <h4>مدى الحياة (Lifetime)</h4>
+              <span>ترخيص دائم للجهاز ✓</span>
+            </div>
+            <div class="price-figure">
+              <span class="price-val" id="dispPriceLifetime">٦٬٠٠٠</span>
+              <span class="price-unit">ج مرة واحدة</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hardware & Add-ons Quick Strip -->
+        <div style="font-size: 0.8rem; font-weight: 800; color: #94a3b8; margin-bottom: 6px; text-align: right; width: 100%; max-width: 500px;">
+          إضافات الهاردوير والخدمات الذكية:
+        </div>
+        <div class="addon-chips">
+          <div class="addon-chip">بصمة وجه: <strong id="dispAddonFace">٤٬٠٠٠</strong> ج</div>
+          <div class="addon-chip">بصمة يد: <strong id="dispAddonFingerprint">٣٬٥٠٠</strong> ج</div>
+          <div class="addon-chip">باركود: <strong id="dispAddonBarcode">٢٬٥٠٠</strong> ج</div>
+          <div class="addon-chip">كود QR: <strong id="dispAddonQr">١٬٥٠٠</strong> ج</div>
+          <div class="addon-chip">بوت واتساب: <strong id="dispAddonBot">٢٬٠٠٠</strong> ج</div>
+          <div class="addon-chip">نقاط البار: <strong id="dispAddonBar">١٬٥٠٠</strong> ج</div>
+          <div class="addon-chip" style="border-color: rgba(56,189,248,0.4);">ربط فروع: <strong id="dispAddonGlobal" style="color: var(--cyan);">٢٬٥٠٠</strong> ج</div>
+        </div>
+
+        <!-- Actions -->
+        <button class="btn-main" onclick="openQuoteSheet()">
+          <span>🧮 تخصيص باقة وحساب مقايسة للعميل</span>
+        </button>
+        <button class="btn-outline" onclick="goToSlide(0)">
+          <span>🔄 الرجوع لأول العرض</span>
+        </button>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Sticky Bottom Dock -->
+  <footer class="bottom-dock">
+    <div class="dock-nav">
+      <button class="dock-btn" onclick="prevSlide()" title="السابق">
+        <span>السابق ➡️</span>
+      </button>
+      <div class="slide-indicator">
+        <strong id="dockCurrentNum">01</strong>/<span id="dockTotalNum">13</span>
+      </div>
+      <button class="dock-btn primary" onclick="nextSlide()" title="التالي">
+        <span>التالي ⬅️</span>
+      </button>
+    </div>
+
+    <div class="dock-nav">
+      <button class="dock-btn" onclick="openQuoteSheet()" title="مقايسة للعميل" style="border-color: var(--lime); color: #bef264;">
+        <span>🧮 المقايسة</span>
+      </button>
+      <a href="https://wa.me/201080922432?text=أود الاستفسار عن سيستم Systemize Gym OS" target="_blank" class="dock-btn" style="background: rgba(34,197,94,0.18); border-color: rgba(34,197,94,0.4); color: #4ade80; text-decoration: none;" title="واتساب الدعم">
+        <span>💬</span>
+      </a>
+    </div>
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- BOTTOM SHEET 1: EDIT PRICES (PRICES CAN BE CHANGED)     -->
+  <!-- ======================================================== -->
+  <div class="sheet-overlay" id="priceEditorSheet">
+    <div class="sheet-container">
+      <div class="sheet-header">
+        <div class="sheet-title">
+          <span>✏️ تعديل الأسعار والإضافات</span>
+        </div>
+        <button class="sheet-close" onclick="closeSheet('priceEditorSheet')">✕</button>
+      </div>
+
+      <p style="font-size: 0.78rem; color: #94a3b8; margin-bottom: 12px;">
+        الأسعار المعدلة هنا تُحفظ تلقائياً على الموبايل وتتحدث في كل الشرائح وحاسبة المقايسة فوراً.
+      </p>
+
+      <div style="font-size: 0.82rem; font-weight: 800; color: var(--lime); margin-bottom: 8px;">باقات البرنامج الأساسي:</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+        <div class="form-group">
+          <label class="form-label">الاشتراك الشهري (ج)</label>
+          <input type="number" id="inPriceMonthly" class="input-box" value="350">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الاشتراك السنوي (ج)</label>
+          <input type="number" id="inPriceYearly" class="input-box" value="3500">
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label class="form-label">ترخيص مدى الحياة (ج)</label>
+          <input type="number" id="inPriceLifetime" class="input-box" value="6000">
+        </div>
+      </div>
+
+      <div style="font-size: 0.82rem; font-weight: 800; color: var(--cyan); margin-bottom: 8px;">أسعار الهاردوير والإضافات:</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+        <div class="form-group">
+          <label class="form-label">بصمة وجه (ج)</label>
+          <input type="number" id="inAddonFace" class="input-box" value="4000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">بصمة يد (ج)</label>
+          <input type="number" id="inAddonFingerprint" class="input-box" value="3500">
+        </div>
+        <div class="form-group">
+          <label class="form-label">قارئ باركود (ج)</label>
+          <input type="number" id="inAddonBarcode" class="input-box" value="2500">
+        </div>
+        <div class="form-group">
+          <label class="form-label">كود QR (ج)</label>
+          <input type="number" id="inAddonQr" class="input-box" value="1500">
+        </div>
+        <div class="form-group">
+          <label class="form-label">بوت واتساب (ج)</label>
+          <input type="number" id="inAddonBot" class="input-box" value="2000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">نقاط البار POS (ج)</label>
+          <input type="number" id="inAddonBar" class="input-box" value="1500">
+        </div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label class="form-label">ربط الفروع السحابي Global (ج/سنة)</label>
+          <input type="number" id="inAddonGlobal" class="input-box" value="2500">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="btn-main" style="flex: 2;" onclick="saveCustomPrices()">
+          <span>💾 حفظ وتطبيق الأسعار</span>
+        </button>
+        <button class="btn-outline" style="flex: 1;" onclick="resetPricesToDefault()">
+          <span>↺ الافتراضي</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- BOTTOM SHEET 2: QUOTE & CLIENT PACKAGE BUILDER           -->
+  <!-- ======================================================== -->
+  <div class="sheet-overlay" id="quoteSheet">
+    <div class="sheet-container">
+      <div class="sheet-header">
+        <div class="sheet-title">
+          <span>🧮 حاسبة مقايسة مخصصة للعميل</span>
+        </div>
+        <button class="sheet-close" onclick="closeSheet('quoteSheet')">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">اسم الجيم / العميل (اختياري)</label>
+        <input type="text" id="quoteClientName" class="input-box" placeholder="مثال: كابتن محمد - جيم الأبطال">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">نوع الترخيص الأساسي المطلوب:</label>
+        <select id="quoteBasePlan" class="input-box" onchange="calculateQuote()">
+          <option value="yearly" selected>اشتراك سنوي (3,500 ج/سنة)</option>
+          <option value="monthly">اشتراك شهري (350 ج/شهر)</option>
+          <option value="lifetime">ترخيص مدى الحياة (6,000 ج لمرة واحدة)</option>
+        </select>
+      </div>
+
+      <div style="font-size: 0.82rem; font-weight: 800; color: #cbd5e1; margin-bottom: 8px;">اختار الإضافات المطلوبة للصالة:</div>
+
+      <label class="quote-check-item">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="chkAddonFace" onchange="calculateQuote()" checked>
+          <span style="font-size: 0.82rem; font-weight: 800; color: #fff;">بصمة وجه فورية (Face Kiosk)</span>
+        </div>
+        <strong style="color: var(--lime); font-family: var(--font-mono); font-size: 0.85rem;" id="qPriceFace">+4,000 ج</strong>
+      </label>
+
+      <label class="quote-check-item">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="chkAddonFingerprint" onchange="calculateQuote()">
+          <span style="font-size: 0.82rem; font-weight: 800; color: #fff;">جهاز بصمة اليد ZKTeco</span>
+        </div>
+        <strong style="color: var(--lime); font-family: var(--font-mono); font-size: 0.85rem;" id="qPriceFingerprint">+3,500 ج</strong>
+      </label>
+
+      <label class="quote-check-item">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="chkAddonBarcode" onchange="calculateQuote()">
+          <span style="font-size: 0.82rem; font-weight: 800; color: #fff;">قارئ باركود ليزر سريع</span>
+        </div>
+        <strong style="color: var(--lime); font-family: var(--font-mono); font-size: 0.85rem;" id="qPriceBarcode">+2,500 ج</strong>
+      </label>
+
+      <label class="quote-check-item">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="chkAddonBot" onchange="calculateQuote()" checked>
+          <span style="font-size: 0.82rem; font-weight: 800; color: #fff;">روبوت واتساب آلي للتنبيهات</span>
+        </div>
+        <strong style="color: var(--lime); font-family: var(--font-mono); font-size: 0.85rem;" id="qPriceBot">+2,000 ج</strong>
+      </label>
+
+      <label class="quote-check-item">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="chkAddonBar" onchange="calculateQuote()">
+          <span style="font-size: 0.82rem; font-weight: 800; color: #fff;">كاشير ونقاط بيع البار POS</span>
+        </div>
+        <strong style="color: var(--lime); font-family: var(--font-mono); font-size: 0.85rem;" id="qPriceBar">+1,500 ج</strong>
+      </label>
+
+      <!-- Discount input -->
+      <div class="form-group" style="margin-top: 10px;">
+        <label class="form-label">خصم خاص أو عرض (ج)</label>
+        <input type="number" id="quoteDiscount" class="input-box" value="0" min="0" oninput="calculateQuote()">
+      </div>
+
+      <!-- Live Total Box -->
+      <div class="glass-card highlight" style="text-align: center; margin-top: 10px;">
+        <div style="font-size: 0.8rem; color: #bef264; font-weight: 800;">إجمالي الباقة المخصصة للعميل:</div>
+        <div style="font-size: 2.3rem; font-weight: 900; color: #fff; font-family: var(--font-mono); margin: 4px 0;" id="quoteTotalVal">
+          ٩٬٥٠٠ <span style="font-size: 0.95rem; font-family: var(--font-main);">جنيه مصري</span>
+        </div>
+        <div style="font-size: 0.74rem; color: #cbd5e1;" id="quoteBreakdownText">الترخيص الأساسي + بصمة وجه + بوت واتساب</div>
+      </div>
+
+      <button class="btn-main" onclick="sendQuoteViaWhatsApp()">
+        <span>📲 إرسال عرض السعر للعميل عبر واتساب</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- BOTTOM SHEET 3: LOSS CALCULATOR                          -->
+  <!-- ======================================================== -->
+  <div class="sheet-overlay" id="lossSheet">
+    <div class="sheet-container">
+      <div class="sheet-header">
+        <div class="sheet-title">
+          <span>🧮 حاسبة التسريب والفرص الضائعة</span>
+        </div>
+        <button class="sheet-close" onclick="closeSheet('lossSheet')">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">عدد الأعضاء المتوقع عدم تجديدهم شهرياً</label>
+        <input type="number" id="inLossMembers" class="input-box" value="15" oninput="computeLossCalc()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">متوسط سعر الاشتراك بالصالة (ج)</label>
+        <input type="number" id="inLossAvgSub" class="input-box" value="450" oninput="computeLossCalc()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">قيمة أي فروق كاش أو أخطاء حسابية شهرية (ج)</label>
+        <input type="number" id="inLossCashDiff" class="input-box" value="1000" oninput="computeLossCalc()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ساعات المتابعة اليدوية اليومية</label>
+        <input type="number" id="inLossHours" class="input-box" value="2" oninput="computeLossCalc()">
+      </div>
+
+      <div class="glass-card highlight" style="text-align: center; margin-top: 10px;">
+        <div style="font-size: 0.8rem; color: #bef264; font-weight: 800;">إجمالي التسريب الشهري المقدر:</div>
+        <div style="font-size: 2.2rem; font-weight: 900; color: #fff; font-family: var(--font-mono);" id="lossCalcTotal">
+          ٩٬٥٥٠ <span style="font-size: 0.9rem; font-family: var(--font-main);">ج/شهر</span>
+        </div>
+        <div style="font-size: 0.74rem; color: #cbd5e1;" id="lossCalcYearly">١١٤٬٦٠٠ ج سنوياً</div>
+      </div>
+
+      <button class="btn-main" onclick="applyLossToSlide1()">
+        <span>تطبيق الأرقام على الشريحة الأولى ✓</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- BOTTOM SHEET 4: QUICK JUMP SLIDES DRAWER                 -->
+  <!-- ======================================================== -->
+  <div class="sheet-overlay" id="jumpSheet">
+    <div class="sheet-container">
+      <div class="sheet-header">
+        <div class="sheet-title">
+          <span>📑 فهرس شرائح العرض (13 شريحة)</span>
+        </div>
+        <button class="sheet-close" onclick="closeSheet('jumpSheet')">✕</button>
+      </div>
+
+      <div class="slide-jump-grid">
+        <div class="jump-item" onclick="goToSlide(0)"><strong>01. الافتتاحية</strong>كم ينزف الجيم شهرياً؟</div>
+        <div class="jump-item" onclick="goToSlide(1)"><strong>02. التسريب</strong>الـ 3 ثغرات الخفية</div>
+        <div class="jump-item" onclick="goToSlide(2)"><strong>03. المشكلة</strong>فخ الاعتماد على الذاكرة</div>
+        <div class="jump-item" onclick="goToSlide(3)"><strong>04. الحل</strong>عقل Systemize الذكي</div>
+        <div class="jump-item" onclick="goToSlide(4)"><strong>05. البوابة</strong>بصمة الوجه والكشك</div>
+        <div class="jump-item" onclick="goToSlide(5)"><strong>06. الأعضاء</strong>التجديدات والاحتفاظ</div>
+        <div class="jump-item" onclick="goToSlide(6)"><strong>07. الخزينة</strong>الكاش ونقاط البار</div>
+        <div class="jump-item" onclick="goToSlide(7)"><strong>08. المدربين</strong>الـ PT والعمولات والسُلف</div>
+        <div class="jump-item" onclick="goToSlide(8)"><strong>09. الواتساب</strong>الأتمتة ورسائل المتابعة</div>
+        <div class="jump-item" onclick="goToSlide(9)"><strong>10. التقارير</strong>لوحة رؤية المدير</div>
+        <div class="jump-item" onclick="goToSlide(10)"><strong>11. المقارنة</strong>الدفاتر vs سيستمايز</div>
+        <div class="jump-item" onclick="goToSlide(11)"><strong>12. الاستثمار</strong>استرداد التكلفة فوراً</div>
+        <div class="jump-item" onclick="goToSlide(12)"><strong>13. الأسعار</strong>الباقات والمقايسة</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- LOGIC & SCRIPTS                                          -->
+  <!-- ======================================================== -->
+  <script>
+    /* 1. App State & Dynamic Prices */
+    const DEFAULT_PRICES = {
+      monthly: 350,
+      yearly: 3500,
+      lifetime: 6000,
+      addonFace: 4000,
+      addonFingerprint: 3500,
+      addonBarcode: 2500,
+      addonQr: 1500,
+      addonBot: 2000,
+      addonBar: 1500,
+      addonGlobal: 2500
+    };
+
+    let currentPrices = Object.assign({}, DEFAULT_PRICES);
+
+    function loadSavedPrices() {
+      try {
+        const saved = localStorage.getItem('systemize_presentation_prices');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          currentPrices = Object.assign({}, DEFAULT_PRICES, parsed);
+        }
+      } catch (e) {
+        console.warn('Could not load saved prices:', e);
+      }
+      renderPricesToUI();
+    }
+
+    function saveCustomPrices() {
+      currentPrices.monthly = Number(document.getElementById('inPriceMonthly').value) || DEFAULT_PRICES.monthly;
+      currentPrices.yearly = Number(document.getElementById('inPriceYearly').value) || DEFAULT_PRICES.yearly;
+      currentPrices.lifetime = Number(document.getElementById('inPriceLifetime').value) || DEFAULT_PRICES.lifetime;
+      currentPrices.addonFace = Number(document.getElementById('inAddonFace').value) || DEFAULT_PRICES.addonFace;
+      currentPrices.addonFingerprint = Number(document.getElementById('inAddonFingerprint').value) || DEFAULT_PRICES.addonFingerprint;
+      currentPrices.addonBarcode = Number(document.getElementById('inAddonBarcode').value) || DEFAULT_PRICES.addonBarcode;
+      currentPrices.addonQr = Number(document.getElementById('inAddonQr').value) || DEFAULT_PRICES.addonQr;
+      currentPrices.addonBot = Number(document.getElementById('inAddonBot').value) || DEFAULT_PRICES.addonBot;
+      currentPrices.addonBar = Number(document.getElementById('inAddonBar').value) || DEFAULT_PRICES.addonBar;
+      currentPrices.addonGlobal = Number(document.getElementById('inAddonGlobal').value) || DEFAULT_PRICES.addonGlobal;
+
+      try {
+        localStorage.setItem('systemize_presentation_prices', JSON.stringify(currentPrices));
+      } catch (e) {}
+
+      renderPricesToUI();
+      closeSheet('priceEditorSheet');
+      showToast('تم حفظ الأسعار الجديدة بنجاح! ✓');
+    }
+
+    function resetPricesToDefault() {
+      currentPrices = Object.assign({}, DEFAULT_PRICES);
+      try {
+        localStorage.removeItem('systemize_presentation_prices');
+      } catch (e) {}
+      renderPricesToUI();
+      populateInputsFromState();
+      showToast('تمت استعادة الأسعار الافتراضية!');
+    }
+
+    function formatNum(n) {
+      return Number(n).toLocaleString('ar-EG');
+    }
+
+    function renderPricesToUI() {
+      // Base Plans on Slide 13
+      const elMonthly = document.getElementById('dispPriceMonthly');
+      const elYearly = document.getElementById('dispPriceYearly');
+      const elLifetime = document.getElementById('dispPriceLifetime');
+
+      if (elMonthly) elMonthly.innerText = formatNum(currentPrices.monthly);
+      if (elYearly) elYearly.innerText = formatNum(currentPrices.yearly);
+      if (elLifetime) elLifetime.innerText = formatNum(currentPrices.lifetime);
+
+      // Addons Strip
+      const elFace = document.getElementById('dispAddonFace');
+      const elFing = document.getElementById('dispAddonFingerprint');
+      const elBarc = document.getElementById('dispAddonBarcode');
+      const elQr = document.getElementById('dispAddonQr');
+      const elBot = document.getElementById('dispAddonBot');
+      const elBar = document.getElementById('dispAddonBar');
+      const elGlob = document.getElementById('dispAddonGlobal');
+
+      if (elFace) elFace.innerText = formatNum(currentPrices.addonFace);
+      if (elFing) elFing.innerText = formatNum(currentPrices.addonFingerprint);
+      if (elBarc) elBarc.innerText = formatNum(currentPrices.addonBarcode);
+      if (elQr) elQr.innerText = formatNum(currentPrices.addonQr);
+      if (elBot) elBot.innerText = formatNum(currentPrices.addonBot);
+      if (elBar) elBar.innerText = formatNum(currentPrices.addonBar);
+      if (elGlob) elGlob.innerText = formatNum(currentPrices.addonGlobal);
+
+      // Quote Checkbox Labels
+      const qFace = document.getElementById('qPriceFace');
+      const qFing = document.getElementById('qPriceFingerprint');
+      const qBarc = document.getElementById('qPriceBarcode');
+      const qBot = document.getElementById('qPriceBot');
+      const qBar = document.getElementById('qPriceBar');
+
+      if (qFace) qFace.innerText = `+${formatNum(currentPrices.addonFace)} ج`;
+      if (qFing) qFing.innerText = `+${formatNum(currentPrices.addonFingerprint)} ج`;
+      if (qBarc) qBarc.innerText = `+${formatNum(currentPrices.addonBarcode)} ج`;
+      if (qBot) qBot.innerText = `+${formatNum(currentPrices.addonBot)} ج`;
+      if (qBar) qBar.innerText = `+${formatNum(currentPrices.addonBar)} ج`;
+
+      // Update Select Options
+      const sel = document.getElementById('quoteBasePlan');
+      if (sel) {
+        sel.options[0].text = `اشتراك سنوي (${formatNum(currentPrices.yearly)} ج/سنة)`;
+        sel.options[1].text = `اشتراك شهري (${formatNum(currentPrices.monthly)} ج/شهر)`;
+        sel.options[2].text = `ترخيص مدى الحياة (${formatNum(currentPrices.lifetime)} ج لمرة واحدة)`;
+      }
+
+      calculateQuote();
+    }
+
+    function populateInputsFromState() {
+      document.getElementById('inPriceMonthly').value = currentPrices.monthly;
+      document.getElementById('inPriceYearly').value = currentPrices.yearly;
+      document.getElementById('inPriceLifetime').value = currentPrices.lifetime;
+      document.getElementById('inAddonFace').value = currentPrices.addonFace;
+      document.getElementById('inAddonFingerprint').value = currentPrices.addonFingerprint;
+      document.getElementById('inAddonBarcode').value = currentPrices.addonBarcode;
+      document.getElementById('inAddonQr').value = currentPrices.addonQr;
+      document.getElementById('inAddonBot').value = currentPrices.addonBot;
+      document.getElementById('inAddonBar').value = currentPrices.addonBar;
+      document.getElementById('inAddonGlobal').value = currentPrices.addonGlobal;
+    }
+
+    /* 2. Slide Navigation Logic & Touch Swipe */
+    const TOTAL_SLIDES = 13;
+    let currentSlide = 0;
+    const slidesWrapper = document.getElementById('slidesWrapper');
+    const progressBar = document.getElementById('progressBar');
+    const dockCurrentNum = document.getElementById('dockCurrentNum');
+
+    function updateSlidePosition() {
+      const offsetPercent = currentSlide * 100;
+      slidesWrapper.style.transform = `translateX(${offsetPercent}vw)`;
+      
+      const progressPercent = ((currentSlide + 1) / TOTAL_SLIDES) * 100;
+      progressBar.style.width = `${progressPercent}%`;
+
+      const numStr = (currentSlide + 1).toString().padStart(2, '0');
+      dockCurrentNum.innerText = numStr;
+
+      // Update active jump item
+      document.querySelectorAll('.jump-item').forEach((item, idx) => {
+        if (idx === currentSlide) item.classList.add('active');
+        else item.classList.remove('active');
+      });
+    }
+
+    function nextSlide() {
+      if (currentSlide < TOTAL_SLIDES - 1) {
+        currentSlide++;
+        updateSlidePosition();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlidePosition();
+      }
+    }
+
+    function goToSlide(idx) {
+      if (idx >= 0 && idx < TOTAL_SLIDES) {
+        currentSlide = idx;
+        updateSlidePosition();
+        closeAllSheets();
+      }
+    }
+
+    // Touch Swipe Gesture on Phone
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    window.addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener('touchend', e => {
+      const diffX = e.changedTouches[0].clientX - touchStartX;
+      const diffY = e.changedTouches[0].clientY - touchStartY;
+
+      // Ensure horizontal swipe is dominant over vertical scroll
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 45) {
+        if (diffX < 0) {
+          // Swiped left (in RTL, left swipe goes to next slide)
+          nextSlide();
+        } else {
+          // Swiped right
+          prevSlide();
+        }
+      }
+    }, { passive: true });
+
+    // Keyboard support (if connected to iPad/tablet/keyboard)
+    window.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft' || e.key === 'PageDown' || e.key === ' ') nextSlide();
+      else if (e.key === 'ArrowRight' || e.key === 'PageUp') prevSlide();
+      else if (e.key === 'Escape') closeAllSheets();
+    });
+
+    /* 3. Sheet Open / Close Controls */
+    function openSheet(id) {
+      closeAllSheets();
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+    }
+
+    function closeSheet(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('active');
+    }
+
+    function closeAllSheets() {
+      document.querySelectorAll('.sheet-overlay').forEach(s => s.classList.remove('active'));
+    }
+
+    function openPriceEditorSheet() {
+      populateInputsFromState();
+      openSheet('priceEditorSheet');
+    }
+
+    function openQuoteSheet() {
+      calculateQuote();
+      openSheet('quoteSheet');
+    }
+
+    function openLossCalcSheet() {
+      computeLossCalc();
+      openSheet('lossSheet');
+    }
+
+    function openJumpSheet() {
+      openSheet('jumpSheet');
+    }
+
+    /* 4. Quote Calculator Logic */
+    let lastCalculatedTotal = 0;
+    let lastBreakdownItems = [];
+
+    function calculateQuote() {
+      const baseType = document.getElementById('quoteBasePlan').value;
+      let total = 0;
+      let items = [];
+
+      if (baseType === 'monthly') {
+        total += currentPrices.monthly;
+        items.push(`اشتراك شهري (${formatNum(currentPrices.monthly)} ج)`);
+      } else if (baseType === 'lifetime') {
+        total += currentPrices.lifetime;
+        items.push(`ترخيص دائم (${formatNum(currentPrices.lifetime)} ج)`);
+      } else {
+        total += currentPrices.yearly;
+        items.push(`اشتراك سنوي (${formatNum(currentPrices.yearly)} ج)`);
+      }
+
+      if (document.getElementById('chkAddonFace').checked) {
+        total += currentPrices.addonFace;
+        items.push(`بصمة وجه (+${formatNum(currentPrices.addonFace)} ج)`);
+      }
+      if (document.getElementById('chkAddonFingerprint').checked) {
+        total += currentPrices.addonFingerprint;
+        items.push(`بصمة يد (+${formatNum(currentPrices.addonFingerprint)} ج)`);
+      }
+      if (document.getElementById('chkAddonBarcode').checked) {
+        total += currentPrices.addonBarcode;
+        items.push(`باركود (+${formatNum(currentPrices.addonBarcode)} ج)`);
+      }
+      if (document.getElementById('chkAddonBot').checked) {
+        total += currentPrices.addonBot;
+        items.push(`بوت واتساب (+${formatNum(currentPrices.addonBot)} ج)`);
+      }
+      if (document.getElementById('chkAddonBar').checked) {
+        total += currentPrices.addonBar;
+        items.push(`كاشير بار (+${formatNum(currentPrices.addonBar)} ج)`);
+      }
+
+      const discount = Number(document.getElementById('quoteDiscount').value) || 0;
+      total = Math.max(0, total - discount);
+
+      lastCalculatedTotal = total;
+      lastBreakdownItems = items;
+
+      const totalEl = document.getElementById('quoteTotalVal');
+      if (totalEl) totalEl.innerHTML = `${formatNum(total)} <span style="font-size: 0.95rem; font-family: var(--font-main);">جنيه مصري</span>`;
+
+      const breakdownEl = document.getElementById('quoteBreakdownText');
+      if (breakdownEl) breakdownEl.innerText = items.join(' + ') + (discount > 0 ? ` (خصم ${formatNum(discount)} ج)` : '');
+    }
+
+    function sendQuoteViaWhatsApp() {
+      const clientName = document.getElementById('quoteClientName').value.trim() || 'كابتن الجيم';
+      const totalStr = formatNum(lastCalculatedTotal);
+      const itemsStr = lastBreakdownItems.join('\n• ');
+      const discount = Number(document.getElementById('quoteDiscount').value) || 0;
+      const discountText = discount > 0 ? `\n🎁 خصم خاص مقدم: ${formatNum(discount)} ج` : '';
+
+      const msg = `مرحباً ${clientName} 👋\nإليك مقايسة عرض أسعار سيستم Systemize Gym OS:\n\n📌 بنود الباقة المختارة:\n• ${itemsStr}${discountText}\n\n💰 الإجمالي النهائي: ${totalStr} جنيه مصري\n\nيشمل:\n✓ التركيب والتدريب الكامل للموظفين\n✓ دعم فني وتحديثات مستمرة\n✓ العمل بنظام هجين (أوفلاين وأونلاين)\n\nللتأكيد وبدء التركيب، يرجى الرد على هذه الرسالة. دمت بألف خير!`;
+
+      const encoded = encodeURIComponent(msg);
+      window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    }
+
+    /* 5. Loss Calculator Logic */
+    function computeLossCalc() {
+      const members = Number(document.getElementById('inLossMembers').value) || 0;
+      const avgSub = Number(document.getElementById('inLossAvgSub').value) || 0;
+      const cashDiff = Number(document.getElementById('inLossCashDiff').value) || 0;
+      const hours = Number(document.getElementById('inLossHours').value) || 0;
+
+      const subLoss = members * avgSub;
+      const timeCost = hours * 30 * 30; // 30 EGP hourly rate
+      const totalMonthly = subLoss + cashDiff + timeCost;
+      const totalYearly = totalMonthly * 12;
+
+      document.getElementById('lossCalcTotal').innerHTML = `${formatNum(totalMonthly)} <span style="font-size: 0.9rem; font-family: var(--font-main);">ج/شهر</span>`;
+      document.getElementById('lossCalcYearly').innerText = `${formatNum(totalYearly)} ج سنوياً`;
+    }
+
+    function applyLossToSlide1() {
+      const members = Number(document.getElementById('inLossMembers').value) || 0;
+      const avgSub = Number(document.getElementById('inLossAvgSub').value) || 0;
+      const cashDiff = Number(document.getElementById('inLossCashDiff').value) || 0;
+      const hours = Number(document.getElementById('inLossHours').value) || 0;
+
+      const subLoss = members * avgSub;
+      const totalMonthly = subLoss + cashDiff + (hours * 30 * 30);
+
+      document.getElementById('kpiLoss1').innerText = formatNum(subLoss);
+      document.getElementById('kpiLoss2').innerText = formatNum(cashDiff);
+      document.getElementById('kpiLoss3').innerText = `${hours * 30} ساعة`;
+      document.getElementById('kpiLossTotal').innerHTML = `${formatNum(totalMonthly)} <span style="font-size: 0.9rem; font-family: var(--font-main);">ج/شهر</span>`;
+
+      closeSheet('lossSheet');
+      goToSlide(0);
+      showToast('تم تطبيق الأرقام على الشريحة 1!');
+    }
+
+    /* 6. Toast Notification Helper */
+    function showToast(msg) {
+      const t = document.getElementById('toastMsg');
+      t.innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2400);
+    }
+
+    // Initialize App
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedPrices();
+      updateSlidePosition();
+    });
+  </script>
+</body>
+</html>
