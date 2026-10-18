@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Systemize — سيستم إدارة الجيمات الذكي | العرض التقديمي التفاعلي</title>
+  <title>Systemize — سيستم إدارة الجيمات الذكي | العرض التقديمي</title>
   
-  <!-- Cairo Font from Google Fonts -->
+  <!-- Cairo Font & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900;1000&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
@@ -16,7 +16,6 @@
   <style>
     :root {
       --bg-dark: #030712;
-      --bg-surface: #0b1120;
       --card-bg: rgba(15, 23, 42, 0.75);
       --card-border: rgba(255, 255, 255, 0.08);
       --primary: #84cc16;
@@ -54,7 +53,7 @@
       filter: blur(140px);
       pointer-events: none;
       z-index: 0;
-      opacity: 0.35;
+      opacity: 0.32;
       animation: floatAmbient 14s ease-in-out infinite alternate;
     }
     .sphere-1 {
@@ -82,8 +81,8 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 70px;
-      padding: 0 36px;
+      height: 64px;
+      padding: 0 32px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -98,14 +97,14 @@
       cursor: pointer;
     }
     .brand-logo {
-      width: 42px;
-      height: 42px;
+      width: 40px;
+      height: 40px;
       border-radius: 12px;
       background: linear-gradient(135deg, #84cc16 0%, #10b981 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.35rem;
+      font-size: 1.3rem;
       color: #030712;
       box-shadow: 0 0 20px var(--primary-glow);
     }
@@ -121,7 +120,7 @@
       color: #bef264;
       font-size: 0.72rem;
       font-weight: 800;
-      padding: 3px 8px;
+      padding: 2px 8px;
       border-radius: 20px;
       margin-right: 6px;
     }
@@ -129,24 +128,24 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
-    /* Hand Wave HUD in Header */
+    /* Hand Wave HUD */
     .gesture-hud {
       display: flex;
       align-items: center;
       gap: 10px;
       background: rgba(15, 23, 42, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 5px 14px;
+      padding: 4px 12px;
       border-radius: 30px;
       backdrop-filter: blur(12px);
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     }
     .camera-circle {
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       border: 2px solid #84cc16;
       overflow: hidden;
@@ -165,11 +164,11 @@
       border-radius: 50%;
       background: #64748b;
       display: inline-block;
-      margin-left: 6px;
+      margin-left: 4px;
       transition: all 0.3s;
     }
     .gesture-status-text {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
       color: #cbd5e1;
     }
@@ -177,35 +176,35 @@
       background: rgba(132, 204, 22, 0.12);
       border: 1px solid rgba(132, 204, 22, 0.3);
       color: #bef264;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 800;
-      padding: 4px 10px;
-      border-radius: 14px;
+      padding: 3px 8px;
+      border-radius: 12px;
       cursor: pointer;
       transition: all 0.2s;
     }
-    .gesture-toggle-btn:hover {
-      background: rgba(132, 204, 22, 0.25);
-    }
+    .gesture-toggle-btn:hover { background: rgba(132, 204, 22, 0.25); }
 
-    .edit-mode-btn {
+    /* Action Icon Buttons */
+    .action-icon-btn {
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: #94a3b8;
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 20px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 6px;
       cursor: pointer;
-      font-size: 0.95rem;
+      font-size: 0.8rem;
+      font-weight: 700;
       transition: all 0.2s;
     }
-    .edit-mode-btn:hover {
+    .action-icon-btn:hover, .action-icon-btn.active {
       color: #ffffff;
       border-color: var(--primary);
-      background: rgba(132, 204, 22, 0.15);
+      background: rgba(132, 204, 22, 0.18);
     }
 
     /* Main Deck Layout */
@@ -220,15 +219,15 @@
     .slide {
       position: absolute;
       inset: 0;
-      padding: 85px 60px 75px 60px;
+      padding: 70px 48px 65px 48px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transform: scale(0.97) translateY(15px);
-      transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: scale(0.97) translateY(12px);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .slide.active {
@@ -240,8 +239,8 @@
 
     .slide-2col {
       display: grid;
-      grid-template-columns: 1.05fr 1.15fr;
-      gap: 48px;
+      grid-template-columns: 0.95fr 1.25fr;
+      gap: 40px;
       align-items: center;
       width: 100%;
       max-width: 1440px;
@@ -255,34 +254,34 @@
       align-items: center;
       text-align: center;
       width: 100%;
-      max-width: 1200px;
+      max-width: 1100px;
       margin: 0 auto;
       height: 100%;
       justify-content: center;
     }
 
-    /* Typography & Badges */
+    /* Minimal Punchy Typography */
     .slide-tag {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 14px;
+      padding: 5px 14px;
       border-radius: 30px;
       background: rgba(132, 204, 22, 0.12);
-      border: 1px solid rgba(132, 204, 22, 0.3);
+      border: 1px solid rgba(132, 204, 22, 0.35);
       color: #bef264;
       font-size: 0.85rem;
       font-weight: 800;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       width: fit-content;
     }
 
     .slide-title {
-      font-size: 2.7rem;
-      font-weight: 900;
-      line-height: 1.25;
+      font-size: 2.85rem;
+      font-weight: 950;
+      line-height: 1.22;
       color: #ffffff;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       letter-spacing: -0.5px;
     }
     .slide-title span {
@@ -291,132 +290,114 @@
       -webkit-text-fill-color: transparent;
     }
 
-    .slide-desc {
+    .slide-subtitle {
       font-size: 1.25rem;
-      color: var(--text-muted);
-      line-height: 1.6;
+      color: #cbd5e1;
+      font-weight: 700;
       margin-bottom: 24px;
-      font-weight: 500;
-      max-width: 600px;
+      line-height: 1.45;
     }
 
-    /* Cards & Containers */
+    /* Cards */
     .glass-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 24px;
+      border-radius: 20px;
       backdrop-filter: blur(16px);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+      box-shadow: 0 20px 45px rgba(0,0,0,0.6);
       transition: all 0.3s ease;
     }
     .glass-card:hover {
-      border-color: rgba(132, 204, 22, 0.35);
-      box-shadow: 0 20px 60px rgba(132, 204, 22, 0.15);
+      border-color: rgba(132, 204, 22, 0.4);
+      box-shadow: 0 20px 55px rgba(132, 204, 22, 0.15);
     }
 
-    /* Screenshot Visual Container with Zoomable Lightbox */
+    /* Massive Visual Container */
     .visual-wrapper {
       position: relative;
       border-radius: 22px;
       background: #090e17;
       border: 1px solid rgba(255, 255, 255, 0.12);
       overflow: hidden;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 50px rgba(132, 204, 22, 0.12);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 50px rgba(132, 204, 22, 0.14);
       cursor: zoom-in;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       align-items: center;
       justify-content: center;
-      max-height: 560px;
+      max-height: 590px;
     }
     .visual-wrapper:hover {
       transform: translateY(-4px) scale(1.015);
-      border-color: rgba(132, 204, 22, 0.5);
+      border-color: rgba(132, 204, 22, 0.55);
     }
     .visual-wrapper img {
       width: 100%;
       height: auto;
-      max-height: 550px;
+      max-height: 580px;
       object-fit: contain;
       display: block;
       border-radius: 20px;
     }
     .zoom-hint {
       position: absolute;
-      bottom: 14px;
-      left: 14px;
-      background: rgba(15, 23, 42, 0.85);
+      bottom: 12px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.88);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: #cbd5e1;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.72rem;
+      padding: 3px 9px;
+      border-radius: 10px;
+      font-size: 0.7rem;
       font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       pointer-events: none;
     }
 
-    /* Bullets */
-    .feature-list {
+    /* Minimal Pill Badges Row */
+    .pills-row {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
     }
-    .feature-item {
-      display: flex;
+    .pill-item {
+      display: inline-flex;
       align-items: center;
-      gap: 16px;
-      background: rgba(15, 23, 42, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      padding: 12px 18px;
-      border-radius: 18px;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px 16px;
+      border-radius: 14px;
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #e2e8f0;
       transition: all 0.2s;
     }
-    .feature-item:hover {
-      background: rgba(15, 23, 42, 0.95);
-      border-color: rgba(132, 204, 22, 0.3);
-      transform: translateX(-4px);
+    .pill-item i {
+      color: #84cc16;
+      font-size: 1rem;
     }
-    .feature-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: rgba(132, 204, 22, 0.15);
-      border: 1px solid rgba(132, 204, 22, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      color: #a3e635;
-      flex-shrink: 0;
-    }
-    .feature-text strong {
-      font-size: 1.05rem;
-      font-weight: 800;
-      color: #ffffff;
-      display: block;
-    }
-    .feature-text p {
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      margin: 0;
-      font-weight: 600;
+    .pill-item:hover {
+      border-color: #84cc16;
+      background: rgba(132, 204, 22, 0.12);
+      transform: translateY(-2px);
     }
 
-    /* Nav Arrows */
+    /* Navigation Arrows */
     .nav-arrow {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 54px;
-      height: 54px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       background: rgba(15, 23, 42, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: #ffffff;
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -435,14 +416,14 @@
     .nav-arrow.next { left: 24px; }
     .nav-arrow.prev { right: 24px; }
 
-    /* Footer Status */
+    /* Footer */
     footer {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 60px;
-      padding: 0 36px;
+      height: 54px;
+      padding: 0 32px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -450,7 +431,7 @@
       background: linear-gradient(0deg, rgba(3,7,18,0.95) 0%, transparent 100%);
     }
     .slide-counter {
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       font-weight: 800;
       color: var(--text-muted);
       direction: ltr;
@@ -466,7 +447,7 @@
       gap: 6px;
     }
     .dot {
-      width: 18px;
+      width: 16px;
       height: 5px;
       border-radius: 4px;
       background: rgba(255, 255, 255, 0.15);
@@ -474,12 +455,12 @@
       transition: all 0.3s;
     }
     .dot.active {
-      width: 36px;
+      width: 32px;
       background: linear-gradient(90deg, #84cc16, #38bdf8);
       box-shadow: 0 0 12px var(--primary-glow);
     }
     .bottom-hint {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 700;
       color: var(--text-muted);
       display: flex;
@@ -492,42 +473,70 @@
       padding: 1px 6px;
       border-radius: 6px;
       font-family: var(--font-mono);
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: #ffffff;
     }
 
-    /* Wave Notification Toast */
-    #waveNotification {
+    /* ==========================================
+       PRESENTER SCRIPT BOTTOM DRAWER (Prompter)
+       ========================================== */
+    #presenterScriptDrawer {
       position: fixed;
-      top: 85px;
+      bottom: 54px;
       left: 50%;
-      transform: translateX(-50%) translateY(-30px);
-      background: rgba(15, 23, 42, 0.95);
+      transform: translateX(-50%) translateY(120%);
+      width: 90%;
+      max-width: 980px;
+      background: rgba(11, 17, 32, 0.96);
       border: 1px solid #84cc16;
-      box-shadow: 0 10px 40px rgba(132, 204, 22, 0.35);
-      padding: 10px 24px;
-      border-radius: 30px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 800;
-      font-size: 0.9rem;
-      color: #ffffff;
-      z-index: 999;
-      opacity: 0;
-      pointer-events: none;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 -15px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(132, 204, 22, 0.25);
+      border-radius: 20px 20px 0 0;
+      backdrop-filter: blur(20px);
+      padding: 18px 24px;
+      z-index: 50;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    #waveNotification.show {
-      opacity: 1;
+    #presenterScriptDrawer.open {
       transform: translateX(-50%) translateY(0);
     }
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .drawer-title {
+      font-size: 0.9rem;
+      font-weight: 900;
+      color: #bef264;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .drawer-script-body {
+      font-size: 1.05rem;
+      line-height: 1.65;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .drawer-script-body strong {
+      color: #84cc16;
+    }
+    .drawer-close-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
 
-    /* Loss Calculator Modal */
+    /* Modals & Popups */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(3, 7, 18, 0.85);
+      background: rgba(3, 7, 18, 0.88);
       backdrop-filter: blur(14px);
       z-index: 100;
       display: flex;
@@ -538,135 +547,88 @@
       visibility: hidden;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .modal-overlay.open {
-      opacity: 1;
-      visibility: visible;
-    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
     .modal-container {
       background: #0b1120;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 28px;
+      border-radius: 24px;
       max-width: 780px;
       width: 100%;
-      padding: 36px;
+      padding: 32px;
       box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 50px rgba(132, 204, 22, 0.15);
       transform: scale(0.95);
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       max-height: 90vh;
       overflow-y: auto;
     }
-    .modal-overlay.open .modal-container {
-      transform: scale(1);
-    }
+    .modal-overlay.open .modal-container { transform: scale(1); }
 
-    .form-group {
-      margin-bottom: 16px;
-    }
-    .form-label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 800;
-      color: #cbd5e1;
-      margin-bottom: 6px;
-    }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 0.82rem; font-weight: 800; color: #cbd5e1; margin-bottom: 4px; }
     .form-input {
       width: 100%;
       background: #030712;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 12px;
-      padding: 10px 14px;
+      padding: 9px 12px;
       font-size: 0.95rem;
       font-weight: 700;
       color: #ffffff;
       outline: none;
-      transition: border 0.2s;
       font-family: var(--font-mono);
     }
-    .form-input:focus {
-      border-color: var(--primary);
-    }
+    .form-input:focus { border-color: var(--primary); }
 
-    /* Calculator Results Grid */
-    .calc-results-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin: 20px 0;
-    }
-    .calc-res-card {
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 14px;
-      text-align: center;
-    }
-    .calc-res-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    .calc-res-val {
-      font-size: 1.35rem;
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, #84cc16 0%, #10b981 100%);
+      color: #030712;
       font-weight: 900;
-      color: #ffffff;
-      font-family: var(--font-mono);
-    }
-
-    .total-banner {
-      background: linear-gradient(135deg, rgba(132, 204, 22, 0.15) 0%, rgba(56, 189, 248, 0.1) 100%);
-      border: 1px solid rgba(132, 204, 22, 0.4);
-      border-radius: 18px;
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 16px;
-    }
-
-    /* Package Calculator Checkbox Cards */
-    .pkg-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 14px;
-      padding: 12px 16px;
+      font-size: 1rem;
+      padding: 10px 24px;
+      border-radius: 30px;
+      border: none;
       cursor: pointer;
+      box-shadow: 0 10px 25px var(--primary-glow);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       transition: all 0.2s;
     }
-    .pkg-item:hover, .pkg-item.selected {
-      background: rgba(132, 204, 22, 0.08);
-      border-color: rgba(132, 204, 22, 0.4);
-    }
-    .pkg-check {
-      accent-color: #84cc16;
-      width: 18px;
-      height: 18px;
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 35px var(--primary-glow); }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.95rem;
+      padding: 10px 20px;
+      border-radius: 30px;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
     }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.15); }
 
-    /* Lightbox Modal */
+    /* Lightbox */
     #imageLightbox {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.95);
+      background: rgba(0, 0, 0, 0.96);
       backdrop-filter: blur(20px);
       z-index: 200;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 40px;
+      padding: 30px;
       opacity: 0;
       visibility: hidden;
       cursor: zoom-out;
       transition: all 0.25s ease;
     }
-    #imageLightbox.open {
-      opacity: 1;
-      visibility: visible;
-    }
+    #imageLightbox.open { opacity: 1; visibility: visible; }
     #lightboxImg {
       max-width: 95vw;
       max-height: 90vh;
@@ -675,263 +637,33 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    /* Buttons */
-    .btn-primary {
-      background: linear-gradient(135deg, #84cc16 0%, #10b981 100%);
-      color: #030712;
-      font-weight: 900;
-      font-size: 1.05rem;
-      padding: 12px 28px;
-      border-radius: 30px;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 10px 25px var(--primary-glow);
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.2s;
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 14px 35px var(--primary-glow);
-    }
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      color: #ffffff;
-      font-weight: 800;
-      font-size: 1rem;
-      padding: 12px 24px;
-      border-radius: 30px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s;
-    }
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    /* Comparison Table (Excel vs Systemize) */
-    .comp-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 14px;
-      margin-top: 12px;
-    }
-    .comp-card {
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 24px;
-      text-align: right;
-    }
-    .comp-card.systemize {
-      border-color: rgba(132, 204, 22, 0.4);
-      background: linear-gradient(180deg, rgba(132, 204, 22, 0.08) 0%, rgba(15, 23, 42, 0.85) 100%);
-      box-shadow: 0 15px 40px rgba(132, 204, 22, 0.15);
-    }
-    .comp-card h4 {
-      font-size: 1.3rem;
-      font-weight: 900;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .comp-card ul {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .comp-card li {
-      font-size: 0.95rem;
-      line-height: 1.5;
-      color: #cbd5e1;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
-
-    /* Connected Nodes Grid on Slide 4 */
-    .nodes-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      margin-top: 20px;
-    }
-    .node-box {
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      transition: all 0.2s;
-    }
-    .node-box:hover {
-      border-color: var(--primary);
-      transform: translateY(-2px);
-    }
-    .node-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      background: rgba(132, 204, 22, 0.15);
-      border: 1px solid rgba(132, 204, 22, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      color: #a3e635;
-      flex-shrink: 0;
-    }
-
-    /* WhatsApp Sample Bubble */
-    .whatsapp-bubble {
-      background: #054640;
-      border: 1px solid #005d4b;
-      border-radius: 16px 16px 4px 16px;
-      padding: 16px 20px;
-      max-width: 420px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      margin: 16px 0;
-      position: relative;
-    }
-    .wa-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.78rem;
-      color: #a7f3d0;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-    .wa-body {
-      font-size: 0.95rem;
-      color: #ffffff;
-      line-height: 1.55;
-      font-weight: 600;
-    }
-    .wa-time {
-      font-size: 0.7rem;
-      color: #6ee7b7;
-      text-align: left;
-      margin-top: 4px;
-      direction: ltr;
-    }
-
-    /* Step Sequence on Slide 3 */
-    .step-seq-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin: 28px 0;
-      width: 100%;
-    }
-    .step-box {
-      flex: 1;
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 18px;
-      padding: 18px 12px;
-      text-align: center;
-      transition: all 0.3s;
-    }
-    .step-num {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: rgba(132, 204, 22, 0.2);
-      border: 1px solid #84cc16;
-      color: #bef264;
-      font-weight: 900;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 10px auto;
-      font-family: var(--font-mono);
-    }
-    .step-arrow {
-      color: #64748b;
-      font-size: 1.2rem;
-    }
-
-    /* Pricing Slide Grid */
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      width: 100%;
-      margin: 20px 0;
-    }
-    .pricing-tier {
-      background: rgba(15, 23, 42, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 22px;
-      padding: 24px;
-      text-align: center;
-      position: relative;
-      transition: all 0.3s;
-    }
-    .pricing-tier.featured {
-      border-color: #84cc16;
-      background: linear-gradient(180deg, rgba(132, 204, 22, 0.12) 0%, rgba(15, 23, 42, 0.85) 100%);
-      box-shadow: 0 15px 45px rgba(132, 204, 22, 0.2);
-      transform: translateY(-6px);
-    }
-    .pricing-badge {
-      position: absolute;
-      top: -12px;
+    /* Wave Notification Toast */
+    #waveNotification {
+      position: fixed;
+      top: 80px;
       left: 50%;
-      transform: translateX(-50%);
-      background: #84cc16;
-      color: #030712;
-      font-size: 0.75rem;
-      font-weight: 900;
-      padding: 3px 12px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
-    }
-    .tier-price {
-      font-size: 2.2rem;
-      font-weight: 900;
-      color: #ffffff;
-      font-family: var(--font-mono);
-      margin: 12px 0 6px 0;
-    }
-    .tier-price span {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      font-family: 'Cairo', sans-serif;
-    }
-
-    /* Small Tag */
-    .tag-pill {
-      font-size: 0.75rem;
+      transform: translateX(-50%) translateY(-30px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid #84cc16;
+      box-shadow: 0 10px 40px rgba(132, 204, 22, 0.35);
+      padding: 8px 20px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-weight: 800;
-      padding: 3px 10px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.08);
-      color: #cbd5e1;
-      display: inline-block;
+      font-size: 0.88rem;
+      color: #ffffff;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-
-    /* Scrollbars */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #030712; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #84cc16; }
+    #waveNotification.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     @media (max-width: 1100px) {
-      .slide-2col { grid-template-columns: 1fr; gap: 24px; }
+      .slide-2col { grid-template-columns: 1fr; gap: 20px; }
       .slide-title { font-size: 2.1rem; }
-      .slide-desc { font-size: 1.05rem; }
       .visual-wrapper { max-height: 380px; }
     }
   </style>
@@ -948,13 +680,20 @@
       <div class="brand-logo"><i class="fa fa-dumbbell"></i></div>
       <div>
         <div style="display: flex; align-items: center;">
-          <h1 class="brand-title" id="dynBrandTitle">Systemize</h1>
-          <span class="brand-badge" id="dynBrandBadge">عرض أصحاب الجيمات</span>
+          <h1 class="brand-title">Systemize</h1>
+          <span class="brand-badge">PRO GYM OS</span>
         </div>
       </div>
     </div>
 
     <div class="header-actions">
+      <!-- Presenter Script Prompter Toggle -->
+      <button class="action-icon-btn" id="prompterToggleBtn" onclick="togglePresenterScript()" title="فتح اسكريبت الكلام لمقدم العرض (N)">
+        <i class="fa fa-microphone-lines text-lime-400"></i>
+        <span>اسكريبت الكلام</span>
+        <span class="kbd-badge">N</span>
+      </button>
+
       <!-- Hand Gesture HUD Widget -->
       <div class="gesture-hud">
         <div class="camera-circle" id="cameraCircle">
@@ -962,15 +701,15 @@
         </div>
         <div class="gesture-status-text">
           <span class="gesture-pulse" id="hudPulse"></span>
-          <span id="hudStatus">التحكم بالإشارة معطّل</span>
+          <span id="hudStatus">إشارة اليد معطلة</span>
         </div>
         <button type="button" class="gesture-toggle-btn" id="toggleGestureBtn" onclick="toggleWebcamGesture()">
-          <i class="fa fa-hand"></i> تفعيل الكاميرا
+          <i class="fa fa-hand"></i> تفعيل
         </button>
       </div>
 
       <!-- Presenter Settings Button -->
-      <button class="edit-mode-btn" onclick="openPresenterSettings()" title="تعديل الأسعار والمحتوى (خاص بمقدم العرض)">
+      <button class="action-icon-btn" onclick="openPresenterSettings()" title="تعديل الأسعار والمحتوى (Ctrl+E)">
         <i class="fa fa-gear"></i>
       </button>
     </div>
@@ -983,392 +722,273 @@
   </div>
 
   <!-- Floating Nav Arrows -->
-  <div class="nav-arrow next" onclick="nextSlide()" title="الشريحة التالية (أو سهم يسار / مسافة)">
+  <div class="nav-arrow next" onclick="nextSlide()" title="الشريحة التالية (سهم يسار / مسافة)">
     <i class="fa fa-chevron-left"></i>
   </div>
-  <div class="nav-arrow prev" onclick="prevSlide()" title="الشريحة السابقة (أو سهم يمين)">
+  <div class="nav-arrow prev" onclick="prevSlide()" title="الشريحة السابقة (سهم يمين)">
     <i class="fa fa-chevron-right"></i>
   </div>
 
-  <!-- Main Deck Container: 13 Consecutive Slides -->
+  <!-- ==========================================
+       MAIN DECK CONTAINER: 13 MINIMAL VISUAL SLIDES
+       ========================================== -->
   <main class="deck-container" id="deckContainer">
 
-    <!-- ==========================================
-         SLIDE 1: The Hook: How Much Are You Losing?
-         ========================================== -->
+    <!-- SLIDE 1: The Hook: How Much Are You Losing? -->
     <section class="slide active" data-index="0">
       <div class="slide-center">
         <div class="slide-tag"><i class="fa fa-triangle-exclamation"></i> السؤال الأهم لكل صاحب جيم</div>
-        <h2 class="slide-title" style="font-size: 3.2rem; max-width: 980px; margin-bottom: 24px;">
+        <h2 class="slide-title" style="font-size: 3.2rem; max-width: 950px; margin-bottom: 20px;">
           إنت متأكد إن جيمك مش بيخسّرك فلوس من غير ما تاخد بالك؟
         </h2>
-        <p class="slide-desc" style="max-width: 760px; font-size: 1.25rem; margin-bottom: 32px;">
-          أغلب الجيمات مشكلتها مش في عدد المشتركين الجدد.. المشكلة الحقيقية في مصادر تسريب الإيرادات اليومية اللي بتعدي تحت الرادار.
-        </p>
 
-        <!-- 3 Large Summary Editable Figures -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 980px; margin-bottom: 36px;">
+        <!-- 3 Large Summary Figures -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 950px; margin: 24px 0 32px 0;">
           <div class="glass-card" style="padding: 24px; text-align: center; border-top: 3px solid #84cc16;">
-            <span style="font-size: 0.85rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 8px;">
+            <span style="font-size: 0.9rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 8px;">
               اشتراكات كان ممكن تتجدد
             </span>
-            <div id="cardFigRenewals" style="font-size: 2.2rem; font-weight: 900; color: #84cc16; font-family: var(--font-mono);">
+            <div id="cardFigRenewals" style="font-size: 2.3rem; font-weight: 900; color: #84cc16; font-family: var(--font-mono);">
               ٦٬٧٥٠ ج
             </div>
             <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">شهرياً فرصة مفقودة للمتابعة</span>
           </div>
 
           <div class="glass-card" style="padding: 24px; text-align: center; border-top: 3px solid #f59e0b;">
-            <span style="font-size: 0.85rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 8px;">
+            <span style="font-size: 0.9rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 8px;">
               أخطاء أو فروق في الحسابات
             </span>
-            <div id="cardFigDiscrepancies" style="font-size: 2.2rem; font-weight: 900; color: #f59e0b; font-family: var(--font-mono);">
+            <div id="cardFigDiscrepancies" style="font-size: 2.3rem; font-weight: 900; color: #f59e0b; font-family: var(--font-mono);">
               ١٬٠٠٠ ج
             </div>
             <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">بين الدرج والدفاتر والكاشير</span>
           </div>
 
           <div class="glass-card" style="padding: 24px; text-align: center; border-top: 3px solid #38bdf8;">
-            <span style="font-size: 0.85rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 8px;">
+            <span style="font-size: 0.9rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 8px;">
               وقت ضايع في المتابعة اليدوية
             </span>
-            <div id="cardFigTime" style="font-size: 2.2rem; font-weight: 900; color: #38bdf8; font-family: var(--font-mono);">
+            <div id="cardFigTime" style="font-size: 2.3rem; font-weight: 900; color: #38bdf8; font-family: var(--font-mono);">
               ١٬٨٠٠ ج
             </div>
             <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">قيمة ساعات عمل موظفي الصالة</span>
           </div>
         </div>
 
-        <div style="display: flex; gap: 16px; align-items: center; justify-content: center; flex-wrap: wrap;">
+        <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
           <button class="btn-primary" onclick="openLossCalculator()">
             <i class="fa fa-calculator"></i>
             <span>احسب خسارتك المحتملة</span>
           </button>
           <button class="btn-secondary" onclick="nextSlide()">
-            <span>تخطي الحساب ومتابعة العرض</span>
+            <span>تخطي الحساب</span>
             <i class="fa fa-arrow-left"></i>
           </button>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 2: The Hidden Leak
-         ========================================== -->
+    <!-- SLIDE 2: The Hidden Leak -->
     <section class="slide" data-index="1">
       <div class="slide-center">
         <div class="slide-tag"><i class="fa fa-eye"></i> التسريب الخفي</div>
-        <h2 class="slide-title" style="font-size: 3rem; max-width: 980px; margin-bottom: 20px;">
+        <h2 class="slide-title" style="font-size: 3rem; max-width: 980px; margin-bottom: 36px;">
           المشكلة مش دايمًا في قلة العملاء…<br>
           <span>ساعات في فلوس بتضيع من المتابعة.</span>
         </h2>
-        <p class="slide-desc" style="max-width: 720px; margin-bottom: 36px;">
-          أي صالة رياضية شغالة على ورق أو ذاكرة موظفين بيحصل فيها 3 مواقف يومياً بتنزف إيرادات من غير جرس إنذار:
-        </p>
 
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; width: 100%; max-width: 1080px;">
-          <div class="glass-card" style="padding: 28px 22px; text-align: center;">
-            <div style="width: 58px; height: 58px; border-radius: 18px; background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3); color: #fb7185; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 16px auto;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; width: 100%; max-width: 1040px;">
+          <div class="glass-card" style="padding: 36px 24px; text-align: center;">
+            <div style="width: 64px; height: 64px; border-radius: 20px; background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.3); color: #fb7185; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 20px auto;">
               <i class="fa fa-user-xmark"></i>
             </div>
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; margin-bottom: 8px;">
-              عضو اشتراكه انتهى ومحدش تابعه
+            <h3 style="font-size: 1.35rem; font-weight: 900; color: #ffffff; line-height: 1.4;">
+              عضو اشتراكه انتهى<br>ومحدش تابعه
             </h3>
-            <p style="font-size: 0.95rem; color: #94a3b8; line-height: 1.5;">
-              بيكسل يجدد لوحده، ومفيش حد كلمه في الوقت الصح قبل ما ينسى التمرين.
-            </p>
           </div>
 
-          <div class="glass-card" style="padding: 28px 22px; text-align: center; border-color: rgba(245,158,11,0.3);">
-            <div style="width: 58px; height: 58px; border-radius: 18px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 16px auto;">
+          <div class="glass-card" style="padding: 36px 24px; text-align: center; border-color: rgba(245,158,11,0.3);">
+            <div style="width: 64px; height: 64px; border-radius: 20px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 20px auto;">
               <i class="fa fa-door-open"></i>
             </div>
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; margin-bottom: 8px;">
-              عضو داخل والجيم مش متأكد من اشتراكه
+            <h3 style="font-size: 1.35rem; font-weight: 900; color: #ffffff; line-height: 1.4;">
+              عضو داخل والجيم<br>مش متأكد من اشتراكه
             </h3>
-            <p style="font-size: 0.95rem; color: #94a3b8; line-height: 1.5;">
-              زحمة الدخول بتخلي ناس تعدي من غير ما الريسبشن يلحق يراجع كشوفاتهم.
-            </p>
           </div>
 
-          <div class="glass-card" style="padding: 28px 22px; text-align: center;">
-            <div style="width: 58px; height: 58px; border-radius: 18px; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 16px auto;">
+          <div class="glass-card" style="padding: 36px 24px; text-align: center;">
+            <div style="width: 64px; height: 64px; border-radius: 20px; background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); color: #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 20px auto;">
               <i class="fa fa-file-invoice-dollar"></i>
             </div>
-            <h3 style="font-size: 1.25rem; font-weight: 800; color: #ffffff; margin-bottom: 8px;">
-              صاحب الجيم مش عارف يراجع الأرقام بسرعة
+            <h3 style="font-size: 1.35rem; font-weight: 900; color: #ffffff; line-height: 1.4;">
+              صاحب الجيم مش عارف<br>يراجع الأرقام بسرعة
             </h3>
-            <p style="font-size: 0.95rem; color: #94a3b8; line-height: 1.5;">
-              لازم يسأل كذا موظف ويقعد يجمع فواتير وسلف ومصروفات عشان يعرف كسب كام.
-            </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 3: How It Happens
-         ========================================== -->
+    <!-- SLIDE 3: How It Happens -->
     <section class="slide" data-index="2">
       <div class="slide-center">
-        <div class="slide-tag"><i class="fa fa-arrows-split-up-and-left"></i> سلسلة الخطوات اليدوية</div>
-        <h2 class="slide-title" style="font-size: 3rem; margin-bottom: 20px;">
+        <div class="slide-tag"><i class="fa fa-arrows-split-up-and-left"></i> الدورة اليومية</div>
+        <h2 class="slide-title" style="font-size: 3.2rem; margin-bottom: 32px;">
           كل حاجة معتمدة على إن حد يفتكر؟
         </h2>
-        <p class="slide-desc" style="max-width: 720px; margin-bottom: 24px;">
-          لما الإدارة بتعتمد على الذاكرة والورقة، دي دورة الشغل اليومية اللي بتحصل عندك:
-        </p>
 
-        <div class="step-seq-row" style="max-width: 980px;">
-          <div class="step-box">
-            <div class="step-num">1</div>
-            <strong style="display: block; font-size: 1.15rem; color: #ffffff; margin-bottom: 4px;">الموظف يسجل</strong>
-            <span style="font-size: 0.85rem; color: #94a3b8;">يدوي في الدفتر أو الشيت</span>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 36px; width: 100%; max-width: 950px;">
+          <div class="glass-card" style="flex: 1; padding: 24px 16px; text-align: center;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(132,204,22,0.2); border: 1px solid #84cc16; color: #bef264; font-weight: 900; font-size: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; font-family: var(--font-mono);">1</div>
+            <strong style="font-size: 1.25rem; color: #ffffff;">الموظف يسجل</strong>
           </div>
-          <div class="step-arrow"><i class="fa fa-arrow-left"></i></div>
+          <div style="color: #64748b; font-size: 1.4rem;"><i class="fa fa-arrow-left"></i></div>
 
-          <div class="step-box">
-            <div class="step-num">2</div>
-            <strong style="display: block; font-size: 1.15rem; color: #ffffff; margin-bottom: 4px;">الموظف يراجع</strong>
-            <span style="font-size: 0.85rem; color: #94a3b8;">يدور في الأسماء والتوايخ</span>
+          <div class="glass-card" style="flex: 1; padding: 24px 16px; text-align: center;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(132,204,22,0.2); border: 1px solid #84cc16; color: #bef264; font-weight: 900; font-size: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; font-family: var(--font-mono);">2</div>
+            <strong style="font-size: 1.25rem; color: #ffffff;">الموظف يراجع</strong>
           </div>
-          <div class="step-arrow"><i class="fa fa-arrow-left"></i></div>
+          <div style="color: #64748b; font-size: 1.4rem;"><i class="fa fa-arrow-left"></i></div>
 
-          <div class="step-box">
-            <div class="step-num">3</div>
-            <strong style="display: block; font-size: 1.15rem; color: #ffffff; margin-bottom: 4px;">الموظف يفتكر يتابع</strong>
-            <span style="font-size: 0.85rem; color: #94a3b8;">يكلم العضو قبل ما يفوّت</span>
+          <div class="glass-card" style="flex: 1; padding: 24px 16px; text-align: center;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(132,204,22,0.2); border: 1px solid #84cc16; color: #bef264; font-weight: 900; font-size: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; font-family: var(--font-mono);">3</div>
+            <strong style="font-size: 1.25rem; color: #ffffff;">الموظف يفتكر يتابع</strong>
           </div>
-          <div class="step-arrow"><i class="fa fa-arrow-left"></i></div>
+          <div style="color: #64748b; font-size: 1.4rem;"><i class="fa fa-arrow-left"></i></div>
 
-          <div class="step-box">
-            <div class="step-num">4</div>
-            <strong style="display: block; font-size: 1.15rem; color: #ffffff; margin-bottom: 4px;">صاحب الجيم يسأل</strong>
-            <span style="font-size: 0.85rem; color: #94a3b8;">ويقعد يجمع البيانات بنفسه</span>
+          <div class="glass-card" style="flex: 1; padding: 24px 16px; text-align: center;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(132,204,22,0.2); border: 1px solid #84cc16; color: #bef264; font-weight: 900; font-size: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto; font-family: var(--font-mono);">4</div>
+            <strong style="font-size: 1.25rem; color: #ffffff;">صاحب الجيم يسأل</strong>
           </div>
         </div>
 
-        <div class="glass-card" style="padding: 22px 32px; border: 1px solid rgba(244,63,94,0.4); background: rgba(244,63,94,0.08); max-width: 820px; border-radius: 20px;">
-          <h3 style="font-size: 1.45rem; font-weight: 900; color: #fda4af; margin-bottom: 8px;">
+        <div class="glass-card" style="padding: 22px 36px; border: 1px solid rgba(244,63,94,0.4); background: rgba(244,63,94,0.1); border-radius: 20px;">
+          <h3 style="font-size: 1.55rem; font-weight: 950; color: #fda4af;">
             "كل خطوة زيادة ممكن تكون فرصة لخطأ أو تأخير."
           </h3>
-          <p style="font-size: 0.95rem; color: #e2e8f0; margin: 0; line-height: 1.5;">
-            مش بنقول إن كل شغل يدوي بيفشل بالضرورة، بس مع ضغط التمرين وزيادة المشتركين، الخطأ البشري بيبقى مسألة وقت.
-          </p>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 4: Introduce Systemize
-         ========================================== -->
+    <!-- SLIDE 4: Introduce Systemize -->
     <section class="slide" data-index="3">
       <div class="slide-2col">
         <div>
-          <div class="slide-tag"><i class="fa fa-cubes"></i> الحل المتكامل</div>
+          <div class="slide-tag"><i class="fa fa-cubes"></i> السيستم المترابط</div>
           <h2 class="slide-title">
             خلّي شغل الجيم مترابط…<br>
             <span>بدل ما تفضل تلاحق كل تفصيلة.</span>
           </h2>
-          <p class="slide-desc">
-            سيستم مصري ذكي بيربط أطراف الصالة ببعضها في شاشة واحدة واضحة، بدون تعقيد ولا برامج محاسبة محتاجة خبير.
-          </p>
 
-          <div class="nodes-grid">
-            <div class="node-box">
-              <div class="node-icon"><i class="fa fa-users"></i></div>
-              <div>
-                <strong style="display: block; color: #ffffff; font-size: 1rem;">الأعضاء والاشتراكات</strong>
-                <span style="font-size: 0.82rem; color: #94a3b8;">ملف لكل لاعب وتاريخ التجديد</span>
-              </div>
-            </div>
-
-            <div class="node-box">
-              <div class="node-icon"><i class="fa fa-id-badge"></i></div>
-              <div>
-                <strong style="display: block; color: #ffffff; font-size: 1rem;">الدخول والحضور</strong>
-                <span style="font-size: 0.82rem; color: #94a3b8;">بوابات وكاميرات فحص تلقائي</span>
-              </div>
-            </div>
-
-            <div class="node-box">
-              <div class="node-icon"><i class="fa fa-wallet"></i></div>
-              <div>
-                <strong style="display: block; color: #ffffff; font-size: 1rem;">المدفوعات والمصروفات</strong>
-                <span style="font-size: 0.82rem; color: #94a3b8;">خزينة مقفولة وأرباح واضحة</span>
-              </div>
-            </div>
-
-            <div class="node-box">
-              <div class="node-icon"><i class="fa fa-chart-pie"></i></div>
-              <div>
-                <strong style="display: block; color: #ffffff; font-size: 1rem;">الموظفين والتقارير</strong>
-                <span style="font-size: 0.82rem; color: #94a3b8;">رواتب، عمولات، ونشاط لحظي</span>
-              </div>
-            </div>
+          <div class="pills-row" style="margin-top: 24px;">
+            <span class="pill-item"><i class="fa fa-users"></i> الأعضاء والاشتراكات</span>
+            <span class="pill-item"><i class="fa fa-id-badge"></i> الدخول والحضور</span>
+            <span class="pill-item"><i class="fa fa-wallet"></i> المدفوعات والمصروفات</span>
+            <span class="pill-item"><i class="fa fa-chart-pie"></i> الموظفين والتقارير</span>
           </div>
         </div>
 
         <div class="visual-wrapper" onclick="openLightbox('assets/01_dashboard.png')">
           <img src="assets/01_dashboard.png" alt="Systemize Central Dashboard">
-          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> اضغط لتكبير الشاشة</div>
+          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> تكبير الشاشة</div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 5: Control Who Enters
-         ========================================== -->
+    <!-- SLIDE 5: Control Who Enters -->
     <section class="slide" data-index="4">
       <div class="slide-2col">
         <div>
-          <div class="slide-tag"><i class="fa fa-shield-halved"></i> بوابات الدخول والتحكم</div>
+          <div class="slide-tag"><i class="fa fa-shield-halved"></i> بوابات الدخول</div>
           <h2 class="slide-title">
             كل عضو يدخل<br>
             <span>بحالة اشتراك واضحة.</span>
           </h2>
-          <p class="slide-desc">
-            قلّل الاعتماد على المراجعة اليدوية.. اختار الطريقة اللي تناسب صالتك والسيستم يفحص حالة الاشتراك في ثانية ويفتح البوابة تلقائياً.
+          <p class="slide-subtitle">
+            "قلّل الاعتماد على المراجعة اليدوية."
           </p>
 
-          <div class="feature-list">
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-camera"></i></div>
-              <div class="feature-text">
-                <strong>التعرف الذكي بالوجه (AI Face ID)</strong>
-                <p>كاميرا تفحص وجه اللاعب بدون لمس أو كروت مستعارة وتكشف المنتهي فوراً.</p>
-              </div>
-            </div>
-
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-qrcode"></i></div>
-              <div class="feature-text">
-                <strong>QR Code وكارت الموبايل</strong>
-                <p>كود رقمي مشفر على هاتف العضو يُفحص بلحظة بالماسح الضوئي.</p>
-              </div>
-            </div>
-
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-barcode"></i></div>
-              <div class="feature-text">
-                <strong>باركود وبصمة الأصبع (Fingerprint)</strong>
-                <p>تكامل مرن مع أجهزة الباركود وأجهزة البصمة المتاحة في السوق.</p>
-              </div>
-            </div>
+          <div class="pills-row">
+            <span class="pill-item"><i class="fa fa-camera"></i> بصمة وجه AI</span>
+            <span class="pill-item"><i class="fa fa-qrcode"></i> كود QR</span>
+            <span class="pill-item"><i class="fa fa-barcode"></i> باركود سريع</span>
+            <span class="pill-item"><i class="fa fa-fingerprint"></i> بصمة أصبع</span>
           </div>
 
-          <p style="font-size: 0.78rem; color: #64748b; margin-top: 14px; font-weight: 600;">
-            * ملاحظة: وسائل التحكم بالدخول اختيارية وقد تتطلب أجهزة ملحقة وتركيباً مستقلاً حسب رغبة الصالة.
+          <p style="font-size: 0.75rem; color: #64748b; margin-top: 18px; font-weight: 600;">
+            * وسائل التحكم بالدخول اختيارية وتتطلب أجهزة وتجهيزات حسب مساحة الصالة.
           </p>
         </div>
 
         <div class="visual-wrapper" onclick="openLightbox('assets/18_face_kiosk.png')">
           <img src="assets/18_face_kiosk.png" alt="Access Control & Face Recognition">
-          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> اضغط لتكبير الشاشة</div>
+          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> تكبير الشاشة</div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 6: Never Miss a Renewal Opportunity
-         ========================================== -->
+    <!-- SLIDE 6: Never Miss a Renewal Opportunity -->
     <section class="slide" data-index="5">
       <div class="slide-2col">
         <div>
-          <div class="slide-tag"><i class="fa fa-clock-rotate-left"></i> الحفاظ على المشتركين</div>
+          <div class="slide-tag"><i class="fa fa-clock-rotate-left"></i> فرص التجديد</div>
           <h2 class="slide-title">
             اعرف مين اشتراكه قرب يخلص…<br>
             <span>وتابع في الوقت المناسب.</span>
           </h2>
-          <p class="slide-desc">
-            بدل ما تفاجأ بعضو بطل يجي عشان محدش فكّره، السيستم بيفرزلك المشتركين اللي اشتراكاتهم قربت تنتهي قبلها بأيام.
-          </p>
 
-          <!-- Sample Renewal WhatsApp Bubble -->
-          <div class="whatsapp-bubble">
-            <div class="wa-header">
-              <i class="fa-brands fa-whatsapp"></i> رسالة تذكير تلقائية تجديد اشتراك
+          <!-- WhatsApp Renewal Reminder Bubble -->
+          <div style="background: #054640; border: 1px solid #005d4b; border-radius: 16px 16px 4px 16px; padding: 14px 18px; max-width: 380px; margin: 18px 0; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div style="font-size: 0.75rem; color: #a7f3d0; font-weight: 800; margin-bottom: 4px;">
+              <i class="fa-brands fa-whatsapp"></i> رسالة تذكير تجديد تلقائية
             </div>
-            <div class="wa-body">
-              "كابتن أحمد، اشتراكك في الجيم هينتهي بعد يومين (20 أكتوبر). مستنينك تجدد عشان تستمر في مستواك وفورمتك! 💪"
+            <div style="font-size: 0.95rem; color: #ffffff; line-height: 1.5; font-weight: 600;">
+              "كابتن أحمد.. اشتراكك هينتهي بعد يومين (20 أكتوبر). مستنينك تجدد عشان تستمر في فورمتك! 💪"
             </div>
-            <div class="wa-time">10:30 AM ✓✓</div>
+            <div style="font-size: 0.7rem; color: #6ee7b7; text-align: left; margin-top: 4px; direction: ltr;">10:30 AM ✓✓</div>
           </div>
 
-          <div class="feature-list" style="margin-top: 16px;">
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-filter"></i></div>
-              <div class="feature-text">
-                <strong>فلتر المشتركين المنتهيين بنقرة واحدة</strong>
-                <p>شوف مين باقي له 3 أيام، ومين منتهي النهاردة، ومين عليه فلوس مؤجلة.</p>
-              </div>
-            </div>
+          <div class="pills-row">
+            <span class="pill-item"><i class="fa fa-filter"></i> فلاتر منتهي اليوم / باقي أيام</span>
+            <span class="pill-item"><i class="fa fa-paper-plane"></i> رسائل تذكير بضغطة زر</span>
           </div>
         </div>
 
         <div class="visual-wrapper" onclick="openLightbox('assets/02_members_list.png')">
           <img src="assets/02_members_list.png" alt="Members List & Renewal Tracking">
-          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> اضغط لتكبير الشاشة</div>
+          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> تكبير الشاشة</div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 7: Know Where the Money Goes
-         ========================================== -->
+    <!-- SLIDE 7: Know Where the Money Goes -->
     <section class="slide" data-index="6">
       <div class="slide-2col">
         <div>
-          <div class="slide-tag"><i class="fa fa-cash-register"></i> وضوح مالي تام</div>
+          <div class="slide-tag"><i class="fa fa-cash-register"></i> الخزينة والأموال</div>
           <h2 class="slide-title">
             المقبوضات والمصروفات قدامك…<br>
             <span>مش محتاجة تجميع من كذا مكان.</span>
           </h2>
-          <p class="slide-desc">
-            كل حركة فلوس بتتسجل فوراً: اشتراكات، مدفوعات بار، إيجار، فواتير صيانة، وسلف موظفين.
-          </p>
 
-          <div class="feature-list">
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-receipt"></i></div>
-              <div class="feature-text">
-                <strong>فواتير وإيصالات رسمية لكل حركة</strong>
-                <p>رقم إيصال وتاريخ ومبلغ واضح لكل متدرب لتجنب أي جدال.</p>
-              </div>
-            </div>
-
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-money-bill-trend-up"></i></div>
-              <div class="feature-text">
-                <strong>سجل المصروفات والتصنيفات</strong>
-                <p>اعرف فلوس الجيم اتصرفت فين بالضبط كل شهر بتقرير منظم.</p>
-              </div>
-            </div>
-
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-lock"></i></div>
-              <div class="feature-text">
-                <strong>حماية أرقام الخزينة برمز سري</strong>
-                <p>الموظف يسجل المقبوضات لكن أرباح الجيم الإجمالية لا تظهر إلا للمدير.</p>
-              </div>
-            </div>
+          <div class="pills-row" style="margin-top: 20px;">
+            <span class="pill-item"><i class="fa fa-receipt"></i> فواتير وإيصالات رسمية</span>
+            <span class="pill-item"><i class="fa fa-money-bill-transfer"></i> تصنيف المصروفات</span>
+            <span class="pill-item"><i class="fa fa-lock"></i> قفل أرقام الخزينة برمز المدير</span>
           </div>
 
-          <p style="font-size: 0.78rem; color: #64748b; margin-top: 12px; font-weight: 600;">
-            * السيستم أداة تنظيمية ورقابية دقيقة ولا يُلغي الأخطاء البشرية إذا كانت المدخلات غير صحيحة.
+          <p style="font-size: 0.75rem; color: #64748b; margin-top: 18px; font-weight: 600;">
+            * أداة تنظيمية ورقابية دقيقة ولا تلغي الأخطاء في حال كانت المدخلات غير صحيحة.
           </p>
         </div>
 
         <div class="visual-wrapper" onclick="openLightbox('assets/07_payments_list.png')">
           <img src="assets/07_payments_list.png" alt="Payments & Revenue Tracking">
-          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> اضغط لتكبير الشاشة</div>
+          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> تكبير الشاشة</div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 8: Stop Depending on Memory
-         ========================================== -->
+    <!-- SLIDE 8: Stop Depending on Memory -->
     <section class="slide" data-index="7">
       <div class="slide-2col">
         <div>
@@ -1377,243 +997,159 @@
             المرتبات والسُلف والعمولات…<br>
             <span>كل حاجة ليها سجل.</span>
           </h2>
-          <p class="slide-desc">
-            ودّع خناقات آخر الشهر على مين درّب مين وحصته كام.. السيستم بيحسب حصص البرايفت (PT) والسُلف أوتوماتيك:
-          </p>
 
-          <div class="feature-list">
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-handshake"></i></div>
-              <div class="feature-text">
-                <strong>عمولات البرايفت (PT) الفردية والشهرية</strong>
-                <p>نسبة الكابتن ونسبة الصالة بتنزل في حساب الكابتن أول ما المتدرب يسدد.</p>
-              </div>
-            </div>
-
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-file-invoice"></i></div>
-              <div class="feature-text">
-                <strong>مسيرات الرواتب والسُلف والخصومات</strong>
-                <p>سجل شفاف يوضح الراتب الأساسي + العمولات - السُلف بضغطة زر واحدة.</p>
-              </div>
-            </div>
-
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-user-shield"></i></div>
-              <div class="feature-text">
-                <strong>صلاحيات مخصصة لكل موظف</strong>
-                <p>تحكم كامل في ما يراه الريسبشن والمدرب مقارنة بما يراه صاحب الصالة.</p>
-              </div>
-            </div>
+          <div class="pills-row" style="margin-top: 24px;">
+            <span class="pill-item"><i class="fa fa-handshake"></i> عمولات البرايفت (PT)</span>
+            <span class="pill-item"><i class="fa fa-file-invoice"></i> مسيرات الرواتب والسُلف</span>
+            <span class="pill-item"><i class="fa fa-user-shield"></i> صلاحيات مخصصة لكل دور</span>
           </div>
         </div>
 
         <div class="visual-wrapper" onclick="openLightbox('assets/09_trainers_management.png')">
           <img src="assets/09_trainers_management.png" alt="Trainers Management & Payroll">
-          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> اضغط لتكبير الشاشة</div>
+          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> تكبير الشاشة</div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 9: Follow Up Without Chasing Everyone
-         ========================================== -->
+    <!-- SLIDE 9: Follow Up Without Chasing Everyone -->
     <section class="slide" data-index="8">
       <div class="slide-2col">
         <div>
-          <div class="slide-tag"><i class="fa fa-paper-plane"></i> أتمتة المتابعة والتواصل</div>
+          <div class="slide-tag"><i class="fa fa-paper-plane"></i> أتمتة التواصل</div>
           <h2 class="slide-title">
             وفّر وقت المتابعة…<br>
             <span>وخليه يروح لخدمة العملاء.</span>
           </h2>
-          <p class="slide-desc">
-            بدل ما الموظف يقضي ساعتين يومياً يبعت رسايل ويكتب أسماء، روبوتات الواتساب والتليجرام بتعمل ده تلقائياً:
-          </p>
 
-          <div class="feature-list">
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa-brands fa-whatsapp" style="color: #25d366;"></i></div>
-              <div class="feature-text">
-                <strong>رسائل الترحيب وفواتير السداد الآلية</strong>
-                <p>المشترك بيدفع.. توصله رسالة واتساب أنيقة باسم الجيم وتفاصيل اشتراكه فوراً.</p>
-              </div>
-            </div>
-
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-bell"></i></div>
-              <div class="feature-text">
-                <strong>تذكير التجديد التلقائي قبل الانتهاء</strong>
-                <p>تنبيه محترم بيحافظ على تدفق إيراداتك من غير إحراج ولا ملاحقة يدوية.</p>
-              </div>
-            </div>
-
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa-brands fa-telegram" style="color: #38bdf8;"></i></div>
-              <div class="feature-text">
-                <strong>بوت تليجرام تفاعلي للإدارة والمشتركين</strong>
-                <p>استعلام المشترك عن رصيده أو إشعار الإدارة بكل حركة بيع تتم في الصالة.</p>
-              </div>
-            </div>
+          <div class="pills-row" style="margin-top: 24px;">
+            <span class="pill-item"><i class="fa-brands fa-whatsapp" style="color: #25d366;"></i> فواتير وترحيب واتساب</span>
+            <span class="pill-item"><i class="fa fa-bell"></i> تذكيرات التجديد الآلية</span>
+            <span class="pill-item"><i class="fa-brands fa-telegram" style="color: #38bdf8;"></i> بوت تليجرام للإدارة</span>
           </div>
         </div>
 
         <div class="visual-wrapper" onclick="openLightbox('assets/13_whatsapp_center.png')">
           <img src="assets/13_whatsapp_center.png" alt="WhatsApp Automation Center">
-          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> اضغط لتكبير الشاشة</div>
+          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> تكبير الشاشة</div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 10: Know What's Happening in Your Gym
-         ========================================== -->
+    <!-- SLIDE 10: Know What's Happening in Your Gym (Clean Financial Reports) -->
     <section class="slide" data-index="9">
       <div class="slide-2col">
         <div>
-          <div class="slide-tag"><i class="fa fa-chart-line"></i> تقارير ورؤية الإدارة</div>
+          <div class="slide-tag"><i class="fa fa-chart-line"></i> تقارير الإدارة</div>
           <h2 class="slide-title">
             بدل ما تسأل كل موظف…<br>
             <span>راجع الصورة كاملة.</span>
           </h2>
-          <p class="slide-desc">
-            لوحة تحكم حية توريك مؤشرات حقيقية واضحة في ثواني بدون كلام نظري ولا رسوم معقدة:
-          </p>
 
-          <div class="feature-list">
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-users"></i></div>
-              <div class="feature-text">
-                <strong>الأعضاء النشطين مقابل المنتهية اشتراكاتهم</strong>
-                <p>اعرف نسبة التجديد الشهرية بدقة وقوة احتفاظ الجيم بمتدربيه.</p>
-              </div>
-            </div>
-
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-money-bill-wave"></i></div>
-              <div class="feature-text">
-                <strong>صافي الإيراد الحقيقي اليومي والشهري</strong>
-                <p>إيرادات الاشتراكات + مبيعات البار مطروحاً منها المصروفات والعمولات.</p>
-              </div>
-            </div>
-
-            <div class="feature-item">
-              <div class="feature-icon"><i class="fa fa-clock"></i></div>
-              <div class="feature-text">
-                <strong>كثافة الحضور وأوقات الذروة</strong>
-                <p>اعرف أكتر ساعات اليوم زحمة عشان توزع كباتنك وموظفيك صح.</p>
-              </div>
-            </div>
+          <div class="pills-row" style="margin-top: 24px;">
+            <span class="pill-item"><i class="fa fa-users"></i> الأعضاء النشطين vs المنتهيين</span>
+            <span class="pill-item"><i class="fa fa-money-bill-wave"></i> صافي الإيراد الحقيقي</span>
+            <span class="pill-item"><i class="fa fa-clock"></i> تسجيلات الحضور اليومية</span>
           </div>
         </div>
 
-        <div class="visual-wrapper" onclick="openLightbox('assets/17_manager_dashboard.png')">
-          <img src="assets/17_manager_dashboard.png" alt="Manager Insights Dashboard">
-          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> اضغط لتكبير الشاشة</div>
+        <div class="visual-wrapper" onclick="openLightbox('assets/15_reports_financial.png')">
+          <img src="assets/15_reports_financial.png" alt="Manager Financial & Operational Dashboard">
+          <div class="zoom-hint"><i class="fa fa-magnifying-glass-plus"></i> تكبير الشاشة</div>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 11: The Excel Objection
-         ========================================== -->
+    <!-- SLIDE 11: The Excel Objection -->
     <section class="slide" data-index="10">
       <div class="slide-center">
-        <div class="slide-tag"><i class="fa fa-scale-unbalanced"></i> سؤال منطقي ومحترم</div>
-        <h2 class="slide-title" style="font-size: 2.9rem; margin-bottom: 12px;">
+        <div class="slide-tag"><i class="fa fa-scale-unbalanced"></i> سؤال منطقي</div>
+        <h2 class="slide-title" style="font-size: 2.85rem; margin-bottom: 8px;">
           "طب ما أنا ممكن أعمل كل ده على Excel!"
         </h2>
-        <p class="slide-desc" style="max-width: 780px; margin-bottom: 24px; font-size: 1.25rem;">
-          <strong>أكيد تقدر… لو معمول ومترتب ومربوط بكل احتياجاتك.</strong><br>
-          بس تعالى نقارن الواقع العملي في الصالة الرياضية:
+        <p class="slide-subtitle" style="margin-bottom: 24px;">
+          "أكيد تقدر… لو معمول ومترتب ومربوط بكل احتياجاتك."
         </p>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; width: 100%; max-width: 960px; text-align: right; margin-bottom: 24px;">
-          <div class="comp-card">
-            <h4 style="color: #94a3b8;"><i class="fa-solid fa-file-excel" style="color: #10b981;"></i> شيتات Excel اليدوية</h4>
-            <ul>
-              <li><i class="fa fa-check text-slate-400"></i> مرونة كبيرة جداً في إنشاء الجداول والمعادلات الحسابية.</li>
-              <li><i class="fa fa-triangle-exclamation text-amber-400"></i> محتاج تصميم ومتابعة مستمرة وإدخال يدوي لكل حركة.</li>
-              <li><i class="fa fa-triangle-exclamation text-amber-400"></i> الربط مع بوابات الدخول والكاميرات والواتساب محتاج إعدادات إضافية معقدة.</li>
-              <li><i class="fa fa-triangle-exclamation text-amber-400"></i> أي خطأ أو حذف في خلية ممكن يغيّر الأرقام بدون سجل تدقيق.</li>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 920px; text-align: right; margin-bottom: 24px;">
+          <div class="glass-card" style="padding: 22px;">
+            <h4 style="font-size: 1.2rem; font-weight: 900; color: #94a3b8; margin-bottom: 12px;">
+              <i class="fa-solid fa-file-excel" style="color: #10b981;"></i> شيتات Excel
+            </h4>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: #cbd5e1;">
+              <li>• مرونة كبيرة جداً.</li>
+              <li>• محتاج تصميم ومتابعة مستمرة وإدخال يدوي.</li>
+              <li>• الربط مع أجهزة الدخول والواتساب محتاج إعدادات إضافية.</li>
             </ul>
           </div>
 
-          <div class="comp-card systemize">
-            <h4 style="color: #a3e635;"><i class="fa fa-dumbbell"></i> سيستم Systemize المخصص</h4>
-            <ul>
-              <li><i class="fa fa-circle-check text-lime-400"></i> خطوات شغل جاهزة ومبرمجة لروتين الجيم من أول دقيقة.</li>
-              <li><i class="fa fa-circle-check text-lime-400"></i> بيانات الأعضاء، الدخول، الاشتراكات، والفلوس مترابطة أوتوماتيك.</li>
-              <li><i class="fa fa-circle-check text-lime-400"></i> بوابات الدخول وبصمة الوجه والواتساب بتسجل الحركات في لحظتها.</li>
-              <li><i class="fa fa-circle-check text-lime-400"></i> صلاحيات محددة وسجل أمان مقفول يحمي أرقامك بدون تعديل غير مصرح.</li>
+          <div class="glass-card" style="padding: 22px; border-color: rgba(132,204,22,0.4); background: linear-gradient(180deg, rgba(132,204,22,0.08) 0%, rgba(15,23,42,0.85) 100%);">
+            <h4 style="font-size: 1.2rem; font-weight: 900; color: #a3e635; margin-bottom: 12px;">
+              <i class="fa fa-dumbbell"></i> سيستم Systemize
+            </h4>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; color: #cbd5e1;">
+              <li>✓ خطوات شغل جاهزة ومخصصة للجيم.</li>
+              <li>✓ بيانات الأعضاء والاشتراكات والمدفوعات في مكان واحد.</li>
+              <li>✓ صلاحيات وتقارير وتكاملات مخصصة حسب الباقة.</li>
             </ul>
           </div>
         </div>
 
-        <div style="background: rgba(132,204,22,0.1); border: 1px solid rgba(132,204,22,0.3); border-radius: 18px; padding: 14px 28px; max-width: 860px;">
-          <p style="font-size: 1.15rem; font-weight: 800; color: #bef264; margin: 0;">
+        <div style="background: rgba(132,204,22,0.1); border: 1px solid rgba(132,204,22,0.3); border-radius: 16px; padding: 12px 24px; max-width: 820px;">
+          <strong style="font-size: 1.1rem; color: #bef264;">
             "المهم مش اسم البرنامج… المهم هل هيوفّر عليك وقت ويقلّل مشاكل التشغيل فعلًا؟"
-          </p>
+          </strong>
         </div>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 12: What Is It Worth to You?
-         ========================================== -->
+    <!-- SLIDE 12: What Is It Worth to You? -->
     <section class="slide" data-index="11">
       <div class="slide-center">
-        <div class="slide-tag"><i class="fa fa-calculator"></i> القيمة الحقيقية لصالتك</div>
-        <h2 class="slide-title" style="font-size: 2.6rem; max-width: 980px; margin-bottom: 16px;">
-          لو وفّرت وقت، ومنعت أخطاء، وتابعت التجديدات بشكل أحسن…<br>
+        <div class="slide-tag"><i class="fa fa-calculator"></i> مقارنة القيمة</div>
+        <h2 class="slide-title" style="font-size: 2.6rem; max-width: 950px; margin-bottom: 24px;">
+          لو وفّرت وقت، ومنعت أخطاء، وتابعت التجديدات…<br>
           <span>هيفرق معاك بكام؟</span>
         </h2>
-        <p class="slide-desc" style="max-width: 720px; margin-bottom: 28px;">
-          مقارنة تقديرية بين تكلفة الترخيص الشهرية والقيمة المحتمل توفيرها لجيمك:
-        </p>
 
-        <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 28px; width: 100%; max-width: 980px; align-items: stretch; margin-bottom: 24px;">
-          <!-- Software Cost Card -->
-          <div class="glass-card" style="padding: 28px; text-align: center; border-color: rgba(56,189,248,0.4); display: flex; flex-direction: column; justify-content: center;">
-            <span class="tag-pill" style="margin-bottom: 12px; align-self: center;">تكلفة الاشتراك الأساسي</span>
+        <div style="display: grid; grid-template-columns: 1fr 1.25fr; gap: 24px; width: 100%; max-width: 920px; align-items: stretch; margin-bottom: 24px;">
+          <div class="glass-card" style="padding: 24px; text-align: center; border-color: rgba(56,189,248,0.4); display: flex; flex-direction: column; justify-content: center;">
+            <span style="font-size: 0.85rem; color: #94a3b8; font-weight: 800; margin-bottom: 8px;">تكلفة الترخيص الأساسي</span>
             <div id="compareSoftwarePrice" style="font-size: 3rem; font-weight: 900; color: #38bdf8; font-family: var(--font-mono); margin-bottom: 6px;">
               ٣٥٠ ج
             </div>
-            <span style="font-size: 0.95rem; color: #94a3b8; font-weight: 700;">شهرياً فقط للبرنامج الأساسي</span>
-            <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 0.85rem; color: #cbd5e1;">
-              (أو ٣٬٥٠٠ ج سنوياً مع توفير شهرين كاملين)
-            </div>
+            <span style="font-size: 0.9rem; color: #cbd5e1; font-weight: 700;">شهرياً فقط (أو ٣٬٥٠٠ ج سنوياً)</span>
           </div>
 
-          <!-- Potential Opportunity Card -->
-          <div class="glass-card" style="padding: 28px; text-align: right; border-color: rgba(132,204,22,0.4); background: linear-gradient(180deg, rgba(132,204,22,0.08) 0%, rgba(15,23,42,0.85) 100%);">
-            <span class="tag-pill" style="background: rgba(132,204,22,0.15); color: #bef264; margin-bottom: 12px;">تقدير القيمة والفرص المحمية</span>
+          <div class="glass-card" style="padding: 24px; text-align: right; border-color: rgba(132,204,22,0.4); background: linear-gradient(180deg, rgba(132,204,22,0.08) 0%, rgba(15,23,42,0.85) 100%);">
+            <span style="font-size: 0.85rem; color: #bef264; font-weight: 800; display: block; margin-bottom: 12px;">تقدير القيمة والفرص المحمية:</span>
             
-            <div style="display: flex; flex-direction: column; gap: 10px; margin: 14px 0;">
-              <div style="display: flex; justify-content: space-between; font-size: 0.95rem; color: #cbd5e1;">
-                <span>قيمة وقت المتابعة اليومي المقدر:</span>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.92rem; color: #cbd5e1;">
+              <div style="display: flex; justify-content: space-between;">
+                <span>قيمة الوقت اليدوي المقدر:</span>
                 <strong id="valCompTime" style="color: #ffffff; font-family: var(--font-mono);">١٬٨٠٠ ج / شهر</strong>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.95rem; color: #cbd5e1;">
+              <div style="display: flex; justify-content: space-between;">
                 <span>فرص اشتراكات يمكن متابعتها:</span>
                 <strong id="valCompRenewals" style="color: #a3e635; font-family: var(--font-mono);">٦٬٧٥٠ ج / شهر</strong>
               </div>
-              <div style="display: flex; justify-content: space-between; font-size: 0.95rem; color: #cbd5e1;">
-                <span>فروق حسابات تتطلب تدقيقاً:</span>
+              <div style="display: flex; justify-content: space-between;">
+                <span>فروق مالية تحت المراجعة:</span>
                 <strong id="valCompDiscrepancies" style="color: #fbbf24; font-family: var(--font-mono);">١٬٠٠٠ ج / شهر</strong>
               </div>
             </div>
 
-            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+            <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
               <span style="font-weight: 800; color: #ffffff;">إجمالي الفرص التقديرية:</span>
-              <strong id="valCompTotal" style="font-size: 1.5rem; color: #84cc16; font-family: var(--font-mono);">٩٬٥٥٠ ج / شهر</strong>
+              <strong id="valCompTotal" style="font-size: 1.45rem; color: #84cc16; font-family: var(--font-mono);">٩٬٥٥٠ ج / شهر</strong>
             </div>
           </div>
         </div>
 
-        <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+        <div style="display: flex; gap: 14px; align-items: center; justify-content: center;">
           <button class="btn-secondary" onclick="openLossCalculator()">
             <i class="fa fa-sliders"></i>
-            <span>تعديل أرقام التقدير</span>
+            <span>تعديل التقدير</span>
           </button>
           <button class="btn-primary" onclick="nextSlide()">
             <span>مشاهدة الباقات والأسعار</span>
@@ -1621,76 +1157,56 @@
           </button>
         </div>
 
-        <p style="font-size: 0.75rem; color: #64748b; margin-top: 16px; font-weight: 600;">
-          * الأرقام الموضحة مبنية على افتراضات ومعدلات تقديرية وليست عوائد مؤكدة أو أرباحاً مضمونة لكل صالة.
+        <p style="font-size: 0.72rem; color: #64748b; margin-top: 14px; font-weight: 600;">
+          * أرقام تقديرية للمقارنة وليست عوائد مؤكدة أو أرباحاً مضمونة.
         </p>
       </div>
     </section>
 
-    <!-- ==========================================
-         SLIDE 13: Pricing
-         ========================================== -->
+    <!-- SLIDE 13: Pricing -->
     <section class="slide" data-index="12">
       <div class="slide-center">
         <div class="slide-tag"><i class="fa fa-tag"></i> الأسعار والباقات</div>
-        <h2 class="slide-title" style="font-size: 2.8rem; margin-bottom: 12px;">
+        <h2 class="slide-title" style="font-size: 2.8rem; margin-bottom: 20px;">
           باقات واضحة ومباشرة…<br>
           <span>اختار اللي يناسب صالتك.</span>
         </h2>
-        <p class="slide-desc" style="max-width: 760px; margin-bottom: 24px; font-size: 1.15rem;">
-          مفيش مصاريف مخفية ولا اشتراكات مفاجئة.. ادفع فقط مقابل الإضافات اللي جيمك محتاجها:
-        </p>
 
-        <!-- Base Pricing 3 Columns -->
-        <div class="pricing-grid" style="max-width: 960px;">
-          <!-- Monthly -->
-          <div class="pricing-tier">
-            <span class="tag-pill">اشتراك شهري</span>
-            <div class="tier-price"><span id="lblPriceMonthly">٣٥٠</span> <span>جنيه / شهر</span></div>
-            <p style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 14px;">مرونة كاملة لتجربة البرنامج شهراً بشهر بدون التزام طويل.</p>
-            <div style="font-size: 0.8rem; color: #cbd5e1; font-weight: 700;">البرنامج الأساسي الكامل ✓</div>
+        <!-- Pricing 3 Cards -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; width: 100%; max-width: 920px; margin-bottom: 18px;">
+          <div class="glass-card" style="padding: 22px; text-align: center;">
+            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 4px;">اشتراك شهري</span>
+            <div style="font-size: 2.2rem; font-weight: 900; color: #ffffff; font-family: var(--font-mono); margin: 8px 0;"><span id="lblPriceMonthly">٣٥٠</span> <span style="font-size: 0.9rem; font-family: Cairo;">ج / شهر</span></div>
+            <div style="font-size: 0.78rem; color: #cbd5e1; font-weight: 700;">البرنامج الأساسي الكامل ✓</div>
           </div>
 
-          <!-- Yearly (Featured) -->
-          <div class="pricing-tier featured">
-            <div class="pricing-badge">الأكثر توفيراً (وفر شهرين)</div>
-            <span class="tag-pill" style="background: rgba(132,204,22,0.2); color: #bef264;">اشتراك سنوي</span>
-            <div class="tier-price"><span id="lblPriceYearly">٣٬٥٠٠</span> <span>جنيه / سنة</span></div>
-            <p style="font-size: 0.82rem; color: #bef264; margin-bottom: 14px;">ادفع 10 شهور وخد شهرين مجاناً مع أولوية الدعم والتحديثات.</p>
-            <div style="font-size: 0.8rem; color: #ffffff; font-weight: 800;">البرنامج الأساسي الكامل ✓</div>
+          <div class="glass-card" style="padding: 22px; text-align: center; border-color: #84cc16; background: linear-gradient(180deg, rgba(132,204,22,0.12) 0%, rgba(15,23,42,0.85) 100%); transform: translateY(-4px);">
+            <span style="font-size: 0.8rem; color: #bef264; font-weight: 900; display: block; margin-bottom: 4px;">اشتراك سنوي (توفير شهرين)</span>
+            <div style="font-size: 2.2rem; font-weight: 900; color: #ffffff; font-family: var(--font-mono); margin: 8px 0;"><span id="lblPriceYearly">٣٬٥٠٠</span> <span style="font-size: 0.9rem; font-family: Cairo;">ج / سنة</span></div>
+            <div style="font-size: 0.78rem; color: #ffffff; font-weight: 800;">البرنامج الأساسي الكامل ✓</div>
           </div>
 
-          <!-- Lifetime -->
-          <div class="pricing-tier">
-            <span class="tag-pill">مدى الحياة</span>
-            <div class="tier-price"><span id="lblPriceLifetime">٦٬٠٠٠</span> <span>جنيه لمرة واحدة</span></div>
-            <p style="font-size: 0.82rem; color: #94a3b8; margin-bottom: 14px;">ترخيص دائم يعمل على جهاز الصالة أوفلاين مدى الحياة بدون تجديد.</p>
-            <div style="font-size: 0.8rem; color: #cbd5e1; font-weight: 700;">ترخيص دائم للجهاز ✓</div>
+          <div class="glass-card" style="padding: 22px; text-align: center;">
+            <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 800; display: block; margin-bottom: 4px;">مدى الحياة</span>
+            <div style="font-size: 2.2rem; font-weight: 900; color: #ffffff; font-family: var(--font-mono); margin: 8px 0;"><span id="lblPriceLifetime">٦٬٠٠٠</span> <span style="font-size: 0.9rem; font-family: Cairo;">ج لمرة واحدة</span></div>
+            <div style="font-size: 0.78rem; color: #cbd5e1; font-weight: 700;">ترخيص دائم للجهاز ✓</div>
           </div>
         </div>
 
-        <!-- Add-ons Summary Row -->
-        <div class="glass-card" style="padding: 18px 24px; width: 100%; max-width: 960px; margin-bottom: 22px; text-align: right;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 10px;">
-            <strong style="font-size: 0.95rem; color: #ffffff;"><i class="fa fa-puzzle-piece text-lime-400"></i> إضافات اختيارية (تدفع مرة واحدة فقط):</strong>
-            <span style="font-size: 0.78rem; color: #94a3b8;">تُضاف حسب الرغبة وتظل ملكك دائماً</span>
+        <!-- Add-ons Quick Strip -->
+        <div class="glass-card" style="padding: 14px 20px; width: 100%; max-width: 920px; margin-bottom: 22px; text-align: right;">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.82rem; color: #cbd5e1; justify-content: center;">
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بصمة وجه: <strong id="lblAddonFace" style="color: #a3e635; margin-right: 4px;">٤٬٠٠٠</strong> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بصمة يد: <strong id="lblAddonFingerprint" style="color: #a3e635; margin-right: 4px;">٣٬٥٠٠</strong> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">باركود: <strong id="lblAddonBarcode" style="color: #a3e635; margin-right: 4px;">٢٬٥٠٠</strong> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">كود QR: <strong id="lblAddonQr" style="color: #a3e635; margin-right: 4px;">١٬٥٠٠</strong> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بوت واتساب: <strong id="lblAddonBot" style="color: #a3e635; margin-right: 4px;">٢٬٠٠٠</strong> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">نقاط البار: <strong id="lblAddonBar" style="color: #a3e635; margin-right: 4px;">١٬٥٠٠</strong> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem; border-color: rgba(56,189,248,0.4);">Global Access: <strong id="lblAddonGlobal" style="color: #38bdf8; margin-right: 4px;">٢٬٥٠٠</strong> ج/سنة</span>
           </div>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85rem; color: #cbd5e1;">
-            <span class="tag-pill">بصمة وجه AI: <strong id="lblAddonFace">٤٬٠٠٠</strong> ج</span>
-            <span class="tag-pill">بصمة يد: <strong id="lblAddonFingerprint">٣٬٥٠٠</strong> ج</span>
-            <span class="tag-pill">باركود: <strong id="lblAddonBarcode">٢٬٥٠٠</strong> ج</span>
-            <span class="tag-pill">كود QR: <strong id="lblAddonQr">١٬٥٠٠</strong> ج</span>
-            <span class="tag-pill">بوت واتساب/تليجرام: <strong id="lblAddonBot">٢٬٠٠٠</strong> ج</span>
-            <span class="tag-pill">مخزون ونقاط بيع البار: <strong id="lblAddonBar">١٬٥٠٠</strong> ج</span>
-            <span class="tag-pill" style="border-color: rgba(56,189,248,0.4);">Global Access سحابي: <strong id="lblAddonGlobal">٢٬٥٠٠</strong> ج/سنة</span>
-          </div>
-          <p style="font-size: 0.75rem; color: #64748b; margin-top: 10px; margin-bottom: 0;">
-            * أجهزة البوابات والكمبيوتر والأسلاك والتركيب الفعلي يتم تسعيرها معاً حسب معاينة المكان.
-          </p>
         </div>
 
-        <!-- Action Buttons -->
-        <div style="display: flex; gap: 16px; align-items: center; justify-content: center;">
+        <div style="display: flex; gap: 14px; align-items: center; justify-content: center;">
           <button class="btn-primary" onclick="openPackageCalculator()">
             <i class="fa fa-sliders"></i>
             <span>نحسب الباقة المناسبة</span>
@@ -1705,429 +1221,278 @@
 
   </main>
 
-  <!-- Hidden Motion Canvas for WebCam Frame Difference Processing -->
-  <canvas id="motionCanvas" width="120" height="90" style="display: none;"></canvas>
+  <!-- ==========================================
+       PRESENTER SCRIPT FLOATING PROMPTER (Toggle N)
+       ========================================== -->
+  <aside id="presenterScriptDrawer">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <i class="fa fa-microphone-lines"></i>
+        <span>اسكريبت الكلام لمقدم العرض — <span id="prompterSlideName">الشريحة 1</span></span>
+      </div>
+      <button class="drawer-close-btn" onclick="togglePresenterScript()"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="drawer-script-body" id="prompterScriptText">
+      <!-- Dynamic Script Injected Here -->
+    </div>
+  </aside>
 
-  <!-- Footer Navigation & Indicator -->
+  <!-- Footer Navigation -->
   <footer>
     <div class="slide-counter">
-      <span id="currentSlideNum">01</span> / <span id="totalSlideNum" style="color: var(--text-muted); font-size: 0.9rem;">13</span>
+      <span id="currentSlideNum">01</span> / <span id="totalSlideNum" style="color: var(--text-muted); font-size: 0.88rem;">13</span>
     </div>
 
     <div class="slide-dots" id="slideDots"></div>
 
     <div class="bottom-hint">
       <span>✋ لوّح بيدك أمام الكاميرا</span>
-      <span>أو بالأسهم <span class="kbd-badge">←</span> <span class="kbd-badge">→</span> <span class="kbd-badge">Space</span></span>
-      <button onclick="toggleFullscreen()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.1rem; cursor: pointer; padding: 4px;" title="ملء الشاشة">⛶</button>
+      <span>أو بالأسهم <span class="kbd-badge">←</span> <span class="kbd-badge">→</span></span>
+      <span>ملاحظات الملقّن: <span class="kbd-badge">N</span></span>
+      <button onclick="toggleFullscreen()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.1rem; cursor: pointer; padding: 2px;" title="ملء الشاشة">⛶</button>
     </div>
   </footer>
 
-  <!-- ==========================================
-       MODAL 1: Interactive Loss Calculator (Slide 1)
-       ========================================== -->
+  <!-- Hidden Motion Canvas for WebCam Frame Difference Processing -->
+  <canvas id="motionCanvas" width="120" height="90" style="display: none;"></canvas>
+
+  <!-- Modal 1: Loss Calculator -->
   <div class="modal-overlay" id="lossCalcModal">
     <div class="modal-container">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 16px; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(132,204,22,0.15); color: #84cc16; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-            <i class="fa fa-calculator"></i>
-          </div>
-          <div>
-            <h3 style="font-size: 1.35rem; font-weight: 900; color: #ffffff;">حاسبة الخسارة والفرص المحتملة</h3>
-            <p style="font-size: 0.8rem; color: #94a3b8;">أدخل تقديراتك لصالتك لنحسب القيمة المتوقعة شهرياً وسنوياً</p>
-          </div>
-        </div>
-        <button onclick="closeModal('lossCalcModal')" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">
-          <i class="fa fa-times"></i>
-        </button>
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px; margin-bottom: 18px;">
+        <h3 style="font-size: 1.3rem; font-weight: 900; color: #ffffff;"><i class="fa fa-calculator text-lime-400"></i> حاسبة الخسارة والفرص المحتملة</h3>
+        <button onclick="closeModal('lossCalcModal')" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;"><i class="fa fa-times"></i></button>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
         <div class="form-group">
           <label class="form-label">عدد الأعضاء اللي ممكن يفوّتوا التجديد كل شهر</label>
           <input type="number" id="inMissedMembers" class="form-input" value="15" min="0" oninput="calculateLoss()">
         </div>
-
         <div class="form-group">
           <label class="form-label">متوسط سعر الاشتراك بالجنيه</label>
           <input type="number" id="inAvgSub" class="form-input" value="450" min="0" oninput="calculateLoss()">
         </div>
-
         <div class="form-group">
           <label class="form-label">قيمة أي فرق مالي أو خطأ متكرر عايز تحسبه (ج)</label>
           <input type="number" id="inCashDiff" class="form-input" value="1000" min="0" oninput="calculateLoss()">
         </div>
-
         <div class="form-group">
           <label class="form-label">عدد ساعات المتابعة اليدوية يومياً</label>
           <input type="number" id="inHoursDaily" class="form-input" value="2" min="0" step="0.5" oninput="calculateLoss()">
         </div>
-
         <div class="form-group" style="grid-column: span 2;">
           <label class="form-label">تكلفة ساعة الموظف بالجنيه (لو معروفة)</label>
           <input type="number" id="inHourlyRate" class="form-input" value="30" min="0" oninput="calculateLoss()">
         </div>
       </div>
 
-      <!-- Separate Calculated Categories -->
-      <div class="calc-results-grid">
-        <div class="calc-res-card">
-          <div class="calc-res-label">قيمة الاشتراكات المحتمل تفويتها</div>
-          <div class="calc-res-val" id="resRenewals" style="color: #a3e635;">٠ ج</div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 16px 0;">
+        <div class="glass-card" style="padding: 12px; text-align: center;">
+          <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">اشتراكات محتمل تفويتها</div>
+          <div class="calc-res-val" id="resRenewals" style="color: #a3e635; font-size: 1.3rem; font-weight: 900; font-family: var(--font-mono);">٠ ج</div>
         </div>
-        <div class="calc-res-card">
-          <div class="calc-res-label">الفروق المالية المدخلة</div>
-          <div class="calc-res-val" id="resDiscrepancies" style="color: #fbbf24;">٠ ج</div>
+        <div class="glass-card" style="padding: 12px; text-align: center;">
+          <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">الفروق المالية المدخلة</div>
+          <div class="calc-res-val" id="resDiscrepancies" style="color: #fbbf24; font-size: 1.3rem; font-weight: 900; font-family: var(--font-mono);">٠ ج</div>
         </div>
-        <div class="calc-res-card">
-          <div class="calc-res-label">تكلفة الوقت اليدوي المقدرة</div>
-          <div class="calc-res-val" id="resTimeCost" style="color: #38bdf8;">٠ ج</div>
+        <div class="glass-card" style="padding: 12px; text-align: center;">
+          <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">تكلفة الوقت اليدوي</div>
+          <div class="calc-res-val" id="resTimeCost" style="color: #38bdf8; font-size: 1.3rem; font-weight: 900; font-family: var(--font-mono);">٠ ج</div>
         </div>
       </div>
 
-      <div class="total-banner">
+      <div style="background: linear-gradient(135deg, rgba(132, 204, 22, 0.15) 0%, rgba(56, 189, 248, 0.1) 100%); border: 1px solid rgba(132, 204, 22, 0.4); border-radius: 16px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
         <div>
-          <span style="font-size: 0.85rem; color: #cbd5e1; font-weight: 700; display: block;">الإجمالي التقديري الشهري:</span>
-          <span id="resMonthlyTotal" style="font-size: 2rem; font-weight: 1000; color: #84cc16; font-family: var(--font-mono);">٠ ج / شهر</span>
+          <span style="font-size: 0.8rem; color: #cbd5e1; font-weight: 700; display: block;">الإجمالي التقديري الشهري:</span>
+          <span id="resMonthlyTotal" style="font-size: 1.8rem; font-weight: 900; color: #84cc16; font-family: var(--font-mono);">٠ ج / شهر</span>
         </div>
         <div style="text-align: left;">
-          <span style="font-size: 0.85rem; color: #cbd5e1; font-weight: 700; display: block;">الإجمالي التقديري السنوي:</span>
-          <span id="resYearlyTotal" style="font-size: 1.5rem; font-weight: 900; color: #38bdf8; font-family: var(--font-mono);">٠ ج / سنة</span>
+          <span style="font-size: 0.8rem; color: #cbd5e1; font-weight: 700; display: block;">الإجمالي السنوي:</span>
+          <span id="resYearlyTotal" style="font-size: 1.4rem; font-weight: 900; color: #38bdf8; font-family: var(--font-mono);">٠ ج / سنة</span>
         </div>
       </div>
 
-      <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 12px 16px; margin: 18px 0; font-size: 0.8rem; color: #94a3b8; line-height: 1.5;">
-        <i class="fa fa-info-circle text-sky-400"></i>
-        <strong>توضيح مهم:</strong> هذه الحسابات مبنية على افتراضات يحددها صاحب الجيم وتعتبر تكلفة فرصة بديلة محتملة، وليست خسائر مؤكدة أو أرباحاً مضمونة، ودون احتساب مزدوج للبنود.
-      </div>
+      <p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4; margin-bottom: 16px;">
+        * افتراضات يحددها صاحب الجيم وتعتبر تكلفة فرصة بديلة محتملة وليست خسائر مؤكدة أو أرباحاً مضمونة، ودون احتساب مزدوج.
+      </p>
 
-      <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button class="btn-secondary" onclick="closeModal('lossCalcModal')">
-          تخطي الحساب
-        </button>
-        <button class="btn-primary" onclick="saveAndApplyLoss()">
-          <i class="fa fa-check"></i> حفظ ومتابعة العرض
-        </button>
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn-secondary" onclick="closeModal('lossCalcModal')">تخطي الحساب</button>
+        <button class="btn-primary" onclick="saveAndApplyLoss()"><i class="fa fa-check"></i> حفظ ومتابعة العرض</button>
       </div>
     </div>
   </div>
 
-  <!-- ==========================================
-       MODAL 2: Interactive Package Calculator (Slide 13)
-       ========================================== -->
+  <!-- Modal 2: Package Calculator -->
   <div class="modal-overlay" id="packageCalcModal">
     <div class="modal-container">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 16px; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(132,204,22,0.15); color: #84cc16; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-            <i class="fa fa-sliders"></i>
-          </div>
-          <div>
-            <h3 style="font-size: 1.35rem; font-weight: 900; color: #ffffff;">حاسبة الباقة المخصصة لجيمك</h3>
-            <p style="font-size: 0.8rem; color: #94a3b8;">حدد خطتك والإضافات المطلوبة لحساب التكلفة بدقة تامة</p>
-          </div>
-        </div>
-        <button onclick="closeModal('packageCalcModal')" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">
-          <i class="fa fa-times"></i>
-        </button>
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px; margin-bottom: 16px;">
+        <h3 style="font-size: 1.3rem; font-weight: 900; color: #ffffff;"><i class="fa fa-sliders text-lime-400"></i> حاسبة الباقة المخصصة لصالتك</h3>
+        <button onclick="closeModal('packageCalcModal')" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;"><i class="fa fa-times"></i></button>
       </div>
 
-      <!-- Plan Selection -->
-      <div style="margin-bottom: 18px;">
-        <label class="form-label">1. اختار خطة الترخيص الأساسي:</label>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-          <label class="pkg-item" id="optPlanMonthly" onclick="selectPlan('monthly')">
-            <div>
-              <strong style="display: block; font-size: 0.95rem; color: #ffffff;">شهري</strong>
-              <span style="font-size: 0.78rem; color: #94a3b8;"><span id="calcLblPriceMonthly">350</span> ج / شهر</span>
-            </div>
-            <input type="radio" name="basePlan" value="monthly" class="pkg-check" checked>
+      <div style="margin-bottom: 16px;">
+        <label class="form-label">1. خطة الترخيص الأساسي:</label>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+          <label class="glass-card" style="padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="selectPlan('monthly')">
+            <div><strong style="font-size: 0.9rem; color: #fff; display: block;">شهري</strong><span style="font-size: 0.75rem; color: #94a3b8;"><span id="calcLblPriceMonthly">350</span> ج/شهر</span></div>
+            <input type="radio" name="basePlan" value="monthly" checked class="accent-lime-500">
           </label>
-
-          <label class="pkg-item" id="optPlanYearly" onclick="selectPlan('yearly')">
-            <div>
-              <strong style="display: block; font-size: 0.95rem; color: #ffffff;">سنوي (توفير شهرين)</strong>
-              <span style="font-size: 0.78rem; color: #94a3b8;"><span id="calcLblPriceYearly">3,500</span> ج / سنة</span>
-            </div>
-            <input type="radio" name="basePlan" value="yearly" class="pkg-check">
+          <label class="glass-card" style="padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="selectPlan('yearly')">
+            <div><strong style="font-size: 0.9rem; color: #fff; display: block;">سنوي (توفير شهرين)</strong><span style="font-size: 0.75rem; color: #94a3b8;"><span id="calcLblPriceYearly">3,500</span> ج/سنة</span></div>
+            <input type="radio" name="basePlan" value="yearly" class="accent-lime-500">
           </label>
-
-          <label class="pkg-item" id="optPlanLifetime" onclick="selectPlan('lifetime')">
-            <div>
-              <strong style="display: block; font-size: 0.95rem; color: #ffffff;">مدى الحياة</strong>
-              <span style="font-size: 0.78rem; color: #94a3b8;"><span id="calcLblPriceLifetime">6,000</span> ج لمرة واحدة</span>
-            </div>
-            <input type="radio" name="basePlan" value="lifetime" class="pkg-check">
+          <label class="glass-card" style="padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" onclick="selectPlan('lifetime')">
+            <div><strong style="font-size: 0.9rem; color: #fff; display: block;">مدى الحياة</strong><span style="font-size: 0.75rem; color: #94a3b8;"><span id="calcLblPriceLifetime">6,000</span> ج مرة واحدة</span></div>
+            <input type="radio" name="basePlan" value="lifetime" class="accent-lime-500">
           </label>
         </div>
       </div>
 
-      <!-- Add-ons Checkboxes -->
-      <div style="margin-bottom: 18px;">
-        <label class="form-label">2. الإضافات الاختيارية (دفع لمرة واحدة فقط):</label>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <label class="pkg-item">
-            <div>
-              <strong style="font-size: 0.88rem; color: #ffffff;">التعرف على الوجه الذكي (AI Face ID)</strong>
-              <span style="font-size: 0.75rem; color: #94a3b8;">+<span id="calcLblAddonFace">4,000</span> ج مرة واحدة</span>
-            </div>
-            <input type="checkbox" id="chkAddonFace" class="pkg-check" onchange="recalculatePackage()">
+      <div style="margin-bottom: 16px;">
+        <label class="form-label">2. الإضافات الاختيارية (دفع مرة واحدة):</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <span style="font-size: 0.82rem; color: #fff;">التعرف بالوجه الذكي AI (+<span id="calcLblAddonFace">4,000</span> ج)</span>
+            <input type="checkbox" id="chkAddonFace" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
-
-          <label class="pkg-item">
-            <div>
-              <strong style="font-size: 0.88rem; color: #ffffff;">بصمة الأصبع (Fingerprint Access)</strong>
-              <span style="font-size: 0.75rem; color: #94a3b8;">+<span id="calcLblAddonFingerprint">3,500</span> ج مرة واحدة</span>
-            </div>
-            <input type="checkbox" id="chkAddonFingerprint" class="pkg-check" onchange="recalculatePackage()">
+          <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <span style="font-size: 0.82rem; color: #fff;">بصمة الأصبع (+<span id="calcLblAddonFingerprint">3,500</span> ج)</span>
+            <input type="checkbox" id="chkAddonFingerprint" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
-
-          <label class="pkg-item">
-            <div>
-              <strong style="font-size: 0.88rem; color: #ffffff;">قارئ الباركود (Barcode Access)</strong>
-              <span style="font-size: 0.75rem; color: #94a3b8;">+<span id="calcLblAddonBarcode">2,500</span> ج مرة واحدة</span>
-            </div>
-            <input type="checkbox" id="chkAddonBarcode" class="pkg-check" onchange="recalculatePackage()">
+          <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <span style="font-size: 0.82rem; color: #fff;">قارئ الباركود (+<span id="calcLblAddonBarcode">2,500</span> ج)</span>
+            <input type="checkbox" id="chkAddonBarcode" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
-
-          <label class="pkg-item">
-            <div>
-              <strong style="font-size: 0.88rem; color: #ffffff;">قارئ كود QR (QR Access)</strong>
-              <span style="font-size: 0.75rem; color: #94a3b8;">+<span id="calcLblAddonQr">1,500</span> ج مرة واحدة</span>
-            </div>
-            <input type="checkbox" id="chkAddonQr" class="pkg-check" onchange="recalculatePackage()">
+          <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <span style="font-size: 0.82rem; color: #fff;">قارئ كود QR (+<span id="calcLblAddonQr">1,500</span> ج)</span>
+            <input type="checkbox" id="chkAddonQr" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
-
-          <label class="pkg-item">
-            <div>
-              <strong style="font-size: 0.88rem; color: #ffffff;">بوت واتساب وتليجرام التلقائي</strong>
-              <span style="font-size: 0.75rem; color: #94a3b8;">+<span id="calcLblAddonBot">2,000</span> ج مرة واحدة</span>
-            </div>
-            <input type="checkbox" id="chkAddonBot" class="pkg-check" onchange="recalculatePackage()">
+          <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <span style="font-size: 0.82rem; color: #fff;">بوت واتساب وتليجرام (+<span id="calcLblAddonBot">2,000</span> ج)</span>
+            <input type="checkbox" id="chkAddonBot" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
-
-          <label class="pkg-item">
-            <div>
-              <strong style="font-size: 0.88rem; color: #ffffff;">إدارة ومبيعات ونقاط بيع البار</strong>
-              <span style="font-size: 0.75rem; color: #94a3b8;">+<span id="calcLblAddonBar">1,500</span> ج مرة واحدة</span>
-            </div>
-            <input type="checkbox" id="chkAddonBar" class="pkg-check" onchange="recalculatePackage()">
+          <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <span style="font-size: 0.82rem; color: #fff;">مخزون ونقاط بيع البار (+<span id="calcLblAddonBar">1,500</span> ج)</span>
+            <input type="checkbox" id="chkAddonBar" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
         </div>
       </div>
 
-      <!-- Cloud & Extra Branches -->
-      <div style="margin-bottom: 20px;">
-        <label class="form-label">3. الربط السحابي والفروع الإضافية (رسوم سنوية):</label>
-        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
-          <label class="pkg-item">
-            <div>
-              <strong style="font-size: 0.88rem; color: #ffffff;">Global Access (ربط سحابي وتحكم عن بعد)</strong>
-              <span style="font-size: 0.75rem; color: #94a3b8;">+<span id="calcLblAddonGlobal">2,500</span> ج سنوياً</span>
-            </div>
-            <input type="checkbox" id="chkAddonGlobal" class="pkg-check" onchange="recalculatePackage()">
-          </label>
-
-          <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 10px 14px;">
-            <label class="form-label" style="margin-bottom: 4px; font-size: 0.78rem;">عدد الفروع الإضافية (2,500 ج/فرع/سنة):</label>
-            <input type="number" id="inExtraBranches" class="form-input" style="padding: 6px 10px;" value="0" min="0" oninput="recalculatePackage()">
-          </div>
+      <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; margin-bottom: 16px;">
+        <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+          <span style="font-size: 0.82rem; color: #fff;">Global Access سحابي (+<span id="calcLblAddonGlobal">2,500</span> ج/سنة)</span>
+          <input type="checkbox" id="chkAddonGlobal" class="accent-lime-500" onchange="recalculatePackage()">
+        </label>
+        <div class="glass-card" style="padding: 6px 12px;">
+          <label class="form-label" style="font-size: 0.72rem; margin-bottom: 2px;">فروع إضافية (2,500 ج/فرع/سنة):</label>
+          <input type="number" id="inExtraBranches" class="form-input" style="padding: 4px 8px; font-size: 0.85rem;" value="0" min="0" oninput="recalculatePackage()">
         </div>
       </div>
 
-      <!-- Live Split Totals -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-        <div style="background: rgba(132,204,22,0.1); border: 1px solid rgba(132,204,22,0.3); border-radius: 18px; padding: 16px; text-align: center;">
-          <span style="font-size: 0.8rem; color: #cbd5e1; font-weight: 700; display: block; margin-bottom: 4px;">إجمالي يُدفع لمرة واحدة فقط (One-Time):</span>
-          <span id="pkgTotalOneTime" style="font-size: 1.8rem; font-weight: 900; color: #84cc16; font-family: var(--font-mono);">٠ ج</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+        <div style="background: rgba(132,204,22,0.1); border: 1px solid rgba(132,204,22,0.3); border-radius: 14px; padding: 12px; text-align: center;">
+          <span style="font-size: 0.75rem; color: #cbd5e1; font-weight: 700; display: block;">إجمالي لمرة واحدة (One-Time):</span>
+          <span id="pkgTotalOneTime" style="font-size: 1.6rem; font-weight: 900; color: #84cc16; font-family: var(--font-mono);">٠ ج</span>
         </div>
-
-        <div style="background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.3); border-radius: 18px; padding: 16px; text-align: center;">
-          <span style="font-size: 0.8rem; color: #cbd5e1; font-weight: 700; display: block; margin-bottom: 4px;">إجمالي التكلفة الدورية المتكررة:</span>
-          <span id="pkgTotalRecurring" style="font-size: 1.8rem; font-weight: 900; color: #38bdf8; font-family: var(--font-mono);">٠ ج</span>
+        <div style="background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.3); border-radius: 14px; padding: 12px; text-align: center;">
+          <span style="font-size: 0.75rem; color: #cbd5e1; font-weight: 700; display: block;">إجمالي دوري متكرر:</span>
+          <span id="pkgTotalRecurring" style="font-size: 1.6rem; font-weight: 900; color: #38bdf8; font-family: var(--font-mono);">٠ ج</span>
         </div>
       </div>
 
-      <div style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button class="btn-secondary" onclick="closeModal('packageCalcModal')">
-          الرجوع للعرض
-        </button>
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn-secondary" onclick="closeModal('packageCalcModal')">الرجوع للعرض</button>
         <a id="btnWhatsAppQuote" href="#" target="_blank" class="btn-primary" style="text-decoration: none;">
-          <i class="fa-brands fa-whatsapp"></i> إرسال المقايسة على واتساب
+          <i class="fa-brands fa-whatsapp"></i> إرسال المقايسة واتساب
         </a>
       </div>
     </div>
   </div>
 
-  <!-- ==========================================
-       MODAL 3: Presenter Editing Mode (Protected)
-       ========================================== -->
+  <!-- Modal 3: Presenter Settings (Ctrl+E) -->
   <div class="modal-overlay" id="presenterSettingsModal">
-    <div class="modal-container" style="max-width: 860px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 16px; margin-bottom: 20px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(56,189,248,0.15); color: #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-            <i class="fa fa-sliders"></i>
-          </div>
-          <div>
-            <h3 style="font-size: 1.35rem; font-weight: 900; color: #ffffff;">لوحة تعديل أسعار ونصوص العرض (خاص بمقدم العرض)</h3>
-            <p style="font-size: 0.8rem; color: #94a3b8;">التعديلات تُحفظ في المتصفح تلقائياً ولا تحتاج تعديل كود المصدر</p>
-          </div>
-        </div>
-        <button onclick="closeModal('presenterSettingsModal')" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">
-          <i class="fa fa-times"></i>
-        </button>
+    <div class="modal-container" style="max-width: 820px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px; margin-bottom: 16px;">
+        <h3 style="font-size: 1.25rem; font-weight: 900; color: #ffffff;"><i class="fa fa-gear text-sky-400"></i> تعديل الأسعار والمحتوى (مقدم العرض)</h3>
+        <button onclick="closeModal('presenterSettingsModal')" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;"><i class="fa fa-times"></i></button>
       </div>
 
-      <!-- Tab Buttons -->
-      <div style="display: flex; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 18px;">
-        <button onclick="switchSettingsTab('tabPrices')" id="tabBtnPrices" class="tag-pill" style="background: #84cc16; color: #030712; cursor: pointer; padding: 6px 14px; font-size: 0.85rem;">الأسعار والباقات</button>
-        <button onclick="switchSettingsTab('tabDefaults')" id="tabBtnDefaults" class="tag-pill" style="cursor: pointer; padding: 6px 14px; font-size: 0.85rem;">افتراضات الحاسبة والعملة</button>
-        <button onclick="switchSettingsTab('tabBackup')" id="tabBtnBackup" class="tag-pill" style="cursor: pointer; padding: 6px 14px; font-size: 0.85rem;">نسخ واستيراد JSON</button>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;">
+        <div class="form-group"><label class="form-label">شهري (ج)</label><input type="number" id="cfgPriceMonthly" class="form-input"></div>
+        <div class="form-group"><label class="form-label">سنوي (ج)</label><input type="number" id="cfgPriceYearly" class="form-input"></div>
+        <div class="form-group"><label class="form-label">مدى الحياة (ج)</label><input type="number" id="cfgPriceLifetime" class="form-input"></div>
+        <div class="form-group"><label class="form-label">بصمة وجه (ج)</label><input type="number" id="cfgAddonFace" class="form-input"></div>
+        <div class="form-group"><label class="form-label">بصمة يد (ج)</label><input type="number" id="cfgAddonFingerprint" class="form-input"></div>
+        <div class="form-group"><label class="form-label">باركود (ج)</label><input type="number" id="cfgAddonBarcode" class="form-input"></div>
+        <div class="form-group"><label class="form-label">كود QR (ج)</label><input type="number" id="cfgAddonQr" class="form-input"></div>
+        <div class="form-group"><label class="form-label">بوت واتساب (ج)</label><input type="number" id="cfgAddonBot" class="form-input"></div>
+        <div class="form-group"><label class="form-label">نقاط البار (ج)</label><input type="number" id="cfgAddonBar" class="form-input"></div>
       </div>
 
-      <!-- Tab 1: Prices -->
-      <div id="tabPrices" class="settings-tab-content">
-        <h4 style="font-size: 1rem; color: #bef264; margin-bottom: 12px;">أسعار التراخيص الأساسية:</h4>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px;">
-          <div class="form-group">
-            <label class="form-label">سعر الاشتراك الشهري (ج)</label>
-            <input type="number" id="cfgPriceMonthly" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">سعر الاشتراك السنوي (ج)</label>
-            <input type="number" id="cfgPriceYearly" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">سعر ترخيص مدى الحياة (ج)</label>
-            <input type="number" id="cfgPriceLifetime" class="form-input">
-          </div>
-        </div>
-
-        <h4 style="font-size: 1rem; color: #bef264; margin-bottom: 12px;">أسعار الإضافات (دفع مرة واحدة):</h4>
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px;">
-          <div class="form-group">
-            <label class="form-label">بصمة الوجه AI (ج)</label>
-            <input type="number" id="cfgAddonFace" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">بصمة الأصبع (ج)</label>
-            <input type="number" id="cfgAddonFingerprint" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">قارئ الباركود (ج)</label>
-            <input type="number" id="cfgAddonBarcode" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">قارئ QR (ج)</label>
-            <input type="number" id="cfgAddonQr" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">بوت واتساب وتليجرام (ج)</label>
-            <input type="number" id="cfgAddonBot" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">مخزون ونقاط بيع البار (ج)</label>
-            <input type="number" id="cfgAddonBar" class="form-input">
-          </div>
-        </div>
-
-        <h4 style="font-size: 1rem; color: #bef264; margin-bottom: 12px;">الربط السحابي والفروع الإضافية (سنوياً):</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-          <div class="form-group">
-            <label class="form-label">Global Access السحابي (ج/سنة)</label>
-            <input type="number" id="cfgAddonGlobal" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">سعر كل فرع إضافي (ج/سنة)</label>
-            <input type="number" id="cfgBranchPrice" class="form-input">
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab 2: Defaults & Currency -->
-      <div id="tabDefaults" class="settings-tab-content" style="display: none;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-          <div class="form-group">
-            <label class="form-label">رمز العملة (مثال: ج أو EGP)</label>
-            <input type="text" id="cfgCurrency" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">رقم واتساب المبيعات لتلقي الطلبات</label>
-            <input type="text" id="cfgWhatsAppPhone" class="form-input" placeholder="010XXXXXXXX">
-          </div>
-          <div class="form-group">
-            <label class="form-label">الافتراضي: عدد المشتركين المفوّتين شهرياً</label>
-            <input type="number" id="cfgDefMembers" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">الافتراضي: متوسط سعر الاشتراك (ج)</label>
-            <input type="number" id="cfgDefAvgSub" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">الافتراضي: فرق الخزينة المتكرر (ج)</label>
-            <input type="number" id="cfgDefCashDiff" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">الافتراضي: ساعات المتابعة اليومية</label>
-            <input type="number" id="cfgDefHours" class="form-input">
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab 3: Backup & Restore -->
-      <div id="tabBackup" class="settings-tab-content" style="display: none;">
-        <p style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 16px;">
-          يمكنك تصدير الإعدادات كاملة في ملف JSON لحفظها، أو استيرادها على أي لابتوب آخر فوراً:
-        </p>
-        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
-          <button class="btn-secondary" onclick="exportConfigJson()">
-            <i class="fa fa-download"></i> تصدير إعدادات العرض (JSON)
-          </button>
-          <label class="btn-secondary" style="cursor: pointer;">
-            <i class="fa fa-upload"></i> استيراد ملف (JSON)
-            <input type="file" id="importJsonFileInput" accept=".json" style="display: none;" onchange="importConfigJson(event)">
-          </label>
-        </div>
-        <div style="padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
-          <button onclick="resetConfigToDefaults()" style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); color: #f43f5e; padding: 10px 18px; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 0.85rem;">
-            <i class="fa fa-arrow-rotate-left"></i> استعادة الإعدادات الأصلية الافتراضية
-          </button>
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <button class="btn-secondary" onclick="closeModal('presenterSettingsModal')">
-          إلغاء
-        </button>
-        <button class="btn-primary" onclick="savePresenterSettings()">
-          <i class="fa fa-floppy-disk"></i> حفظ التعديلات وتحديث العرض
-        </button>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <button class="btn-secondary" onclick="closeModal('presenterSettingsModal')">إلغاء</button>
+        <button class="btn-primary" onclick="savePresenterSettings()"><i class="fa fa-floppy-disk"></i> حفظ التعديلات</button>
       </div>
     </div>
   </div>
 
-  <!-- ==========================================
-       LIGHTBOX MODAL FOR SCREENSHOTS
-       ========================================== -->
+  <!-- Lightbox Modal -->
   <div id="imageLightbox" onclick="closeLightbox()">
     <img id="lightboxImg" src="" alt="Zoomed Screenshot">
   </div>
 
   <!-- ==========================================
-       CORE JAVASCRIPT LOGIC
+       JAVASCRIPT LOGIC + PRESENTER TALKING SCRIPTS
        ========================================== -->
   <script>
-    /* ========================================================
-       1. DEFAULT PRESENTATION CONFIGURATION DATA
-       Editable by Presenter, stored in LocalStorage
-       ======================================================== */
+    /* 1. Presenter Spoken Scripts per Slide (بالعامية المصرية الصميمة) */
+    const PRESENTER_SCRIPTS = [
+      /* Slide 1 */
+      `<strong>الافتتاحية:</strong> "صباح الفل يا كابتن.. سؤال مهم بسأل بيه دايماً أصحاب الجيمات الشاطرين: إنت متأكد إن صالتك مش بتنزف فلوس وإنت مش واخد بالك؟ بص معايا على التلات أرقام دول: دي مش اشتراكات جديدة، دي اشتراكات كان المفروض تتجدد وعدت، وفروق دروج بتتنسي، وساعات ضايعة موظفينك بيقضوها في الدفاتر بدل ما يخدموا المتدربين. تحب نحسب مع بعض جيمك ممكن يكون بيسرب كام شهرياً؟"`,
+      
+      /* Slide 2 */
+      `<strong>التسريب الخفي:</strong> "المشكلة في الجيم مش إن مفيش ناس بتدخل تشترك.. المشكلة إن في 3 حاجات بتحصل كل يوم بتسرب إيرادات في الهوا: متدرب وقته خلص ومحدش كلمه فكسل يجي.. متدرب داخل في الزحمة ومحدش عارف حسابه ساري ولا لأ.. وإنت كصاحب جيم لو حبيت تعرف كسبت كام النهاردة محتاج تقعد تسأل وتجمع وتراجع ورقة ورقة!"`,
+
+      /* Slide 3 */
+      `<strong>الدورة اليدوية:</strong> "ليه ده بيحصل؟ لأن الروتين كله معتمد على إن شخص يفتكر! الموظف يسجل في الدفتر، وبعدين يفتكر يراجع، وبعدين يفتكر يبعت أو يكلم، وبعدين إنت تيجي تسأل.. كل خطوة من دول فرصة لخطأ وتأخير وكسل، ومع زيادة المشتركين الشغل اليدوي بيبقى حمل تقيل بيخسر فلوس."`,
+
+      /* Slide 4 */
+      `<strong>تقديم Systemize:</strong> "وده بالظبط اللي اتعمل علشانه سيستم Systemize.. مش برنامج معقد، ده عقل إلكتروني بيدير صالتك ويربط الأطراف ببعضها: المشترك يدخل من الباب، اشتراكه يتفحص، يخصم من حسابه، الخزينة تسمع، وتقريرك يوصلك.. كل ده في شاشة واحدة وبضغطة زر."`,
+
+      /* Slide 5 */
+      `<strong>بوابات الدخول:</strong> "أول خطوة: نقفل باب الحرج.. اللاعب يدخل قدام الكاميرا، بصمة الوجه تفحصه في أقل من ثانية، لو اشتراكه ساري البوابة تفتح وترحب بيه.. لو اشتراكه خلصان، السيستم ينبه الريسبشن في لحظتها. مفيش حد هيدخل ببلاش، ومفيش حد هيقول 'نسيت الكارت في البيت'!"`,
+
+      /* Slide 6 */
+      `<strong>فرص التجديد:</strong> "بدل ما تستنى المتدرب يقطع ويختفي، السيستم بيفرزلك المشتركين اللي باقي لهم 3 أيام أو يومين، وبضغطة زر واحدة بتتبعتله رسالة واتساب شيك باسم الجيم تفكّره بالتجديد عشان يفضل محافظ على فورمتك ومستواك.. بكده بتحافظ على تدفق فلوسك كل شهر."`,
+
+      /* Slide 7 */
+      `<strong>الخزينة والأموال:</strong> "الفلوس.. كل قرش يدخل بيطلع بيه إيصال رسمي للمتدرب، وكل مصروف بيسجله الريسبشن متصنف.. وميزة الأمان: أرقام أرباحك الصافية وإجمالي الخزينة مقفولة برمز سري ليك إنت كمدير فقط، الموظف يسجل بس ميعرفش إجمالي دخل الجيم."`,
+
+      /* Slide 8 */
+      `<strong>المدربين والبرايفت:</strong> "مفيش خناقات آخر الشهر مع الكباتن.. نسب البرايفت بتتحسب بالسحتوت أول ما اللاعب يسدد، وسجل السُلف والخصومات والغياب موجود لكل كابتن وموظف بتقرير شفاف يطبع في ثانية."`,
+
+      /* Slide 9 */
+      `<strong>أتمتة المتابعة:</strong> "بدل ما الموظف يضيع ساعتين يومياً على التليفون، روبوت الواتساب والتليجرام بيبعت فواتير السداد وترحيب المشتركين الجدد وتذكير المتبقي أوتوماتيك.. الموظف يتفرغ لصالة الجيم وخدمة اللاعبين."`,
+
+      /* Slide 10 */
+      `<strong>تقارير الإدارة:</strong> "شاشة التقارير المالية والإدارية الحقيقية.. بنظرة واحدة على موبايلك أو لابتوبك تعرف: كام مشترك نشط، كام انتهى، صافي إيرادك الحقيقي مطروحاً منه المصروفات، وأكتر ساعات فيها زحمة حضور عشان تظبط مواعيد كباتنك."`,
+
+      /* Slide 11 */
+      `<strong>الرد على اعتراض Excel:</strong> "ناس كتير بتسألني: طب ما أنا ممكن أعمل شيت Excel؟ وأنا بقولك بصراحة: طبعاً تقدر.. لو عندك وقت تصمم وتدخل كل رقم بإيدك! بس إكسيل مش هيربط بكاميرا الباب، ولا هيبعت واتساب للمشتركين تلقائي، ولا هيقفل الصلاحيات على الموظفين.. المهم مش اسم البرنامج، المهم هل هيوفر وقتك ويقفل ثغرات صالتك بجد؟"`,
+
+      /* Slide 12 */
+      `<strong>مقارنة القيمة بالتكلفة:</strong> "تعالى نقارن مع بعض: اشتراك البرنامج بـ 350 جنيه في الشهر.. في المقابل السيستم بيحمي لك آلاف الجنيهات في ساعات متابعة موظفينك، والاشتراكات اللي كانت بتضيع، وفروق الخزينة.. يعني البرنامج مش تكلفة، دي أداة بتجيب تمنها من أول أسبوع."`,
+
+      /* Slide 13 */
+      `<strong>الأسعار وبناء الباقة:</strong> "باقاتنا واضحة ومباشرة: تقدر تبدأ شهري بـ 350 جنيه، أو تاخد السنوي بـ 3,500 وتوفر شهرين، أو رخصة مدى الحياة بـ 6,000 جنيه.. وأي إضافة جهاز زي بصمة الوش أو الباركود بتدفع تمنها مرة واحدة وتفضل ملكك على طول. يلا نحسب الباقة اللي تناسب جيمك دلوقتي؟"`
+    ];
+
+    /* 2. Configuration State */
     const DEFAULT_CONFIG = {
       currency: "ج",
       whatsappPhone: "01080922432",
-      brandTitle: "Systemize",
-      brandBadge: "عرض أصحاب الجيمات",
       prices: {
         monthly: 350,
         yearly: 3500,
@@ -2154,21 +1519,13 @@
 
     function loadSavedConfig() {
       try {
-        const saved = localStorage.getItem('systemize_deck_config_v2');
-        if (saved) {
-          appConfig = Object.assign({}, DEFAULT_CONFIG, JSON.parse(saved));
-        }
-      } catch (e) {
-        console.warn('Could not load saved config', e);
-      }
+        const saved = localStorage.getItem('systemize_deck_config_v3');
+        if (saved) appConfig = Object.assign({}, DEFAULT_CONFIG, JSON.parse(saved));
+      } catch (e) {}
     }
 
     function saveConfigToStorage() {
-      try {
-        localStorage.setItem('systemize_deck_config_v2', JSON.stringify(appConfig));
-      } catch (e) {
-        console.error(e);
-      }
+      localStorage.setItem('systemize_deck_config_v3', JSON.stringify(appConfig));
     }
 
     function formatNumber(num) {
@@ -2179,7 +1536,6 @@
       const p = appConfig.prices;
       const c = appConfig.currency;
 
-      // Slide 13 Pricing Labels
       document.getElementById('lblPriceMonthly').innerText = formatNumber(p.monthly);
       document.getElementById('lblPriceYearly').innerText = formatNumber(p.yearly);
       document.getElementById('lblPriceLifetime').innerText = formatNumber(p.lifetime);
@@ -2192,10 +1548,8 @@
       document.getElementById('lblAddonBar').innerText = formatNumber(p.addonBar);
       document.getElementById('lblAddonGlobal').innerText = formatNumber(p.addonGlobal);
 
-      // Slide 12 Compare Price
       document.getElementById('compareSoftwarePrice').innerText = `${formatNumber(p.monthly)} ${c}`;
 
-      // Calculator Labels
       document.getElementById('calcLblPriceMonthly').innerText = formatNumber(p.monthly);
       document.getElementById('calcLblPriceYearly').innerText = formatNumber(p.yearly);
       document.getElementById('calcLblPriceLifetime').innerText = formatNumber(p.lifetime);
@@ -2208,9 +1562,7 @@
       document.getElementById('calcLblAddonGlobal').innerText = formatNumber(p.addonGlobal);
     }
 
-    /* ========================================================
-       2. SLIDES NAVIGATION ENGINE
-       ======================================================== */
+    /* 3. Slides Engine */
     const slides = document.querySelectorAll('.slide');
     const totalSlides = slides.length;
     let currentSlide = 0;
@@ -2218,6 +1570,8 @@
     const currentSlideNum = document.getElementById('currentSlideNum');
     const totalSlideNum = document.getElementById('totalSlideNum');
     const slideDotsContainer = document.getElementById('slideDots');
+    const prompterSlideName = document.getElementById('prompterSlideName');
+    const prompterScriptText = document.getElementById('prompterScriptText');
 
     function initDots() {
       slideDotsContainer.innerHTML = '';
@@ -2232,34 +1586,27 @@
     }
 
     function updateSlideUI() {
-      slides.forEach((s, idx) => {
-        s.classList.toggle('active', idx === currentSlide);
-      });
-
+      slides.forEach((s, idx) => s.classList.toggle('active', idx === currentSlide));
       const numStr = currentSlide + 1 < 10 ? `0${currentSlide + 1}` : `${currentSlide + 1}`;
       currentSlideNum.innerText = numStr;
 
       const dots = slideDotsContainer.querySelectorAll('.dot');
-      dots.forEach((d, idx) => {
-        d.classList.toggle('active', idx === currentSlide);
-      });
+      dots.forEach((d, idx) => d.classList.toggle('active', idx === currentSlide));
+
+      // Update Prompter text
+      prompterSlideName.innerText = `الشريحة ${currentSlide + 1}`;
+      prompterScriptText.innerHTML = PRESENTER_SCRIPTS[currentSlide] || "اسكريبت هذه الشريحة قيد الإعداد.";
     }
 
     function nextSlide() {
-      if (currentSlide < totalSlides - 1) {
-        currentSlide++;
-      } else {
-        currentSlide = 0;
-      }
+      if (currentSlide < totalSlides - 1) currentSlide++;
+      else currentSlide = 0;
       updateSlideUI();
     }
 
     function prevSlide() {
-      if (currentSlide > 0) {
-        currentSlide--;
-      } else {
-        currentSlide = totalSlides - 1;
-      }
+      if (currentSlide > 0) currentSlide--;
+      else currentSlide = totalSlides - 1;
       updateSlideUI();
     }
 
@@ -2270,9 +1617,18 @@
       }
     }
 
-    // Keyboard Navigation
+    /* Presenter Script Prompter Toggle */
+    let isPrompterOpen = false;
+    function togglePresenterScript() {
+      isPrompterOpen = !isPrompterOpen;
+      const drawer = document.getElementById('presenterScriptDrawer');
+      const btn = document.getElementById('prompterToggleBtn');
+      drawer.classList.toggle('open', isPrompterOpen);
+      btn.classList.toggle('active', isPrompterOpen);
+    }
+
+    // Keyboard Controls
     window.addEventListener('keydown', (e) => {
-      // Don't intercept typing in inputs
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
 
       if (e.key === 'ArrowLeft' || e.key === ' ' || e.key === 'PageDown') {
@@ -2283,6 +1639,8 @@
         goToSlide(0);
       } else if (e.key === 'End') {
         goToSlide(totalSlides - 1);
+      } else if (e.key === 'n' || e.key === 'N' || e.key === 's' || e.key === 'S') {
+        togglePresenterScript();
       } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
       } else if ((e.ctrlKey || e.metaKey) && (e.key === 'e' || e.key === 'E')) {
@@ -2291,10 +1649,11 @@
       } else if (e.key === 'Escape') {
         closeAllModals();
         closeLightbox();
+        if (isPrompterOpen) togglePresenterScript();
       }
     });
 
-    // Touch Swipe Controls
+    // Touch Swipe
     let touchStartX = 0;
     window.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
     window.addEventListener('touchend', e => {
@@ -2304,23 +1663,12 @@
     }, { passive: true });
 
     function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      } else {
-        document.exitFullscreen().catch(() => {});
-      }
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen().catch(() => {});
     }
 
-    /* ========================================================
-       3. LOSS CALCULATOR LOGIC (Slide 1 & Slide 12)
-       ======================================================== */
-    let calculatedLossState = {
-      missedRenewals: 6750,
-      cashDiscrepancies: 1000,
-      timeCost: 1800,
-      monthlyTotal: 9550,
-      yearlyTotal: 114600
-    };
+    /* 4. Loss Calculator */
+    let calculatedLossState = { missedRenewals: 6750, cashDiscrepancies: 1000, timeCost: 1800, monthlyTotal: 9550, yearlyTotal: 114600 };
 
     function openLossCalculator() {
       const d = appConfig.calculatorDefaults;
@@ -2342,17 +1690,11 @@
       const c = appConfig.currency;
 
       const missedRenewals = members * avgSub;
-      const timeCost = hours * hourlyRate * 30; // 30 days per month
+      const timeCost = hours * hourlyRate * 30;
       const monthlyTotal = missedRenewals + cashDiff + timeCost;
       const yearlyTotal = monthlyTotal * 12;
 
-      calculatedLossState = {
-        missedRenewals,
-        cashDiscrepancies: cashDiff,
-        timeCost,
-        monthlyTotal,
-        yearlyTotal
-      };
+      calculatedLossState = { missedRenewals, cashDiscrepancies: cashDiff, timeCost, monthlyTotal, yearlyTotal };
 
       document.getElementById('resRenewals').innerText = `${formatNumber(missedRenewals)} ${c}`;
       document.getElementById('resDiscrepancies').innerText = `${formatNumber(cashDiff)} ${c}`;
@@ -2363,40 +1705,25 @@
 
     function saveAndApplyLoss() {
       const c = appConfig.currency;
-      // Update Slide 1 Summary Cards
       document.getElementById('cardFigRenewals').innerText = `${formatNumber(calculatedLossState.missedRenewals)} ${c}`;
       document.getElementById('cardFigDiscrepancies').innerText = `${formatNumber(calculatedLossState.cashDiscrepancies)} ${c}`;
       document.getElementById('cardFigTime').innerText = `${formatNumber(calculatedLossState.timeCost)} ${c}`;
 
-      // Update Slide 12 Value Comparison Card
       document.getElementById('valCompRenewals').innerText = `${formatNumber(calculatedLossState.missedRenewals)} ${c} / شهر`;
       document.getElementById('valCompDiscrepancies').innerText = `${formatNumber(calculatedLossState.cashDiscrepancies)} ${c} / شهر`;
       document.getElementById('valCompTime').innerText = `${formatNumber(calculatedLossState.timeCost)} ${c} / شهر`;
       document.getElementById('valCompTotal').innerText = `${formatNumber(calculatedLossState.monthlyTotal)} ${c} / شهر`;
 
       closeModal('lossCalcModal');
-      // Advance to next slide smoothly
       nextSlide();
     }
 
-    /* ========================================================
-       4. PACKAGE CALCULATOR LOGIC (Slide 13)
-       ======================================================== */
+    /* 5. Package Calculator */
     let selectedBasePlan = 'monthly';
-
-    function openPackageCalculator() {
-      recalculatePackage();
-      openModal('packageCalcModal');
-    }
-
+    function openPackageCalculator() { recalculatePackage(); openModal('packageCalcModal'); }
     function selectPlan(plan) {
       selectedBasePlan = plan;
-      document.querySelectorAll('input[name="basePlan"]').forEach(r => {
-        r.checked = (r.value === plan);
-      });
-      document.getElementById('optPlanMonthly').classList.toggle('selected', plan === 'monthly');
-      document.getElementById('optPlanYearly').classList.toggle('selected', plan === 'yearly');
-      document.getElementById('optPlanLifetime').classList.toggle('selected', plan === 'lifetime');
+      document.querySelectorAll('input[name="basePlan"]').forEach(r => r.checked = (r.value === plan));
       recalculatePackage();
     }
 
@@ -2406,20 +1733,11 @@
 
       let oneTimeTotal = 0;
       let recurringTotal = 0;
-      let recurringLabel = "";
 
-      // 1. Base Plan
-      if (selectedBasePlan === 'monthly') {
-        recurringTotal += p.monthly;
-        recurringLabel = "شهرياً";
-      } else if (selectedBasePlan === 'yearly') {
-        recurringTotal += p.yearly;
-        recurringLabel = "سنوياً";
-      } else if (selectedBasePlan === 'lifetime') {
-        oneTimeTotal += p.lifetime;
-      }
+      if (selectedBasePlan === 'monthly') recurringTotal += p.monthly;
+      else if (selectedBasePlan === 'yearly') recurringTotal += p.yearly;
+      else if (selectedBasePlan === 'lifetime') oneTimeTotal += p.lifetime;
 
-      // 2. Addons (One-time)
       if (document.getElementById('chkAddonFace').checked) oneTimeTotal += p.addonFace;
       if (document.getElementById('chkAddonFingerprint').checked) oneTimeTotal += p.addonFingerprint;
       if (document.getElementById('chkAddonBarcode').checked) oneTimeTotal += p.addonBarcode;
@@ -2427,53 +1745,31 @@
       if (document.getElementById('chkAddonBot').checked) oneTimeTotal += p.addonBot;
       if (document.getElementById('chkAddonBar').checked) oneTimeTotal += p.addonBar;
 
-      // 3. Cloud & Branches (Recurring annual)
       let annualExtra = 0;
-      if (document.getElementById('chkAddonGlobal').checked) {
-        annualExtra += p.addonGlobal;
-      }
+      if (document.getElementById('chkAddonGlobal').checked) annualExtra += p.addonGlobal;
       const branches = Number(document.getElementById('inExtraBranches').value) || 0;
-      if (branches > 0) {
-        annualExtra += (branches * p.branchPrice);
-      }
+      if (branches > 0) annualExtra += (branches * p.branchPrice);
 
-      // Combine recurring
       let recurringText = "";
       if (selectedBasePlan === 'monthly') {
-        if (annualExtra > 0) {
-          recurringText = `${formatNumber(recurringTotal)} ${c}/شهر + ${formatNumber(annualExtra)} ${c}/سنة`;
-        } else {
-          recurringText = `${formatNumber(recurringTotal)} ${c} / شهر`;
-        }
+        recurringText = annualExtra > 0 ? `${formatNumber(recurringTotal)} ${c}/شهر + ${formatNumber(annualExtra)} ${c}/سنة` : `${formatNumber(recurringTotal)} ${c} / شهر`;
       } else if (selectedBasePlan === 'yearly') {
-        const totalYearly = recurringTotal + annualExtra;
-        recurringText = `${formatNumber(totalYearly)} ${c} / سنة`;
+        recurringText = `${formatNumber(recurringTotal + annualExtra)} ${c} / سنة`;
       } else {
-        // lifetime
-        if (annualExtra > 0) {
-          recurringText = `${formatNumber(annualExtra)} ${c} / سنة`;
-        } else {
-          recurringText = `٠ ${c} (لا توجد رسوم متكررة)`;
-        }
+        recurringText = annualExtra > 0 ? `${formatNumber(annualExtra)} ${c} / سنة` : `٠ ${c}`;
       }
 
       document.getElementById('pkgTotalOneTime').innerText = `${formatNumber(oneTimeTotal)} ${c}`;
       document.getElementById('pkgTotalRecurring').innerText = recurringText;
 
-      // Prepare WhatsApp Quote Message
-      const waMsg = `مرحباً، أريد الاستفسار عن باقة Systemize المخصصة:%0A- الخطة الأساسية: ${selectedBasePlan}%0A- التكلفة لمرة واحدة: ${oneTimeTotal} ${c}%0A- التكلفة المتكررة: ${recurringText}`;
+      const waMsg = `مرحباً، أود حجز واستفسار عن باقة Systemize:%0A- الخطة: ${selectedBasePlan}%0A- رسوم مرة واحدة: ${oneTimeTotal} ${c}%0A- الرسوم الدورية: ${recurringText}`;
       const phone = (appConfig.whatsappPhone || '01080922432').replace(/[^0-9]/g, '');
       document.getElementById('btnWhatsAppQuote').href = `https://wa.me/2${phone}?text=${waMsg}`;
     }
 
-    /* ========================================================
-       5. PRESENTER SETTINGS LOGIC (Protected Editor)
-       ======================================================== */
+    /* 6. Presenter Settings */
     function openPresenterSettings() {
       const p = appConfig.prices;
-      const d = appConfig.calculatorDefaults;
-
-      // Tab 1 Inputs
       document.getElementById('cfgPriceMonthly').value = p.monthly;
       document.getElementById('cfgPriceYearly').value = p.yearly;
       document.getElementById('cfgPriceLifetime').value = p.lifetime;
@@ -2483,122 +1779,34 @@
       document.getElementById('cfgAddonQr').value = p.addonQr;
       document.getElementById('cfgAddonBot').value = p.addonBot;
       document.getElementById('cfgAddonBar').value = p.addonBar;
-      document.getElementById('cfgAddonGlobal').value = p.addonGlobal;
-      document.getElementById('cfgBranchPrice').value = p.branchPrice;
-
-      // Tab 2 Inputs
-      document.getElementById('cfgCurrency').value = appConfig.currency || 'ج';
-      document.getElementById('cfgWhatsAppPhone').value = appConfig.whatsappPhone || '01080922432';
-      document.getElementById('cfgDefMembers').value = d.missedMembers;
-      document.getElementById('cfgDefAvgSub').value = d.avgSubscription;
-      document.getElementById('cfgDefCashDiff').value = d.cashDiscrepancy;
-      document.getElementById('cfgDefHours').value = d.hoursDaily;
-
       openModal('presenterSettingsModal');
     }
 
-    function switchSettingsTab(tabId) {
-      document.querySelectorAll('.settings-tab-content').forEach(el => el.style.display = 'none');
-      document.getElementById(tabId).style.display = 'block';
-
-      document.getElementById('tabBtnPrices').style.background = tabId === 'tabPrices' ? '#84cc16' : 'rgba(255,255,255,0.08)';
-      document.getElementById('tabBtnPrices').style.color = tabId === 'tabPrices' ? '#030712' : '#cbd5e1';
-
-      document.getElementById('tabBtnDefaults').style.background = tabId === 'tabDefaults' ? '#84cc16' : 'rgba(255,255,255,0.08)';
-      document.getElementById('tabBtnDefaults').style.color = tabId === 'tabDefaults' ? '#030712' : '#cbd5e1';
-
-      document.getElementById('tabBtnBackup').style.background = tabId === 'tabBackup' ? '#84cc16' : 'rgba(255,255,255,0.08)';
-      document.getElementById('tabBtnBackup').style.color = tabId === 'tabBackup' ? '#030712' : '#cbd5e1';
-    }
-
     function savePresenterSettings() {
-      appConfig.prices = {
-        monthly: Number(document.getElementById('cfgPriceMonthly').value) || 350,
-        yearly: Number(document.getElementById('cfgPriceYearly').value) || 3500,
-        lifetime: Number(document.getElementById('cfgPriceLifetime').value) || 6000,
-        addonFace: Number(document.getElementById('cfgAddonFace').value) || 4000,
-        addonFingerprint: Number(document.getElementById('cfgAddonFingerprint').value) || 3500,
-        addonBarcode: Number(document.getElementById('cfgAddonBarcode').value) || 2500,
-        addonQr: Number(document.getElementById('cfgAddonQr').value) || 1500,
-        addonBot: Number(document.getElementById('cfgAddonBot').value) || 2000,
-        addonBar: Number(document.getElementById('cfgAddonBar').value) || 1500,
-        addonGlobal: Number(document.getElementById('cfgAddonGlobal').value) || 2500,
-        branchPrice: Number(document.getElementById('cfgBranchPrice').value) || 2500
-      };
-
-      appConfig.currency = document.getElementById('cfgCurrency').value.trim() || 'ج';
-      appConfig.whatsappPhone = document.getElementById('cfgWhatsAppPhone').value.trim() || '01080922432';
-
-      appConfig.calculatorDefaults = {
-        missedMembers: Number(document.getElementById('cfgDefMembers').value) || 15,
-        avgSubscription: Number(document.getElementById('cfgDefAvgSub').value) || 450,
-        cashDiscrepancy: Number(document.getElementById('cfgDefCashDiff').value) || 1000,
-        hoursDaily: Number(document.getElementById('cfgDefHours').value) || 2,
-        hourlyRate: 30
-      };
+      appConfig.prices.monthly = Number(document.getElementById('cfgPriceMonthly').value) || 350;
+      appConfig.prices.yearly = Number(document.getElementById('cfgPriceYearly').value) || 3500;
+      appConfig.prices.lifetime = Number(document.getElementById('cfgPriceLifetime').value) || 6000;
+      appConfig.prices.addonFace = Number(document.getElementById('cfgAddonFace').value) || 4000;
+      appConfig.prices.addonFingerprint = Number(document.getElementById('cfgAddonFingerprint').value) || 3500;
+      appConfig.prices.addonBarcode = Number(document.getElementById('cfgAddonBarcode').value) || 2500;
+      appConfig.prices.addonQr = Number(document.getElementById('cfgAddonQr').value) || 1500;
+      appConfig.prices.addonBot = Number(document.getElementById('cfgAddonBot').value) || 2000;
+      appConfig.prices.addonBar = Number(document.getElementById('cfgAddonBar').value) || 1500;
 
       saveConfigToStorage();
       updateUIDisplayPrices();
       closeModal('presenterSettingsModal');
-      showWaveToast('✓ تم حفظ التعديلات وتحديث العرض');
+      showWaveToast('✓ تم حفظ الأسعار بنجاح');
     }
 
-    function exportConfigJson() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appConfig, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", "systemize_presentation_config.json");
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    }
-
-    function importConfigJson(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const parsed = JSON.parse(e.target.result);
-          appConfig = Object.assign({}, DEFAULT_CONFIG, parsed);
-          saveConfigToStorage();
-          updateUIDisplayPrices();
-          closeModal('presenterSettingsModal');
-          showWaveToast('✓ تم استيراد الإعدادات بنجاح!');
-        } catch (err) {
-          alert('الملف غير صالح أو تالف.');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function resetConfigToDefaults() {
-      if (!confirm('هل تريد فعلاً استعادة جميع الإعدادات والأسعار الأصلية الافتراضية؟')) return;
-      appConfig = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-      saveConfigToStorage();
-      updateUIDisplayPrices();
-      closeModal('presenterSettingsModal');
-      showWaveToast('✓ تمت استعادة الإعدادات الأصلية');
-    }
-
-    /* ========================================================
-       6. LIGHTBOX ZOOMABLE SCREENSHOTS
-       ======================================================== */
-    const imageLightbox = document.getElementById('imageLightbox');
-    const lightboxImg = document.getElementById('lightboxImg');
-
+    /* 7. Lightbox */
     function openLightbox(src) {
-      lightboxImg.src = src;
-      imageLightbox.classList.add('open');
+      document.getElementById('lightboxImg').src = src;
+      document.getElementById('imageLightbox').classList.add('open');
     }
+    function closeLightbox() { document.getElementById('imageLightbox').classList.remove('open'); }
 
-    function closeLightbox() {
-      imageLightbox.classList.remove('open');
-    }
-
-    /* ========================================================
-       7. HAND GESTURE DETECTION ENGINE (Webcam Motion Detection)
-       ======================================================== */
+    /* 8. Hand Gesture Engine */
     const video = document.getElementById('gestureVideo');
     const canvas = document.getElementById('motionCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -2617,7 +1825,7 @@
 
     async function initWebcamGesture() {
       try {
-        hudStatus.innerText = 'جاري طلب إذن الكاميرا...';
+        hudStatus.innerText = 'طلب الكاميرا...';
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 320, height: 240, frameRate: { ideal: 30 } },
           audio: false
@@ -2626,34 +1834,28 @@
         video.srcObject = stream;
         await video.play();
         isCameraActive = true;
-        hudStatus.innerText = 'لوّح بيدك ✋ أمام الكاميرا';
+        hudStatus.innerText = 'لوّح بيدك ✋ للتقليب';
         hudPulse.style.background = '#84cc16';
         hudPulse.style.boxShadow = '0 0 10px #84cc16';
-        toggleGestureBtn.innerHTML = '<i class="fa fa-video"></i> إيقاف الكاميرا';
-        toggleGestureBtn.style.background = 'rgba(132, 204, 22, 0.25)';
+        toggleGestureBtn.innerHTML = '<i class="fa fa-video"></i> إيقاف';
         processMotionFrames();
         showWaveToast('الكاميرا نشطة: لوّح لليمين أو اليسار لتقليب الشريحة');
       } catch (err) {
-        console.warn('Webcam permission error or no camera', err);
-        hudStatus.innerText = 'الكاميرا غير مفعلة (استخدم الأسهم ⌨️)';
+        hudStatus.innerText = 'الكاميرا غير مفعلة';
         hudPulse.style.background = '#f59e0b';
-        toggleGestureBtn.innerHTML = '<i class="fa fa-hand"></i> تفعيل الكاميرا';
         isCameraActive = false;
       }
     }
 
     function toggleWebcamGesture() {
       if (isCameraActive) {
-        if (cameraStream) {
-          cameraStream.getTracks().forEach(t => t.stop());
-        }
+        if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
         isCameraActive = false;
         video.srcObject = null;
-        hudStatus.innerText = 'التحكم بالإشارة معطّل';
+        hudStatus.innerText = 'إشارة اليد معطلة';
         hudPulse.style.background = '#64748b';
         hudPulse.style.boxShadow = 'none';
-        toggleGestureBtn.innerHTML = '<i class="fa fa-hand"></i> تفعيل الكاميرا';
-        toggleGestureBtn.style.background = 'rgba(132, 204, 22, 0.12)';
+        toggleGestureBtn.innerHTML = '<i class="fa fa-hand"></i> تفعيل';
         if (waveDetectionAnimationId) cancelAnimationFrame(waveDetectionAnimationId);
       } else {
         initWebcamGesture();
@@ -2675,68 +1877,44 @@
           const len = curPixels.length;
 
           for (let i = 0; i < len; i += 4) {
-            const curBrightness = (curPixels[i] + curPixels[i+1] + curPixels[i+2]) / 3;
-            const prevBrightness = (prevPixels[i] + prevPixels[i+1] + prevPixels[i+2]) / 3;
-            const diff = Math.abs(curBrightness - prevBrightness);
-
-            if (diff > 28) {
-              const pixelIndex = i / 4;
-              const x = pixelIndex % canvas.width;
-              sumX += x;
+            const curB = (curPixels[i] + curPixels[i+1] + curPixels[i+2]) / 3;
+            const prevB = (prevPixels[i] + prevPixels[i+1] + prevPixels[i+2]) / 3;
+            if (Math.abs(curB - prevB) > 28) {
+              sumX += (i / 4) % canvas.width;
               motionPixels++;
             }
           }
 
-          const minMotionThreshold = 180;
-          if (motionPixels > minMotionThreshold) {
+          if (motionPixels > 180) {
             const centroidX = sumX / motionPixels;
             const now = Date.now();
             motionHistory.push({ x: centroidX, time: now });
-
             motionHistory = motionHistory.filter(p => now - p.time < 420);
 
             if (!isGestureCoolingDown && motionHistory.length >= 4) {
-              const first = motionHistory[0];
-              const last = motionHistory[motionHistory.length - 1];
-              const deltaX = last.x - first.x;
-              const duration = last.time - first.time;
+              const deltaX = motionHistory[motionHistory.length - 1].x - motionHistory[0].x;
+              const duration = motionHistory[motionHistory.length - 1].time - motionHistory[0].time;
 
-              // Camera image is mirrored
-              // Swipe right on camera (deltaX > 28)
-              if (deltaX > 28 && duration > 70 && duration < 450) {
-                triggerHandWaveAction('next');
-              } else if (deltaX < -28 && duration > 70 && duration < 450) {
-                triggerHandWaveAction('prev');
-              }
+              if (deltaX > 28 && duration > 70 && duration < 450) triggerHandWaveAction('next');
+              else if (deltaX < -28 && duration > 70 && duration < 450) triggerHandWaveAction('prev');
             }
           } else {
-            if (motionHistory.length > 0 && Date.now() - motionHistory[motionHistory.length - 1].time > 200) {
-              motionHistory = [];
-            }
+            if (motionHistory.length > 0 && Date.now() - motionHistory[motionHistory.length - 1].time > 200) motionHistory = [];
           }
         }
-
         prevFrameData = currentData;
       }
-
       waveDetectionAnimationId = requestAnimationFrame(processMotionFrames);
     }
 
     function triggerHandWaveAction(direction) {
       isGestureCoolingDown = true;
       motionHistory = [];
-
-      if (direction === 'next') {
-        nextSlide();
-        showWaveToast('👋 لوّحت لليمين ➡️ الشريحة التالية');
-      } else {
-        prevSlide();
-        showWaveToast('👋 لوّحت لليسار ⬅️ الشريحة السابقة');
-      }
+      if (direction === 'next') { nextSlide(); showWaveToast('👋 لوّحت لليمين ➡️ الشريحة التالية'); }
+      else { prevSlide(); showWaveToast('👋 لوّحت لليسار ⬅️ الشريحة السابقة'); }
 
       hudPulse.style.background = '#38bdf8';
       hudPulse.style.boxShadow = '0 0 16px #38bdf8';
-
       setTimeout(() => {
         isGestureCoolingDown = false;
         hudPulse.style.background = '#84cc16';
@@ -2749,30 +1927,19 @@
       clearTimeout(toastTimer);
       waveText.innerText = message;
       waveToast.classList.add('show');
-      toastTimer = setTimeout(() => {
-        waveToast.classList.remove('show');
-      }, 1800);
+      toastTimer = setTimeout(() => waveToast.classList.remove('show'), 1800);
     }
 
-    /* Modal Helpers */
-    function openModal(id) {
-      document.getElementById(id).classList.add('open');
-    }
-    function closeModal(id) {
-      document.getElementById(id).classList.remove('open');
-    }
-    function closeAllModals() {
-      document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
-    }
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    function closeAllModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open')); }
 
-    // Initialize on DOM load
     window.addEventListener('DOMContentLoaded', () => {
       loadSavedConfig();
       initDots();
       updateUIDisplayPrices();
       calculateLoss();
-      saveAndApplyLoss(); // populate default cards
-      // start on slide 0
+      saveAndApplyLoss();
       goToSlide(0);
     });
   </script>
