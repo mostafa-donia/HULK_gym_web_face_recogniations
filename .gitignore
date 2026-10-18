@@ -23,10 +23,11 @@ web_face/media/
 media/
 
 # Secrets and OAuth credentials
-web_face/data/*.json
-data/*.json
+web_face/data/
+data/
 
-# Distribution builds and legacy folders
+# Distribution builds, results and legacy folders
+results/
 dist/
 old/
 v1/

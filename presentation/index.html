@@ -13,6 +13,10 @@
   <!-- FontAwesome 6 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+  <!-- MediaPipe Hands & Camera Utils for 4-Finger Gesture Tracking -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.4/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
+
   <style>
     :root {
       --bg-dark: #030712;
@@ -661,6 +665,136 @@
     }
     #waveNotification.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    /* ==========================================
+       4-FINGER VIEW FINDER & INTERACTIVE ZOOM HUD
+       ========================================== */
+    .viewfinder-hud {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 80;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.2s ease-out;
+    }
+    .viewfinder-hud.active {
+      display: block;
+      opacity: 1;
+    }
+    .viewfinder-box {
+      position: absolute;
+      border: 1.5px dashed rgba(132, 204, 22, 0.65);
+      border-radius: 16px;
+      box-shadow: 0 0 35px rgba(132, 204, 22, 0.25), inset 0 0 30px rgba(132, 204, 22, 0.08);
+      pointer-events: none;
+      transition: all 0.04s ease-out;
+    }
+    .vf-corner {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      border-color: #84cc16;
+      border-style: solid;
+      filter: drop-shadow(0 0 8px #84cc16);
+    }
+    .vf-corner.tl { top: -3px; right: -3px; border-width: 3.5px 3.5px 0 0; border-top-right-radius: 12px; }
+    .vf-corner.tr { top: -3px; left: -3px; border-width: 3.5px 0 0 3.5px; border-top-left-radius: 12px; }
+    .vf-corner.bl { bottom: -3px; right: -3px; border-width: 0 3.5px 3.5px 0; border-bottom-right-radius: 12px; }
+    .vf-corner.br { bottom: -3px; left: -3px; border-width: 0 0 3.5px 3.5px; border-bottom-left-radius: 12px; }
+
+    .vf-reticle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 22px;
+      height: 22px;
+      border: 1.5px solid rgba(132, 204, 22, 0.75);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .vf-reticle::after {
+      content: '';
+      width: 5px;
+      height: 5px;
+      background: #84cc16;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #84cc16;
+    }
+
+    .finger-dot {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: rgba(132, 204, 22, 0.95);
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 16px #84cc16;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      transition: all 0.04s ease-out;
+      z-index: 85;
+    }
+    .finger-dot-label {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(3, 7, 18, 0.92);
+      color: #bef264;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      border: 1px solid rgba(132, 204, 22, 0.35);
+    }
+
+    .zoom-status-pill {
+      position: absolute;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(11, 17, 32, 0.94);
+      border: 1px solid #84cc16;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8), 0 0 30px rgba(132, 204, 22, 0.35);
+      border-radius: 30px;
+      padding: 6px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #ffffff;
+      backdrop-filter: blur(14px);
+      z-index: 90;
+      direction: rtl;
+    }
+    .zoom-status-pill .zoom-badge {
+      background: #84cc16;
+      color: #030712;
+      padding: 2px 9px;
+      border-radius: 12px;
+      font-family: var(--font-mono);
+      font-weight: 900;
+      font-size: 0.8rem;
+    }
+
+    /* Target Image Gesture Zoom State */
+    .visual-wrapper.gesture-zoomed {
+      border-color: #84cc16 !important;
+      box-shadow: 0 0 60px rgba(132, 204, 22, 0.5), 0 35px 90px rgba(0,0,0,0.95) !important;
+      transform: scale(1.02);
+      z-index: 40;
+    }
+    .visual-wrapper.gesture-zoomed img {
+      border-radius: 16px;
+      cursor: grab;
+      will-change: transform;
+    }
+
     @media (max-width: 1100px) {
       .slide-2col { grid-template-columns: 1fr; gap: 20px; }
       .slide-title { font-size: 2.1rem; }
@@ -719,6 +853,29 @@
   <div id="waveNotification">
     <span style="font-size: 1.4rem;" id="waveIcon">👋</span>
     <span id="waveText">تم التقليب بالتلويح!</span>
+  </div>
+
+  <!-- 4-Finger L-Shape Viewfinder HUD Overlay -->
+  <div class="viewfinder-hud" id="viewfinderHud">
+    <div class="zoom-status-pill">
+      <i class="fa fa-crosshairs text-lime-400"></i>
+      <span>وضع التكبير التفاعلي بالأصابع (L-Shape)</span>
+      <span class="zoom-badge" id="hudZoomFactor">2.2x</span>
+      <span style="color: #94a3b8; font-size: 0.75rem;">حرك اليدين للتجول | انزل أصابعك للعودة</span>
+    </div>
+
+    <div class="viewfinder-box" id="viewfinderBox">
+      <div class="vf-corner tl"></div>
+      <div class="vf-corner tr"></div>
+      <div class="vf-corner bl"></div>
+      <div class="vf-corner br"></div>
+      <div class="vf-reticle"></div>
+    </div>
+
+    <div class="finger-dot" id="fDotLIndex"><span class="finger-dot-label">سبابة 1</span></div>
+    <div class="finger-dot" id="fDotLThumb"><span class="finger-dot-label">إبهام 1</span></div>
+    <div class="finger-dot" id="fDotRIndex"><span class="finger-dot-label">سبابة 2</span></div>
+    <div class="finger-dot" id="fDotRThumb"><span class="finger-dot-label">إبهام 2</span></div>
   </div>
 
   <!-- Floating Nav Arrows -->
@@ -1246,9 +1403,10 @@
     <div class="slide-dots" id="slideDots"></div>
 
     <div class="bottom-hint">
-      <span>✋ لوّح بيدك أمام الكاميرا</span>
-      <span>أو بالأسهم <span class="kbd-badge">←</span> <span class="kbd-badge">→</span></span>
-      <span>ملاحظات الملقّن: <span class="kbd-badge">N</span></span>
+      <span>✋ لوّح للتقليب</span>
+      <span>✌️ تكبير بالـ L-Shape (سبابتين وإبهامين)</span>
+      <span>تكبير: <span class="kbd-badge">Z</span></span>
+      <span>الملقّن: <span class="kbd-badge">N</span></span>
       <button onclick="toggleFullscreen()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.1rem; cursor: pointer; padding: 2px;" title="ملء الشاشة">⛶</button>
     </div>
   </footer>
@@ -1646,10 +1804,13 @@
       } else if ((e.ctrlKey || e.metaKey) && (e.key === 'e' || e.key === 'E')) {
         e.preventDefault();
         openPresenterSettings();
+      } else if (e.key === 'z' || e.key === 'Z') {
+        toggleKeyboardZoom();
       } else if (e.key === 'Escape') {
         closeAllModals();
         closeLightbox();
         if (isPrompterOpen) togglePresenterScript();
+        if (isZoomActive) disableGestureZoom();
       }
     });
 
@@ -1806,7 +1967,7 @@
     }
     function closeLightbox() { document.getElementById('imageLightbox').classList.remove('open'); }
 
-    /* 8. Hand Gesture Engine */
+    /* 8. Hand Gesture Engine — Dual-Engine: 4-Finger L-Shape Viewfinder + Wave Motion */
     const video = document.getElementById('gestureVideo');
     const canvas = document.getElementById('motionCanvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -1815,6 +1976,9 @@
     const toggleGestureBtn = document.getElementById('toggleGestureBtn');
     const waveToast = document.getElementById('waveNotification');
     const waveText = document.getElementById('waveText');
+    const viewfinderHud = document.getElementById('viewfinderHud');
+    const viewfinderBox = document.getElementById('viewfinderBox');
+    const hudZoomFactor = document.getElementById('hudZoomFactor');
 
     let isCameraActive = false;
     let cameraStream = null;
@@ -1822,6 +1986,49 @@
     let motionHistory = [];
     let isGestureCoolingDown = false;
     let waveDetectionAnimationId = null;
+
+    // MediaPipe Hands & Zoom State
+    let mpHands = null;
+    let isMediaPipeReady = false;
+    let isZoomActive = false;
+    let isKeyboardZoomActive = false;
+    let consecutiveZoomFrames = 0;
+    let consecutiveDropFrames = 0;
+
+    let targetZoomScale = 1.0;
+    let currentZoomScale = 1.0;
+    let targetPanX = 0;
+    let targetPanY = 0;
+    let currentPanX = 0;
+    let currentPanY = 0;
+
+    let targetBox = { x: 0, y: 0, w: 0, h: 0 };
+    let currentBox = { x: 0, y: 0, w: 0, h: 0 };
+    let fingersPos = { lIndex: null, lThumb: null, rIndex: null, rThumb: null };
+
+    // Initialize MediaPipe Hands if available
+    function initMediaPipe() {
+      if (typeof Hands === 'undefined') {
+        console.warn("MediaPipe Hands library not loaded; using canvas motion detection.");
+        return;
+      }
+      try {
+        mpHands = new Hands({
+          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`
+        });
+        mpHands.setOptions({
+          maxNumHands: 2,
+          modelComplexity: 1,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5
+        });
+        mpHands.onResults(onHandResults);
+        isMediaPipeReady = true;
+        console.log("✓ MediaPipe Hands 4-finger tracker initialized.");
+      } catch (err) {
+        console.warn("Failed to init MediaPipe Hands:", err);
+      }
+    }
 
     async function initWebcamGesture() {
       try {
@@ -1834,12 +2041,17 @@
         video.srcObject = stream;
         await video.play();
         isCameraActive = true;
-        hudStatus.innerText = 'لوّح بيدك ✋ للتقليب';
+
+        if (!isMediaPipeReady) {
+          initMediaPipe();
+        }
+
+        hudStatus.innerText = 'لوّح ✋ أو L-Shape ✌️';
         hudPulse.style.background = '#84cc16';
         hudPulse.style.boxShadow = '0 0 10px #84cc16';
         toggleGestureBtn.innerHTML = '<i class="fa fa-video"></i> إيقاف';
         processMotionFrames();
-        showWaveToast('الكاميرا نشطة: لوّح لليمين أو اليسار لتقليب الشريحة');
+        showWaveToast('الكاميرا نشطة: لوّح للتقليب، أو ارفع سبابتين وإبهامين للتكبير والتجول!');
       } catch (err) {
         hudStatus.innerText = 'الكاميرا غير مفعلة';
         hudPulse.style.background = '#f59e0b';
@@ -1857,15 +2069,25 @@
         hudPulse.style.boxShadow = 'none';
         toggleGestureBtn.innerHTML = '<i class="fa fa-hand"></i> تفعيل';
         if (waveDetectionAnimationId) cancelAnimationFrame(waveDetectionAnimationId);
+        if (isZoomActive) disableGestureZoom();
       } else {
         initWebcamGesture();
       }
     }
 
+    let frameSkipCounter = 0;
     function processMotionFrames() {
       if (!isCameraActive) return;
 
       if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        // Send frame to MediaPipe Hands if initialized
+        if (isMediaPipeReady && mpHands) {
+          frameSkipCounter++;
+          // Run hand detection at 20-30 FPS for optimal performance
+          mpHands.send({ image: video }).catch(() => {});
+        }
+
+        // Parallel Fallback: Motion difference for simple wave
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const currentData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const curPixels = currentData.data;
@@ -1885,7 +2107,7 @@
             }
           }
 
-          if (motionPixels > 180) {
+          if (motionPixels > 180 && !isZoomActive) {
             const centroidX = sumX / motionPixels;
             const now = Date.now();
             motionHistory.push({ x: centroidX, time: now });
@@ -1907,6 +2129,362 @@
       waveDetectionAnimationId = requestAnimationFrame(processMotionFrames);
     }
 
+    /* Geometric L-Shape Finger Recognition:
+       Index pointed UP (tip < pip), Thumb extended ~90 deg, other 3 fingers folded */
+    function checkHandLShape(landmarks) {
+      const wrist = landmarks[0];
+      const thumbTip = landmarks[4];
+      const thumbMcp = landmarks[2];
+      const indexTip = landmarks[8];
+      const indexMcp = landmarks[5];
+      const indexPip = landmarks[6];
+
+      // 1. Index finger pointed UP (tip significantly above pip and mcp)
+      const isIndexUp = (indexTip.y < indexPip.y) && (indexTip.y < indexMcp.y - 0.03);
+      if (!isIndexUp) return null;
+
+      // 2. Vectors for angle calculation
+      const vIndex = { x: indexTip.x - indexMcp.x, y: indexTip.y - indexMcp.y };
+      const vThumb = { x: thumbTip.x - thumbMcp.x, y: thumbTip.y - thumbMcp.y };
+      const magIndex = Math.hypot(vIndex.x, vIndex.y);
+      const magThumb = Math.hypot(vThumb.x, vThumb.y);
+      if (magIndex < 0.04 || magThumb < 0.03) return null;
+
+      // 3. Angle between Index and Thumb
+      const dot = (vIndex.x * vThumb.x + vIndex.y * vThumb.y) / (magIndex * magThumb);
+      const angleDeg = Math.acos(Math.max(-1, Math.min(1, dot))) * (180 / Math.PI);
+
+      // Ergonomic 90° L-shape window (50° to 135°)
+      if (angleDeg < 50 || angleDeg > 135) return null;
+
+      // 4. Middle, Ring, Pinky retracted/folded down
+      const midDist = Math.hypot(landmarks[12].x - wrist.x, landmarks[12].y - wrist.y);
+      const ringDist = Math.hypot(landmarks[16].x - wrist.x, landmarks[16].y - wrist.y);
+      const pinkyDist = Math.hypot(landmarks[20].x - wrist.x, landmarks[20].y - wrist.y);
+      const idxDist = Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y);
+
+      const areOtherFolded = (midDist < idxDist * 0.92) && (ringDist < idxDist * 0.92) && (pinkyDist < idxDist * 0.92);
+      const isIndexHigher = (indexTip.y < landmarks[12].y) && (indexTip.y < landmarks[16].y);
+
+      if (!areOtherFolded && !isIndexHigher) return null;
+
+      return {
+        indexTip,
+        thumbTip,
+        indexMcp,
+        wrist,
+        angleDeg
+      };
+    }
+
+    /* MediaPipe Hand Results Callback */
+    function onHandResults(results) {
+      if (!isCameraActive) return;
+
+      const hands = results.multiHandLandmarks;
+
+      // Wave detection via Open Palm (when not zooming)
+      if (hands && hands.length === 1 && !isZoomActive) {
+        checkSingleHandWave(hands[0]);
+      }
+
+      // Check 2-Hand L-Shape Viewfinder (4 fingers total)
+      if (hands && hands.length >= 2) {
+        const handA = checkHandLShape(hands[0]);
+        const handB = checkHandLShape(hands[1]);
+
+        if (handA && handB) {
+          consecutiveZoomFrames++;
+          consecutiveDropFrames = 0;
+
+          // Identify left hand vs right hand in camera coordinate
+          const leftH = handA.indexTip.x < handB.indexTip.x ? handA : handB;
+          const rightH = handA.indexTip.x < handB.indexTip.x ? handB : handA;
+
+          const f1 = leftH.indexTip;
+          const f2 = leftH.thumbTip;
+          const f3 = rightH.indexTip;
+          const f4 = rightH.thumbTip;
+
+          // Centroid of the 4 fingers
+          const cx = (f1.x + f2.x + f3.x + f4.x) / 4;
+          const cy = (f1.y + f2.y + f3.y + f4.y) / 4;
+
+          // Hand distance controls zoom magnification (1.6x - 3.8x)
+          const distHands = Math.hypot(rightH.indexTip.x - leftH.indexTip.x, rightH.indexTip.y - leftH.indexTip.y);
+          const normDist = Math.max(0, Math.min(1, (distHands - 0.16) / 0.45));
+          const calcScale = 1.6 + normDist * 2.2;
+
+          // Centroid relative to camera center (mirrored horizontally)
+          const normCenterX = (1 - cx) - 0.5;
+          const normCenterY = cy - 0.5;
+
+          const maxPanX = (calcScale - 1) * 360;
+          const maxPanY = (calcScale - 1) * 240;
+
+          const calcPanX = -normCenterX * maxPanX * 2.2;
+          const calcPanY = -normCenterY * maxPanY * 2.0;
+
+          // Bounding box in mirrored screen coordinates
+          const minX = Math.min(f1.x, f2.x, f3.x, f4.x);
+          const maxX = Math.max(f1.x, f2.x, f3.x, f4.x);
+          const minY = Math.min(f1.y, f2.y, f3.y, f4.y);
+          const maxY = Math.max(f1.y, f2.y, f3.y, f4.y);
+
+          const screenBox = {
+            x: (1 - maxX) * window.innerWidth,
+            y: minY * window.innerHeight,
+            w: Math.max((maxX - minX) * window.innerWidth, 120),
+            h: Math.max((maxY - minY) * window.innerHeight, 90)
+          };
+
+          const dots = {
+            lIndex: { x: (1 - leftH.indexTip.x) * window.innerWidth, y: leftH.indexTip.y * window.innerHeight },
+            lThumb: { x: (1 - leftH.thumbTip.x) * window.innerWidth, y: leftH.thumbTip.y * window.innerHeight },
+            rIndex: { x: (1 - rightH.indexTip.x) * window.innerWidth, y: rightH.indexTip.y * window.innerHeight },
+            rThumb: { x: (1 - rightH.thumbTip.x) * window.innerWidth, y: rightH.thumbTip.y * window.innerHeight }
+          };
+
+          if (consecutiveZoomFrames >= 2) {
+            enableGestureZoom(calcScale, calcPanX, calcPanY, screenBox, dots);
+          }
+          return;
+        }
+      }
+
+      // Single-Hand L-Shape fallback
+      if (hands && hands.length === 1) {
+        const singleHand = checkHandLShape(hands[0]);
+        if (singleHand) {
+          consecutiveZoomFrames++;
+          consecutiveDropFrames = 0;
+
+          const f1 = singleHand.indexTip;
+          const f2 = singleHand.thumbTip;
+          const cx = (f1.x + f2.x) / 2;
+          const cy = (f1.y + f2.y) / 2;
+
+          const calcScale = 2.2;
+          const normCenterX = (1 - cx) - 0.5;
+          const normCenterY = cy - 0.5;
+
+          const calcPanX = -normCenterX * 320;
+          const calcPanY = -normCenterY * 220;
+
+          const screenX = (1 - Math.max(f1.x, f2.x)) * window.innerWidth;
+          const screenY = Math.min(f1.y, f2.y) * window.innerHeight;
+          const screenW = Math.abs(f1.x - f2.x) * window.innerWidth + 80;
+          const screenH = Math.abs(f1.y - f2.y) * window.innerHeight + 80;
+
+          const dots = {
+            lIndex: { x: (1 - f1.x) * window.innerWidth, y: f1.y * window.innerHeight },
+            lThumb: { x: (1 - f2.x) * window.innerWidth, y: f2.y * window.innerHeight },
+            rIndex: null,
+            rThumb: null
+          };
+
+          if (consecutiveZoomFrames >= 3) {
+            enableGestureZoom(calcScale, calcPanX, calcPanY, { x: screenX, y: screenY, w: screenW, h: screenH }, dots);
+          }
+          return;
+        }
+      }
+
+      // If no L-shape detected -> Fingers LOWERED or hands lowered out of camera frame
+      consecutiveDropFrames++;
+      if (isZoomActive && consecutiveDropFrames >= 5) {
+        disableGestureZoom();
+      }
+    }
+
+    /* Open Palm Swipe Detection */
+    let lastHandWaveTime = 0;
+    function checkSingleHandWave(landmarks) {
+      const wrist = landmarks[0];
+      const now = Date.now();
+      if (now - lastHandWaveTime < 900) return;
+
+      const isIndexOpen = landmarks[8].y < landmarks[6].y;
+      const isMiddleOpen = landmarks[12].y < landmarks[10].y;
+      const isRingOpen = landmarks[16].y < landmarks[14].y;
+      const isPinkyOpen = landmarks[20].y < landmarks[18].y;
+
+      if (isIndexOpen && isMiddleOpen && isRingOpen && isPinkyOpen) {
+        motionHistory.push({ x: wrist.x, time: now });
+        motionHistory = motionHistory.filter(p => now - p.time < 420);
+
+        if (motionHistory.length >= 4) {
+          const deltaX = motionHistory[motionHistory.length - 1].x - motionHistory[0].x;
+          const duration = motionHistory[motionHistory.length - 1].time - motionHistory[0].time;
+          // In mirrored video, deltaX > 0 means moving right
+          if (deltaX > 0.12 && duration > 70 && duration < 450) {
+            lastHandWaveTime = now;
+            triggerHandWaveAction('next');
+          } else if (deltaX < -0.12 && duration > 70 && duration < 450) {
+            lastHandWaveTime = now;
+            triggerHandWaveAction('prev');
+          }
+        }
+      }
+    }
+
+    /* Enable Gesture Zoom */
+    function enableGestureZoom(scale, panX, panY, box, dots) {
+      if (!isZoomActive) {
+        isZoomActive = true;
+        showWaveToast('⌕ تم فتح التكبير بتتبع الأصابع الأربعة (L-Shape)');
+        hudPulse.style.background = '#a3e635';
+        hudPulse.style.boxShadow = '0 0 18px #a3e635';
+      }
+
+      targetZoomScale = scale;
+      targetPanX = panX;
+      targetPanY = panY;
+      targetBox = box;
+      fingersPos = dots;
+
+      if (viewfinderHud && !viewfinderHud.classList.contains('active')) {
+        viewfinderHud.classList.add('active');
+      }
+
+      if (hudZoomFactor) {
+        hudZoomFactor.innerText = `${scale.toFixed(1)}x`;
+      }
+
+      const activeSlide = slides[currentSlide];
+      if (activeSlide) {
+        const visual = activeSlide.querySelector('.visual-wrapper');
+        if (visual && !visual.classList.contains('gesture-zoomed')) {
+          visual.classList.add('gesture-zoomed');
+        }
+      }
+    }
+
+    /* Disable Gesture Zoom (Triggered when user LOWERS fingers) */
+    function disableGestureZoom() {
+      if (!isZoomActive) return;
+      isZoomActive = false;
+      isKeyboardZoomActive = false;
+      consecutiveZoomFrames = 0;
+
+      targetZoomScale = 1.0;
+      targetPanX = 0;
+      targetPanY = 0;
+
+      if (viewfinderHud) {
+        viewfinderHud.classList.remove('active');
+      }
+
+      // Smoothly restore image on active slide
+      const activeSlide = slides[currentSlide];
+      if (activeSlide) {
+        const visual = activeSlide.querySelector('.visual-wrapper');
+        if (visual) {
+          visual.classList.remove('gesture-zoomed');
+          const img = visual.querySelector('img');
+          if (img) {
+            img.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+            img.style.transform = 'translate(0px, 0px) scale(1)';
+            setTimeout(() => { if (!isZoomActive && img) img.style.transition = ''; }, 480);
+          }
+        }
+      }
+
+      // Also reset lightbox image if open
+      const lightboxImg = document.getElementById('lightboxImg');
+      if (lightboxImg) {
+        lightboxImg.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+        lightboxImg.style.transform = 'translate(0px, 0px) scale(1)';
+        setTimeout(() => { if (!isZoomActive && lightboxImg) lightboxImg.style.transition = ''; }, 480);
+      }
+
+      hudPulse.style.background = '#84cc16';
+      hudPulse.style.boxShadow = '0 0 10px #84cc16';
+      showWaveToast('تم إنزال الأصابع — العودة للشريحة العادية ↺');
+    }
+
+    /* Keyboard / Mouse Zoom Toggle (Z Key) */
+    function toggleKeyboardZoom() {
+      if (isZoomActive) {
+        disableGestureZoom();
+      } else {
+        isKeyboardZoomActive = true;
+        enableGestureZoom(2.2, 0, 0, {
+          x: window.innerWidth * 0.25,
+          y: window.innerHeight * 0.2,
+          w: window.innerWidth * 0.5,
+          h: window.innerHeight * 0.6
+        }, { lIndex: null, lThumb: null, rIndex: null, rThumb: null });
+        showWaveToast('⌕ وضع التكبير التفاعلي: حرّك الماوس للتجول | Esc للعودة');
+      }
+    }
+
+    // Mouse movement panning during keyboard zoom
+    window.addEventListener('mousemove', (e) => {
+      if (!isKeyboardZoomActive) return;
+      const normX = (e.clientX / window.innerWidth) - 0.5;
+      const normY = (e.clientY / window.innerHeight) - 0.5;
+      targetPanX = -normX * 420;
+      targetPanY = -normY * 280;
+    });
+
+    /* Continuous Buttery 60FPS LERP Loop */
+    function updateZoomTransformLoop() {
+      if (isZoomActive) {
+        // Smooth LERP (0.16 speed factor)
+        currentZoomScale += (targetZoomScale - currentZoomScale) * 0.16;
+        currentPanX += (targetPanX - currentPanX) * 0.16;
+        currentPanY += (targetPanY - currentPanY) * 0.16;
+
+        currentBox.x += (targetBox.x - currentBox.x) * 0.2;
+        currentBox.y += (targetBox.y - currentBox.y) * 0.2;
+        currentBox.w += (targetBox.w - currentBox.w) * 0.2;
+        currentBox.h += (targetBox.h - currentBox.h) * 0.2;
+
+        if (viewfinderBox) {
+          viewfinderBox.style.left = `${currentBox.x}px`;
+          viewfinderBox.style.top = `${currentBox.y}px`;
+          viewfinderBox.style.width = `${currentBox.w}px`;
+          viewfinderBox.style.height = `${currentBox.h}px`;
+        }
+
+        updateFingerDot('fDotLIndex', fingersPos.lIndex);
+        updateFingerDot('fDotLThumb', fingersPos.lThumb);
+        updateFingerDot('fDotRIndex', fingersPos.rIndex);
+        updateFingerDot('fDotRThumb', fingersPos.rThumb);
+
+        // Apply transform to active image
+        let targetImg = null;
+        if (document.getElementById('imageLightbox').classList.contains('open')) {
+          targetImg = document.getElementById('lightboxImg');
+        } else {
+          const activeSlide = slides[currentSlide];
+          if (activeSlide) {
+            const visual = activeSlide.querySelector('.visual-wrapper');
+            if (visual) targetImg = visual.querySelector('img');
+          }
+        }
+
+        if (targetImg) {
+          targetImg.style.transform = `translate(${currentPanX.toFixed(1)}px, ${currentPanY.toFixed(1)}px) scale(${currentZoomScale.toFixed(2)})`;
+        }
+      }
+
+      requestAnimationFrame(updateZoomTransformLoop);
+    }
+
+    function updateFingerDot(id, pos) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (pos) {
+        el.style.display = 'block';
+        el.style.left = `${pos.x}px`;
+        el.style.top = `${pos.y}px`;
+      } else {
+        el.style.display = 'none';
+      }
+    }
+
     function triggerHandWaveAction(direction) {
       isGestureCoolingDown = true;
       motionHistory = [];
@@ -1917,7 +2495,7 @@
       hudPulse.style.boxShadow = '0 0 16px #38bdf8';
       setTimeout(() => {
         isGestureCoolingDown = false;
-        hudPulse.style.background = '#84cc16';
+        hudPulse.style.background = isZoomActive ? '#a3e635' : '#84cc16';
         hudPulse.style.boxShadow = '0 0 10px #84cc16';
       }, 850);
     }
@@ -1927,7 +2505,7 @@
       clearTimeout(toastTimer);
       waveText.innerText = message;
       waveToast.classList.add('show');
-      toastTimer = setTimeout(() => waveToast.classList.remove('show'), 1800);
+      toastTimer = setTimeout(() => waveToast.classList.remove('show'), 2200);
     }
 
     function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -1941,6 +2519,7 @@
       calculateLoss();
       saveAndApplyLoss();
       goToSlide(0);
+      requestAnimationFrame(updateZoomTransformLoop);
     });
   </script>
 </body>
