@@ -902,7 +902,7 @@ def manager_dashboard_view(request):
     period_private_count = period_private_subs.count() + period_standalone_sessions.count()
     period_private_revenue = (
         (period_private_subs.aggregate(Sum("private_price"))["private_price__sum"] or Decimal("0.00"))
-        + (period_standalone_sessions.aggregate(Sum("price_paid"))["price_paid__sum"] or Decimal("0.00"))
+        + (period_standalone_sessions.aggregate(Sum("package_price"))["package_price__sum"] or Decimal("0.00"))
     )
     period_coaches_commission = (
         (period_private_subs.aggregate(Sum("coach_commission_amount"))["coach_commission_amount__sum"] or Decimal("0.00"))
@@ -922,7 +922,7 @@ def manager_dashboard_view(request):
     )
     month_private_revenue = (
         (month_private_subs.aggregate(Sum("private_price"))["private_price__sum"] or Decimal("0.00"))
-        + (month_standalone_sessions.aggregate(Sum("price_paid"))["price_paid__sum"] or Decimal("0.00"))
+        + (month_standalone_sessions.aggregate(Sum("package_price"))["package_price__sum"] or Decimal("0.00"))
     )
     month_coaches_commission = (
         (month_private_subs.aggregate(Sum("coach_commission_amount"))["coach_commission_amount__sum"] or Decimal("0.00"))
@@ -957,10 +957,10 @@ def manager_dashboard_view(request):
         standalone_qs = PrivateTrainingRecord.objects.filter(
             trainer=coach,
             standard_plan_price=Decimal("0.00"),
-            is_approved_for_payroll=False,
+            is_counted_in_payroll=False,
         )
         standalone_count = standalone_qs.count()
-        standalone_rev = standalone_qs.aggregate(Sum("price_paid"))["price_paid__sum"] or Decimal("0.00")
+        standalone_rev = standalone_qs.aggregate(Sum("package_price"))["package_price__sum"] or Decimal("0.00")
         standalone_comm = standalone_qs.aggregate(Sum("calculated_commission"))["calculated_commission__sum"] or Decimal("0.00")
 
         total_coach_rev = coach_pt_revenue + standalone_rev
