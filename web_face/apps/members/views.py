@@ -1,6 +1,6 @@
+import calendar
 from datetime import date, timedelta
 from decimal import Decimal
-from dateutil.relativedelta import relativedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -68,20 +68,29 @@ def generate_next_payment_id() -> tuple[str, str]:
     return f"PAY-{next_num:05d}", f"INV-{next_num:05d}"
 
 
+def _add_months(start_date: date, months: int) -> date:
+    """Adds months to a date preserving valid end-of-month dates without external dateutil."""
+    month = start_date.month - 1 + months
+    year = start_date.year + month // 12
+    month = month % 12 + 1
+    day = min(start_date.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
+
+
 def compute_plan_end_date(plan, start_date: date) -> date:
     """Calculates subscription end date based on gym rules:
     - 1 session ('جلسة واحدة' or duration_days == 1): ends on start_date
     - 14 days ('يوم ويوم' - day on, day off) & 28 days ('كل يوم'):
       Friday is an official gym holiday, so both 14-day and 28-day plans represent
       a 1-month subscription.
-      Calculation: start_date + relativedelta(months=plan.months) - relativedelta(days=1)
+      Calculation: start_date + plan.months - 1 day.
       e.g. starting on 13 Oct -> ends on 12 Nov.
     """
     if plan.name == "جلسة واحدة" or getattr(plan, "duration_days", 30) == 1 or getattr(plan, "frequency", "") == "جلسة واحدة":
         return start_date
 
     months = getattr(plan, "months", 1) or 1
-    return start_date + relativedelta(months=months) - relativedelta(days=1)
+    return _add_months(start_date, months) - timedelta(days=1)
 
 
 @login_required

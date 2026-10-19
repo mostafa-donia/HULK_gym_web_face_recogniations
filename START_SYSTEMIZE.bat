@@ -35,15 +35,11 @@ echo [*] Checking database migrations...
 "%PY_EXE%" manage.py migrate --no-input
 
 echo.
-echo [*] Starting Systemize Web Server at http://127.0.0.1:8000 ...
 echo.
+echo [*] Launching Systemize in default web browser...
+start "" "http://127.0.0.1:8000/"
 
-if exist "startup.html" (
-    start "" "%APP_DIR%\startup.html"
-) else (
-    start http://127.0.0.1:8000/
-)
-
+echo.
 echo ========================================================
 echo  System is running. Press Ctrl+C to stop the server.
 echo ========================================================

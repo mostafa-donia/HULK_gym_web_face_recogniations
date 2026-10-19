@@ -11,7 +11,10 @@ import time
 
 import pyautogui
 pyautogui.FAILSAFE = False
-import win32clipboard
+try:
+    import win32clipboard
+except ImportError:
+    win32clipboard = None
 from PIL import Image
 from pyautogui import hotkey, press, write
 from pyperclip import copy, paste
@@ -147,6 +150,10 @@ def copy_file(file_path: str) -> bool:
 
     if not os.path.exists(abs_path):
         print(f"[copy_file] File not found: {abs_path}")
+        return False
+
+    if not win32clipboard:
+        print("[copy_file] Warning: win32clipboard is not available on this platform.")
         return False
 
     # Universal 64-bit safe CF_HDROP and CF_DIB clipboard placement
