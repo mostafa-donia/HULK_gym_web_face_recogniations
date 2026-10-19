@@ -778,7 +778,8 @@ def whatsapp_overlay_window_view(request):
     Renders the dedicated Always-On-Top floating HUD counter window.
     Designed to float above WhatsApp Desktop while batch messaging is in progress.
     """
-    return render(request, "messaging/overlay_window.html")
+    profile = GymProfile.get_solo()
+    return render(request, "messaging/overlay_window.html", {"gym_profile": profile, "profile": profile})
 
 
 @login_required

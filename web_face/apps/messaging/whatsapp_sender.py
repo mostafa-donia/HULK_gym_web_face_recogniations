@@ -433,10 +433,14 @@ def remember_current_window():
         print(f"[remember_current_window] Warning: {e}")
 
 
+_overlay_keeper_active = False
+
+
 def pin_overlay_window_topmost() -> bool:
     """
     Searches for any active Systemize WhatsApp Overlay Counter window
-    and asserts HWND_TOPMOST (-1) so it stays pinned above WhatsApp Desktop.
+    and asserts HWND_TOPMOST (-1) and WS_EX_TOPMOST so it stays pinned above WhatsApp Desktop
+    even when mouse clicks occur.
     """
     try:
         user32 = ctypes.windll.user32
@@ -450,6 +454,17 @@ def pin_overlay_window_topmost() -> bool:
                     user32.GetWindowTextW(hwnd, buffer, length + 1)
                     window_title = buffer.value
                     if any(key in window_title for key in ["SYSTEMIZE_WA_OVERLAY", "SystemizeWhatsAppOverlay", "طابور إرسال واتساب", "WhatsAppOverlay"]):
+                        # 1. Set WS_EX_TOPMOST (0x00000008) in GWL_EXSTYLE (-20)
+                        GWL_EXSTYLE = -20
+                        WS_EX_TOPMOST = 0x00000008
+                        try:
+                            ex_style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+                            if not (ex_style & WS_EX_TOPMOST):
+                                user32.SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_TOPMOST)
+                        except Exception:
+                            pass
+
+                        # 2. Assert HWND_TOPMOST (-1)
                         # HWND_TOPMOST = -1, SWP_NOMOVE = 0x0002, SWP_NOSIZE = 0x0001, SWP_NOACTIVATE = 0x0010, SWP_SHOWWINDOW = 0x0040
                         user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0010 | 0x0040)
                         matched_hwnds.append(hwnd)
@@ -457,11 +472,36 @@ def pin_overlay_window_topmost() -> bool:
 
         WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
         user32.EnumWindows(WNDENUMPROC(enum_windows_callback), 0)
-        if matched_hwnds:
-            return True
+        return len(matched_hwnds) > 0
     except Exception as e:
         print(f"[pin_overlay_window_topmost] Warning: {e}")
     return False
+
+
+def start_overlay_keeper():
+    """Starts a continuous daemon thread that keeps the overlay pinned topmost every 300ms."""
+    global _overlay_keeper_active
+    if _overlay_keeper_active:
+        return
+    _overlay_keeper_active = True
+
+    def _loop():
+        while _overlay_keeper_active:
+            try:
+                pin_overlay_window_topmost()
+            except Exception:
+                pass
+            sleep(0.3)
+
+    import threading
+    t = threading.Thread(target=_loop, daemon=True, name="WA_OverlayTopmostKeeper")
+    t.start()
+
+
+def stop_overlay_keeper():
+    """Stops the overlay topmost keeper thread."""
+    global _overlay_keeper_active
+    _overlay_keeper_active = False
 
 
 def whatsupp_ready() -> bool:
@@ -503,6 +543,7 @@ def whatsupp_ready() -> bool:
     sleep(0.8)
     # Ensure our overlay counter window stays Always On Top of WhatsApp Desktop!
     pin_overlay_window_topmost()
+    start_overlay_keeper()
 
     print(f"[whatsupp_ready] WhatsApp Desktop maximized and focused: HWND={hwnd}")
     return True
@@ -631,6 +672,7 @@ def send_message(
 
     human_move_to(x_search, y_search)
     pyautogui.click()
+    pin_overlay_window_topmost()
     random_delay(0.2, 0.35)
 
     # Clear previous search content cleanly and type space then phone
@@ -664,6 +706,7 @@ def send_message(
     if chat_input_x and chat_input_y:
         human_move_to(chat_input_x, chat_input_y)
         pyautogui.click()
+        pin_overlay_window_topmost()
         random_delay(0.25, 0.45)
 
     # 3. Paste file / invoice attachment if present
@@ -739,6 +782,7 @@ def send_message(
 
     # 5. Return focus to browser if requested
     if return_to_system:
+        stop_overlay_keeper()
         return_to_system_window()
 
     return True
@@ -760,9 +804,11 @@ def sending(
 
     set_keyboard_layout_to_english()
     random_delay(0.2, 0.8)
+    start_overlay_keeper()
 
     if not phones or not messages:
         print("[sending] No phones or messages to send")
+        stop_overlay_keeper()
         return "No phones or messages to send"
 
     # Support dictionary of messages with groups/topics
@@ -855,6 +901,7 @@ def sending(
                 progress_callback(i + 1, total_count, phone, result)
             sleep(0.5)
 
+    stop_overlay_keeper()
     return_to_system_window()
     return f"""
     total: {len(phones)}
