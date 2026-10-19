@@ -17,7 +17,8 @@ def gym_context(request):
             license_info = {}
 
     status = (license_info.get("status") or "").lower()
-    is_demo = status == "demo"
+    lic_type = (license_info.get("license_type") or "").lower()
+    is_demo = (status == "demo") and (lic_type not in ["lifetime", "perpetual"])
     features = license_info.get("features", {
         "face_recognition": True,
         "whatsapp": True,

@@ -1585,7 +1585,7 @@
           </div>
 
           <!-- Client Info & Status Row -->
-          <div style="display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px;">
             <div>
               <label style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">
                 اسم الجيم / العميل (Client Name):
@@ -1598,7 +1598,7 @@
               <label style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">
                 حالة الترخيص (License Status):
               </label>
-              <select name="license_status" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 9px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: bold;">
+              <select id="licStatusSelect" name="license_status" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 9px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: bold;">
                 <option value="active" {% if system_license.status == 'active' %}selected{% endif %}>🟢 نشط ومفعل (Active)</option>
                 <option value="demo" {% if system_license.status == 'demo' %}selected{% endif %}>🟡 تجريبي (Demo)</option>
                 <option value="suspended" {% if system_license.status == 'suspended' %}selected{% endif %}>🔴 معلق / موقوف لعدم السداد (Suspended)</option>
@@ -1610,11 +1610,25 @@
               <label style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">
                 نوع الباقة (License Type):
               </label>
-              <select name="license_type" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 9px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: bold;">
-                <option value="monthly" {% if system_license.license_type == 'monthly' %}selected{% endif %}>شهري (Monthly)</option>
-                <option value="yearly" {% if system_license.license_type == 'yearly' %}selected{% endif %}>سنوي (Yearly)</option>
-                <option value="lifetime" {% if system_license.license_type == 'lifetime' %}selected{% endif %}>مدى الحياة (Lifetime)</option>
-                <option value="demo" {% if system_license.license_type == 'demo' %}selected{% endif %}>تجريبي (Demo)</option>
+              <select id="licTypeSelect" name="license_type" onchange="handleLicenseTypeChange(this.value)" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 9px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: bold;">
+                <option value="lifetime" {% if system_license.license_type == 'lifetime' %}selected{% endif %}>🌟 شراء مدى الحياة (Lifetime)</option>
+                <option value="demo" {% if system_license.license_type == 'demo' %}selected{% endif %}>🟡 تجريبي (Demo 7 Days)</option>
+                <option value="monthly" {% if system_license.license_type == 'monthly' %}selected{% endif %}>📅 اشتراك شهري (Monthly 30 Days)</option>
+                <option value="yearly" {% if system_license.license_type == 'yearly' %}selected{% endif %}>🏆 اشتراك سنوي (Yearly 365 Days)</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; display: block; margin-bottom: 4px;">
+                مدة الصلاحية المحددة:
+              </label>
+              <select id="licDurationSelect" name="license_valid_days" onchange="handleLicenseDaysChange(this.value)" style="width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); padding: 9px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: bold;">
+                <option value="" selected>-- المدة التلقائية للباقة --</option>
+                <option value="7">7 أيام (فترة تجريبية سريعة)</option>
+                <option value="14">14 يوماً (أسبوعين)</option>
+                <option value="30">30 يوماً (شهر كامل)</option>
+                <option value="90">90 يوماً (3 أشهر)</option>
+                <option value="365">365 يوماً (سنة كاملة)</option>
               </select>
             </div>
           </div>
@@ -2336,6 +2350,41 @@ async function deleteMgrFace() {
     }
   } catch (err) {
     alert('حدث خطأ في الاتصال بالخادم.');
+  }
+}
+
+function handleLicenseTypeChange(val) {
+  const statusSel = document.getElementById('licStatusSelect');
+  const durSel = document.getElementById('licDurationSelect');
+  if (!statusSel) return;
+  if (val === 'lifetime') {
+    statusSel.value = 'active';
+    if (durSel) durSel.value = '';
+  } else if (val === 'demo') {
+    statusSel.value = 'demo';
+    if (durSel) durSel.value = '7';
+  } else if (val === 'monthly') {
+    statusSel.value = 'active';
+    if (durSel) durSel.value = '30';
+  } else if (val === 'yearly') {
+    statusSel.value = 'active';
+    if (durSel) durSel.value = '365';
+  }
+}
+
+function handleLicenseDaysChange(days) {
+  const statusSel = document.getElementById('licStatusSelect');
+  const typeSel = document.getElementById('licTypeSelect');
+  if (!days) return;
+  if (days === '7' || days === '14') {
+    if (typeSel && typeSel.value !== 'demo') typeSel.value = 'demo';
+    if (statusSel) statusSel.value = 'demo';
+  } else if (days === '30' || days === '90') {
+    if (typeSel) typeSel.value = 'monthly';
+    if (statusSel) statusSel.value = 'active';
+  } else if (days === '365') {
+    if (typeSel) typeSel.value = 'yearly';
+    if (statusSel) statusSel.value = 'active';
   }
 }
 </script>

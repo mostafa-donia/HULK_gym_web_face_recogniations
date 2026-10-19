@@ -68,7 +68,7 @@ class Command(BaseCommand):
         lic.client_name = "Number One Gym - صالات نمبر وان"
         lic.status = "demo"
         lic.license_type = "demo"
-        lic.valid_until = now + timedelta(days=365)
+        lic.valid_until = now + timedelta(days=7)
         lic.tamper_hash = compute_tamper_token(current_hwid, "demo", "demo", lic.valid_until)
         lic.last_clock_check = now
         lic.feature_multi_branch = True

@@ -294,7 +294,7 @@
 <body>
 
   <!-- Top Horizontal Navigation Bar -->
-  {% if is_demo %}
+  {% if is_demo and system_license.license_type != 'lifetime' and license_info.license_type != 'lifetime' and system_license.license_type != 'perpetual' %}
   <!-- Demo Mode Countdown Banner (Slim Compact) -->
   <div style="background: linear-gradient(90deg, #d97706, #b45309); color: #FFFFFF; padding: 2px 14px; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(251, 191, 36, 0.4); z-index: 9999; flex-wrap: nowrap; gap: 8px;">
     <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">

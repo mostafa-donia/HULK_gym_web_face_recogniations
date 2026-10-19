@@ -1473,6 +1473,8 @@ def settings_view(request):
                 return redirect("core:settings")
             from apps.core.licensing.engine import get_or_create_system_license
             from apps.core.licensing.crypto import compute_tamper_token
+            from datetime import datetime, timedelta
+            from django.utils import timezone
             lic, _ = get_or_create_system_license()
             lic.remote_control_url = request.POST.get("remote_control_url", "").strip()
             lic.developer_contact_phone = request.POST.get("developer_contact_phone", "01080922432").strip()
@@ -1490,15 +1492,48 @@ def settings_view(request):
             lic.feature_barcode = "feature_barcode" in request.POST
             lic.feature_expenses = "feature_expenses" in request.POST
 
-            if "license_status" in request.POST and request.POST["license_status"] in ["demo", "active", "suspended", "expired"]:
-                lic.status = request.POST["license_status"]
-            if "license_type" in request.POST and request.POST["license_type"] in ["demo", "monthly", "yearly", "lifetime"]:
-                lic.license_type = request.POST["license_type"]
+            now = timezone.now()
+            post_type = request.POST.get("license_type", lic.license_type)
+            post_status = request.POST.get("license_status", lic.status)
+            custom_until_str = request.POST.get("license_valid_until", "").strip()
+            custom_days_str = request.POST.get("license_valid_days", "").strip()
+
+            if post_type in ["demo", "monthly", "yearly", "lifetime"]:
+                lic.license_type = post_type
+
+            if lic.license_type == "lifetime":
+                lic.valid_until = None
+                lic.status = "active"
+            else:
+                if custom_until_str:
+                    try:
+                        parsed_dt = datetime.fromisoformat(custom_until_str)
+                        if timezone.is_naive(parsed_dt):
+                            parsed_dt = timezone.make_aware(parsed_dt)
+                        lic.valid_until = parsed_dt
+                    except Exception:
+                        pass
+                elif custom_days_str and custom_days_str.isdigit():
+                    lic.valid_until = now + timedelta(days=int(custom_days_str))
+                else:
+                    if lic.license_type == "demo":
+                        lic.valid_until = now + timedelta(days=7)
+                    elif lic.license_type == "monthly":
+                        lic.valid_until = now + timedelta(days=30)
+                    elif lic.license_type == "yearly":
+                        lic.valid_until = now + timedelta(days=365)
+
+                if post_status in ["demo", "active", "suspended", "expired"]:
+                    lic.status = post_status
+                elif lic.license_type == "demo":
+                    lic.status = "demo"
+                else:
+                    lic.status = "active"
 
             exp_iso = lic.valid_until.isoformat() if lic.valid_until else "NONE"
             lic.tamper_hash = compute_tamper_token(lic.machine_id, lic.status, lic.license_type, exp_iso)
             lic.save()
-            messages.success(request, "✓ تم حفظ إعدادات الترخيص وتخصيص صلاحيات الميزات بنجاح.")
+            messages.success(request, f"✓ تم حفظ الترخيص وتحديث الصلاحيات بنجاح (الباقة: {lic.get_license_type_display()} | الحالة: {lic.get_status_display()}).")
             return redirect("core:settings")
 
         elif action == "activate_license_key":
