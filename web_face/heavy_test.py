@@ -162,7 +162,12 @@ def main():
     r = admin_client.get("/")
     test_case("Admin access to Dashboard -> 200", r.status_code == 200)
     r = admin_client.get("/settings/")
-    test_case("Admin access to Settings -> 200", r.status_code == 200)
+    test_case("Admin access to Settings Gate -> 200", r.status_code == 200)
+    s = admin_client.session
+    s["settings_page_unlocked"] = True
+    s.save()
+    r = admin_client.get("/settings/")
+    test_case("Admin access to Unlocked Settings Template -> 200", r.status_code == 200)
     r = admin_client.get("/admin/")
     test_case("Admin access to Django Admin (/admin/) -> 200 or 302", r.status_code in [200, 302])
 

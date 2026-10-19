@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}إعدادات النظام — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
@@ -1055,7 +1056,7 @@
             
             <!-- Photo Thumbnail Preview -->
             <div style="position: relative; width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 3px solid {% if profile.manager_face_enrolled %}#84cc16{% else %}var(--border-color){% endif %}; background: #020617; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
-              <img id="mgrFacePreviewImg" src="{% if profile.manager_face_photo %}{{ profile.manager_face_photo.url }}{% else %}{% static 'images/avatar_placeholder.png' %}{% endif %}" alt="وجه المدير" style="width: 100%; height: 100%; object-fit: cover; display: {% if profile.manager_face_photo %}block{% else %}none{% endif %};">
+              <img id="mgrFacePreviewImg" src="{% if profile.manager_face_photo %}{{ profile.manager_face_photo.url }}{% else %}{% static 'images/logo.png' %}{% endif %}" alt="وجه المدير" style="width: 100%; height: 100%; object-fit: cover; display: {% if profile.manager_face_photo %}block{% else %}none{% endif %};">
               <span id="mgrFacePlaceholderIcon" style="font-size: 2.5rem; display: {% if profile.manager_face_photo %}none{% else %}block{% endif %};">👤</span>
             </div>
 
