@@ -58,17 +58,54 @@
       text-align: center;
     }
     @media print {
-      body {
-        padding: 0;
-        background: #fff;
+      @page {
+        size: auto;
+        margin: 6mm 10mm;
+      }
+      html, body {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        display: block !important;
+        min-height: auto !important;
+        height: auto !important;
+        width: 100% !important;
+        overflow: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .print-hide, .no-print, nav, header, footer, button, .btn {
+        display: none !important;
       }
       .receipt-box {
-        border: none;
-        box-shadow: none;
-        padding: 10px;
+        display: block !important;
+        border: 2px dashed #64748b !important;
+        box-shadow: none !important;
+        padding: 18px 24px !important;
+        margin: 0 auto !important;
+        max-width: 520px !important;
+        width: 100% !important;
+        background: #ffffff !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
-      .print-hide {
-        display: none;
+      .receipt-box * {
+        color: #0f172a !important;
+        visibility: visible !important;
+      }
+      .receipt-table td {
+        border-bottom: 1px solid #cbd5e1 !important;
+        padding: 8px 0 !important;
+      }
+      .total-banner {
+        background: #f1f5f9 !important;
+        border: 1px solid #94a3b8 !important;
+        color: #0f172a !important;
+      }
+      .total-banner span:last-child {
+        color: #16a34a !important;
       }
     }
   </style>
@@ -139,6 +176,10 @@
         <span id="btnSendWhatsAppText">إرسال الفاتورة بالواتساب</span>
       </a>
       {% endif %}
+
+      <a href="{% url 'payments:download_invoice_image' payment.id %}" onclick="cancelAutoRedirect()" class="btn btn-secondary" style="padding: 10px 16px; text-decoration: none; font-size: 0.9rem; font-weight: 700; color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">
+        📥 تحميل صورة الفاتورة (PNG)
+      </a>
 
       <a href="{% url 'payments:download_invoice_html' payment.id %}" onclick="cancelAutoRedirect()" class="btn btn-secondary" style="padding: 10px 16px; text-decoration: none; font-size: 0.9rem; font-weight: 700;">
         تحميل الفاتورة (HTML)

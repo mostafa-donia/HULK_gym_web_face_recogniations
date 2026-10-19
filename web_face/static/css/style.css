@@ -1292,3 +1292,89 @@ select.form-control {
     grid-template-columns: 1fr;
   }
 }
+
+/* ======================================================== */
+/* GLOBAL PRINT ENGINE (Fixes blank page & dark mode print) */
+/* ======================================================== */
+@media print {
+  @page {
+    size: auto;
+    margin: 8mm 10mm;
+  }
+  
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    display: block !important;
+    min-height: auto !important;
+    height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force all printable text to high contrast black/dark slate */
+  body, p, span, div, h1, h2, h3, h4, h5, h6, td, th, li, strong, b, em {
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+
+  /* Hide navigation, sidebars, alerts, interactive widgets */
+  header, nav, footer, .top-navbar, .top-navbar-container, .top-brand, .top-nav-links, .top-nav-actions,
+  .print-hide, .no-print, #whatsappOverlayWidget, #whatsapp30MinOverlay, #receiptAlertBox, #autoRedirectBanner,
+  .btn, button, .btn-primary, .btn-secondary, input[type="button"], input[type="submit"], .modal-overlay {
+    display: none !important;
+  }
+
+  /* Main content containers become clean block layout */
+  .main-wrapper, .app-container, .content-container, main {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Force cards, panels, and tables to high-contrast white with clean borders */
+  .card, .receipt-box, .slip-box, .panel, .table-container, table {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  table th, table td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 6px 8px !important;
+    background: transparent !important;
+    color: #0f172a !important;
+  }
+
+  table th {
+    background-color: #f1f5f9 !important;
+    font-weight: 800 !important;
+  }
+
+  /* Images / Logos */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+  }
+}
+

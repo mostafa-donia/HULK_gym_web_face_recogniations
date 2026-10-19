@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q, Sum, Count
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -173,6 +173,25 @@ def download_invoice_html_view(request, payment_id):
     clean_no = payment.invoice_no.replace("/", "_")
     response["Content-Disposition"] = f'attachment; filename="invoice_{clean_no}.html"'
     return response
+
+
+@login_required
+def download_invoice_image_view(request, payment_id):
+    """Generates and serves the official high-resolution PNG receipt image for direct download."""
+    payment = get_object_or_404(Payment, id=payment_id)
+    from apps.payments.services import generate_invoice_image_file
+    rel_path = generate_invoice_image_file(payment)
+
+    from django.conf import settings
+    from pathlib import Path
+    full_path = Path(settings.MEDIA_ROOT) / rel_path
+
+    if full_path.exists():
+        clean_no = payment.invoice_no.replace("/", "_").replace("\\", "_")
+        return FileResponse(open(full_path, "rb"), as_attachment=True, filename=f"invoice_{clean_no}.png")
+
+    messages.error(request, "تعذر تحميل صورة الفاتورة.")
+    return redirect("payments:payment_detail", payment_id=payment.id)
 
 
 @login_required

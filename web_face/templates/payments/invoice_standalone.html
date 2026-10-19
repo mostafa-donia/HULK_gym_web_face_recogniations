@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -154,18 +154,42 @@
       line-height: 1.5;
     }
     @media print {
-      body {
-        background: #ffffff !important;
-        padding: 0 !important;
+      @page {
+        size: auto;
+        margin: 6mm 10mm;
       }
-      .print-hide {
+      html, body {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        min-height: auto !important;
+        height: auto !important;
+        width: 100% !important;
+        overflow: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      .print-hide, .no-print, nav, header, footer, button, .btn-print, .btn-badge {
         display: none !important;
       }
       .receipt-box {
-        border: none !important;
+        display: block !important;
+        border: 2px dashed #64748b !important;
         box-shadow: none !important;
-        padding: 10px !important;
-        max-width: 100% !important;
+        padding: 16px 20px !important;
+        max-width: 520px !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+        background: #ffffff !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .receipt-box * {
+        color: #0f172a !important;
+        visibility: visible !important;
       }
     }
   </style>
