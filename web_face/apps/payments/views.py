@@ -177,12 +177,21 @@ def download_invoice_html_view(request, payment_id):
 
 @login_required
 def send_receipt_whatsapp_now_view(request, payment_id):
-    """Queues and immediately attempts to dispatch the HTML invoice via WhatsApp."""
+    """Queues and immediately attempts to dispatch the HTML/PNG invoice via WhatsApp."""
     payment = get_object_or_404(Payment, id=payment_id)
     msg_obj = queue_payment_receipt_whatsapp(payment)
 
+    is_ajax = (
+        request.headers.get("x-requested-with") == "XMLHttpRequest"
+        or request.GET.get("format") == "json"
+        or "application/json" in request.headers.get("Accept", "")
+    )
+
     if not msg_obj:
-        messages.error(request, "تعذر إرسال الفاتورة: لا يوجد رقم هاتف مسجل للعضو أو أن خدمة الواتساب معطلة.")
+        err_msg = "تعذر إرسال الفاتورة: لا يوجد رقم هاتف مسجل للعضو أو أن خدمة الواتساب معطلة في الإعدادات."
+        if is_ajax:
+            return JsonResponse({"success": False, "error": err_msg})
+        messages.error(request, err_msg)
         return redirect("payments:payment_detail", payment_id=payment.id)
 
     from apps.messaging.models import MessageStatus
@@ -191,17 +200,36 @@ def send_receipt_whatsapp_now_view(request, payment_id):
     promote_due_scheduled_messages()
     msg_obj.refresh_from_db()
 
-    if msg_obj.status == MessageStatus.SCHEDULED and msg_obj.send_after and msg_obj.send_after > timezone.now() and request.GET.get("force") != "1":
-        rem_mins = max(1, int((msg_obj.send_after - timezone.now()).total_seconds() // 60) + 1)
-        local_time = timezone.localtime(msg_obj.send_after).strftime("%I:%M %p")
-        messages.info(
-            request,
-            f"⏳ هذا رقم هاتف عضو جديد يتم مزامنته الآن مع جهات اتصال Google Contacts. "
-            f"تمت جدولة إرسال الفاتورة تلقائياً بعد {rem_mins} دقيقة (الساعة {local_time}) لضمان ظهور الاسم في الواتساب."
-        )
-        return redirect("payments:payment_detail", payment_id=payment.id)
+    # User explicitly clicked Send: promote from SCHEDULED to PENDING immediately
+    if msg_obj.status == MessageStatus.SCHEDULED:
+        msg_obj.status = MessageStatus.PENDING
+        msg_obj.send_after = None
+        msg_obj.save(update_fields=["status", "send_after"])
+
+    # If requested via AJAX to prepare message ID for client overlay runner
+    if is_ajax and request.GET.get("queue_only") == "1":
+        return JsonResponse({
+            "success": True,
+            "message_id": msg_obj.id,
+            "mobile": msg_obj.mobile,
+            "recipient_name": payment.member.name if payment.member else "",
+            "invoice_no": payment.invoice_no,
+            "message": msg_obj.message,
+            "has_attachment": bool(msg_obj.attachment),
+        })
 
     dispatched = dispatch_message_record(msg_obj, return_to_system=True)
+
+    if is_ajax:
+        return JsonResponse({
+            "success": True,
+            "dispatched": dispatched,
+            "message_id": msg_obj.id,
+            "mobile": msg_obj.mobile,
+            "recipient_name": payment.member.name if payment.member else "",
+            "status": msg_obj.status,
+            "message": msg_obj.message,
+        })
 
     if dispatched:
         messages.success(request, f"✓ تم إرسال الفاتورة الرسمية بنجاح إلى هاتف {payment.member.name} عبر الواتساب!")

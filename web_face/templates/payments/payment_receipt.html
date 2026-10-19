@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -76,10 +76,26 @@
 <body>
 
   <div class="print-hide" style="max-width: 520px; margin: 0 auto 16px auto;">
+    {% if messages %}
+    <div style="margin-bottom: 12px;">
+      {% for msg in messages %}
+      <div style="padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        {% if msg.tags == 'success' %}background: #dcfce7; color: #15803d; border: 1px solid #86efac;
+        {% elif msg.tags == 'warning' %}background: #fef9c3; color: #854d0e; border: 1px solid #fde047;
+        {% elif msg.tags == 'error' %}background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;
+        {% else %}background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc;{% endif %}">
+        <span>{{ msg }}</span>
+        <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:inherit; line-height:1;">✕</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div id="receiptAlertBox"></div>
+
     {% if not member.has_face_enrolled %}
     <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: 10px; padding: 12px 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #fca5a5; font-size: 0.92rem; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);">
       <div style="display: flex; align-items: center; gap: 10px;">
-        
         <div>
           <strong style="color: #fff; font-size: 0.95rem;">تنبيه: بصمة الوجه غير مسجلة لهذا العضو!</strong>
           <div style="font-size: 0.8rem; color: #fca5a5; margin-top: 2px;">يجب التقاط بصمة الوجه لتفعيل تسجيل الحضور التلقائي عبر الكاميرا.</div>
@@ -116,9 +132,11 @@
       </button>
 
       {% if member.mobile %}
-      <a href="{% url 'payments:send_receipt_whatsapp' payment.id %}" onclick="cancelAutoRedirect()" class="btn" style="background: #25D366; color: #fff; padding: 10px 18px; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 0.92rem; display: inline-flex; align-items: center; gap: 6px;">
-        
-        <span>إرسال الفاتورة بالواتساب</span>
+      <a href="{% url 'payments:send_receipt_whatsapp' payment.id %}" id="btnSendWhatsAppInvoice" onclick="sendInvoiceWhatsApp(event, {{ payment.id }})" class="btn" style="background: #25D366; color: #fff; padding: 10px 18px; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 0.92rem; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,211,102,0.3); transition: all 0.2s ease;">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/>
+        </svg>
+        <span id="btnSendWhatsAppText">إرسال الفاتورة بالواتساب</span>
       </a>
       {% endif %}
 
@@ -243,6 +261,86 @@ function closeOrBack() {
     window.close();
   } else {
     window.history.back();
+  }
+}
+
+async function sendInvoiceWhatsApp(evt, paymentId) {
+  if (evt) evt.preventDefault();
+  cancelAutoRedirect();
+
+  const btn = document.getElementById('btnSendWhatsAppInvoice');
+  const btnText = document.getElementById('btnSendWhatsAppText');
+  const alertBox = document.getElementById('receiptAlertBox');
+
+  if (!btn) return;
+  btn.style.pointerEvents = 'none';
+  btn.style.opacity = '0.85';
+  if (btnText) btnText.innerText = 'جاري الإرسال عبر واتساب...';
+
+  // Open Always-On-Top overlay popup window if permitted
+  try {
+    const screenW = window.screen.availWidth || window.screen.width || 1920;
+    const popupW = 390;
+    const popupH = 250;
+    const popupX = Math.max(20, screenW - popupW - 30);
+    const popupY = 30;
+    window.open(
+      "{% url 'messaging:whatsapp_overlay_window' %}",
+      "SystemizeWhatsAppOverlay",
+      `width=${popupW},height=${popupH},left=${popupX},top=${popupY},resizable=no,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`
+    );
+  } catch (e) {
+    console.warn("Could not open overlay popup window:", e);
+  }
+
+  try {
+    const response = await fetch(`{% url 'payments:send_receipt_whatsapp' payment.id %}?format=json`, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    const data = await response.json();
+
+    if (data.success && data.dispatched) {
+      btn.style.background = '#15803d';
+      if (btnText) btnText.innerText = '✓ تم إرسال الفاتورة للواتساب';
+      if (alertBox) {
+        alertBox.innerHTML = `
+          <div style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 12px 18px; border-radius: 8px; margin-bottom: 12px; font-weight: 800; font-size: 0.92rem; display: flex; align-items: center; justify-content: space-between;">
+            <span>✓ تم إرسال الفاتورة الرسمية وصورة الإيصال بنجاح إلى هاتف <strong>{{ member.name }}</strong> ({{ member.mobile }}) عبر الواتساب!</span>
+            <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:inherit;">✕</button>
+          </div>
+        `;
+      }
+    } else {
+      btn.style.background = '#f59e0b';
+      if (btnText) btnText.innerText = 'تمت الإضافة لطابور الواتساب';
+      let phoneClean = '{{ member.mobile }}'.replace(/\D/g, '');
+      if (phoneClean.startsWith('0')) phoneClean = '2' + phoneClean;
+      else if (!phoneClean.startsWith('2') && phoneClean.length === 10) phoneClean = '20' + phoneClean;
+      const waWebUrl = `https://wa.me/${phoneClean}`;
+
+      if (alertBox) {
+        alertBox.innerHTML = `
+          <div style="background: #fef9c3; color: #854d0e; border: 1px solid #fde047; padding: 12px 18px; border-radius: 8px; margin-bottom: 12px; font-weight: 700; font-size: 0.92rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <span>تم تجهيز الفاتورة وصورتها بنجاح في طابور الإرسال!</span>
+              <button type="button" onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; cursor:pointer; font-size:1.1rem; color:inherit;">✕</button>
+            </div>
+            <div style="font-size: 0.84rem; color: #713f12; margin-bottom: 8px;">(يرجى التأكد من تشغيل تطبيق WhatsApp Desktop لإتمام الإرسال التلقائي، أو الضغط أدناه لفتح المحادثة مباشرة)</div>
+            <a href="${waWebUrl}" target="_blank" class="btn btn-sm" style="background: #25D366; color: #fff; padding: 6px 14px; border-radius: 6px; text-decoration: none; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+              فتح المحادثة عبر واتساب ويب ↵
+            </a>
+          </div>
+        `;
+      }
+    }
+  } catch (err) {
+    console.error("WhatsApp invoice dispatch error:", err);
+    window.location.href = "{% url 'payments:send_receipt_whatsapp' payment.id %}";
+  } finally {
+    btn.style.pointerEvents = 'auto';
+    btn.style.opacity = '1';
   }
 }
 </script>
