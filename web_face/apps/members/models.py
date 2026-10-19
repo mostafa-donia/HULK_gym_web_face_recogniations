@@ -131,6 +131,11 @@ class Member(models.Model):
         return self.current_remaining > Decimal("0.00")
 
     @property
+    def phone(self) -> str:
+        """Backward-compatibility alias for mobile."""
+        return self.mobile or ""
+
+    @property
     def check_in_events(self):
         return self.check_ins
 

@@ -263,6 +263,11 @@ def get_pending_summary() -> dict:
     - Others / Custom (bulk, custom, etc.)
     """
     promote_due_scheduled_messages()
+    try:
+        prepare_due_reminders()
+    except Exception as e:
+        logger.warning("Auto prepare_due_reminders in get_pending_summary error: %s", e)
+
     from apps.messaging import whatsapp_sender
     is_installed, inst_msg, _ = whatsapp_sender.is_whatsapp_desktop_installed()
 
@@ -364,7 +369,7 @@ def prepare_due_reminders() -> dict:
     profile = GymProfile.get_solo()
     gym_name = profile.gym_name or "سينا سبا | CINA SPA"
 
-    members = Member.objects.filter(phone__isnull=False).exclude(phone="").select_related()
+    members = Member.objects.filter(mobile__isnull=False).exclude(mobile="").select_related()
     queued_count = 0
 
     for m in members:
@@ -379,14 +384,14 @@ def prepare_due_reminders() -> dict:
 
         # 1. Reminder 3 days before
         if days_diff == 3:
-            dedup = f"{m.phone}_rem3_{end_date.isoformat()}"
+            dedup = f"{m.mobile}_rem3_{end_date.isoformat()}"
             ctx = {
                 "name": m.name,
                 "gym_name": gym_name,
                 "end_date": end_date.strftime("%Y-%m-%d"),
                 "days_left": 3,
                 "plan": m.last_subscription_type or "الاشتراك",
-                "phone": m.phone,
+                "phone": m.mobile,
             }
             if getattr(profile, "whatsapp_randomize_templates", True):
                 msg_text = get_random_message("reminder_3", ctx)
@@ -398,7 +403,7 @@ def prepare_due_reminders() -> dict:
                     f"جاهزين لتجديدك في أي وقت للاستمرار في فورمتك! 💪"
                 )
             created = enqueue_message(
-                mobile=m.phone,
+                mobile=m.mobile,
                 message=msg_text,
                 msg_type=MessageType.REMINDER_3,
                 recipient_name=m.name,
@@ -409,14 +414,14 @@ def prepare_due_reminders() -> dict:
 
         # 2. Reminder 1 day before
         elif days_diff == 1:
-            dedup = f"{m.phone}_rem1_{end_date.isoformat()}"
+            dedup = f"{m.mobile}_rem1_{end_date.isoformat()}"
             ctx = {
                 "name": m.name,
                 "gym_name": gym_name,
                 "end_date": end_date.strftime("%Y-%m-%d"),
                 "days_left": 1,
                 "plan": m.last_subscription_type or "الاشتراك",
-                "phone": m.phone,
+                "phone": m.mobile,
             }
             if getattr(profile, "whatsapp_randomize_templates", True):
                 msg_text = get_random_message("reminder_1", ctx)
@@ -428,7 +433,7 @@ def prepare_due_reminders() -> dict:
                     f"تقدر تجدد مع كابتن الاستقبال اليوم عشان بوابتك تفضل شغالة بدون توقف! 🚀"
                 )
             created = enqueue_message(
-                mobile=m.phone,
+                mobile=m.mobile,
                 message=msg_text,
                 msg_type=MessageType.REMINDER_1,
                 recipient_name=m.name,
@@ -439,14 +444,14 @@ def prepare_due_reminders() -> dict:
 
         # 3. Already expired (50 diverse Egyptian Arabic variations)
         elif days_diff <= 0:
-            dedup = f"{m.phone}_exp_{end_date.isoformat()}"
+            dedup = f"{m.mobile}_exp_{end_date.isoformat()}"
             ctx = {
                 "name": m.name,
                 "gym_name": gym_name,
                 "end_date": end_date.strftime("%Y-%m-%d"),
                 "days_left": abs(days_diff),
                 "plan": m.last_subscription_type or "الاشتراك",
-                "phone": m.phone,
+                "phone": m.mobile,
             }
             custom_tmpl = (profile.expired_message_template or "").strip()
             # If randomizing is enabled (default True), pick from the 50 variations
@@ -462,7 +467,7 @@ def prepare_due_reminders() -> dict:
                 msg_text = get_random_message("expired", ctx)
 
             created = enqueue_message(
-                mobile=m.phone,
+                mobile=m.mobile,
                 message=msg_text,
                 msg_type=MessageType.EXPIRED,
                 recipient_name=m.name,
@@ -783,7 +788,7 @@ def filter_members_for_bulk(
     Filters members based on category, date range, or preset for bulk WhatsApp campaigns.
     """
     today = timezone.localdate()
-    qs = Member.objects.filter(phone__isnull=False).exclude(phone="")
+    qs = Member.objects.filter(mobile__isnull=False).exclude(mobile="")
 
     if category == "non_sub":
         # Expired or no active subscription
@@ -868,7 +873,7 @@ def prepare_bulk_campaign(
             "remaining_amount": str(m.current_remaining),
             "plan": m.last_subscription_type or "الاشتراك",
             "plan_name": m.last_subscription_type or "الاشتراك",
-            "phone": m.phone,
+            "phone": m.mobile,
         }
 
         raw_template = message_template.strip()
@@ -883,9 +888,9 @@ def prepare_bulk_campaign(
         else:
             text = format_template_safely(raw_template, ctx)
 
-        dedup = f"{m.phone}_{batch_tag}"
+        dedup = f"{m.mobile}_{batch_tag}"
         msg = enqueue_message(
-            mobile=m.phone,
+            mobile=m.mobile,
             message=text,
             msg_type=MessageType.BULK,
             recipient_name=m.name,

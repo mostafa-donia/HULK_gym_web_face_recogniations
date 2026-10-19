@@ -952,60 +952,51 @@
         if (overlay) overlay.style.display = 'none';
       };
 
-      window.trigger30MinSend10 = function() {
+      window.trigger30MinSend10 = async function() {
         const statusBox = document.getElementById('wa30ActionStatusBox');
         const statusText = document.getElementById('wa30ActionStatusText');
         const btn = document.getElementById('btnWa30Send10');
 
-        statusBox.style.display = 'block';
-        statusBox.style.background = 'rgba(56, 189, 248, 0.15)';
-        statusBox.style.color = '#38bdf8';
-        statusText.textContent = '⏳ جار إرسال 10 رسائل عبر واتساب...';
-        btn.disabled = true;
-
-        function getCsrf() {
-          const cookies = document.cookie.split(';');
-          for (let c of cookies) {
-            c = c.trim();
-            if (c.startsWith('csrftoken=')) return c.substring('csrftoken='.length);
-          }
-          return '';
+        if (statusBox) {
+          statusBox.style.display = 'block';
+          statusBox.style.background = 'rgba(56, 189, 248, 0.15)';
+          statusBox.style.color = '#38bdf8';
+          statusText.textContent = '⏳ جار تجهيز الرسائل وتشغيل الواتساب...';
         }
+        if (btn) btn.disabled = true;
 
-        fetch("{% url 'messaging:whatsapp_dispatch_batch' %}", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "X-CSRFToken": getCsrf()
-          },
-          body: "limit=10"
-        })
-        .then(r => r.json())
-        .then(res => {
-          if (res.success) {
-            statusBox.style.background = 'rgba(34, 197, 94, 0.15)';
-            statusBox.style.color = '#4ade80';
-            statusText.textContent = `✓ تم إرسال ${res.sent} رسالة بنجاح! متبقي ${res.summary ? res.summary.pending_count : 0} معلقة.`;
+        try {
+          const res = await fetch("{% url 'messaging:whatsapp_pending_messages' %}", {
+            headers: {
+              "Accept": "application/json",
+              "X-Requested-With": "XMLHttpRequest"
+            }
+          });
+          const data = await res.json();
+          if (data.success && data.messages && data.messages.length > 0) {
+            const idsToSend = data.messages.slice(0, 10).map(m => m.id);
             localStorage.setItem(WA_REMINDER_KEY, Date.now());
-            setTimeout(() => {
-              dismiss30MinReminder();
-              if (window.location.pathname.includes('/messaging/')) {
-                window.location.reload();
-              }
-            }, 2000);
+            dismiss30MinReminder();
+            if (window.whatsappQueueRunner) {
+              window.whatsappQueueRunner.start(idsToSend);
+            }
           } else {
+            if (statusBox) {
+              statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
+              statusBox.style.color = '#f87171';
+              statusText.textContent = 'لا توجد رسائل معلقة حالياً في الطابور.';
+            }
+            if (btn) btn.disabled = false;
+          }
+        } catch (err) {
+          console.error("Error starting WhatsApp 10 batch:", err);
+          if (statusBox) {
             statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
             statusBox.style.color = '#f87171';
-            statusText.textContent = 'تعذر إرسال الدفعة حالياً.';
-            btn.disabled = false;
+            statusText.textContent = 'حدث خطأ أثناء جلب الرسائل من الخادم.';
           }
-        })
-        .catch(() => {
-          statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
-          statusBox.style.color = '#f87171';
-          statusText.textContent = 'حدث خطأ في الاتصال بالخادم.';
-          btn.disabled = false;
-        });
+          if (btn) btn.disabled = false;
+        }
       };
 
       window.goToPendingQueueAndSelect = function() {

@@ -450,6 +450,7 @@ def pin_overlay_window_topmost() -> bool:
     even when mouse clicks occur.
     """
     try:
+        ensure_desktop_attached()
         user32 = ctypes.windll.user32
         matched_hwnds = []
 
@@ -511,6 +512,54 @@ def stop_overlay_keeper():
     _overlay_keeper_active = False
 
 
+def find_whatsapp_window():
+    """
+    Finds the native WhatsApp Desktop window HWND reliably across Windows versions,
+    whether minimized, unread (e.g. '(1) WhatsApp'), localized ('واتساب'),
+    or using WinUI / Electron class names.
+    """
+    ensure_desktop_attached()
+    user32 = ctypes.windll.user32
+    try:
+        import win32gui
+    except ImportError:
+        win32gui = None
+
+    # Fast direct check
+    hwnd = user32.FindWindowW(None, "WhatsApp")
+    if hwnd and user32.IsWindow(hwnd):
+        return hwnd
+    hwnd = user32.FindWindowW("WinUIDesktopWin32WindowClass", None)
+    if hwnd and user32.IsWindow(hwnd):
+        return hwnd
+
+    matched = []
+    if win32gui:
+        def enum_cb(h, _):
+            if not win32gui.IsWindow(h):
+                return
+            cls = (win32gui.GetClassName(h) or "").strip()
+            title = (win32gui.GetWindowText(h) or "").strip().lower()
+            if any(b in title for b in ["google chrome", "edge", "firefox", "brave", "opera", "systemize", "hulk", "cina", "127.0.0.1", "localhost", "visual studio code"]):
+                return
+            if cls == "WinUIDesktopWin32WindowClass":
+                matched.append((h, 10))
+            elif "whatsapp" in title or "واتساب" in title:
+                w = 5 + (3 if win32gui.IsWindowVisible(h) else 0)
+                matched.append((h, w))
+
+        try:
+            win32gui.EnumWindows(enum_cb, None)
+        except Exception:
+            pass
+
+    if matched:
+        matched.sort(key=lambda x: x[1], reverse=True)
+        return matched[0][0]
+
+    return None
+
+
 def whatsupp_ready() -> bool:
     """
     Ensures WhatsApp Desktop (native Windows application) is installed, running,
@@ -525,17 +574,14 @@ def whatsupp_ready() -> bool:
     # Save active browser window before WhatsApp steals focus
     remember_current_window()
 
-    user32 = ctypes.windll.user32
-    hwnd = user32.FindWindowW(None, "WhatsApp")
-    if not hwnd:
-        hwnd = user32.FindWindowW("WinUIDesktopWin32WindowClass", None)
+    hwnd = find_whatsapp_window()
 
     if not hwnd:
         print("[whatsupp_ready] WhatsApp Desktop is not visible. Launching via 'start whatsapp:' ...")
         Popen("start whatsapp:", shell=True)
-        for _ in range(20):
+        for _ in range(25):
             sleep(0.5)
-            hwnd = user32.FindWindowW(None, "WhatsApp") or user32.FindWindowW("WinUIDesktopWin32WindowClass", None)
+            hwnd = find_whatsapp_window()
             if hwnd:
                 break
 
@@ -544,6 +590,7 @@ def whatsupp_ready() -> bool:
         return False
 
     # Activate and MAXIMIZE WhatsApp Desktop to full screen (SW_MAXIMIZE = 3)
+    user32 = ctypes.windll.user32
     force_activate_window(hwnd, maximize=True)
     user32.ShowWindow(hwnd, 3)
 
@@ -682,13 +729,13 @@ def send_message(
     pin_overlay_window_topmost()
     random_delay(0.2, 0.35)
 
-    # Clear previous search content cleanly and type space then phone
+    # Clear previous search content cleanly and paste phone number
     hotkey("ctrl", "a")
     press("backspace")
     sleep(0.1)
 
-    write(" ")
-    write(phone)
+    copy(phone)
+    hotkey("ctrl", "v")
     random_delay(0.8, 1.2)
     press("enter")
     random_delay(1.2, 1.6)
@@ -699,7 +746,7 @@ def send_message(
     try:
         user32 = ctypes.windll.user32
         import win32gui
-        w_hwnd = user32.FindWindowW(None, "WhatsApp") or user32.FindWindowW("WinUIDesktopWin32WindowClass", None)
+        w_hwnd = find_whatsapp_window()
         if w_hwnd:
             rect = win32gui.GetWindowRect(w_hwnd)
             w_width = rect[2] - rect[0]
