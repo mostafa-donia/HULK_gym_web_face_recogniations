@@ -371,12 +371,36 @@ def manager_dashboard_view(request):
     month_start = today.replace(day=1)
     gym_profile = GymProfile.get_solo()
 
-    from apps.core.branch_context import filter_by_branch
+    from apps.core.branch_context import (
+        filter_by_branch,
+        get_active_branch,
+        get_active_branch_display,
+        is_multi_branch_active,
+    )
+
+    active_branch = get_active_branch(request)
+    active_branch_display = get_active_branch_display(request)
 
     base_members = filter_by_branch(Member.objects.all(), request)
     base_payments = filter_by_branch(Payment.objects.all(), request)
+    base_expenses = filter_by_branch(Expense.objects.all(), request)
 
-    # 1. Core 9 Metric Cards from Legacy Screen
+    if is_multi_branch_active() and active_branch:
+        base_checkins = CheckInEvent.objects.filter(Q(branch=active_branch) | Q(member__branch=active_branch))
+        base_subscriptions = Subscription.objects.filter(member__branch=active_branch)
+        from apps.payroll.models import PrivateTrainingRecord, TrainerClientAssignment
+        base_standalone_sessions = PrivateTrainingRecord.objects.filter(client__branch=active_branch)
+        from apps.payments.models import BarSale
+        base_bar_sales = BarSale.objects.filter(Q(payment__branch=active_branch) | Q(member__branch=active_branch))
+    else:
+        base_checkins = CheckInEvent.objects.all()
+        base_subscriptions = Subscription.objects.all()
+        from apps.payroll.models import PrivateTrainingRecord, TrainerClientAssignment
+        base_standalone_sessions = PrivateTrainingRecord.objects.all()
+        from apps.payments.models import BarSale
+        base_bar_sales = BarSale.objects.all()
+
+    # 1. Core 9 Metric Cards from Legacy Screen (strictly branch-filtered)
     total_members = base_members.count()
     active_members = base_members.filter(last_subscription_end__gte=today).count()
     expired_members = total_members - active_members
@@ -469,27 +493,27 @@ def manager_dashboard_view(request):
         if b_start > b_end:
             b_start, b_end = b_end, b_start
 
-        # Calculate metrics for Range A
-        a_payments = Payment.objects.filter(created_at__date__gte=a_start, created_at__date__lte=a_end)
+        # Calculate metrics for Range A (branch-filtered)
+        a_payments = base_payments.filter(created_at__date__gte=a_start, created_at__date__lte=a_end)
         a_revenue = a_payments.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
         a_ops = a_payments.count()
         a_renewals = a_payments.filter(operation_type="renewal").count()
-        a_new_members = Member.objects.filter(created_at__date__gte=a_start, created_at__date__lte=a_end).count()
-        a_expenses = Expense.objects.filter(expense_date__gte=a_start, expense_date__lte=a_end).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+        a_new_members = base_members.filter(created_at__date__gte=a_start, created_at__date__lte=a_end).count()
+        a_expenses = base_expenses.filter(expense_date__gte=a_start, expense_date__lte=a_end).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
         a_net = a_revenue - a_expenses
-        a_checkins = CheckInEvent.objects.filter(checked_in_at__date__gte=a_start, checked_in_at__date__lte=a_end).count()
-        a_expired = Member.objects.filter(last_subscription_end__gte=a_start, last_subscription_end__lte=a_end).count()
+        a_checkins = base_checkins.filter(checked_in_at__date__gte=a_start, checked_in_at__date__lte=a_end).count()
+        a_expired = base_members.filter(last_subscription_end__gte=a_start, last_subscription_end__lte=a_end).count()
 
-        # Calculate metrics for Range B
-        b_payments = Payment.objects.filter(created_at__date__gte=b_start, created_at__date__lte=b_end)
+        # Calculate metrics for Range B (branch-filtered)
+        b_payments = base_payments.filter(created_at__date__gte=b_start, created_at__date__lte=b_end)
         b_revenue = b_payments.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
         b_ops = b_payments.count()
         b_renewals = b_payments.filter(operation_type="renewal").count()
-        b_new_members = Member.objects.filter(created_at__date__gte=b_start, created_at__date__lte=b_end).count()
-        b_expenses = Expense.objects.filter(expense_date__gte=b_start, expense_date__lte=b_end).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+        b_new_members = base_members.filter(created_at__date__gte=b_start, created_at__date__lte=b_end).count()
+        b_expenses = base_expenses.filter(expense_date__gte=b_start, expense_date__lte=b_end).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
         b_net = b_revenue - b_expenses
-        b_checkins = CheckInEvent.objects.filter(checked_in_at__date__gte=b_start, checked_in_at__date__lte=b_end).count()
-        b_expired = Member.objects.filter(last_subscription_end__gte=b_start, last_subscription_end__lte=b_end).count()
+        b_checkins = base_checkins.filter(checked_in_at__date__gte=b_start, checked_in_at__date__lte=b_end).count()
+        b_expired = base_members.filter(last_subscription_end__gte=b_start, last_subscription_end__lte=b_end).count()
 
         comparison_data = {
             "preset": preset,
@@ -563,9 +587,9 @@ def manager_dashboard_view(request):
         period_end = today
         period_title = f"تقرير اليوم - {today.strftime('%d/%m/%Y')}"
 
-    # Selected period transactions and summary
+    # Selected period transactions and summary (strictly branch-filtered)
     period_payments = (
-        Payment.objects.filter(
+        base_payments.filter(
             created_at__date__gte=period_start,
             created_at__date__lte=period_end,
         )
@@ -575,24 +599,24 @@ def manager_dashboard_view(request):
     period_ops_count = period_payments.count()
     period_total_revenue = period_payments.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
     period_expenses = (
-        Expense.objects.filter(
+        base_expenses.filter(
             expense_date__gte=period_start,
             expense_date__lte=period_end,
         ).aggregate(Sum("amount"))["amount__sum"]
         or Decimal("0.00")
     )
-    period_new_members = Member.objects.filter(
+    period_new_members = base_members.filter(
         created_at__date__gte=period_start,
         created_at__date__lte=period_end,
     ).count()
     period_renewals = period_payments.filter(operation_type="renewal").count()
-    period_debtors_count = Member.objects.filter(current_remaining__gt=0).count()
-    period_ended_count = Member.objects.filter(
+    period_debtors_count = base_members.filter(current_remaining__gt=0).count()
+    period_ended_count = base_members.filter(
         last_subscription_end__gte=period_start,
         last_subscription_end__lte=period_end,
     ).count()
     period_net = period_total_revenue - period_expenses
-    period_checkins = CheckInEvent.objects.filter(
+    period_checkins = base_checkins.filter(
         checked_in_at__date__gte=period_start,
         checked_in_at__date__lte=period_end,
     ).count()
@@ -628,7 +652,7 @@ def manager_dashboard_view(request):
     while cur_d <= chart_end:
         revenue_trend_labels.append(cur_d.strftime("%d/%m"))
         day_rev = (
-            Payment.objects.filter(created_at__date=cur_d).aggregate(Sum("amount"))["amount__sum"]
+            base_payments.filter(created_at__date=cur_d).aggregate(Sum("amount"))["amount__sum"]
             or Decimal("0.00")
         )
         revenue_trend_data.append(float(day_rev))
@@ -636,7 +660,7 @@ def manager_dashboard_view(request):
 
     # B) Hourly Attendance Distribution (Peak Hours Analysis)
     hourly_checkins = {h: 0 for h in range(6, 24)}
-    checkin_events_period = CheckInEvent.objects.filter(
+    checkin_events_period = base_checkins.filter(
         checked_in_at__date__gte=period_start,
         checked_in_at__date__lte=period_end,
     )
@@ -659,41 +683,42 @@ def manager_dashboard_view(request):
         hourly_labels.append(label)
         hourly_data.append(hourly_checkins[h])
 
-    # 5. AI Analytics Engine
+    # 5. Marketing Analysis & Insights (strictly branch-filtered)
     # A) 10-Day Marketing Analysis
     t10_start = today - timedelta(days=9)
-    t10_new_members = Member.objects.filter(created_at__date__gte=t10_start, created_at__date__lte=today).count()
+    t10_new_members = base_members.filter(created_at__date__gte=t10_start, created_at__date__lte=today).count()
     p10_start = today - timedelta(days=19)
     p10_end = today - timedelta(days=10)
-    p10_new_members = Member.objects.filter(created_at__date__gte=p10_start, created_at__date__lte=p10_end).count()
+    p10_new_members = base_members.filter(created_at__date__gte=p10_start, created_at__date__lte=p10_end).count()
     marketing_growth_pct = calc_pct_growth(t10_new_members, p10_new_members)
 
+    branch_display_scope = f"فرع {active_branch.name}" if active_branch else "الفرع"
     if t10_new_members >= 10 or marketing_growth_pct >= 20:
         marketing_status = "success"
         marketing_badge = "أداء التسويق ممتاز ومتصاعد"
         marketing_analysis = (
-            f"سجلت الصالة {t10_new_members} مشترك جديد خلال آخر 10 أيام (+{marketing_growth_pct}% نمو مقارنة بـ {p10_new_members} في الـ 10 أيام السابقة). "
+            f"سجل {branch_display_scope} {t10_new_members} مشترك جديد خلال آخر 10 أيام (+{marketing_growth_pct}% نمو مقارنة بـ {p10_new_members} في الـ 10 أيام السابقة). "
             f"حملات الإعلانات واستقطاب المتدربين تسير بفعالية عالية؛ يُنصح بمواصلة الخطة الإعلانية مع تحفيز الاشتراكات الربع سنوية."
         )
     elif marketing_growth_pct >= -15:
         marketing_status = "warning"
         marketing_badge = "تدفق تسويقي مستقر"
         marketing_analysis = (
-            f"تم تسجيل {t10_new_members} مشترك جديد في آخر 10 أيام مقارنة بـ {p10_new_members} في الـ 10 أيام السابقة (تغيير {marketing_growth_pct}%). "
+            f"تم تسجيل {t10_new_members} مشترك جديد في {branch_display_scope} آخر 10 أيام مقارنة بـ {p10_new_members} في الـ 10 أيام السابقة (تغيير {marketing_growth_pct}%). "
             f"المعدل مستقر ولكنه يتطلب تنشيطاً تسويقياً عبر طرح عروض نهاية الأسبوع لتحفيز تسجيل أعضاء جدد."
         )
     else:
         marketing_status = "danger"
         marketing_badge = "تنبيه تسويقي: تراجع في المشتركين الجدد"
         marketing_analysis = (
-            f"سجلت الصالة {t10_new_members} مشترك جديد فقط في آخر 10 أيام (تراجع بنسبة {abs(marketing_growth_pct)}% عن الفترة السابقة). "
+            f"سجل {branch_display_scope} {t10_new_members} مشترك جديد فقط في آخر 10 أيام (تراجع بنسبة {abs(marketing_growth_pct)}% عن الفترة السابقة). "
             f"يُوصى بإطلاق حملة استقطاب ترويجية فورية (مثل باقة 'صديق التمرين' أو إعفاء من رسوم الاشتراك السنوية)."
         )
 
-    # B) Period-over-Period Quick Comparisons
+    # B) Period-over-Period Quick Comparisons (strictly branch-filtered)
     yesterday = today - timedelta(days=1)
     yesterday_revenue = (
-        Payment.objects.filter(created_at__date=yesterday).aggregate(Sum("amount"))["amount__sum"]
+        base_payments.filter(created_at__date=yesterday).aggregate(Sum("amount"))["amount__sum"]
         or Decimal("0.00")
     )
     day_comp_pct = calc_pct_growth(today_revenue, yesterday_revenue)
@@ -701,7 +726,7 @@ def manager_dashboard_view(request):
     prev_week_start = today - timedelta(days=13)
     prev_week_end = today - timedelta(days=7)
     prev_week_revenue = (
-        Payment.objects.filter(
+        base_payments.filter(
             created_at__date__gte=prev_week_start,
             created_at__date__lte=prev_week_end,
         ).aggregate(Sum("amount"))["amount__sum"]
@@ -712,7 +737,7 @@ def manager_dashboard_view(request):
     last_month_end = month_start - timedelta(days=1)
     last_month_start = last_month_end.replace(day=1)
     last_month_revenue = (
-        Payment.objects.filter(
+        base_payments.filter(
             created_at__date__gte=last_month_start,
             created_at__date__lte=last_month_end,
         ).aggregate(Sum("amount"))["amount__sum"]
@@ -720,18 +745,18 @@ def manager_dashboard_view(request):
     )
     month_comp_pct = calc_pct_growth(month_revenue, last_month_revenue)
 
-    # C) Enriched Domain-Specific Gym Business Advices
-    expiring_3_days_count = Member.objects.filter(
+    # C) Enriched Domain-Specific Gym Business Advices (strictly branch-filtered)
+    expiring_3_days_count = base_members.filter(
         last_subscription_end__gte=today,
         last_subscription_end__lte=today + timedelta(days=3),
     ).count()
 
-    expired_last_7_days = Member.objects.filter(
+    expired_last_7_days = base_members.filter(
         last_subscription_end__gte=today - timedelta(days=7),
         last_subscription_end__lt=today,
     ).count()
 
-    debtors_count = Member.objects.filter(current_remaining__gt=0).count()
+    debtors_count = base_members.filter(current_remaining__gt=0).count()
     avg_debt = round(total_remaining / max(1, debtors_count), 2) if total_remaining > 0 else Decimal("0.00")
 
     smart_insights = []
@@ -801,13 +826,13 @@ def manager_dashboard_view(request):
             ),
         })
 
-    # 6. Advanced Managerial Analytics: Separate Remaining Debts, Separate Discounts, Private Add-on, and Payroll
-    # A1) Remaining Debts (المتبقيات المستحقة للتحصيل - منفصلة تماماً عن الخصومات)
-    period_subs_qs = Subscription.objects.filter(
+    # 6. Advanced Managerial Analytics: Debts, Discounts, Private Add-on, and Payroll (strictly branch-filtered)
+    # A1) Remaining Debts
+    period_subs_qs = base_subscriptions.filter(
         created_at__date__gte=period_start,
         created_at__date__lte=period_end,
     )
-    month_subs_qs = Subscription.objects.filter(
+    month_subs_qs = base_subscriptions.filter(
         created_at__date__gte=month_start,
         created_at__date__lte=today,
     )
@@ -821,7 +846,7 @@ def manager_dashboard_view(request):
         or Decimal("0.00")
     )
 
-    # A2) Discounts Given (الخصومات الممنوحة - منفصلة تماماً عن المتبقيات)
+    # A2) Discounts Given
     period_discounts_lost = (
         period_subs_qs.aggregate(Sum("discount"))["discount__sum"]
         or Decimal("0.00")
@@ -834,7 +859,7 @@ def manager_dashboard_view(request):
     )
     month_discounted_subs_count = month_subs_qs.filter(discount__gt=0).count()
 
-    # A3) Clear Numerical Analytics (Revenue diffs, Top Plans, Payment Methods, Peak Hour)
+    # A3) Numerical Analytics
     day_rev_diff = today_revenue - yesterday_revenue
     week_rev_diff = week_revenue - prev_week_revenue
     month_rev_diff = month_revenue - last_month_revenue
@@ -850,7 +875,7 @@ def manager_dashboard_view(request):
         else Decimal("0")
     )
 
-    # Top Plans Breakdown (for selected period, or current month if period has no subscriptions yet)
+    # Top Plans Breakdown (branch-filtered)
     from django.db.models import Count
     plans_source_qs = period_subs_qs if period_subs_qs.exists() else month_subs_qs
     plans_source_label = period_title if period_subs_qs.exists() else "هذا الشهر"
@@ -870,7 +895,7 @@ def manager_dashboard_view(request):
             "pct": round((cnt / total_subs_for_plans) * 100),
         })
 
-    # Payment Methods Breakdown for the selected period
+    # Payment Methods Breakdown for the selected period (branch-filtered)
     raw_pay_methods = (
         period_payments.values("payment_method")
         .annotate(ops_count=Count("id"), total_amount=Sum("amount"))
@@ -887,14 +912,13 @@ def manager_dashboard_view(request):
             "pct": pct,
         })
 
-    # B) Private Add-on & Standalone Private Sessions Revenue & Breakdown
-    from apps.payroll.models import PrivateTrainingRecord, TrainerClientAssignment
-    period_private_subs = Subscription.objects.filter(
+    # B) Private Add-on & Standalone Private Sessions Revenue & Breakdown (branch-filtered)
+    period_private_subs = base_subscriptions.filter(
         created_at__date__gte=period_start,
         created_at__date__lte=period_end,
         has_private=True,
     )
-    period_standalone_sessions = PrivateTrainingRecord.objects.filter(
+    period_standalone_sessions = base_standalone_sessions.filter(
         standard_plan_price=Decimal("0.00"),
         created_at__date__gte=period_start,
         created_at__date__lte=period_end,
@@ -910,12 +934,12 @@ def manager_dashboard_view(request):
     )
     period_gym_private_profit = period_private_revenue - period_coaches_commission
 
-    month_private_subs = Subscription.objects.filter(
+    month_private_subs = base_subscriptions.filter(
         created_at__date__gte=month_start,
         created_at__date__lte=today,
         has_private=True,
     )
-    month_standalone_sessions = PrivateTrainingRecord.objects.filter(
+    month_standalone_sessions = base_standalone_sessions.filter(
         standard_plan_price=Decimal("0.00"),
         created_at__date__gte=month_start,
         created_at__date__lte=today,
@@ -938,10 +962,10 @@ def manager_dashboard_view(request):
     )
     total_payroll_liabilities = total_fixed_salaries + month_coaches_commission
 
-    # D) Coach Performance Summary Table (Monthly Private Subscribers + Unapproved Standalone Sessions)
+    # D) Coach Performance Summary Table (branch-filtered private trainees)
     coaches_summary = []
     for coach in active_trainers:
-        assigned_pts = Member.objects.filter(assigned_coach=coach, has_private=True)
+        assigned_pts = base_members.filter(assigned_coach=coach, has_private=True)
         coach_pt_count = assigned_pts.count()
         default_comm_rate = (coach.commission_percentage or Decimal("50.00")) / Decimal("100.00")
 
@@ -954,7 +978,7 @@ def manager_dashboard_view(request):
             coach_pt_revenue += m_price
             coach_pt_commission += (m_price * m_rate).quantize(Decimal("0.01"))
 
-        standalone_qs = PrivateTrainingRecord.objects.filter(
+        standalone_qs = base_standalone_sessions.filter(
             trainer=coach,
             standard_plan_price=Decimal("0.00"),
             is_counted_in_payroll=False,
@@ -975,9 +999,8 @@ def manager_dashboard_view(request):
             "total_due": coach_total_due,
         })
 
-    # E) Bar & Inventory Revenue in Period
-    from apps.payments.models import BarSale
-    period_bar_sales = BarSale.objects.filter(
+    # E) Bar & Inventory Revenue in Period (branch-filtered)
+    period_bar_sales = base_bar_sales.filter(
         created_at__date__gte=period_start,
         created_at__date__lte=period_end,
     )
@@ -990,6 +1013,8 @@ def manager_dashboard_view(request):
 
     context = {
         "gym_profile": gym_profile,
+        "active_branch": active_branch,
+        "active_branch_display": active_branch_display,
         "period_bar_revenue": period_bar_revenue,
         "period_bar_unpaid": period_bar_unpaid,
         "period_bar_ops_count": period_bar_ops_count,
@@ -1078,6 +1103,7 @@ def manager_dashboard_view(request):
         "total_payroll_liabilities": total_payroll_liabilities,
         "coaches_summary": coaches_summary,
         "recent_audit_logs": recent_audit_logs,
+        "all_branches": Branch.objects.filter(is_active=True),
     }
     return render(request, "core/manager_dashboard.html", context)
 

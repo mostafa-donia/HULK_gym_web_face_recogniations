@@ -5,21 +5,67 @@
 {% block content %}
 <div class="manager-dashboard-container" style="display: flex; flex-direction: column; gap: 16px;">
 
-  <!-- ==================== 1. UNIFIED HEADER & PERIOD TOOLBAR ==================== -->
+  <!-- ==================== 1. UNIFIED EXECUTIVE HEADER & TOOLBAR ==================== -->
   <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 14px;">
     
-    <!-- Top Row: Title + Quick Navigation & WhatsApp/PDF Actions -->
+    <!-- Top Row: Title, Branch Badge, Period Badge + Action Buttons -->
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <h1 style="color: var(--text-main); font-size: 1.45rem; font-weight: 900; margin: 0;">
-          📊 لوحة المدير
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <h1 style="color: var(--text-main); font-size: 1.45rem; font-weight: 900; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>📊 لوحة المدير التنفيذية</span>
         </h1>
+        
+        <!-- Active Branch Indicator / Switcher -->
+        {% if user.is_owner and all_branches %}
+          <div class="branch-switcher-wrapper" style="position: relative; display: inline-flex; align-items: center;">
+            <button type="button" onclick="toggleMgrBranchDropdown(event)" 
+                    style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid rgba(77, 179, 255, 0.4); background: rgba(77, 179, 255, 0.12); border-radius: 999px; color: #38bdf8; font-weight: 800; font-size: 0.82rem; transition: all 0.2s;"
+                    title="التبديل بين فروع الصالة">
+              <span>🏢</span>
+              <span>{{ active_branch_display|default:"الفرع الرئيسي" }}</span>
+              <span style="font-size: 0.65rem; opacity: 0.85;">▼</span>
+            </button>
+            <div id="mgrBranchDropdownMenu" 
+                 style="display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 210px; background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); z-index: 1000; overflow: hidden; padding: 5px;">
+              <a href="{% url 'accounts:switch_branch' 'all' %}" 
+                 style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 6px; color: {% if not active_branch %}#38bdf8{% else %}#E2E8F0{% endif %}; font-weight: 700; font-size: 0.82rem; text-decoration: none;">
+                 <span>🌐 كافة الفروع (مجمّع)</span>
+                 {% if not active_branch %}<span style="color: #38bdf8; font-weight: 900;">✓</span>{% endif %}
+              </a>
+              <div style="height: 1px; background: rgba(255,255,255,0.08); margin: 3px 0;"></div>
+              {% for b in all_branches %}
+              <a href="{% url 'accounts:switch_branch' b.id %}" 
+                 style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 6px; color: {% if active_branch.id == b.id %}#38bdf8{% else %}#CBD5E1{% endif %}; font-weight: 700; font-size: 0.82rem; text-decoration: none;">
+                 <span>📍 {{ b.name }}</span>
+                 {% if active_branch.id == b.id %}<span style="color: #38bdf8; font-weight: 900;">✓</span>{% endif %}
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+          <script>
+            function toggleMgrBranchDropdown(e) {
+              if (e) e.stopPropagation();
+              const m = document.getElementById('mgrBranchDropdownMenu');
+              if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
+            }
+            document.addEventListener('click', function(e) {
+              const m = document.getElementById('mgrBranchDropdownMenu');
+              if (m && !m.contains(e.target)) m.style.display = 'none';
+            });
+          </script>
+        {% else %}
+          <span style="background: rgba(77, 179, 255, 0.12); color: #38bdf8; border: 1px solid rgba(77, 179, 255, 0.3); padding: 4px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;">
+            🏢 {{ active_branch_display|default:"الفرع الرئيسي" }}
+          </span>
+        {% endif %}
+
+        <!-- Period Title Badge -->
         <span style="background: rgba(168, 241, 75, 0.12); color: #A8F14B; border: 1px solid rgba(168, 241, 75, 0.3); padding: 4px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 800;">
-          {{ period_title }}
+          📅 {{ period_title }}
         </span>
       </div>
 
-      <!-- Quick Links & Export Actions -->
+      <!-- Quick Action Buttons -->
       <div class="no-print" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
         <button type="button" onclick="openManagerReportModal()" class="btn btn-sm" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; background: #22c55e; color: #052e16; font-weight: 900; border: none; border-radius: 8px; cursor: pointer;">
           📱 تقرير الواتساب للمدير
@@ -34,40 +80,37 @@
         </a>
 
         <a href="{% url 'payroll:payroll_runs' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
-          💼 رواتب الشهر
+          💼 مسير الرواتب
         </a>
 
         <a href="{% url 'reports:financial_report' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
           📑 التقارير المالية
         </a>
-
-        <a href="{% url 'reports:member_retention' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; border-color: #10B981; color: #10B981;">
-          🔄 حركة واحتفاظ الأعضاء
-        </a>
       </div>
     </div>
 
-    <!-- Bottom Row: Fast Period Selector Bar -->
-    <div class="no-print" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--border-color);">
-      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 700; margin-left: 4px;">الفترة الزمنية:</span>
+    <!-- Bottom Row: Period Filter Buttons & Quick Summary Strip -->
+    <div class="no-print" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--border-color);">
+      <!-- Filter Segmented Buttons -->
+      <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 700; margin-left: 4px;">الفترة:</span>
 
-        <a href="?period=today" class="btn btn-sm {% if period == 'today' %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 34px; padding: 0 16px; font-weight: 800;">
-          تقرير اليوم
+        <a href="?period=today" class="btn btn-sm {% if period == 'today' %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 34px; padding: 0 14px; font-weight: 800;">
+          اليوم
         </a>
 
-        <a href="?period=week" class="btn btn-sm {% if period == 'week' %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 34px; padding: 0 16px; font-weight: 800;">
-          تقرير الأسبوع
+        <a href="?period=week" class="btn btn-sm {% if period == 'week' %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 34px; padding: 0 14px; font-weight: 800;">
+          هذا الأسبوع
         </a>
 
-        <a href="?period=month" class="btn btn-sm {% if period == 'month' and not selected_month %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 34px; padding: 0 16px; font-weight: 800;">
-          تقرير الشهر
+        <a href="?period=month" class="btn btn-sm {% if period == 'month' and not selected_month %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 34px; padding: 0 14px; font-weight: 800;">
+          هذا الشهر
         </a>
 
         <form method="GET" action="" style="margin: 0; display: inline-block;">
           <input type="hidden" name="period" value="month">
-          <select name="selected_month" onchange="this.form.submit()" class="form-control" style="height: 34px; padding: 0 12px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-block; width: auto;">
-            <option value="">{{ current_month_badge }}</option>
+          <select name="selected_month" onchange="this.form.submit()" class="form-control" style="height: 34px; padding: 0 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-block; width: auto;">
+            <option value="">{{ current_month_badge }} (الحالي)</option>
             {% for m in months_choices %}
               <option value="{{ m.value }}" {% if selected_month == m.value %}selected{% endif %}>{{ m.label }}</option>
             {% endfor %}
@@ -75,14 +118,14 @@
         </form>
 
         <a href="?period=compare" class="btn btn-sm {% if period == 'compare' %}btn-primary{% else %}btn-secondary{% endif %}" style="height: 34px; padding: 0 14px; font-weight: 800;">
-          ⚖️ مقارنة فترتين
+          ⚖️ مقارنة فترات
         </a>
       </div>
 
-      <!-- Quick Revenue Strip (Today / Week / Month always visible) -->
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 0.84rem;">
+      <!-- Quick Revenue Strip -->
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.82rem;">
         <span style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; color: var(--text-muted);">
-          إيراد اليوم: <strong style="color: var(--text-main);">{{ today_revenue }} {{ gym_profile.currency|default:"ج" }}</strong> ({{ today_ops_count }} عملية)
+          اليوم: <strong style="color: var(--accent-green);">{{ today_revenue }} {{ gym_profile.currency|default:"ج" }}</strong> ({{ today_ops_count }} عملية)
         </span>
         <span style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; color: var(--text-muted);">
           الأسبوع: <strong style="color: var(--text-main);">{{ week_revenue }} {{ gym_profile.currency|default:"ج" }}</strong>
@@ -95,124 +138,108 @@
 
   </div>
 
-  <!-- ==================== 2. COMPACT 5-CARD EXECUTIVE KPI SUMMARY (SEPARATED DEBTS & DISCOUNTS) ==================== -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 12px;" class="exec-kpi-grid">
+  <!-- ==================== 2. THE 4 EXECUTIVE HERO KPI CARDS ==================== -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px;" class="exec-kpi-grid">
 
-    <!-- Card 1: Net Cash & Revenue of Selected Period -->
-    <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.35); border-radius: 12px; padding: 15px 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+    <!-- Card 1: Net Cashflow (صافي الخزينة) -->
+    <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.35); border-radius: 12px; padding: 18px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
-          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">صافي الخزينة ({{ period_title }})</span>
-          <div style="color: {% if period_net >= 0 %}#A8F14B{% else %}#FF5C67{% endif %}; font-size: 1.65rem; font-weight: 900; line-height: 1.15; margin-top: 4px;">
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">💰 صافي الخزينة ({{ period_title }})</span>
+          <div style="color: {% if period_net >= 0 %}#A8F14B{% else %}#FF5C67{% endif %}; font-size: 1.85rem; font-weight: 900; line-height: 1.15; margin-top: 6px;">
             {{ period_net }} <small style="font-size: 0.85rem; font-weight: 700;">{{ gym_profile.currency|default:"ج" }}</small>
           </div>
         </div>
-        <span style="font-size: 1.3rem;">💰</span>
+        <span style="background: rgba(168, 241, 75, 0.12); padding: 8px; border-radius: 10px; font-size: 1.3rem;">💵</span>
       </div>
-      <div style="display: flex; justify-content: space-between; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border-color); font-size: 0.78rem; flex-wrap: wrap;">
-        <span style="color: var(--text-muted);">الإيراد: <strong style="color: var(--accent-green);">{{ period_total_revenue }} ج</strong></span>
-        <span style="color: var(--text-muted);">المصروف: <strong style="color: var(--accent-red);">{{ period_expenses }} ج</strong></span>
-        <span style="color: var(--text-muted);">العمليات: <strong style="color: var(--text-main);">{{ period_ops_count }}</strong></span>
+      <div style="display: flex; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 0.8rem; flex-wrap: wrap;">
+        <span style="color: var(--text-muted);">الإيرادات: <strong style="color: var(--accent-green);">+{{ period_total_revenue }} ج</strong></span>
+        <span style="color: var(--text-muted);">المصروفات: <strong style="color: var(--accent-red);">-{{ period_expenses }} ج</strong></span>
       </div>
     </div>
 
-    <!-- Card 2: Members & Subscriptions Status -->
-    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+    <!-- Card 2: Total Revenue & Ops (إجمالي المقبوضات والعمليات) -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
-          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">الأعضاء النشطين / الإجمالي</span>
-          <div style="color: var(--text-main); font-size: 1.65rem; font-weight: 900; line-height: 1.15; margin-top: 4px;">
-            <span style="color: #4DB3FF;">{{ active_members }}</span>
-            <small style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600;">/ {{ total_members }} عضو</small>
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">💳 إجمالي المقبوضات المحصلة</span>
+          <div style="color: var(--text-main); font-size: 1.85rem; font-weight: 900; line-height: 1.15; margin-top: 6px;">
+            {{ period_total_revenue }} <small style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
           </div>
         </div>
-        <span style="font-size: 1.3rem;">👥</span>
+        <span style="background: var(--bg-surface-subtle); padding: 8px; border-radius: 10px; font-size: 1.3rem;">🧾</span>
       </div>
-      <div style="display: flex; justify-content: space-between; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border-color); font-size: 0.78rem; flex-wrap: wrap;">
-        <span style="color: var(--text-muted);">جدد: <strong style="color: var(--accent-green);">{{ period_new_members }}</strong></span>
-        <span style="color: var(--text-muted);">تجديدات: <strong style="color: #4DB3FF;">{{ period_renewals }}</strong></span>
+      <div style="display: flex; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 0.8rem; flex-wrap: wrap;">
+        <span style="color: var(--text-muted);">العمليات المسجلة: <strong style="color: var(--text-main);">{{ period_ops_count }} عملية</strong></span>
+        <span style="color: var(--text-muted);">متوسط العملية: <strong style="color: var(--text-main);">{{ avg_payment_amount }} ج</strong></span>
+      </div>
+    </div>
+
+    <!-- Card 3: Branch Members Health (أعضاء الفرع والنشاط) -->
+    <div style="background: var(--bg-card); border: 1px solid rgba(77, 179, 255, 0.35); border-radius: 12px; padding: 18px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">👥 أعضاء الفرع النشطين</span>
+          <div style="color: var(--text-main); font-size: 1.85rem; font-weight: 900; line-height: 1.15; margin-top: 6px;">
+            <span style="color: #38bdf8;">{{ active_members }}</span>
+            <small style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600;">/ {{ total_members }} بالفرع</small>
+          </div>
+        </div>
+        <span style="background: rgba(77, 179, 255, 0.12); padding: 8px; border-radius: 10px; font-size: 1.3rem;">🏋️</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; gap: 6px; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 0.8rem; flex-wrap: wrap;">
+        <span style="color: var(--text-muted);">جدد بالفترة: <strong style="color: var(--accent-green);">+{{ period_new_members }}</strong></span>
+        <span style="color: var(--text-muted);">تجديدات: <strong style="color: #38bdf8;">{{ period_renewals }}</strong></span>
         <span style="color: var(--text-muted);">منتهي: <strong style="color: var(--accent-red);">{{ expired_members }}</strong></span>
       </div>
     </div>
 
-    <!-- Card 3: Private Training, Commissions & Payroll -->
-    <div style="background: var(--bg-card); border: 1px solid rgba(77, 179, 255, 0.3); border-radius: 12px; padding: 15px 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+    <!-- Card 4: Uncollected Debts (المتبقيات والديون) -->
+    <div style="background: var(--bg-card); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 12px; padding: 18px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
-          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">إيراد البرايفت ({{ period_private_count }} اشتراك)</span>
-          <div style="color: #4DB3FF; font-size: 1.65rem; font-weight: 900; line-height: 1.15; margin-top: 4px;">
-            {{ period_private_revenue }} <small style="font-size: 0.85rem; font-weight: 700;">{{ gym_profile.currency|default:"ج" }}</small>
-          </div>
-        </div>
-        <span style="font-size: 1.3rem;">🏋️‍♂️</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border-color); font-size: 0.78rem; flex-wrap: wrap;">
-        <span style="color: var(--text-muted);">عمولة الكباتن: <strong style="color: #4DB3FF;">{{ period_coaches_commission }} ج</strong></span>
-        <span style="color: var(--text-muted);">ربح الصالة: <strong style="color: var(--accent-green);">{{ period_gym_private_profit }} ج</strong></span>
-      </div>
-    </div>
-
-    <!-- Card 4: Remaining Debts ONLY (إجمالي المتبقيات - ديون الأعضاء المستحقة للتحصيل) -->
-    <div style="background: var(--bg-card); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 12px; padding: 15px 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">إجمالي المتبقي (ديون الأعضاء)</span>
-          <div style="color: #f59e0b; font-size: 1.65rem; font-weight: 900; line-height: 1.15; margin-top: 4px;">
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">⚠️ متبقيات ديون الأعضاء</span>
+          <div style="color: #f59e0b; font-size: 1.85rem; font-weight: 900; line-height: 1.15; margin-top: 6px;">
             {{ total_remaining }} <small style="font-size: 0.85rem; font-weight: 700;">{{ gym_profile.currency|default:"ج" }}</small>
           </div>
         </div>
-        <a href="{% url 'members:member_list' %}?filter=debt" style="background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.35); color: #fbbf24; font-size: 0.74rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-decoration: none;" title="عرض قائمة الأعضاء الذين عليهم مبالغ متبقية">
+        <a href="{% url 'members:member_list' %}?filter=debt" style="background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.35); color: #fbbf24; font-size: 0.74rem; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-decoration: none;" title="عرض الأعضاء المدينين">
           {{ debtors_count }} مدين ↗
         </a>
       </div>
-      <div style="display: flex; justify-content: space-between; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border-color); font-size: 0.78rem; flex-wrap: wrap;">
+      <div style="display: flex; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 0.8rem; flex-wrap: wrap;">
         <span style="color: var(--text-muted);">متبقي بالفترة: <strong style="color: #f59e0b;">{{ period_remaining_created }} ج</strong></span>
         <span style="color: var(--text-muted);">تم تحصيله: <strong style="color: var(--accent-green);">{{ period_remaining_collected }} ج</strong></span>
       </div>
     </div>
 
-    <!-- Card 5: Discounts ONLY (إجمالي الخصومات الممنوحة - منفصلة تماماً عن المتبقيات) -->
-    <div style="background: var(--bg-card); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 12px; padding: 15px 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">إجمالي الخصومات (الفترة)</span>
-          <div style="color: #FF5C67; font-size: 1.65rem; font-weight: 900; line-height: 1.15; margin-top: 4px;">
-            {{ period_discounts_lost }} <small style="font-size: 0.85rem; font-weight: 700;">{{ gym_profile.currency|default:"ج" }}</small>
-          </div>
-        </div>
-        <span style="background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; font-size: 0.74rem; font-weight: 800; padding: 3px 8px; border-radius: 6px;">
-          {{ period_discounted_subs_count }} اشتراك بخصم
-        </span>
-      </div>
-      <div style="display: flex; justify-content: space-between; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border-color); font-size: 0.78rem; flex-wrap: wrap;">
-        <span style="color: var(--text-muted);">إجمالي خصومات الشهر: <strong style="color: #FF5C67;">{{ month_discounts_lost }} ج</strong></span>
-        <span style="color: var(--text-muted);">({{ month_discounted_subs_count }} اشتراك)</span>
-      </div>
+  </div>
+
+  <!-- ==================== 3. CLEAN FINANCIAL SUB-STRIP ==================== -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; font-size: 0.85rem;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="color: var(--text-muted);">🏋️‍♂️ <strong>تدريب خاص (برايفت):</strong></span>
+      <span style="color: #38bdf8; font-weight: 800;">{{ period_private_revenue }} {{ gym_profile.currency|default:"ج" }}</span>
+      <span style="color: var(--text-muted); font-size: 0.78rem;">(عمولة الكباتن: <strong style="color: #38bdf8;">{{ period_coaches_commission }} ج</strong> | صافي الصالة: <strong style="color: var(--accent-green);">{{ period_gym_private_profit }} ج</strong>)</span>
     </div>
 
-    <!-- Card 6: Bar & Snacks Sales (مبيعات البار والمشروبات) -->
-    <div style="background: var(--bg-card); border: 1px solid rgba(14, 165, 233, 0.35); border-radius: 12px; padding: 15px 16px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-        <div>
-          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">مبيعات البار المحصلة (الفترة)</span>
-          <div style="color: #38bdf8; font-size: 1.65rem; font-weight: 900; line-height: 1.15; margin-top: 4px;">
-            {{ period_bar_revenue }} <small style="font-size: 0.85rem; font-weight: 700;">{{ gym_profile.currency|default:"ج" }}</small>
-          </div>
-        </div>
-        <a href="{% url 'payments:bar_inventory' %}" style="background: rgba(14, 165, 233, 0.14); border: 1px solid rgba(14, 165, 233, 0.3); color: #38bdf8; font-size: 0.74rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; text-decoration: none;">
-          {{ period_bar_ops_count }} طلب بار ←
-        </a>
-      </div>
-      <div style="display: flex; justify-content: space-between; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border-color); font-size: 0.78rem; flex-wrap: wrap;">
-        <span style="color: var(--text-muted);">آجل البار المعلق (لم يُدفع): <strong style="color: #c084fc;">{{ period_bar_unpaid }} ج</strong></span>
-        <a href="{% url 'payments:bar_inventory' %}?filter=unpaid" style="color: #c084fc; font-weight: 700; text-decoration: none;">عرض الآجل</a>
-      </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="color: var(--text-muted);">🥤 <strong>مبيعات البار:</strong></span>
+      <span style="color: #38bdf8; font-weight: 800;">{{ period_bar_revenue }} {{ gym_profile.currency|default:"ج" }}</span>
+      {% if period_bar_unpaid > 0 %}
+        <span style="color: #c084fc; font-size: 0.78rem;">(معلق آجل: <strong>{{ period_bar_unpaid }} ج</strong>)</span>
+      {% endif %}
     </div>
 
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="color: var(--text-muted);">🎁 <strong>الخصومات الممنوحة:</strong></span>
+      <span style="color: #FF5C67; font-weight: 800;">{{ period_discounts_lost }} {{ gym_profile.currency|default:"ج" }}</span>
+      <span style="color: var(--text-muted); font-size: 0.78rem;">(على {{ period_discounted_subs_count }} اشتراك)</span>
+    </div>
   </div>
 
   {% if period == 'compare' and comparison_data %}
-  <!-- ==================== PERIOD COMPARISON MODE (AI ANALYTICS) ==================== -->
+  <!-- ==================== PERIOD COMPARISON MODE ==================== -->
   <div class="card no-print" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px; box-shadow: var(--shadow-sm);">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
       <h3 style="margin: 0; color: var(--text-main); font-size: 1.1rem; font-weight: 800;">
@@ -254,7 +281,7 @@
     </form>
   </div>
 
-  <!-- Comparison Metrics Scorecards (6 Cards) -->
+  <!-- Comparison Metrics Scorecards -->
   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;" class="metric-grid-3x3">
     <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -297,7 +324,7 @@
 
     <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px 16px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-        <span style="color: var(--text-muted); font-size: 0.86rem; font-weight: 700;">مشتركون جدد</span>
+        <span style="color: var(--text-muted); font-size: 0.86rem; font-weight: 700;">مشتركون جدد بالفرع</span>
         <span style="font-size: 0.8rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; {% if comparison_data.new_members_pct >= 0 %}background: var(--status-active-bg); color: var(--accent-green);{% else %}background: var(--status-expired-bg); color: var(--accent-red);{% endif %}">
           {% if comparison_data.new_members_pct >= 0 %}+{% endif %}{{ comparison_data.new_members_pct }}%
         </span>
@@ -344,11 +371,16 @@
   </div>
   {% endif %}
 
-  <!-- ==================== 3. FAST INTERACTIVE TABS BAR ==================== -->
+  <!-- ==================== 4. CLEAR, INTUITIVE TABS BAR ==================== -->
   <div class="no-print" style="display: flex; gap: 8px; flex-wrap: wrap; background: var(--bg-card); border: 1px solid var(--border-color); padding: 8px; border-radius: 12px;">
     <button type="button" class="mgr-tab-btn active" onclick="switchMgrTab('operations', this)">
       💳 العمليات والمقبوضات
       <span class="tab-count">{{ period_ops_count }}</span>
+    </button>
+
+    <button type="button" class="mgr-tab-btn" onclick="switchMgrTab('members-plans', this)">
+      👥 حالة الأعضاء والباقات
+      <span class="tab-count">{{ period_new_members }} جديد</span>
     </button>
 
     <button type="button" class="mgr-tab-btn" onclick="switchMgrTab('coaches', this)">
@@ -358,12 +390,12 @@
 
     {% if period != 'compare' %}
     <button type="button" class="mgr-tab-btn" onclick="switchMgrTab('analytics', this)">
-      📈 الإحصائيات والرسوم البيانية
+      📈 الرسوم البيانية وأوقات الذروة
     </button>
     {% endif %}
 
     <button type="button" class="mgr-tab-btn" onclick="switchMgrTab('audit', this)">
-      🚨 سجل الرقابة والخصومات
+      🛡️ سجل الرقابة والخصومات
       <span class="tab-count">{{ recent_audit_logs|length }}</span>
     </button>
   </div>
@@ -372,21 +404,23 @@
   <div id="mgr-tab-operations" class="mgr-tab-panel active">
     <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow-sm);">
       
-      <!-- Header + Instant Search & Filter -->
+      <!-- Table Header & Quick Search -->
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
         <div>
           <h2 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0;">
             💳 سجل العمليات والمقبوضات ({{ period_title }})
           </h2>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">خاص بـ {{ active_branch_display }} — إجمالي {{ period_ops_count }} عملية</span>
         </div>
 
         <div class="no-print" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          <input type="text" id="opsSearchInput" oninput="filterOpsTable()" placeholder="🔍 بحث باسم العضو أو الموبايل..." class="form-control" style="height: 34px; width: 220px; font-size: 0.85rem; padding: 0 12px;">
+          <input type="text" id="opsSearchInput" oninput="filterOpsTable()" placeholder="🔍 بحث باسم العضو أو الهاتف..." class="form-control" style="height: 34px; width: 220px; font-size: 0.85rem; padding: 0 12px;">
           <select id="opsTypeFilter" onchange="filterOpsTable()" class="form-control" style="height: 34px; width: auto; font-size: 0.85rem; padding: 0 10px; font-weight: 700;">
             <option value="">كل العمليات</option>
             <option value="new">اشتراك جديد</option>
             <option value="renewal">تجديد</option>
             <option value="remaining">سداد متبقي</option>
+            <option value="bar_sale">مبيعات البار</option>
           </select>
         </div>
       </div>
@@ -396,12 +430,12 @@
         <table class="dark-table" id="opsTable">
           <thead>
             <tr>
-              <th>العضو</th>
+              <th>العضو / العميل</th>
               <th style="text-align: left;">المبلغ المحصل</th>
               <th>نوع العملية</th>
               <th>طريقة الدفع</th>
               <th>الوقت</th>
-              <th>الموظف</th>
+              <th>الموظف المسؤول</th>
             </tr>
           </thead>
           <tbody>
@@ -449,15 +483,129 @@
         </table>
       </div>
       {% else %}
-      <div style="text-align: center; color: var(--text-muted); padding: 32px 20px;">
-        <p style="font-size: 1rem; margin: 0 0 4px 0;">لا توجد عمليات أو مقبوضات مسجلة خلال هذه الفترة.</p>
-        <span style="font-size: 0.84rem;">يمكنك اختيار فترة أخرى من الشريط العلوي.</span>
+      <div style="text-align: center; color: var(--text-muted); padding: 36px 20px;">
+        <p style="font-size: 1rem; margin: 0 0 4px 0;">لا توجد عمليات أو مقبوضات مسجلة في هذا الفرع خلال الفترة المحددة.</p>
+        <span style="font-size: 0.84rem;">يمكنك اختيار فترة زمنية أخرى من الشريط العلوي.</span>
       </div>
       {% endif %}
     </div>
   </div>
 
-  <!-- ==================== TAB 2: COACHES PERFORMANCE & SALARIES ==================== -->
+  <!-- ==================== TAB 2: MEMBERS HEALTH & PLANS BREAKDOWN ==================== -->
+  <div id="mgr-tab-members-plans" class="mgr-tab-panel">
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+
+      <!-- 3 Direct Actionable Alerts -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
+        
+        <!-- 1. Expiring within 3 days -->
+        <div style="background: var(--bg-card); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">⏰ تنتهي اشتراكاتهم خلال 72 ساعة</span>
+            <span style="font-size: 1.1rem;">⏳</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #fbbf24; font-size: 1.6rem; font-weight: 900;">{{ expiring_3_days_count }} <small style="font-size: 0.84rem; color: var(--text-muted);">عضو بالفرع</small></strong>
+            <a href="{% url 'members:member_list' %}?filter=expiring_soon" class="btn btn-secondary btn-sm" style="font-size: 0.78rem; padding: 4px 10px; font-weight: 800;">
+              عرض الأسماء ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- 2. Expired in last 7 days -->
+        <div style="background: var(--bg-card); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">🔔 انتهت عضويتهم هذا الأسبوع ولم يجددوا</span>
+            <span style="font-size: 1.1rem;">⚠️</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #f87171; font-size: 1.6rem; font-weight: 900;">{{ expired_last_7_days }} <small style="font-size: 0.84rem; color: var(--text-muted);">عضو بالفرع</small></strong>
+            <a href="{% url 'messaging:whatsapp_queue' %}" class="btn btn-secondary btn-sm" style="font-size: 0.78rem; padding: 4px 10px; font-weight: 800;">
+              إرسال تذكير واتساب ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- 3. New Members in Branch -->
+        <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.35); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">🌟 مشتركون جدد في الفرع</span>
+            <span style="font-size: 0.78rem; font-weight: 800; color: #4ade80;">هذا الشهر: {{ new_members_month }}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #A8F14B; font-size: 1.6rem; font-weight: 900;">{{ t10_new_members }} <small style="font-size: 0.84rem; color: var(--text-muted);">مشترك في آخر 10 أيام</small></strong>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">السابق: {{ p10_new_members }}</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Top Plans Breakdown & Payment Methods Breakdown -->
+      <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px;" class="charts-row-grid">
+        
+        <!-- Top Subscription Plans -->
+        <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+            <h3 style="margin: 0; color: var(--text-main); font-size: 1rem; font-weight: 800;">🏆 أكثر الباقات طلباً بالفرع ({{ plans_source_label }})</h3>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">حسب المشتركين</span>
+          </div>
+          {% if top_plans %}
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for tp in top_plans %}
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.86rem; margin-bottom: 5px;">
+                <strong style="color: var(--text-main);">{{ tp.plan_name }}</strong>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                  <span style="color: #38bdf8; font-weight: 800;">{{ tp.subs_count }} مشترك ({{ tp.pct }}%)</span>
+                  <span style="color: #A8F14B; font-weight: 800;">{{ tp.total_paid }} {{ gym_profile.currency|default:"ج" }}</span>
+                </div>
+              </div>
+              <div style="height: 6px; width: 100%; background: var(--bg-surface-subtle); border-radius: 999px; overflow: hidden;">
+                <div style="height: 100%; width: {{ tp.pct }}%; background: linear-gradient(90deg, #84cc16, #38bdf8); border-radius: 999px;"></div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 24px 0;">
+            لا توجد اشتراكات مسجلة في هذا الفرع خلال الفترة المحددة.
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Payment Methods Breakdown -->
+        <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
+            <h3 style="margin: 0; color: var(--text-main); font-size: 1rem; font-weight: 800;">💳 توزيع طرق الدفع ({{ period_title }})</h3>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">نقدي / إلكتروني</span>
+          </div>
+          {% if payment_methods_breakdown %}
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for pm in payment_methods_breakdown %}
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.86rem; margin-bottom: 5px;">
+                <strong style="color: var(--text-main);">{{ pm.method }} <small style="color: var(--text-muted); font-weight: 600;">({{ pm.ops_count }} عملية)</small></strong>
+                <span style="color: #A8F14B; font-weight: 800;">{{ pm.total_amount }} {{ gym_profile.currency|default:"ج" }} ({{ pm.pct }}%)</span>
+              </div>
+              <div style="height: 6px; width: 100%; background: var(--bg-surface-subtle); border-radius: 999px; overflow: hidden;">
+                <div style="height: 100%; width: {{ pm.pct }}%; background: #A8F14B; border-radius: 999px;"></div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 24px 0;">
+            لا توجد مقبوضات مسجلة في هذا الفرع خلال الفترة.
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== TAB 3: COACHES PERFORMANCE & SALARIES ==================== -->
   <div id="mgr-tab-coaches" class="mgr-tab-panel">
     <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow-sm);">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 14px;">
@@ -465,6 +613,7 @@
           <h2 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0;">
             🏋️‍♂️ كشف أداء الكباتن ومستحقات الرواتب والتدريب الخاص
           </h2>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">متدربو البرايفت والعمولات الخاصة بـ {{ active_branch_display }}</span>
         </div>
         <a href="{% url 'payroll:trainers_index' %}" class="btn btn-primary btn-sm" style="font-weight: 800;">
           فتح إدارة المدربين الكاملة ←
@@ -479,8 +628,8 @@
               <th>اسم الكابتن</th>
               <th>الراتب الثابت</th>
               <th>نسبة العمولة</th>
-              <th>متدربو البرايفت</th>
-              <th>إجمالي دخل البرايفت</th>
+              <th>متدربو البرايفت بالفرع</th>
+              <th>دخل البرايفت</th>
               <th>عمولة الكابتن</th>
               <th>إجمالي المستحق</th>
               <th class="no-print">إجراءات سريعة</th>
@@ -507,7 +656,7 @@
               <td style="color: #A8F14B; font-weight: 800;">
                 {{ row.private_revenue }} {{ gym_profile.currency|default:"ج" }}
               </td>
-              <td style="color: #4DB3FF; font-weight: 800;">
+              <td style="color: #38bdf8; font-weight: 800;">
                 {{ row.commission_amount }} {{ gym_profile.currency|default:"ج" }}
               </td>
               <td style="color: #A8F14B; font-size: 1.1rem; font-weight: 900;">
@@ -529,25 +678,25 @@
         </table>
       </div>
       {% else %}
-      <div style="text-align: center; color: var(--text-muted); padding: 24px;">
-        لا يوجد مدربين نشطين مسجلين حالياً.
+      <div style="text-align: center; color: var(--text-muted); padding: 28px;">
+        لا يوجد مدربين مسجلين حالياً.
       </div>
       {% endif %}
     </div>
   </div>
 
-  <!-- ==================== TAB 3: CLEAN NUMERICAL ANALYTICS & CHARTS ==================== -->
+  <!-- ==================== TAB 4: CHARTS & PEAK HOURS ==================== -->
   {% if period != 'compare' %}
   <div id="mgr-tab-analytics" class="mgr-tab-panel">
     <div style="display: flex; flex-direction: column; gap: 14px;">
 
-      <!-- Row 1: Fast Revenue Comparison Cards (Today vs Yesterday / Week vs Last Week / Month vs Last Month) -->
+      <!-- Row 1: Fast Revenue Comparison Cards -->
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;" class="period-comp-grid">
         
         <!-- Today vs Yesterday -->
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">إيراد اليوم مقارنة بالأمس</span>
+            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">إيراد اليوم مقابل الأمس</span>
             <span style="font-size: 0.78rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; {% if today_revenue >= yesterday_revenue %}background: rgba(34, 197, 94, 0.14); color: #4ade80;{% else %}background: rgba(239, 68, 68, 0.14); color: #f87171;{% endif %}">
               {% if today_revenue >= yesterday_revenue %}▲ +{% else %}▼ {% endif %}{{ day_comp_pct }}%
             </span>
@@ -561,159 +710,38 @@
         <!-- This Week vs Previous Week -->
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">إيراد آخر 7 أيام مقارنة بالسابق</span>
+            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">آخر 7 أيام مقابل السابقة</span>
             <span style="font-size: 0.78rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; {% if week_revenue >= prev_week_revenue %}background: rgba(34, 197, 94, 0.14); color: #4ade80;{% else %}background: rgba(239, 68, 68, 0.14); color: #f87171;{% endif %}">
               {% if week_revenue >= prev_week_revenue %}▲ +{% else %}▼ {% endif %}{{ week_comp_pct }}%
             </span>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;">
             <strong style="color: var(--text-main); font-size: 1.45rem; font-weight: 900;">{{ week_revenue }} <small style="font-size: 0.8rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small></strong>
-            <span style="color: var(--text-muted); font-size: 0.82rem;">الأسبوع السابق: <strong>{{ prev_week_revenue }} ج</strong></span>
+            <span style="color: var(--text-muted); font-size: 0.82rem;">السابق: <strong>{{ prev_week_revenue }} ج</strong></span>
           </div>
         </div>
 
         <!-- This Month vs Last Month -->
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">إيراد الشهر الحالي مقارنة بالماضي</span>
+            <span style="color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">الشهر الحالي مقابل الماضي</span>
             <span style="font-size: 0.78rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; {% if month_revenue >= last_month_revenue %}background: rgba(34, 197, 94, 0.14); color: #4ade80;{% else %}background: rgba(239, 68, 68, 0.14); color: #f87171;{% endif %}">
               {% if month_revenue >= last_month_revenue %}▲ +{% else %}▼ {% endif %}{{ month_comp_pct }}%
             </span>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;">
             <strong style="color: var(--text-main); font-size: 1.45rem; font-weight: 900;">{{ month_revenue }} <small style="font-size: 0.8rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small></strong>
-            <span style="color: var(--text-muted); font-size: 0.82rem;">الشهر الماضي: <strong>{{ last_month_revenue }} ج</strong></span>
+            <span style="color: var(--text-muted); font-size: 0.82rem;">الماضي: <strong>{{ last_month_revenue }} ج</strong></span>
           </div>
         </div>
 
       </div>
 
-      <!-- Row 2: 4 Direct Actionable Operational Indicators (No Wall of Text) -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 12px;">
-        
-        <!-- 1. Expiring within 3 days -->
-        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700;">تنتهي خلال 3 أيام</span>
-            <span style="font-size: 1.1rem;">⏰</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <strong style="color: #fbbf24; font-size: 1.5rem; font-weight: 900;">{{ expiring_3_days_count }} <small style="font-size: 0.82rem; color: var(--text-muted);">عضو</small></strong>
-            <a href="{% url 'members:member_list' %}?filter=expiring_soon" class="btn btn-secondary btn-sm" style="font-size: 0.76rem; padding: 4px 10px; font-weight: 800;">
-              عرض الأسماء ↗
-            </a>
-          </div>
-        </div>
-
-        <!-- 2. Expired in last 7 days -->
-        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700;">انتهى اشتراكهم آخر 7 أيام</span>
-            <span style="font-size: 1.1rem;">🔔</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <strong style="color: #f87171; font-size: 1.5rem; font-weight: 900;">{{ expired_last_7_days }} <small style="font-size: 0.82rem; color: var(--text-muted);">عضو</small></strong>
-            <a href="{% url 'messaging:whatsapp_queue' %}" class="btn btn-secondary btn-sm" style="font-size: 0.76rem; padding: 4px 10px; font-weight: 800;">
-              إرسال تذكير ↗
-            </a>
-          </div>
-        </div>
-
-        <!-- 3. New Members (Last 10 Days vs Prev 10 Days) -->
-        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700;">مشتركون جدد (آخر 10 أيام)</span>
-            <span style="font-size: 0.76rem; font-weight: 800; color: {% if t10_new_members >= p10_new_members %}#4ade80{% else %}#fbbf24{% endif %};">
-              السابق: {{ p10_new_members }} مشترك
-            </span>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <strong style="color: #A8F14B; font-size: 1.5rem; font-weight: 900;">{{ t10_new_members }} <small style="font-size: 0.82rem; color: var(--text-muted);">مشترك جديد</small></strong>
-            <span style="font-size: 0.78rem; color: var(--text-muted);">هذا الشهر: <strong>{{ new_members_month }}</strong></span>
-          </div>
-        </div>
-
-        <!-- 4. Peak Attendance Hour & Avg Payment -->
-        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700;">ساعة الذروة ومتوسط العملية</span>
-            <span style="font-size: 0.76rem; font-weight: 800; color: #38bdf8;">{{ period_checkins }} دخول بالفترة</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: baseline;">
-            <strong style="color: #38bdf8; font-size: 1.15rem; font-weight: 900;">{{ peak_hour_label }}</strong>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">متوسط الدفع: <strong style="color: var(--text-main);">{{ avg_payment_amount }} ج</strong></span>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Row 3: Top Plans Breakdown & Payment Methods Breakdown -->
-      <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 14px;" class="charts-row-grid">
-        
-        <!-- Top Subscription Plans -->
-        <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 18px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
-            <h3 style="margin: 0; color: var(--text-main); font-size: 0.98rem; font-weight: 800;">🏆 أكثر الباقات طلباً ({{ plans_source_label }})</h3>
-            <span style="font-size: 0.78rem; color: var(--text-muted);">حسب عدد المشتركين والدخل</span>
-          </div>
-          {% if top_plans %}
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            {% for tp in top_plans %}
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px;">
-                <strong style="color: var(--text-main);">{{ tp.plan_name }}</strong>
-                <div style="display: flex; gap: 12px; align-items: center;">
-                  <span style="color: #4DB3FF; font-weight: 800;">{{ tp.subs_count }} مشترك ({{ tp.pct }}%)</span>
-                  <span style="color: #A8F14B; font-weight: 800;">{{ tp.total_paid }} {{ gym_profile.currency|default:"ج" }}</span>
-                </div>
-              </div>
-              <div style="height: 6px; width: 100%; background: var(--bg-surface-subtle); border-radius: 999px; overflow: hidden;">
-                <div style="height: 100%; width: {{ tp.pct }}%; background: linear-gradient(90deg, #84cc16, #38bdf8); border-radius: 999px;"></div>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-          {% else %}
-          <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 20px 0;">
-            لا توجد اشتراكات مسجلة في هذه الفترة بعد.
-          </div>
-          {% endif %}
-        </div>
-
-        <!-- Payment Methods Breakdown -->
-        <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 18px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color);">
-            <h3 style="margin: 0; color: var(--text-main); font-size: 0.98rem; font-weight: 800;">💳 توزيع طرق الدفع ({{ period_title }})</h3>
-            <span style="font-size: 0.78rem; color: var(--text-muted);">نقدي / محافظ / تحويلات</span>
-          </div>
-          {% if payment_methods_breakdown %}
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            {% for pm in payment_methods_breakdown %}
-            <div>
-              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 4px;">
-                <strong style="color: var(--text-main);">{{ pm.method }} <small style="color: var(--text-muted); font-weight: 600;">({{ pm.ops_count }} عملية)</small></strong>
-                <span style="color: #A8F14B; font-weight: 800;">{{ pm.total_amount }} {{ gym_profile.currency|default:"ج" }} ({{ pm.pct }}%)</span>
-              </div>
-              <div style="height: 6px; width: 100%; background: var(--bg-surface-subtle); border-radius: 999px; overflow: hidden;">
-                <div style="height: 100%; width: {{ pm.pct }}%; background: #A8F14B; border-radius: 999px;"></div>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-          {% else %}
-          <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 20px 0;">
-            لا توجد مقبوضات مسجلة في هذه الفترة.
-          </div>
-          {% endif %}
-        </div>
-
-      </div>
-
-      <!-- Row 4: Visual Charts Row -->
+      <!-- Row 2: Visual Charts Row -->
       <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px;" class="charts-row-grid">
         <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h3 style="margin: 0; color: var(--text-main); font-size: 1rem; font-weight: 800;">📈 مسار الإيرادات اليومية</h3>
+            <h3 style="margin: 0; color: var(--text-main); font-size: 1rem; font-weight: 800;">📈 مسار الإيرادات اليومية بالفرع</h3>
             <span style="font-size: 0.8rem; color: var(--text-muted);">تطور الدخل باليوم</span>
           </div>
           <div style="height: 220px; position: relative;">
@@ -724,7 +752,7 @@
         <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h3 style="margin: 0; color: var(--text-main); font-size: 1rem; font-weight: 800;">⏰ أوقات الذروة والحضور</h3>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">توزيع الدخول بالساعات</span>
+            <span style="font-size: 0.8rem; color: #38bdf8; font-weight: 700;">{{ peak_hour_label }}</span>
           </div>
           <div style="height: 220px; position: relative;">
             <canvas id="hourlyAttendanceChart"></canvas>
@@ -736,17 +764,18 @@
   </div>
   {% endif %}
 
-  <!-- ==================== TAB 4: ANTI-DECEPTION AUDIT TRAIL ==================== -->
+  <!-- ==================== TAB 5: ANTI-DECEPTION AUDIT TRAIL ==================== -->
   <div id="mgr-tab-audit" class="mgr-tab-panel">
     <div class="card" style="background: var(--bg-card); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow-sm);">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 14px;">
         <div>
           <h2 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0;">
-            🚨 سجل الرقابة والخصومات وتعديلات البرايفت
+            🛡️ سجل الرقابة والخصومات وتعديلات النظام
           </h2>
+          <span style="color: var(--text-muted); font-size: 0.8rem;">سجل غير قابل للتعديل لكافة الإجراءات الحساسة</span>
         </div>
         <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-weight: 800; padding: 5px 12px;">
-          رقابة تلقائية
+          رقابة تلقائية مشفرة
         </span>
       </div>
 
@@ -774,7 +803,7 @@
                 {% elif "private" in log.action %}
                   <span class="badge" style="background: rgba(168, 241, 75, 0.15); color: #A8F14B;">تدريب خاص 🏋️‍♂️</span>
                 {% elif "coach" in log.action %}
-                  <span class="badge" style="background: rgba(77, 179, 255, 0.15); color: #4DB3FF;">إسناد كابتن 👤</span>
+                  <span class="badge" style="background: rgba(77, 179, 255, 0.15); color: #38bdf8;">إسناد كابتن 👤</span>
                 {% else %}
                   <span class="badge badge-neutral">{{ log.action }}</span>
                 {% endif %}
@@ -798,7 +827,7 @@
         </table>
       </div>
       {% else %}
-      <div style="text-align: center; color: var(--text-muted); padding: 24px;">
+      <div style="text-align: center; color: var(--text-muted); padding: 28px;">
         لا توجد عمليات حساسة مسجلة في الأرشيف الرقابي مؤخراً.
       </div>
       {% endif %}
@@ -856,7 +885,13 @@
     const rows = document.querySelectorAll('#opsTable tbody tr');
     rows.forEach(row => {
       const textMatch = !q || row.innerText.toLowerCase().includes(q);
-      const typeMatch = !typeFilter || row.getAttribute('data-op-type') === typeFilter;
+      const rowType = row.getAttribute('data-op-type') || '';
+      let typeMatch = !typeFilter;
+      if (typeFilter === 'new') {
+        typeMatch = rowType === 'new' || rowType === 'new_subscription';
+      } else if (typeFilter) {
+        typeMatch = rowType === typeFilter;
+      }
       row.style.display = (textMatch && typeMatch) ? '' : 'none';
     });
   }
