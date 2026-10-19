@@ -952,51 +952,53 @@
         if (overlay) overlay.style.display = 'none';
       };
 
-      window.trigger30MinSend10 = async function() {
-        const statusBox = document.getElementById('wa30ActionStatusBox');
-        const statusText = document.getElementById('wa30ActionStatusText');
+      window.trigger30MinSend10 = function() {
         const btn = document.getElementById('btnWa30Send10');
-
-        if (statusBox) {
-          statusBox.style.display = 'block';
-          statusBox.style.background = 'rgba(56, 189, 248, 0.15)';
-          statusBox.style.color = '#38bdf8';
-          statusText.textContent = '⏳ جار تجهيز الرسائل وتشغيل الواتساب...';
-        }
         if (btn) btn.disabled = true;
 
+        // Open popup window IMMEDIATELY on user click so Chrome/Edge popup blocker NEVER blocks it!
+        let popupWin = null;
         try {
-          const res = await fetch("{% url 'messaging:whatsapp_pending_messages' %}", {
-            headers: {
-              "Accept": "application/json",
-              "X-Requested-With": "XMLHttpRequest"
-            }
-          });
-          const data = await res.json();
+          const screenW = window.screen.availWidth || window.screen.width || 1920;
+          const popupW = 320;
+          const popupH = 155;
+          const popupX = Math.max(20, screenW - popupW - 30);
+          const popupY = 30;
+          popupWin = window.open(
+            "{% url 'messaging:whatsapp_overlay_window' %}",
+            "SystemizeWhatsAppOverlay",
+            `width=${popupW},height=${popupH},left=${popupX},top=${popupY},resizable=no,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`
+          );
+        } catch (e) {
+          console.warn("Could not open overlay popup window:", e);
+        }
+
+        dismiss30MinReminder();
+
+        fetch("{% url 'messaging:whatsapp_pending_messages' %}", {
+          headers: {
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        })
+        .then(r => r.json())
+        .then(data => {
           if (data.success && data.messages && data.messages.length > 0) {
             const idsToSend = data.messages.slice(0, 10).map(m => m.id);
             localStorage.setItem(WA_REMINDER_KEY, Date.now());
-            dismiss30MinReminder();
             if (window.whatsappQueueRunner) {
-              window.whatsappQueueRunner.start(idsToSend);
+              window.whatsappQueueRunner.start(idsToSend, popupWin);
             }
           } else {
-            if (statusBox) {
-              statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
-              statusBox.style.color = '#f87171';
-              statusText.textContent = 'لا توجد رسائل معلقة حالياً في الطابور.';
-            }
-            if (btn) btn.disabled = false;
+            if (popupWin && !popupWin.closed) popupWin.close();
+            alert("لا توجد رسائل معلقة حالياً في طابور الواتساب.");
           }
-        } catch (err) {
+        })
+        .catch(err => {
+          if (popupWin && !popupWin.closed) popupWin.close();
           console.error("Error starting WhatsApp 10 batch:", err);
-          if (statusBox) {
-            statusBox.style.background = 'rgba(239, 68, 68, 0.15)';
-            statusBox.style.color = '#f87171';
-            statusText.textContent = 'حدث خطأ أثناء جلب الرسائل من الخادم.';
-          }
-          if (btn) btn.disabled = false;
-        }
+          alert("حدث خطأ أثناء جلب الرسائل من الخادم.");
+        });
       };
 
       window.goToPendingQueueAndSelect = function() {
@@ -1139,7 +1141,7 @@
         };
       },
 
-      start: function(messageIds) {
+      start: function(messageIds, existingPopupWin) {
         if (!messageIds || messageIds.length === 0) return;
         this.queue = messageIds.slice();
         this.totalCount = this.queue.length;
@@ -1147,20 +1149,24 @@
         this.isCancelled = false;
         this.isRunning = true;
 
-        // Open dedicated Always-On-Top popup window
-        try {
-          const screenW = window.screen.availWidth || window.screen.width || 1920;
-          const popupW = 320;
-          const popupH = 155;
-          const popupX = Math.max(20, screenW - popupW - 30);
-          const popupY = 30;
-          this.popupWin = window.open(
-            "{% url 'messaging:whatsapp_overlay_window' %}",
-            "SystemizeWhatsAppOverlay",
-            `width=${popupW},height=${popupH},left=${popupX},top=${popupY},resizable=no,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`
-          );
-        } catch (e) {
-          console.warn("Could not open overlay popup window:", e);
+        // Use existing popup window if already opened by synchronous user click
+        if (existingPopupWin && !existingPopupWin.closed) {
+          this.popupWin = existingPopupWin;
+        } else {
+          try {
+            const screenW = window.screen.availWidth || window.screen.width || 1920;
+            const popupW = 320;
+            const popupH = 155;
+            const popupX = Math.max(20, screenW - popupW - 30);
+            const popupY = 30;
+            this.popupWin = window.open(
+              "{% url 'messaging:whatsapp_overlay_window' %}",
+              "SystemizeWhatsAppOverlay",
+              `width=${popupW},height=${popupH},left=${popupX},top=${popupY},resizable=no,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`
+            );
+          } catch (e) {
+            console.warn("Could not open overlay popup window:", e);
+          }
         }
 
         const widget = document.getElementById('whatsappOverlayWidget');

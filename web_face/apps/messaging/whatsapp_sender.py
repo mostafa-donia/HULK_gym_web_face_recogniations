@@ -452,34 +452,40 @@ def pin_overlay_window_topmost() -> bool:
     try:
         ensure_desktop_attached()
         user32 = ctypes.windll.user32
+        import win32gui
+        import win32con
+
         matched_hwnds = []
 
-        def enum_windows_callback(hwnd, lParam):
-            if user32.IsWindow(hwnd) and user32.IsWindowVisible(hwnd):
-                length = user32.GetWindowTextLengthW(hwnd)
-                if length > 0:
-                    buffer = ctypes.create_unicode_buffer(length + 1)
-                    user32.GetWindowTextW(hwnd, buffer, length + 1)
-                    window_title = buffer.value
-                    if any(key in window_title for key in ["SYSTEMIZE_WA_OVERLAY", "SystemizeWhatsAppOverlay", "طابور إرسال واتساب", "WhatsAppOverlay"]):
-                        # 1. Set WS_EX_TOPMOST (0x00000008) in GWL_EXSTYLE (-20)
-                        GWL_EXSTYLE = -20
-                        WS_EX_TOPMOST = 0x00000008
-                        try:
-                            ex_style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-                            if not (ex_style & WS_EX_TOPMOST):
-                                user32.SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_TOPMOST)
-                        except Exception:
-                            pass
+        def enum_cb(hwnd, _):
+            if win32gui.IsWindow(hwnd):
+                title = (win32gui.GetWindowText(hwnd) or "").strip()
+                t_lower = title.lower()
+                target_keys = ["systemize_wa_overlay", "systemizewhatsappoverlay", "طابور إرسال واتساب", "whatsappoverlay", "طابور إرسال"]
+                if any(k in t_lower for k in target_keys):
+                    # Restore if minimized
+                    if user32.IsIconic(hwnd):
+                        user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+                    else:
+                        user32.ShowWindow(hwnd, 5)  # SW_SHOW
 
-                        # 2. Assert HWND_TOPMOST (-1)
-                        # HWND_TOPMOST = -1, SWP_NOMOVE = 0x0002, SWP_NOSIZE = 0x0001, SWP_NOACTIVATE = 0x0010, SWP_SHOWWINDOW = 0x0040
-                        user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0010 | 0x0040)
-                        matched_hwnds.append(hwnd)
-            return True
+                    # 1. Set WS_EX_TOPMOST in GWL_EXSTYLE
+                    try:
+                        ex_style = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+                        if not (ex_style & win32con.WS_EX_TOPMOST):
+                            win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, ex_style | win32con.WS_EX_TOPMOST)
+                    except Exception:
+                        pass
 
-        WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
-        user32.EnumWindows(WNDENUMPROC(enum_windows_callback), 0)
+                    # 2. Assert HWND_TOPMOST (-1)
+                    user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
+                    try:
+                        win32gui.BringWindowToTop(hwnd)
+                    except Exception:
+                        pass
+                    matched_hwnds.append(hwnd)
+
+        win32gui.EnumWindows(enum_cb, None)
         return len(matched_hwnds) > 0
     except Exception as e:
         print(f"[pin_overlay_window_topmost] Warning: {e}")
