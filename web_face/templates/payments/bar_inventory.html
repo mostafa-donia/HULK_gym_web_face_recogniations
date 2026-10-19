@@ -13,6 +13,11 @@
           🥤 إدارة مخزون ومبيعات البار
         </h1>
         <span class="badge badge-active" style="font-size: 0.8rem;">مخزون ومشروبات</span>
+        {% if active_branch %}
+          <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); font-size: 0.8rem; font-weight: 800;">
+            🏢 فرع: {{ active_branch.name }}
+          </span>
+        {% endif %}
       </div>
       <p style="color: var(--text-muted); margin: 4px 0 0 0; font-size: 0.88rem;">
         متابعة كميات المياه، المكملات، البروتين، تسجيل المبيعات النقدية والآجلة (بعد التمرين)

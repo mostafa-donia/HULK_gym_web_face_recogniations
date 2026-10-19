@@ -111,6 +111,15 @@ class BarProduct(models.Model):
     stock_quantity = models.IntegerField(default=0, verbose_name="الكمية المتاحة بالمخزون")
     min_stock_alert = models.IntegerField(default=5, verbose_name="حد التنبيه لنقص المخزون")
     is_active = models.BooleanField(default=True, verbose_name="متاح للبيع")
+    branch = models.ForeignKey(
+        "core.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bar_products",
+        verbose_name="الفرع",
+        db_index=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإضافة")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="آخر تحديث")
 
@@ -177,6 +186,15 @@ class BarSale(models.Model):
         blank=True,
         verbose_name="المسؤول",
     )
+    branch = models.ForeignKey(
+        "core.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bar_sales",
+        verbose_name="الفرع",
+        db_index=True,
+    )
 
     class Meta:
         verbose_name = "عملية بيع بار"
@@ -186,3 +204,13 @@ class BarSale(models.Model):
     def __str__(self) -> str:
         status_txt = "مدفوع" if self.is_paid else "آجل (لم يدفع)"
         return f"{self.sale_id} - {self.product.name} x {self.quantity} - {self.buyer_name} ({status_txt})"
+
+    def save(self, *args, **kwargs):
+        if not self.branch_id:
+            if self.member and getattr(self.member, "branch_id", None):
+                self.branch = self.member.branch
+            elif self.payment and getattr(self.payment, "branch_id", None):
+                self.branch = self.payment.branch
+            elif self.created_by and getattr(self.created_by, "branch_id", None):
+                self.branch = getattr(self.created_by, "branch", None)
+        super().save(*args, **kwargs)

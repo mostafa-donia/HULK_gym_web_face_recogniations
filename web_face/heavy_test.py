@@ -222,13 +222,16 @@ def main():
             bs = BarSale.objects.create(
                 sale_id=f"SALE-TEST-{int(time.time())}",
                 product=p,
+                branch=test_branch,
                 quantity=1,
                 unit_price=p.price,
                 total_price=p.price,
                 payment_method="نقدي",
                 is_paid=True
             )
-            test_case("Bar sale transaction", bs.id is not None)
+            test_case("Bar sale transaction with branch", bs.id is not None and bs.branch == test_branch)
+            branch_filtered_sales = BarSale.objects.filter(branch=test_branch)
+            test_case("Bar sale branch isolation query", branch_filtered_sales.filter(id=bs.id).exists())
             bs.delete()
 
         # Clean up test records

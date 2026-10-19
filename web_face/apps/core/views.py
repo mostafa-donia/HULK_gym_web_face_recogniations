@@ -78,8 +78,20 @@ def dashboard_view(request):
 
     # Bar & Inventory Quick Actions
     from apps.payments.models import BarProduct, BarSale
+    from apps.core.branch_context import get_active_branch
+    active_branch = get_active_branch(request)
+
     bar_products = BarProduct.objects.filter(is_active=True).order_by("category", "name")
     unpaid_bar_sales = BarSale.objects.filter(is_paid=False).select_related("product", "member").order_by("-created_at")
+
+    if active_branch:
+        bar_products = bar_products.filter(Q(branch=active_branch) | Q(branch__isnull=True))
+        unpaid_bar_sales = unpaid_bar_sales.filter(
+            Q(branch=active_branch)
+            | Q(member__branch=active_branch)
+            | Q(payment__branch=active_branch)
+        )
+
     unpaid_bar_count = unpaid_bar_sales.count()
     unpaid_bar_total = (
         unpaid_bar_sales.aggregate(Sum("total_price"))["total_price__sum"]
@@ -391,7 +403,11 @@ def manager_dashboard_view(request):
         from apps.payroll.models import PrivateTrainingRecord, TrainerClientAssignment
         base_standalone_sessions = PrivateTrainingRecord.objects.filter(client__branch=active_branch)
         from apps.payments.models import BarSale
-        base_bar_sales = BarSale.objects.filter(Q(payment__branch=active_branch) | Q(member__branch=active_branch))
+        base_bar_sales = BarSale.objects.filter(
+            Q(branch=active_branch)
+            | Q(payment__branch=active_branch)
+            | Q(member__branch=active_branch)
+        )
     else:
         base_checkins = CheckInEvent.objects.all()
         base_subscriptions = Subscription.objects.all()

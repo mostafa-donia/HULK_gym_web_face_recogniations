@@ -326,6 +326,15 @@ def bar_quick_sale_view(request):
     unit_price = product.price
     total_price = (unit_price * quantity).quantize(Decimal("0.01"))
 
+    from apps.core.branch_context import get_active_branch
+    active_branch = get_active_branch(request)
+    sale_branch = (
+        active_branch
+        or (member.branch if member and member.branch else None)
+        or (product.branch if product and product.branch else None)
+        or getattr(request.user, "branch", None)
+    )
+
     with transaction.atomic():
         # Decrement stock
         product.stock_quantity = product.stock_quantity - quantity
@@ -341,6 +350,7 @@ def bar_quick_sale_view(request):
                 invoice_no=inv_no,
                 operation_type=PaymentOperationType.BAR_SALE,
                 member=member,
+                branch=sale_branch,
                 amount=total_price,
                 payment_method=payment_method,
                 notes=f"مبيعات بار: {product.name} (عدد {quantity}) - المشتري: {buyer_name}{(' | ' + notes) if notes else ''}",
@@ -350,6 +360,7 @@ def bar_quick_sale_view(request):
         sale = BarSale.objects.create(
             sale_id=sale_code,
             product=product,
+            branch=sale_branch,
             member=member,
             buyer_name=buyer_name,
             buyer_phone=buyer_phone,
@@ -396,6 +407,14 @@ def bar_settle_sale_view(request, sale_id):
 
     payment_method = request.POST.get("payment_method", "نقدي") if request.method == "POST" else "نقدي"
 
+    from apps.core.branch_context import get_active_branch
+    settle_branch = (
+        sale.branch
+        or (sale.member.branch if sale.member and sale.member.branch else None)
+        or get_active_branch(request)
+        or getattr(request.user, "branch", None)
+    )
+
     with transaction.atomic():
         pay_id, inv_no = generate_next_payment_id()
         payment = Payment.objects.create(
@@ -403,6 +422,7 @@ def bar_settle_sale_view(request, sale_id):
             invoice_no=inv_no,
             operation_type=PaymentOperationType.BAR_SALE,
             member=sale.member,
+            branch=settle_branch,
             amount=sale.total_price,
             payment_method=payment_method,
             notes=f"سداد آجل بار: {sale.product.name} (عدد {sale.quantity}) - اللاعب: {sale.buyer_name}",
@@ -413,7 +433,11 @@ def bar_settle_sale_view(request, sale_id):
         sale.paid_at = timezone.now()
         sale.payment = payment
         sale.payment_method = payment_method
-        sale.save(update_fields=["is_paid", "paid_at", "payment", "payment_method"])
+        if not sale.branch and settle_branch:
+            sale.branch = settle_branch
+            sale.save(update_fields=["is_paid", "paid_at", "payment", "payment_method", "branch"])
+        else:
+            sale.save(update_fields=["is_paid", "paid_at", "payment", "payment_method"])
 
         AuditLog.log(
             action_type="BAR_SALE_SETTLED",
@@ -457,10 +481,23 @@ def bar_cancel_sale_view(request, sale_id):
 @login_required
 def bar_inventory_view(request):
     """Full inventory, products management, and sales log for the Bar."""
+    from apps.core.branch_context import get_active_branch
+    active_branch = get_active_branch(request)
+
     products = BarProduct.objects.all().order_by("category", "name")
+    if active_branch:
+        products = products.filter(Q(branch=active_branch) | Q(branch__isnull=True))
+
     filter_type = request.GET.get("filter", "all")
 
     sales_qs = BarSale.objects.select_related("product", "member", "created_by").order_by("-created_at")
+    if active_branch:
+        sales_qs = sales_qs.filter(
+            Q(branch=active_branch)
+            | Q(member__branch=active_branch)
+            | Q(payment__branch=active_branch)
+        )
+
     if filter_type == "unpaid":
         sales_qs = sales_qs.filter(is_paid=False)
     elif filter_type == "paid":
@@ -473,17 +510,29 @@ def bar_inventory_view(request):
     today = timezone.localdate()
     total_products_count = products.count()
     total_stock_units = products.aggregate(Sum("stock_quantity"))["stock_quantity__sum"] or 0
+
+    base_unpaid = BarSale.objects.filter(is_paid=False)
+    base_paid = BarSale.objects.filter(is_paid=True)
+    if active_branch:
+        branch_filter = (
+            Q(branch=active_branch)
+            | Q(member__branch=active_branch)
+            | Q(payment__branch=active_branch)
+        )
+        base_unpaid = base_unpaid.filter(branch_filter)
+        base_paid = base_paid.filter(branch_filter)
+
     total_unpaid_debt = (
-        BarSale.objects.filter(is_paid=False).aggregate(Sum("total_price"))["total_price__sum"]
+        base_unpaid.aggregate(Sum("total_price"))["total_price__sum"]
         or Decimal("0.00")
     )
-    unpaid_orders_count = BarSale.objects.filter(is_paid=False).count()
+    unpaid_orders_count = base_unpaid.count()
     total_bar_revenue = (
-        BarSale.objects.filter(is_paid=True).aggregate(Sum("total_price"))["total_price__sum"]
+        base_paid.aggregate(Sum("total_price"))["total_price__sum"]
         or Decimal("0.00")
     )
     today_bar_revenue = (
-        BarSale.objects.filter(is_paid=True, paid_at__date=today).aggregate(Sum("total_price"))["total_price__sum"]
+        base_paid.filter(paid_at__date=today).aggregate(Sum("total_price"))["total_price__sum"]
         or Decimal("0.00")
     )
 
@@ -500,6 +549,7 @@ def bar_inventory_view(request):
         "categories": BarProductCategory.choices,
         "payment_methods": PaymentMethod.objects.filter(is_active=True),
         "profile": GymProfile.get_solo(),
+        "active_branch": active_branch,
     }
     return render(request, "payments/bar_inventory.html", context)
 
@@ -519,6 +569,9 @@ def bar_product_create_view(request):
             messages.error(request, "يرجى كتابة اسم المنتج وسعر البيع بشكل صحيح.")
             return redirect("payments:bar_inventory")
 
+        from apps.core.branch_context import get_active_branch
+        active_branch = get_active_branch(request) or getattr(request.user, "branch", None)
+
         product = BarProduct.objects.create(
             name=name,
             category=category,
@@ -526,6 +579,7 @@ def bar_product_create_view(request):
             cost_price=cost_price,
             stock_quantity=stock_quantity,
             min_stock_alert=min_stock_alert,
+            branch=active_branch,
         )
         AuditLog.log(
             action_type="BAR_PRODUCT_CREATED",
