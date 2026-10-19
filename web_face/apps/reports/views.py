@@ -181,18 +181,19 @@ from apps.payroll.models import PayrollRun, PayrollStatus
 
 def check_retention_page_access(request, target_url=None):
     """
-    PIN / Password protection for Members Movement / Retention report.
-    Protected by dedicated password, manager account password, or default '1234'.
+    PIN / Password / Face ID protection for Members Movement / Retention report.
+    Protected by dedicated password, manager account password, manager face, or default '1234'.
     Returns (is_unlocked, response).
     """
-    if request.session.get("retention_page_unlocked"):
+    if request.session.get("retention_page_unlocked") or request.session.get("manager_page_unlocked"):
         return True, None
 
     profile = GymProfile.get_solo()
     target = request.POST.get("target_url") or target_url or request.get_full_path()
+    unlock_template = "core/manager_unlock.html"
 
-    if request.method == "POST" and "password" in request.POST:
-        entered_password = request.POST.get("password", "").strip()
+    if request.method == "POST" and ("password" in request.POST or "manager_unlock_password" in request.POST):
+        entered_password = (request.POST.get("password") or request.POST.get("manager_unlock_password", "")).strip()
         is_valid = False
 
         if entered_password and entered_password == profile.trainers_page_password:
@@ -204,13 +205,14 @@ def check_retention_page_access(request, target_url=None):
 
         if is_valid:
             request.session["retention_page_unlocked"] = True
+            request.session["manager_page_unlocked"] = True
             messages.success(request, "تم التحقق بنجاح. أهلاً بك في تقرير حركة الأعضاء.")
             return True, redirect(target)
         else:
             messages.error(request, "كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى.")
-            return False, render(request, "reports/retention_unlock.html", {"target_url": target, "profile": profile})
+            return False, render(request, unlock_template, {"target_url": target, "profile": profile})
 
-    return False, render(request, "reports/retention_unlock.html", {"target_url": target, "profile": profile})
+    return False, render(request, unlock_template, {"target_url": target, "profile": profile})
 
 
 @login_required

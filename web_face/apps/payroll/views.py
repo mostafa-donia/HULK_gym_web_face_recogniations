@@ -35,14 +35,15 @@ def check_trainers_page_access(request, target_url=None):
     Protected by dedicated trainers password or manager password or default '1234'.
     Returns (is_unlocked, response).
     """
-    if request.session.get("trainers_page_unlocked"):
+    if request.session.get("trainers_page_unlocked") or request.session.get("manager_page_unlocked"):
         return True, None
 
     profile = GymProfile.get_solo()
     target = request.POST.get("target_url") or target_url or request.get_full_path()
+    unlock_template = "core/manager_unlock.html"
 
-    if request.method == "POST" and "password" in request.POST:
-        entered_password = request.POST.get("password", "").strip()
+    if request.method == "POST" and ("password" in request.POST or "manager_unlock_password" in request.POST):
+        entered_password = (request.POST.get("password") or request.POST.get("manager_unlock_password", "")).strip()
         is_valid = False
 
         if entered_password and entered_password == profile.trainers_page_password:
@@ -54,13 +55,24 @@ def check_trainers_page_access(request, target_url=None):
 
         if is_valid:
             request.session["trainers_page_unlocked"] = True
+            request.session["manager_page_unlocked"] = True
             messages.success(request, "تم التحقق بنجاح. أهلاً بك في صفحة إدارة وعمولات المدربين.")
             return True, redirect(target)
         else:
             messages.error(request, "كلمة المرور غير صحيحة، يرجى المحاولة مرة أخرى.")
-            return False, render(request, "payroll/trainers_unlock.html", {"target_url": target, "profile": profile})
+            return False, render(request, unlock_template, {
+                "target_url": target,
+                "profile": profile,
+                "unlock_title": "صفحة إدارة وعمولات المدربين محمية",
+                "unlock_subtitle": "يرجى تأكيد هوية المدير عبر بصمة الوجه أو كلمة المرور للمتابعة.",
+            })
 
-    return False, render(request, "payroll/trainers_unlock.html", {"target_url": target, "profile": profile})
+    return False, render(request, unlock_template, {
+        "target_url": target,
+        "profile": profile,
+        "unlock_title": "صفحة إدارة وعمولات المدربين محمية",
+        "unlock_subtitle": "يرجى تأكيد هوية المدير عبر بصمة الوجه أو كلمة المرور للمتابعة.",
+    })
 
 
 @login_required

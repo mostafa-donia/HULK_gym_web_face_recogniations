@@ -82,7 +82,10 @@ def api_face_verify(request):
                     mgr_best = s
             if mgr_best >= thresh:
                 request.session["manager_page_unlocked"] = True
-                request.session["settings_page_unlocked"] = True
+                request.session["trainers_page_unlocked"] = True
+                request.session["retention_page_unlocked"] = True
+                request.session["reports_page_unlocked"] = True
+                request.session["developer_options_unlocked"] = False
                 request.session.modified = True
                 return JsonResponse({
                     "success": True,
@@ -606,7 +609,11 @@ def api_verify_manager_face_unlock(request):
 
     if best_score >= thresh:
         request.session["manager_page_unlocked"] = True
-        request.session["settings_page_unlocked"] = True
+        request.session["trainers_page_unlocked"] = True
+        request.session["retention_page_unlocked"] = True
+        request.session["reports_page_unlocked"] = True
+        # Developer settings requires developer password and is NOT unlocked by manager face
+        request.session["developer_options_unlocked"] = False
         request.session.modified = True
 
         return JsonResponse({
