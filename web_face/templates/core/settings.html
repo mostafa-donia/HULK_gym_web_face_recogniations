@@ -993,10 +993,147 @@
           </div>
 
           <button type="submit" class="btn btn-primary" style="background: #2563eb; border: none; color: #FFFFFF; font-weight: 800; font-size: 0.95rem; padding: 12px 24px; border-radius: 8px; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-            
             <span>حفظ باليتة الألوان والهوية والشعار</span>
           </button>
         </form>
+      </div>
+
+      <!-- Dev Card: Manager Face ID & Master Unlock (بصمة وجه المدير لفتح المناطق المحمية) -->
+      <div class="card" style="background: var(--bg-card); border: 2px solid rgba(168, 241, 75, 0.4); border-radius: 14px; padding: 22px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h3 class="card-title" style="color: #A8F14B; font-size: 1.25rem; font-weight: 900; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+              <span>🔐 بصمة وجه المدير لفتح المناطق المحمية (Manager Face ID)</span>
+            </h3>
+            <span style="color: var(--text-muted); font-size: 0.84rem;">
+              تسجيل بصمة وجه المدير لفتح كافة الصفحات المحمية (لوحة المدير، الإعدادات، المدربين) تلقائياً بالوجه حتى لو تم تغيير كلمة السر.
+            </span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px;">
+            {% if profile.manager_face_enrolled %}
+              <span id="mgrFaceStatusBadge" style="background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #4ade80; font-weight: 800; font-size: 0.82rem; padding: 5px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%;"></span>
+                بصمة وجه المدير مسجلة ونشطة ✓
+              </span>
+            {% else %}
+              <span id="mgrFaceStatusBadge" style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fbbf24; font-weight: 800; font-size: 0.82rem; padding: 5px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">
+                <span style="width: 8px; height: 8px; background: #f59e0b; border-radius: 50%;"></span>
+                لم يتم تسجيل بصمة وجه المدير بعد
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Master Face Unlock Toggle Form -->
+        <form method="post" action="{% url 'core:settings' %}" style="margin-bottom: 20px;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save_profile">
+          <input type="hidden" name="form_manager_face" value="1">
+          <input type="hidden" name="manager_face_unlock_present" value="1">
+
+          <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <div>
+              <label for="mgr_face_unlock_toggle" style="color: var(--text-main); font-weight: 800; font-size: 0.96rem; margin: 0; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="mgr_face_unlock_toggle" name="manager_face_unlock_enabled" {% if profile.manager_face_unlock_enabled %}checked{% endif %} style="width: 20px; height: 20px; accent-color: #84cc16; cursor: pointer;">
+                <span>تفعيل الفتح السريع ببصمة وجه المدير (Manager Face Unlock Enabled)</span>
+              </label>
+              <small style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 4px; margin-right: 28px;">
+                عند التفعيل، يمكن للمدير فتح لوحة المدير وصفحة الإعدادات والرواتب بالتعرف على الوجه بالكاميرا مباشرة.
+              </small>
+            </div>
+
+            <button type="submit" class="btn btn-secondary btn-sm" style="font-weight: 800; height: 36px; padding: 0 16px;">
+              حفظ حالة التفعيل
+            </button>
+          </div>
+        </form>
+
+        <!-- Face Enrollment Box -->
+        <div id="mgrFaceEnrollmentCard" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
+          <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+            
+            <!-- Photo Thumbnail Preview -->
+            <div style="position: relative; width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 3px solid {% if profile.manager_face_enrolled %}#84cc16{% else %}var(--border-color){% endif %}; background: #020617; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+              <img id="mgrFacePreviewImg" src="{% if profile.manager_face_photo %}{{ profile.manager_face_photo.url }}{% else %}{% static 'images/avatar_placeholder.png' %}{% endif %}" alt="وجه المدير" style="width: 100%; height: 100%; object-fit: cover; display: {% if profile.manager_face_photo %}block{% else %}none{% endif %};">
+              <span id="mgrFacePlaceholderIcon" style="font-size: 2.5rem; display: {% if profile.manager_face_photo %}none{% else %}block{% endif %};">👤</span>
+            </div>
+
+            <!-- Details & Actions -->
+            <div style="flex: 1; min-width: 260px;">
+              <h4 style="color: var(--text-main); font-size: 1.05rem; font-weight: 800; margin: 0 0 6px 0;">
+                بصمة الوجه الرقمية المعتمدة (128-D SFace Feature Vectors)
+              </h4>
+              <p style="color: var(--text-muted); font-size: 0.84rem; line-height: 1.5; margin: 0 0 14px 0;">
+                {% if profile.manager_face_enrolled %}
+                  تم استخراج وتسجيل المعالم الرقمية للوجه بنجاح بتاريخ: <strong style="color: var(--text-main);">{{ profile.manager_face_enrolled_at|date:"Y-m-d H:i" }}</strong>.
+                  يتعرف النظام تلقائياً على المدير بنسبة مطابقة حتى لو تغيرت الإضاءة أو زاوية الرؤية.
+                {% else %}
+                  لم يتم تسجيل وجه المدير حتى الآن. يُرجى فتح الكاميرا أو رفع صورة واضحة لوجه المدير لحفظ البصمة الرقمية المشفرة.
+                {% endif %}
+              </p>
+
+              <!-- Action Buttons -->
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <button type="button" onclick="openMgrFaceModal()" class="btn btn-primary btn-sm" style="height: 38px; padding: 0 18px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px;">
+                  <span>📸 فتح الكاميرا والتقاط بصمة وجه المدير</span>
+                </button>
+
+                <button type="button" onclick="document.getElementById('mgrFaceFileInput').click()" class="btn btn-secondary btn-sm" style="height: 38px; padding: 0 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                  <span>📁 رفع صورة من الجهاز</span>
+                </button>
+
+                <input type="file" id="mgrFaceFileInput" accept="image/*" style="display: none;" onchange="handleMgrFaceFileUpload(event)">
+
+                {% if profile.manager_face_enrolled %}
+                  <button type="button" onclick="deleteMgrFace()" class="btn btn-sm" style="height: 38px; padding: 0 14px; font-weight: 700; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); color: #f87171; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <span>🗑️ حذف البصمة</span>
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Manager Face Enrollment Webcam Modal -->
+      <div id="mgrFaceModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: var(--bg-card, #0f172a); border: 1px solid var(--border-color, #1e293b); border-radius: 16px; width: 100%; max-width: 520px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); overflow: hidden; animation: popIn 0.25s ease-out;">
+          <div style="padding: 18px 22px; border-bottom: 1px solid var(--border-color, #1e293b); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main, #f8fafc); display: flex; align-items: center; gap: 8px;">
+              📸 تسجيل بصمة وجه المدير
+            </h3>
+            <button type="button" onclick="closeMgrFaceModal()" style="background: none; border: none; color: var(--text-muted, #94a3b8); font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+          </div>
+
+          <div style="padding: 22px; text-align: center;">
+            <p style="font-size: 0.88rem; color: var(--text-muted, #94a3b8); margin-bottom: 16px;">
+              يرجى النظر مباشرة إلى الكاميرا مع إضاءة جيدة لتسجيل بصمة الوجه الرياضية عالية الدقة.
+            </p>
+
+            <div style="position: relative; width: 100%; max-width: 420px; aspect-ratio: 4/3; margin: 0 auto; background: #020617; border-radius: 12px; overflow: hidden; border: 2px dashed #84cc16; display: flex; align-items: center; justify-content: center;">
+              <video id="mgrFaceVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+              <div id="mgrFaceScanGuide" style="position: absolute; inset: 15%; border: 2px solid rgba(132, 204, 22, 0.6); border-radius: 50%; pointer-events: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);"></div>
+              <div id="mgrFaceLoadingOverlay" style="display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.75); flex-direction: column; align-items: center; justify-content: center; color: #fff; font-weight: 700; gap: 10px;">
+                <div style="width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #84cc16; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                <span id="mgrFaceLoadingText">جاري المعالجة واستخراج البصمة...</span>
+              </div>
+            </div>
+            <canvas id="mgrFaceCanvas" style="display: none;"></canvas>
+
+            <div id="mgrFaceModalError" style="display: none; margin-top: 14px; padding: 10px 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #f87171; font-size: 0.85rem; font-weight: 700;"></div>
+
+            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+              <button type="button" id="btnCaptureMgrFace" onclick="captureAndEnrollMgrFace()" class="btn btn-primary" style="padding: 10px 24px; font-weight: 800; font-size: 0.95rem;">
+                📷 التقاط وحفظ بصمة الوجه
+              </button>
+              <button type="button" onclick="closeMgrFaceModal()" class="btn btn-secondary" style="padding: 10px 18px; font-weight: 700;">
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Dev Card 2: Face AI Models & Hardware Turnstile Relay Control -->
@@ -2052,5 +2189,149 @@ async function testGateTriggerSignal() {
     updateFaceThresholdUI(input.value || 65);
   }
 })();
+
+// ==========================================
+// Manager Face ID Enrollment & Management
+// ==========================================
+let mgrFaceStream = null;
+
+async function openMgrFaceModal() {
+  const modal = document.getElementById('mgrFaceModal');
+  const video = document.getElementById('mgrFaceVideo');
+  const errorBox = document.getElementById('mgrFaceModalError');
+  if (errorBox) { errorBox.style.display = 'none'; errorBox.textContent = ''; }
+  if (modal) modal.style.display = 'flex';
+
+  try {
+    mgrFaceStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+    });
+    if (video) video.srcObject = mgrFaceStream;
+  } catch (err) {
+    console.error('Camera error:', err);
+    if (errorBox) {
+      errorBox.textContent = 'تعذر تشغيل الكاميرا. يرجى التأكد من توصيل الكاميرا وإعطاء الإذن للمتصفح، أو يمكنك رفع صورة واضحة من جهازك بدلاً من ذلك.';
+      errorBox.style.display = 'block';
+    }
+  }
+}
+
+function closeMgrFaceModal() {
+  const modal = document.getElementById('mgrFaceModal');
+  if (modal) modal.style.display = 'none';
+  if (mgrFaceStream) {
+    mgrFaceStream.getTracks().forEach(track => track.stop());
+    mgrFaceStream = null;
+  }
+}
+
+async function captureAndEnrollMgrFace() {
+  const video = document.getElementById('mgrFaceVideo');
+  const canvas = document.getElementById('mgrFaceCanvas');
+  const loading = document.getElementById('mgrFaceLoadingOverlay');
+  const btnCapture = document.getElementById('btnCaptureMgrFace');
+  const errorBox = document.getElementById('mgrFaceModalError');
+  if (errorBox) { errorBox.style.display = 'none'; }
+
+  if (!video || !video.videoWidth) {
+    if (errorBox) {
+      errorBox.textContent = 'الكاميرا غير جاهزة بعد، يرجى الانتظار ثانية ثم المحاولة.';
+      errorBox.style.display = 'block';
+    }
+    return;
+  }
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+  if (loading) loading.style.display = 'flex';
+  if (btnCapture) btnCapture.disabled = true;
+
+  try {
+    const formData = new FormData();
+    formData.append('image', dataUrl);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+    const res = await fetch('/face/manager/enroll/', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      }
+    });
+    const result = await res.json();
+    if (result.success) {
+      closeMgrFaceModal();
+      alert('تم حفظ وتنشيط بصمة وجه المدير بنجاح! يمكنك الآن فتح جميع الأقسام المحمية ببصمة الوجه.');
+      window.location.reload();
+    } else {
+      if (errorBox) {
+        errorBox.textContent = result.message || 'فشل التعرف على الوجه. يرجى النظر للكاميرا جيداً والتأكد من وضوح الإضاءة.';
+        errorBox.style.display = 'block';
+      }
+    }
+  } catch (err) {
+    if (errorBox) {
+      errorBox.textContent = 'حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.';
+      errorBox.style.display = 'block';
+    }
+  } finally {
+    if (loading) loading.style.display = 'none';
+    if (btnCapture) btnCapture.disabled = false;
+  }
+}
+
+async function handleMgrFaceFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+  try {
+    const res = await fetch('/face/manager/enroll/', {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const result = await res.json();
+    if (result.success) {
+      alert('تم استخراج وحفظ بصمة وجه المدير من الصورة بنجاح!');
+      window.location.reload();
+    } else {
+      alert(result.message || 'فشل استخراج ملامح الوجه من الصورة.');
+    }
+  } catch (err) {
+    alert('حدث خطأ أثناء رفع الصورة.');
+  } finally {
+    e.target.value = '';
+  }
+}
+
+async function deleteMgrFace() {
+  if (!confirm('هل أنت متأكد من حذف بصمة وجه المدير؟ سيتعين عليك استخدام كلمة المرور بدلاً منها.')) return;
+  try {
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    const res = await fetch('/face/manager/delete/', {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const result = await res.json();
+    if (result.success) {
+      alert('تم حذف بصمة وجه المدير بنجاح.');
+      window.location.reload();
+    } else {
+      alert(result.message || 'تعذر حذف بصمة الوجه.');
+    }
+  } catch (err) {
+    alert('حدث خطأ في الاتصال بالخادم.');
+  }
+}
 </script>
 {% endblock %}

@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}منطقة الإدارة محمية — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
@@ -26,6 +26,51 @@
       </span>
     </p>
 
+    {% if profile.manager_face_unlock_enabled and profile.manager_face_enrolled or gym_profile.manager_face_unlock_enabled and gym_profile.manager_face_enrolled %}
+    <!-- Face ID Fast Unlock Section -->
+    <div id="faceUnlockSection" style="margin-bottom: 22px; padding: 18px; background: rgba(132, 204, 22, 0.08); border: 2px solid rgba(132, 204, 22, 0.35); border-radius: 14px; text-align: center;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 6px; color: #84cc16; font-weight: 800; font-size: 1.05rem;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2"/>
+          <circle cx="12" cy="11" r="3"/>
+          <path d="M9 16c1.5 1 4.5 1 6 0"/>
+        </svg>
+        <span>فتح ببصمة الوجه (Face ID)</span>
+      </div>
+      <p style="color: var(--text-muted, #8D99A3); font-size: 0.84rem; margin-bottom: 14px; line-height: 1.4;">
+        بصمة وجه المدير نشطة. انقر أدناه للفتح التلقائي بمجرد النظر للكاميرا:
+      </p>
+
+      <!-- Video Scanner Container -->
+      <div id="faceScanArea" style="display: none; position: relative; width: 100%; max-width: 320px; aspect-ratio: 4/3; margin: 0 auto 14px auto; border-radius: 12px; overflow: hidden; border: 2px solid #84cc16; background: #000;">
+        <video id="faceUnlockVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+        <div style="position: absolute; inset: 12%; border: 2px solid rgba(132, 204, 22, 0.8); border-radius: 50%; pointer-events: none; box-shadow: 0 0 15px rgba(132, 204, 22, 0.4);"></div>
+        <div id="faceScanStatusOverlay" style="display: flex; position: absolute; inset: 0; background: rgba(0,0,0,0.45); align-items: flex-end; justify-content: center; padding-bottom: 10px;">
+          <span id="faceScanStatusText" style="color: #fff; font-size: 0.85rem; font-weight: 700; background: rgba(0,0,0,0.7); padding: 4px 14px; border-radius: 999px;">جاري تشغيل الكاميرا...</span>
+        </div>
+      </div>
+      <canvas id="faceUnlockCanvas" style="display: none;"></canvas>
+
+      <button type="button" id="btnStartFaceUnlock" onclick="startFaceUnlockScanner()" class="btn btn-primary" style="width: 100%; justify-content: center; font-size: 1rem; padding: 12px; font-weight: 800; background: #84cc16; color: #000; border: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 18px rgba(132, 204, 22, 0.3);">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <circle cx="9" cy="9" r="1"></circle>
+          <circle cx="15" cy="9" r="1"></circle>
+          <path d="M8 15s1.5 2 4 2 4-2 4-2"></path>
+        </svg>
+        <span>فتح القفل الآن عبر الكاميرا</span>
+      </button>
+
+      <div id="faceUnlockMsg" style="display: none; margin-top: 10px; font-size: 0.86rem; font-weight: 700; padding: 8px 12px; border-radius: 8px;"></div>
+    </div>
+
+    <div style="display: flex; align-items: center; margin: 18px 0; color: var(--text-muted, #8D99A3); font-size: 0.82rem;">
+      <div style="flex: 1; height: 1px; background: var(--border-color, #1A2B36);"></div>
+      <span style="padding: 0 12px; font-weight: 700;">أو عبر كلمة المرور</span>
+      <div style="flex: 1; height: 1px; background: var(--border-color, #1A2B36);"></div>
+    </div>
+    {% endif %}
+
     <form method="post" action="{{ target_url|default:request.get_full_path }}" style="display: flex; flex-direction: column; gap: 16px;">
       {% csrf_token %}
       <input type="hidden" name="target_url" value="{{ target_url|default:request.get_full_path }}">
@@ -39,7 +84,6 @@
           id="mgr-pwd" 
           name="manager_unlock_password" 
           required 
-          autofocus
           placeholder="أدخل كلمة المرور هنا..."
           style="width: 100%; background: var(--bg-surface-subtle, #07131B); border: 1px solid var(--border-color, #182834); color: var(--text-main, #FFFFFF); font-size: 1.1rem; padding: 14px 16px; border-radius: 10px; outline: none; text-align: center; letter-spacing: 2px;"
         >
@@ -64,4 +108,125 @@
 
   </div>
 </div>
+
+<script>
+let faceStream = null;
+let scanAttempts = 0;
+const maxAttempts = 5;
+
+async function startFaceUnlockScanner() {
+  const scanArea = document.getElementById('faceScanArea');
+  const video = document.getElementById('faceUnlockVideo');
+  const statusText = document.getElementById('faceScanStatusText');
+  const btn = document.getElementById('btnStartFaceUnlock');
+  const msgBox = document.getElementById('faceUnlockMsg');
+
+  if (msgBox) { msgBox.style.display = 'none'; }
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  if (scanArea) { scanArea.style.display = 'block'; }
+  if (statusText) { statusText.textContent = 'جاري الاتصال بالكاميرا...'; }
+
+  try {
+    faceStream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+    });
+    video.srcObject = faceStream;
+    scanAttempts = 0;
+    setTimeout(captureAndVerifyFrame, 800);
+  } catch (err) {
+    console.error('Face scan error:', err);
+    if (statusText) statusText.textContent = 'تعذر تشغيل الكاميرا';
+    if (msgBox) {
+      msgBox.textContent = 'تعذر الوصول للكاميرا. يرجى إعطاء الصلاحية أو استخدام كلمة المرور.';
+      msgBox.style.background = 'rgba(239, 68, 68, 0.15)';
+      msgBox.style.color = '#f87171';
+      msgBox.style.display = 'block';
+    }
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
+async function captureAndVerifyFrame() {
+  const video = document.getElementById('faceUnlockVideo');
+  const canvas = document.getElementById('faceUnlockCanvas');
+  const statusText = document.getElementById('faceScanStatusText');
+  const msgBox = document.getElementById('faceUnlockMsg');
+  const btn = document.getElementById('btnStartFaceUnlock');
+
+  if (!video || !video.videoWidth) {
+    setTimeout(captureAndVerifyFrame, 400);
+    return;
+  }
+
+  scanAttempts++;
+  if (statusText) statusText.textContent = `جاري التحقق من الملامح (${scanAttempts}/${maxAttempts})...`;
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+  try {
+    const formData = new FormData();
+    formData.append('image', dataUrl);
+    formData.append('target_url', '{{ target_url|default:request.get_full_path }}');
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+    const res = await fetch('/face/manager/verify-unlock/', {
+      method: 'POST',
+      body: formData,
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      if (statusText) statusText.textContent = '✅ مرحباً يا كابتن! تم التحقق بنجاح';
+      if (msgBox) {
+        msgBox.textContent = '✅ تم التعرف على وجه المدير بنجاح! جاري الدخول...';
+        msgBox.style.background = 'rgba(34, 197, 94, 0.15)';
+        msgBox.style.color = '#4ade80';
+        msgBox.style.display = 'block';
+      }
+      stopFaceStream();
+      setTimeout(() => {
+        window.location.href = data.redirect_url || '{{ target_url|default:request.get_full_path }}';
+      }, 500);
+      return;
+    } else {
+      if (scanAttempts < maxAttempts) {
+        setTimeout(captureAndVerifyFrame, 700);
+      } else {
+        if (statusText) statusText.textContent = 'لم يتم التعرف على الوجه';
+        if (msgBox) {
+          msgBox.textContent = data.message || 'لم يتطابق الوجه مع بصمة المدير المسجلة. يمكنك المحاولة مجدداً أو كتابة كلمة المرور.';
+          msgBox.style.background = 'rgba(239, 68, 68, 0.15)';
+          msgBox.style.color = '#f87171';
+          msgBox.style.display = 'block';
+        }
+        stopFaceStream();
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      }
+    }
+  } catch (err) {
+    if (scanAttempts < maxAttempts) {
+      setTimeout(captureAndVerifyFrame, 800);
+    } else {
+      stopFaceStream();
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      if (msgBox) {
+        msgBox.textContent = 'حدث خطأ في الاتصال بالسيرفر.';
+        msgBox.style.display = 'block';
+      }
+    }
+  }
+}
+
+function stopFaceStream() {
+  if (faceStream) {
+    faceStream.getTracks().forEach(track => track.stop());
+    faceStream = null;
+  }
+}
+</script>
 {% endblock %}

@@ -31,4 +31,8 @@ urlpatterns = [
     path("api/capture-frame/", views.api_capture_frame_view, name="api_capture_frame"),
     path("api/capture_frame/", views.api_capture_frame_view),
     path("gate/test-trigger/", views.api_test_gate_trigger, name="test_gate_trigger"),
+    # Manager Face ID Unlock routes
+    path("manager/enroll/", views.api_enroll_manager_face, name="enroll_manager_face"),
+    path("manager/delete/", views.api_delete_manager_face, name="delete_manager_face"),
+    path("manager/verify-unlock/", views.api_verify_manager_face_unlock, name="verify_manager_face_unlock"),
 ]

@@ -65,6 +65,35 @@ class GymProfile(models.Model):
     )
     face_min_confidence = models.FloatField(default=0.55, verbose_name="حساسية كشف الوجه (Detection Threshold)")
     face_debounce_seconds = models.PositiveIntegerField(default=60, verbose_name="مهلة منع تكرار التسجيل (ثوانٍ)")
+
+    # Manager Face ID Unlock
+    manager_face_unlock_enabled = models.BooleanField(
+        default=True,
+        verbose_name="تفعيل فتح مناطق الإدارة والإعدادات ببصمة وجه المدير",
+        help_text="عند التفعيل، يمكن للمدير فتح لوحة المدير وصفحة الإعدادات والمدربين فوراً عبر التعرف على الوجه دون الحاجة لإدخال كلمة السر.",
+    )
+    manager_face_enrolled = models.BooleanField(
+        default=False,
+        db_index=True,
+        verbose_name="تم تسجيل بصمة وجه المدير",
+    )
+    manager_face_photo = models.ImageField(
+        upload_to="manager_face/",
+        null=True,
+        blank=True,
+        verbose_name="صورة وجه المدير المعتمدة",
+    )
+    manager_face_embeddings = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="بصمات وجه المدير الرقمية (Vectors)",
+    )
+    manager_face_enrolled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="تاريخ تسجيل بصمة وجه المدير",
+    )
+
     # Electronic Gate & Turnstile Network / Relay Settings
     gate_relay_enabled = models.BooleanField(default=False, verbose_name="تفعيل فتح البوابة تلقائياً عند التعرف بالوجه")
     gate_relay_type = models.CharField(

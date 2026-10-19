@@ -2,6 +2,7 @@ import json
 import time
 from datetime import timedelta
 from decimal import Decimal
+import numpy as np
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -64,6 +65,36 @@ def api_face_verify(request):
 
     member_id, score = engine.match_face_vector(emb, cosine_threshold=thresh)
     if not member_id:
+        # Check if the detected face belongs to the Gym Manager
+        if profile.manager_face_unlock_enabled and profile.manager_face_enrolled and profile.manager_face_embeddings:
+            q_vec = np.array(emb, dtype=np.float32)
+            q_norm = np.linalg.norm(q_vec)
+            if q_norm > 0:
+                q_vec = q_vec / q_norm
+            mgr_best = -1.0
+            for m_emb in profile.manager_face_embeddings:
+                m_vec = np.array(m_emb, dtype=np.float32)
+                m_norm = np.linalg.norm(m_vec)
+                if m_norm > 0:
+                    m_vec = m_vec / m_norm
+                s = float(np.dot(q_vec, m_vec))
+                if s > mgr_best:
+                    mgr_best = s
+            if mgr_best >= thresh:
+                request.session["manager_page_unlocked"] = True
+                request.session["settings_page_unlocked"] = True
+                request.session.modified = True
+                return JsonResponse({
+                    "success": True,
+                    "matched": True,
+                    "is_manager": True,
+                    "score": round(mgr_best * 100, 1),
+                    "member_name": "المدير العام (Manager)",
+                    "status": "مدير النظام",
+                    "photo_url": profile.manager_face_photo.url if profile.manager_face_photo else None,
+                    "message": "✓ تم التعرف على وجه مدير الصالة بنجاح. أهلاً بك!",
+                })
+
         return JsonResponse({
             "success": True,
             "matched": False,
@@ -406,5 +437,192 @@ def api_test_gate_trigger(request):
         "gate_relay_type": profile.gate_relay_type,
         "gate_ip": f"{profile.gate_ip_address}:{profile.gate_ip_port}",
     })
+
+
+@csrf_exempt
+@login_required
+def api_enroll_manager_face(request):
+    """
+    Enrolls the Gym Manager's official face embedding.
+    Extracts 128-D SFace feature vectors and crops face thumbnail into GymProfile.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "طريقة الطلب غير صالحة."}, status=405)
+
+    profile = GymProfile.get_solo()
+    raw_img = None
+    if "image" in request.FILES:
+        raw_img = request.FILES["image"].read()
+    elif "image" in request.POST:
+        raw_img = request.POST.get("image")
+    elif request.body:
+        try:
+            data = json.loads(request.body)
+            raw_img = data.get("image")
+        except Exception:
+            pass
+
+    if not raw_img:
+        return JsonResponse({"success": False, "message": "لم يتم إرسال أي صورة لوجه المدير."}, status=400)
+
+    engine = get_face_engine()
+    if not engine.is_ready:
+        return JsonResponse({"success": False, "message": "محرك الذكاء الاصطناعي قيد التهيئة، يرجى المحاولة بعد لحظات."}, status=503)
+
+    det_thresh = float(profile.face_min_confidence or 0.55)
+    success, emb, crop_bytes, err = engine.extract_embedding_and_crop(raw_img, score_threshold=det_thresh)
+
+    if not success or emb is None:
+        return JsonResponse({"success": False, "message": err or "تعذر التعرف على وجه واضح في الصورة. يرجى النظر مباشرة إلى الكاميرا."}, status=400)
+
+    append_mode = str(request.POST.get("append", "false")).lower() in ["true", "1"]
+    current_embs = profile.manager_face_embeddings or [] if append_mode else []
+    current_embs.append(emb.tolist() if hasattr(emb, "tolist") else emb)
+
+    profile.manager_face_embeddings = current_embs
+    profile.manager_face_enrolled = True
+    profile.manager_face_enrolled_at = timezone.now()
+
+    if crop_bytes:
+        filename = f"manager_face_{int(time.time())}.jpg"
+        if profile.manager_face_photo:
+            try:
+                profile.manager_face_photo.delete(save=False)
+            except Exception:
+                pass
+        profile.manager_face_photo.save(filename, ContentFile(crop_bytes), save=False)
+
+    profile.save()
+
+    return JsonResponse({
+        "success": True,
+        "message": "✓ تم تسجيل بصمة وجه المدير بنجاح!",
+        "photo_url": profile.manager_face_photo.url if profile.manager_face_photo else None,
+        "enrolled_at": profile.manager_face_enrolled_at.strftime("%Y-%m-%d %H:%M"),
+        "embeddings_count": len(current_embs),
+    })
+
+
+@csrf_exempt
+@login_required
+def api_delete_manager_face(request):
+    """
+    Deletes the enrolled face records for the Gym Manager.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "طريقة الطلب غير صالحة."}, status=405)
+
+    profile = GymProfile.get_solo()
+    profile.manager_face_enrolled = False
+    profile.manager_face_embeddings = []
+    profile.manager_face_enrolled_at = None
+    if profile.manager_face_photo:
+        try:
+            profile.manager_face_photo.delete(save=False)
+        except Exception:
+            pass
+        profile.manager_face_photo = None
+    profile.save()
+
+    return JsonResponse({
+        "success": True,
+        "message": "✓ تم حذف بصمة وجه المدير بنجاح.",
+    })
+
+
+@csrf_exempt
+def api_verify_manager_face_unlock(request):
+    """
+    Verifies live webcam frame against enrolled manager face embeddings.
+    If matched >= threshold:
+      - Sets manager_page_unlocked and settings_page_unlocked in session.
+      - Returns success=True with redirect_url.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "طريقة الطلب غير صالحة."}, status=405)
+
+    profile = GymProfile.get_solo()
+    if not profile.manager_face_unlock_enabled:
+        return JsonResponse({
+            "success": False,
+            "message": "خاصية فتح القفل ببصمة الوجه معطلة في إعدادات النظام.",
+        }, status=403)
+
+    if not profile.manager_face_enrolled or not profile.manager_face_embeddings:
+        return JsonResponse({
+            "success": False,
+            "message": "لم يتم تسجيل بصمة وجه المدير في إعدادات المطور بعد.",
+        }, status=400)
+
+    raw_img = None
+    target_url = request.POST.get("target_url") or "/manager/"
+
+    if "image" in request.FILES:
+        raw_img = request.FILES["image"].read()
+    elif "image" in request.POST:
+        raw_img = request.POST.get("image")
+    elif request.body:
+        try:
+            data = json.loads(request.body)
+            raw_img = data.get("image")
+            if "target_url" in data:
+                target_url = data["target_url"]
+        except Exception:
+            pass
+
+    if not raw_img:
+        return JsonResponse({"success": False, "message": "لم يتم التقاط صورة من الكاميرا."}, status=400)
+
+    engine = get_face_engine()
+    if not engine.is_ready:
+        return JsonResponse({"success": False, "message": "محرك الذكاء الاصطناعي قيد التحضير."}, status=503)
+
+    det_thresh = float(profile.face_min_confidence or 0.55)
+    success, query_emb, _, err = engine.extract_embedding_and_crop(raw_img, score_threshold=det_thresh)
+
+    if not success or query_emb is None:
+        return JsonResponse({
+            "success": False,
+            "message": "لم يتم اكتشاف وجه واضح أمام الكاميرا. يرجى النظر مباشرة إلى الكاميرا.",
+        }, status=400)
+
+    q_vec = np.array(query_emb, dtype=np.float32)
+    q_norm = np.linalg.norm(q_vec)
+    if q_norm > 0:
+        q_vec = q_vec / q_norm
+
+    best_score = -1.0
+    for emb in profile.manager_face_embeddings:
+        m_vec = np.array(emb, dtype=np.float32)
+        m_norm = np.linalg.norm(m_vec)
+        if m_norm > 0:
+            m_vec = m_vec / m_norm
+        score = float(np.dot(q_vec, m_vec))
+        if score > best_score:
+            best_score = score
+
+    thresh = profile.face_match_threshold_ratio
+    pct_score = round(max(0.0, best_score) * 100)
+
+    if best_score >= thresh:
+        request.session["manager_page_unlocked"] = True
+        request.session["settings_page_unlocked"] = True
+        request.session.modified = True
+
+        return JsonResponse({
+            "success": True,
+            "matched": True,
+            "score": pct_score,
+            "message": f"✓ تم التحقق بنجاح! مرحباً بالمدير (نسبة التطابق {pct_score}%).",
+            "redirect_url": target_url,
+        })
+    else:
+        return JsonResponse({
+            "success": False,
+            "matched": False,
+            "score": pct_score,
+            "message": f"❌ الوجه غير مطابق لبصمة وجه المدير (نسبة التطابق {pct_score}% أقل من المعيار {profile.face_match_threshold_percent}%).",
+        }, status=403)
+
 
 

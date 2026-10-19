@@ -1201,12 +1201,14 @@ def settings_view(request):
                     pass
                 profile.gate_http_path = request.POST.get("gate_http_path", profile.gate_http_path or "/open").strip()
                 profile.gate_http_method = request.POST.get("gate_http_method", profile.gate_http_method or "GET").strip().upper()
-                profile.gate_tcp_payload = request.POST.get("gate_tcp_payload", profile.gate_tcp_payload or "OPEN").strip()
                 try:
                     profile.gate_pulse_seconds = float(request.POST.get("gate_pulse_seconds", profile.gate_pulse_seconds or 2.5))
                 except (ValueError, TypeError):
                     pass
                 profile.gate_relay_port = request.POST.get("gate_relay_port", profile.gate_relay_port or "COM3").strip()
+
+            if "form_manager_face" in request.POST or "manager_face_unlock_present" in request.POST:
+                profile.manager_face_unlock_enabled = "manager_face_unlock_enabled" in request.POST
 
             if "form_whatsapp" in request.POST or "whatsapp_send_mode" in request.POST:
                 profile.whatsapp_enabled = "whatsapp_enabled" in request.POST
