@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from apps.accounts.decorators import manager_required
-from apps.core.models import GymProfile, AuditLog
+from apps.core.models import GymProfile, AuditLog, Branch
 from apps.expenses.models import Expense, ExpenseCategory
 from apps.members.models import CheckInEvent, Member, Plan, Subscription
 from apps.messaging.models import WhatsAppMessage

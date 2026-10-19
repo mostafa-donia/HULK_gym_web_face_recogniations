@@ -83,6 +83,12 @@ def main():
     login_success = client.login(username="demo", password="1234")
     test_case("Demo user authentication succeeds", login_success)
 
+    # Unlock manager and settings zones in session to test inner views
+    session = client.session
+    session["manager_page_unlocked"] = True
+    session["settings_page_unlocked"] = True
+    session.save()
+
     demo_urls = [
         ("Dashboard (/) ", "/"),
         ("Mobile Dashboard (/mobile/)", "/mobile/"),
