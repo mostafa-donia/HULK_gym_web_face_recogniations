@@ -645,7 +645,7 @@ def telegram_send_test_message_view(request):
         return JsonResponse({"ok": False, "description": "لم يتم إدخال معرف شات المدير (Manager Chat ID) بعد."})
     res = send_telegram_message(
         mgr_chat,
-        f"🔔 <b>رسالة تجريبية من نظام {profile.gym_name or 'HULK GYM'}!</b>\n\nبوت تليجرام متصل وجاهز للعمل والرد على المشتركين والإدارة بنجاح ✅"
+        f"🔔 <b>رسالة تجريبية من نظام {profile.gym_name or 'سينا سبا | CINA SPA'}!</b>\n\nبوت تليجرام متصل وجاهز للعمل والرد على المشتركين والإدارة بنجاح ✅"
     )
     return JsonResponse(res)
 
@@ -724,7 +724,7 @@ def whatsapp_message_bank_view(request):
             "variations": b.variations or [],
             "sample": get_random_message(b.category, {
                 "name": "أحمد مصطفى",
-                "gym_name": profile.gym_name or "HULK GYM",
+                "gym_name": profile.gym_name or "سينا سبا | CINA SPA",
                 "end_date": timezone.localdate().strftime("%Y-%m-%d"),
                 "date": timezone.localdate().strftime("%Y-%m-%d"),
                 "amount": "600",
@@ -754,7 +754,7 @@ def whatsapp_message_bank_preview_api(request):
 
     ctx = {
         "name": request.GET.get("name") or "كابتن أحمد",
-        "gym_name": profile.gym_name or "HULK GYM",
+        "gym_name": profile.gym_name or "سينا سبا | CINA SPA",
         "end_date": request.GET.get("end_date") or timezone.localdate().strftime("%Y-%m-%d"),
         "date": timezone.localdate().strftime("%Y-%m-%d"),
         "amount": request.GET.get("amount") or "550",
@@ -770,5 +770,27 @@ def whatsapp_message_bank_preview_api(request):
         "category": category,
         "message": msg,
     })
+
+
+@login_required
+def whatsapp_overlay_window_view(request):
+    """
+    Renders the dedicated Always-On-Top floating HUD counter window.
+    Designed to float above WhatsApp Desktop while batch messaging is in progress.
+    """
+    return render(request, "messaging/overlay_window.html")
+
+
+@login_required
+def whatsapp_pin_overlay_api(request):
+    """
+    AJAX endpoint to force Windows to set the overlay window as HWND_TOPMOST (-1).
+    """
+    try:
+        from apps.messaging import whatsapp_sender
+        pinned = whatsapp_sender.pin_overlay_window_topmost()
+        return JsonResponse({"success": True, "pinned": pinned})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
 
 

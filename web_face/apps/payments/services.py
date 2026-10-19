@@ -99,10 +99,21 @@ def generate_invoice_image_file(payment: Payment, subscription=None) -> str:
         except Exception:
             font_title = font_sub = font_bold = font_normal = font_sm = ImageFont.load_default()
 
-    raw_gym_name = profile.gym_name or "Systemize Gym"
+    raw_gym_name = profile.gym_name or "سينا سبا | CINA SPA"
     curr = profile.currency or "ج.م"
+    theme_rgb = profile.get_primary_color_rgb() if hasattr(profile, "get_primary_color_rgb") else (225, 29, 72)
 
-    draw.text((w // 2, 48), reshape_arabic(raw_gym_name), fill=(132, 204, 22), font=font_title, anchor="mm")
+    # Paste Logo if available
+    logo_p = profile.get_logo_image_path() if hasattr(profile, "get_logo_image_path") else None
+    if logo_p and os.path.exists(logo_p):
+        try:
+            lim = Image.open(logo_p).convert("RGBA")
+            lim.thumbnail((60, 60), Image.Resampling.LANCZOS)
+            img.paste(lim, (45, 25), lim)
+        except Exception:
+            pass
+
+    draw.text((w // 2, 48), reshape_arabic(raw_gym_name), fill=theme_rgb, font=font_title, anchor="mm")
     draw.text((w // 2, 84), reshape_arabic(f"إيصال سداد مالي رسمي | OFFICIAL RECEIPT #{payment.invoice_no}"), fill=(203, 213, 225), font=font_sub, anchor="mm")
 
     # Date & Invoice number bar
@@ -276,7 +287,7 @@ def queue_payment_receipt_whatsapp(payment: Payment, subscription=None) -> Optio
         from apps.messaging.message_bank import get_random_message
         ctx = {
             "name": member.name,
-            "gym_name": profile.gym_name or "Systemize Gym",
+            "gym_name": profile.gym_name or "سينا سبا | CINA SPA",
             "amount": f"{payment.amount}",
             "amount_paid": f"{payment.amount}",
             "currency": profile.currency or "جنيه",

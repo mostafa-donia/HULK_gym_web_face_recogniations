@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SYSTEMIZE_WA_OVERLAY - طابور إرسال واتساب</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: {{ gym_profile.primary_color|default:"#E11D48" }};
+      --bg: #070b14;
+      --card-bg: rgba(15, 23, 42, 0.95);
+      --border: rgba(255, 255, 255, 0.12);
+      --font-main: 'Cairo', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-main);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      background: var(--bg);
+      color: #fff;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border: 1.5px solid var(--primary);
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.9);
+    }
+    .top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .branding-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+    .gym-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .gym-meta {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .gym-name {
+      font-size: 0.88rem;
+      font-weight: 900;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .gym-tagline {
+      font-size: 0.68rem;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .counter-badge {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1.5px solid var(--primary);
+      color: var(--primary);
+      border-radius: 8px;
+      padding: 3px 10px;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 900;
+      flex-shrink: 0;
+      box-shadow: 0 0 12px rgba(0,0,0,0.5);
+    }
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      box-shadow: 0 0 10px var(--primary);
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .recipient-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+    }
+    .rec-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .rec-name {
+      color: #38bdf8;
+      font-size: 0.86rem;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rec-phone {
+      font-family: var(--font-mono);
+      color: #94a3b8;
+      font-size: 0.76rem;
+      direction: ltr;
+    }
+    .status-msg {
+      font-size: 0.74rem;
+      color: #cbd5e1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 8px var(--primary);
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .cancel-btn {
+      width: 100%;
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .cancel-btn:hover { background: #dc2626; }
+    .cancel-btn:active { transform: scale(0.98); }
+    .topmost-indicator {
+      position: absolute;
+      top: 4px;
+      left: 10px;
+      font-size: 0.62rem;
+      color: rgba(255,255,255,0.4);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="topmost-indicator">📌 دائم في المقدمة (Always On Top)</div>
+
+  <!-- Header & Gym Branding -->
+  <div class="top-header">
+    <div class="branding-box">
+      {% if gym_profile.logo %}
+        <img src="{{ gym_profile.logo.url }}" alt="{{ gym_profile.gym_name }}" class="gym-logo">
+      {% else %}
+        <div class="gym-logo" style="display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">🏋️</div>
+      {% endif %}
+      <div class="gym-meta">
+        <span class="gym-name">{{ gym_profile.gym_name|default:"سينا سبا | CINA SPA" }}</span>
+        <span class="gym-tagline">طابور إرسال واتساب المباشر</span>
+      </div>
+    </div>
+    <div class="counter-badge">
+      <span id="waOverlayCurrent">0</span> / <span id="waOverlayTotal">0</span>
+    </div>
+  </div>
+
+  <!-- Progress Bar in Theme Color -->
+  <div class="progress-track">
+    <div class="progress-fill" id="waOverlayProgressBar"></div>
+  </div>
+
+  <!-- Recipient & Live Status Card -->
+  <div class="recipient-card">
+    <div class="rec-row">
+      <span class="rec-name" id="waOverlayRecipientName">-</span>
+      <span class="rec-phone" id="waOverlayPhone"></span>
+    </div>
+    <div class="status-msg">
+      <span class="pulse-dot" id="waOverlayPulse"></span>
+      <span id="waOverlayStatusMsg">جار الاتصال بـ WhatsApp Desktop...</span>
+    </div>
+  </div>
+
+  <!-- Cancel / Stop Action Button -->
+  <button type="button" class="cancel-btn" id="waOverlayCancelBtn" onclick="cancelDispatch()">
+    <svg width="13" height="13" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5 1A1.5 1.5 0 0 0 1 2.5v11A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-11A1.5 1.5 0 0 0 13.5 1h-11z"/></svg>
+    <span>إلغاء الإرسال (إيقاف فوري)</span>
+  </button>
+
+  <script>
+    // 1. Force Windows to pin this window to HWND_TOPMOST immediately
+    async function pinToTopmost() {
+      try {
+        await fetch("{% url 'messaging:whatsapp_pin_overlay' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken") || ""
+          }
+        });
+      } catch (e) {
+        console.warn("Could not trigger pin-overlay API:", e);
+      }
+    }
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    // 2. Broadcast Channel & Opener Listener
+    const channel = new BroadcastChannel('systemize_wa_channel');
+
+    function updateOverlayUI(current, total, statusText, recipientName, mobile) {
+      const curEl = document.getElementById('waOverlayCurrent');
+      const totEl = document.getElementById('waOverlayTotal');
+      const bar = document.getElementById('waOverlayProgressBar');
+      const statusEl = document.getElementById('waOverlayStatusMsg');
+      const recEl = document.getElementById('waOverlayRecipientName');
+      const phoneEl = document.getElementById('waOverlayPhone');
+
+      if (curEl) curEl.textContent = current;
+      if (totEl) totEl.textContent = total;
+      if (bar) bar.style.width = Math.round((current / (total || 1)) * 100) + '%';
+      if (statusEl) statusEl.textContent = statusText;
+      if (recEl && recipientName) recEl.textContent = recipientName;
+      if (phoneEl && mobile) phoneEl.textContent = mobile;
+    }
+
+    window.updateOverlayUI = updateOverlayUI;
+
+    channel.onmessage = (event) => {
+      const data = event.data;
+      if (!data) return;
+
+      if (data.type === 'update') {
+        updateOverlayUI(data.current, data.total, data.status, data.recipient, data.mobile);
+      } else if (data.type === 'cancelled') {
+        const statusEl = document.getElementById('waOverlayStatusMsg');
+        const btn = document.getElementById('waOverlayCancelBtn');
+        const pulse = document.getElementById('waOverlayPulse');
+        if (statusEl) statusEl.textContent = "تم إيقاف الإرسال بواسطة المستخدم.";
+        if (btn) {
+          btn.style.background = "#64748b";
+          btn.textContent = "تم الإلغاء";
+        }
+        if (pulse) pulse.style.background = "#ef4444";
+        setTimeout(() => window.close(), 2500);
+      } else if (data.type === 'completed') {
+        const statusEl = document.getElementById('waOverlayStatusMsg');
+        const btn = document.getElementById('waOverlayCancelBtn');
+        const pulse = document.getElementById('waOverlayPulse');
+        const bar = document.getElementById('waOverlayProgressBar');
+        if (bar) bar.style.width = '100%';
+        if (statusEl) statusEl.textContent = `✓ اكتمل إرسال جميع الرسائل (${data.total})!`;
+        if (btn) {
+          btn.style.background = "#22c55e";
+          btn.textContent = "اكتمل بنجاح ✓";
+        }
+        if (pulse) pulse.style.background = "#22c55e";
+        setTimeout(() => window.close(), 2500);
+      }
+    };
+
+    function cancelDispatch() {
+      channel.postMessage({ type: 'cancel' });
+      if (window.opener && window.opener.whatsappQueueRunner) {
+        window.opener.whatsappQueueRunner.cancel();
+      }
+      const btn = document.getElementById('waOverlayCancelBtn');
+      if (btn) {
+        btn.style.background = "#64748b";
+        btn.textContent = "جار الإيقاف...";
+      }
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      pinToTopmost();
+      // Periodically re-assert topmost in case another window grabbed focus
+      setInterval(pinToTopmost, 3000);
+    });
+  </script>
+</body>
+</html>

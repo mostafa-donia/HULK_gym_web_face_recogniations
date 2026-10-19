@@ -374,9 +374,17 @@ def format_template_safely(template_str: str, context: dict) -> str:
     # Avoid matching single-word placeholders like {name} by matching only those containing pipe '|'
     text = re.sub(r"\{([^{}]+?\|[^{}]+?)\}", _spin_replace, text)
 
+    gym_name_val = context.get("gym_name")
+    if not gym_name_val:
+        try:
+            from apps.core.models import GymProfile
+            gym_name_val = GymProfile.get_solo().gym_name
+        except Exception:
+            gym_name_val = "سينا سبا | CINA SPA"
+
     replacements = {
         "{name}": str(context.get("name") or "كابتن"),
-        "{gym_name}": str(context.get("gym_name") or "Systemize Gym"),
+        "{gym_name}": str(gym_name_val or "سينا سبا | CINA SPA"),
         "{end_date}": str(context.get("end_date") or ""),
         "{date}": str(context.get("date") or context.get("today") or ""),
         "{today}": str(context.get("today") or context.get("date") or ""),

@@ -197,6 +197,42 @@ class GymProfile(models.Model):
         except Exception:
             return "#081104"
 
+    def get_primary_color_rgb(self, default=(225, 29, 72)) -> tuple:
+        """Returns (R, G, B) integer tuple for primary_color."""
+        try:
+            hex_str = (self.primary_color or "#E11D48").lstrip("#")
+            if len(hex_str) == 3:
+                hex_str = "".join([c * 2 for c in hex_str])
+            if len(hex_str) == 6:
+                return (int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16))
+        except Exception:
+            pass
+        return default
+
+    def get_logo_image_path(self):
+        """Returns absolute path to a PNG/JPEG logo file, converting .ico if needed."""
+        if not self.logo:
+            return None
+        try:
+            import os
+            p = getattr(self.logo, "path", None)
+            if not p or not os.path.exists(p):
+                return None
+            if p.lower().endswith(".ico"):
+                png_p = os.path.splitext(p)[0] + ".png"
+                if os.path.exists(png_p):
+                    return png_p
+                try:
+                    from PIL import Image
+                    im = Image.open(p)
+                    im.save(png_p)
+                    return png_p
+                except Exception:
+                    return p
+            return p
+        except Exception:
+            return None
+
     def __str__(self) -> str:
         return self.gym_name
 

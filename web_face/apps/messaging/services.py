@@ -202,9 +202,21 @@ def dispatch_message_record(msg_obj: WhatsAppMessage, return_to_system: bool = F
                 if image_path.lower().endswith(".html") and os.path.exists(image_path[:-5] + ".png"):
                     image_path = image_path[:-5] + ".png"
 
+        profile = GymProfile.get_solo()
+        gym_name = profile.gym_name or "سينا سبا | CINA SPA"
+
+        # Ensure gym name is clearly displayed in message text if not already included
+        if gym_name not in final_message:
+            final_message = f"{final_message}\n\n🏢 *{gym_name}*"
+
+        # If no specific invoice or report attachment is present, attach the gym logo if available!
+        if not image_path:
+            logo_p = profile.get_logo_image_path() if hasattr(profile, "get_logo_image_path") else None
+            if logo_p and os.path.exists(logo_p):
+                image_path = logo_p
+
         print(f"[dispatch_message_record] Sending msg id={msg_obj.id} to {msg_obj.mobile}, image_path={image_path}")
 
-        profile = GymProfile.get_solo()
         success = whatsapp_sender.send_message(
             phone=msg_obj.mobile,
             message=final_message,
@@ -350,7 +362,7 @@ def prepare_due_reminders() -> dict:
     """
     today = timezone.localdate()
     profile = GymProfile.get_solo()
-    gym_name = profile.gym_name or "Systemize Gym"
+    gym_name = profile.gym_name or "سينا سبا | CINA SPA"
 
     members = Member.objects.filter(phone__isnull=False).exclude(phone="").select_related()
     queued_count = 0
@@ -512,15 +524,27 @@ def generate_manager_report_image_file(report_data: dict) -> str:
         except Exception:
             font_badge = font_title = font_sub = font_card_val = font_card_lbl = font_card_sub = font_sec_title = font_normal = font_sm = ImageFont.load_default()
 
-    gym_name = report_data.get("gym_name", "Systemize Gym")
-    curr = report_data.get("currency", "ج.م")
+    profile = GymProfile.get_solo()
+    gym_name = profile.gym_name or report_data.get("gym_name", "سينا سبا | CINA SPA")
+    curr = profile.currency or report_data.get("currency", "ج.م")
+    theme_rgb = profile.get_primary_color_rgb() if hasattr(profile, "get_primary_color_rgb") else (225, 29, 72)
+
+    # Paste Logo if available
+    logo_p = profile.get_logo_image_path() if hasattr(profile, "get_logo_image_path") else None
+    if logo_p and os.path.exists(logo_p):
+        try:
+            lim = Image.open(logo_p).convert("RGBA")
+            lim.thumbnail((70, 70), Image.Resampling.LANCZOS)
+            img.paste(lim, (50, 40), lim)
+        except Exception:
+            pass
 
     # Header Top Badge
     draw.rounded_rectangle([w // 2 - 130, 35, w // 2 + 130, 65], radius=8, fill=(30, 41, 59), outline=(71, 85, 105), width=1)
     draw.text((w // 2, 50), reshape_arabic("تقرير الإدارة اليومي الرسمي"), fill=(251, 191, 36), font=font_badge, anchor="mm")
 
-    # Gym Name
-    draw.text((w // 2, 95), reshape_arabic(gym_name), fill=(163, 230, 53), font=font_title, anchor="mm")
+    # Gym Name with dynamic theme color
+    draw.text((w // 2, 95), reshape_arabic(gym_name), fill=theme_rgb, font=font_title, anchor="mm")
 
     # Date & Time
     time_str = report_data.get("time_str", "")

@@ -433,6 +433,37 @@ def remember_current_window():
         print(f"[remember_current_window] Warning: {e}")
 
 
+def pin_overlay_window_topmost() -> bool:
+    """
+    Searches for any active Systemize WhatsApp Overlay Counter window
+    and asserts HWND_TOPMOST (-1) so it stays pinned above WhatsApp Desktop.
+    """
+    try:
+        user32 = ctypes.windll.user32
+        matched_hwnds = []
+
+        def enum_windows_callback(hwnd, lParam):
+            if user32.IsWindow(hwnd) and user32.IsWindowVisible(hwnd):
+                length = user32.GetWindowTextLengthW(hwnd)
+                if length > 0:
+                    buffer = ctypes.create_unicode_buffer(length + 1)
+                    user32.GetWindowTextW(hwnd, buffer, length + 1)
+                    window_title = buffer.value
+                    if any(key in window_title for key in ["SYSTEMIZE_WA_OVERLAY", "SystemizeWhatsAppOverlay", "طابور إرسال واتساب", "WhatsAppOverlay"]):
+                        # HWND_TOPMOST = -1, SWP_NOMOVE = 0x0002, SWP_NOSIZE = 0x0001, SWP_NOACTIVATE = 0x0010, SWP_SHOWWINDOW = 0x0040
+                        user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0010 | 0x0040)
+                        matched_hwnds.append(hwnd)
+            return True
+
+        WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+        user32.EnumWindows(WNDENUMPROC(enum_windows_callback), 0)
+        if matched_hwnds:
+            return True
+    except Exception as e:
+        print(f"[pin_overlay_window_topmost] Warning: {e}")
+    return False
+
+
 def whatsupp_ready() -> bool:
     """
     Ensures WhatsApp Desktop (native Windows application) is installed, running,
@@ -470,6 +501,9 @@ def whatsupp_ready() -> bool:
     user32.ShowWindow(hwnd, 3)
 
     sleep(0.8)
+    # Ensure our overlay counter window stays Always On Top of WhatsApp Desktop!
+    pin_overlay_window_topmost()
+
     print(f"[whatsupp_ready] WhatsApp Desktop maximized and focused: HWND={hwnd}")
     return True
 
