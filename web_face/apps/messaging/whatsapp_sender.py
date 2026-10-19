@@ -625,34 +625,19 @@ def send_message(
     set_keyboard_layout_to_english()
     random_delay(0.2, 0.4)
 
-    # 2. Focus the search bar via coordinates and verify WhatsApp is loaded & signed in
-    search_ready = False
-    for attempt in range(6):
-        human_move_to(x_search, y_search)
-        pyautogui.click()
-        random_delay(0.15, 0.25)
+    # 2. Focus the search bar via coordinates
+    press("esc")
+    random_delay(0.15, 0.25)
 
-        copy("__WAIT__")
-        write(" ")
-        sleep(0.15)
-        hotkey("ctrl", "a")
-        hotkey("ctrl", "c")
-        sleep(0.15)
-        if paste() != "__WAIT__":
-            search_ready = True
-            break
-
-        print(f"[send_message] WhatsApp search bar not ready yet (attempt {attempt + 1}/6). Waiting for loading/sign-in...")
-        sleep(1.5)
-
-    if not search_ready:
-        print("[send_message] ERROR: WhatsApp Desktop is either NOT signed in (QR screen) or still loading.")
-        if return_to_system:
-            return_to_system_window()
-        return False
+    human_move_to(x_search, y_search)
+    pyautogui.click()
+    random_delay(0.2, 0.35)
 
     # Clear previous search content cleanly and type space then phone
     hotkey("ctrl", "a")
+    press("backspace")
+    sleep(0.1)
+
     write(" ")
     write(phone)
     random_delay(0.8, 1.2)
@@ -741,27 +726,16 @@ def send_message(
             press("enter")
             random_delay(1.0, 1.8)
 
-    # 4. Verification Check: Check if search still contains the typed phone
-    human_move_to(x_search, y_search)
-    pyautogui.click()
-    hotkey("ctrl", "a")
-    hotkey("ctrl", "c")
-    random_delay(0.25, 0.45)
-    search = paste()
-    x = len(phone) + 1
-    if search and search[0:x] == " " + phone:
-        print(f"[send_message] Target contact {phone} was NOT found on WhatsApp.")
+    # 4. Clear search bar cleanly for subsequent messages
+    try:
+        human_move_to(x_search, y_search)
+        pyautogui.click()
+        random_delay(0.15, 0.25)
         hotkey("ctrl", "a")
         press("backspace")
         press("esc")
-        if return_to_system:
-            return_to_system_window()
-        return False
-
-    # Clear search bar cleanly
-    hotkey("ctrl", "a")
-    press("backspace")
-    press("esc")
+    except Exception as e:
+        print(f"[send_message] Clear search bar warning: {e}")
 
     # 5. Return focus to browser if requested
     if return_to_system:
