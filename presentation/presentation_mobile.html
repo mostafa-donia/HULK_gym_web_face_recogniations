@@ -1162,7 +1162,7 @@
           <!-- Yearly Featured -->
           <div class="price-card featured" onclick="openPriceEditorSheet()">
             <div class="price-meta">
-              <h4 style="color: #bef264;">اشتراك سنوي (توفير شهرين)</h4>
+              <h4 style="color: #bef264;">اشتراك سنوي</h4>
               <span style="color: #fff;">البرنامج الأساسي الكامل ✓</span>
             </div>
             <div class="price-figure">
@@ -1193,7 +1193,8 @@
           <div class="addon-chip">بصمة يد: <strong id="dispAddonFingerprint">٣٬٥٠٠</strong> ج</div>
           <div class="addon-chip">باركود: <strong id="dispAddonBarcode">٢٬٥٠٠</strong> ج</div>
           <div class="addon-chip">كود QR: <strong id="dispAddonQr">١٬٥٠٠</strong> ج</div>
-          <div class="addon-chip">بوت واتساب: <strong id="dispAddonBot">٢٬٠٠٠</strong> ج</div>
+          <div class="addon-chip"><i class="fa-brands fa-whatsapp text-emerald-400"></i> واتساب: <strong id="dispAddonWhatsApp">١٬٥٠٠</strong> ج</div>
+          <div class="addon-chip"><i class="fa-brands fa-telegram text-sky-400"></i> تيليجرام: <strong id="dispAddonTelegram">١٬٠٠٠</strong> ج</div>
           <div class="addon-chip">نقاط البار: <strong id="dispAddonBar">١٬٥٠٠</strong> ج</div>
           <div class="addon-chip" style="border-color: rgba(56,189,248,0.4);">ربط فروع: <strong id="dispAddonGlobal" style="color: var(--cyan);">٢٬٥٠٠</strong> ج</div>
         </div>
@@ -1285,8 +1286,12 @@
           <input type="number" id="inAddonQr" class="input-box" value="1500">
         </div>
         <div class="form-group">
-          <label class="form-label">بوت واتساب (ج)</label>
-          <input type="number" id="inAddonBot" class="input-box" value="2000">
+          <label class="form-label">إشعارات واتساب (ج)</label>
+          <input type="number" id="inAddonWhatsApp" class="input-box" value="1500">
+        </div>
+        <div class="form-group">
+          <label class="form-label">بوت تيليجرام (ج)</label>
+          <input type="number" id="inAddonTelegram" class="input-box" value="1000">
         </div>
         <div class="form-group">
           <label class="form-label">نقاط البار POS (ج)</label>
@@ -1363,10 +1368,18 @@
 
       <label class="quote-check-item">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <input type="checkbox" id="chkAddonBot" onchange="calculateQuote()" checked>
-          <span style="font-size: 0.82rem; font-weight: 800; color: #fff;">روبوت واتساب آلي للتنبيهات</span>
+          <input type="checkbox" id="chkAddonWhatsApp" onchange="calculateQuote()" checked>
+          <span style="font-size: 0.82rem; font-weight: 800; color: #fff;"><i class="fa-brands fa-whatsapp text-emerald-400"></i> إرسال رسائل وإشعارات واتساب</span>
         </div>
-        <strong style="color: var(--lime); font-family: var(--font-mono); font-size: 0.85rem;" id="qPriceBot">+2,000 ج</strong>
+        <strong style="color: var(--lime); font-family: var(--font-mono); font-size: 0.85rem;" id="qPriceWhatsApp">+1,500 ج</strong>
+      </label>
+
+      <label class="quote-check-item">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="chkAddonTelegram" onchange="calculateQuote()">
+          <span style="font-size: 0.82rem; font-weight: 800; color: #fff;"><i class="fa-brands fa-telegram text-sky-400"></i> بوت وتقارير تيليجرام اللحظية</span>
+        </div>
+        <strong style="color: var(--lime); font-family: var(--font-mono); font-size: 0.85rem;" id="qPriceTelegram">+1,000 ج</strong>
       </label>
 
       <label class="quote-check-item">
@@ -1484,7 +1497,8 @@
       addonFingerprint: 3500,
       addonBarcode: 2500,
       addonQr: 1500,
-      addonBot: 2000,
+      addonWhatsApp: 1500,
+      addonTelegram: 1000,
       addonBar: 1500,
       addonGlobal: 2500
     };
@@ -1493,7 +1507,7 @@
 
     function loadSavedPrices() {
       try {
-        const saved = localStorage.getItem('systemize_presentation_prices');
+        const saved = localStorage.getItem('systemize_presentation_prices_v2');
         if (saved) {
           const parsed = JSON.parse(saved);
           currentPrices = Object.assign({}, DEFAULT_PRICES, parsed);
@@ -1512,12 +1526,13 @@
       currentPrices.addonFingerprint = Number(document.getElementById('inAddonFingerprint').value) || DEFAULT_PRICES.addonFingerprint;
       currentPrices.addonBarcode = Number(document.getElementById('inAddonBarcode').value) || DEFAULT_PRICES.addonBarcode;
       currentPrices.addonQr = Number(document.getElementById('inAddonQr').value) || DEFAULT_PRICES.addonQr;
-      currentPrices.addonBot = Number(document.getElementById('inAddonBot').value) || DEFAULT_PRICES.addonBot;
+      currentPrices.addonWhatsApp = Number(document.getElementById('inAddonWhatsApp').value) || DEFAULT_PRICES.addonWhatsApp;
+      currentPrices.addonTelegram = Number(document.getElementById('inAddonTelegram').value) || DEFAULT_PRICES.addonTelegram;
       currentPrices.addonBar = Number(document.getElementById('inAddonBar').value) || DEFAULT_PRICES.addonBar;
       currentPrices.addonGlobal = Number(document.getElementById('inAddonGlobal').value) || DEFAULT_PRICES.addonGlobal;
 
       try {
-        localStorage.setItem('systemize_presentation_prices', JSON.stringify(currentPrices));
+        localStorage.setItem('systemize_presentation_prices_v2', JSON.stringify(currentPrices));
       } catch (e) {}
 
       renderPricesToUI();
@@ -1554,7 +1569,8 @@
       const elFing = document.getElementById('dispAddonFingerprint');
       const elBarc = document.getElementById('dispAddonBarcode');
       const elQr = document.getElementById('dispAddonQr');
-      const elBot = document.getElementById('dispAddonBot');
+      const elWA = document.getElementById('dispAddonWhatsApp');
+      const elTG = document.getElementById('dispAddonTelegram');
       const elBar = document.getElementById('dispAddonBar');
       const elGlob = document.getElementById('dispAddonGlobal');
 
@@ -1562,7 +1578,8 @@
       if (elFing) elFing.innerText = formatNum(currentPrices.addonFingerprint);
       if (elBarc) elBarc.innerText = formatNum(currentPrices.addonBarcode);
       if (elQr) elQr.innerText = formatNum(currentPrices.addonQr);
-      if (elBot) elBot.innerText = formatNum(currentPrices.addonBot);
+      if (elWA) elWA.innerText = formatNum(currentPrices.addonWhatsApp);
+      if (elTG) elTG.innerText = formatNum(currentPrices.addonTelegram);
       if (elBar) elBar.innerText = formatNum(currentPrices.addonBar);
       if (elGlob) elGlob.innerText = formatNum(currentPrices.addonGlobal);
 
@@ -1570,13 +1587,15 @@
       const qFace = document.getElementById('qPriceFace');
       const qFing = document.getElementById('qPriceFingerprint');
       const qBarc = document.getElementById('qPriceBarcode');
-      const qBot = document.getElementById('qPriceBot');
+      const qWA = document.getElementById('qPriceWhatsApp');
+      const qTG = document.getElementById('qPriceTelegram');
       const qBar = document.getElementById('qPriceBar');
 
       if (qFace) qFace.innerText = `+${formatNum(currentPrices.addonFace)} ج`;
       if (qFing) qFing.innerText = `+${formatNum(currentPrices.addonFingerprint)} ج`;
       if (qBarc) qBarc.innerText = `+${formatNum(currentPrices.addonBarcode)} ج`;
-      if (qBot) qBot.innerText = `+${formatNum(currentPrices.addonBot)} ج`;
+      if (qWA) qWA.innerText = `+${formatNum(currentPrices.addonWhatsApp)} ج`;
+      if (qTG) qTG.innerText = `+${formatNum(currentPrices.addonTelegram)} ج`;
       if (qBar) qBar.innerText = `+${formatNum(currentPrices.addonBar)} ج`;
 
       // Update Select Options
@@ -1598,7 +1617,8 @@
       document.getElementById('inAddonFingerprint').value = currentPrices.addonFingerprint;
       document.getElementById('inAddonBarcode').value = currentPrices.addonBarcode;
       document.getElementById('inAddonQr').value = currentPrices.addonQr;
-      document.getElementById('inAddonBot').value = currentPrices.addonBot;
+      document.getElementById('inAddonWhatsApp').value = currentPrices.addonWhatsApp;
+      document.getElementById('inAddonTelegram').value = currentPrices.addonTelegram;
       document.getElementById('inAddonBar').value = currentPrices.addonBar;
       document.getElementById('inAddonGlobal').value = currentPrices.addonGlobal;
     }
@@ -1748,9 +1768,13 @@
         total += currentPrices.addonBarcode;
         items.push(`باركود (+${formatNum(currentPrices.addonBarcode)} ج)`);
       }
-      if (document.getElementById('chkAddonBot').checked) {
-        total += currentPrices.addonBot;
-        items.push(`بوت واتساب (+${formatNum(currentPrices.addonBot)} ج)`);
+      if (document.getElementById('chkAddonWhatsApp').checked) {
+        total += currentPrices.addonWhatsApp;
+        items.push(`إشعارات واتساب (+${formatNum(currentPrices.addonWhatsApp)} ج)`);
+      }
+      if (document.getElementById('chkAddonTelegram').checked) {
+        total += currentPrices.addonTelegram;
+        items.push(`بوت تيليجرام (+${formatNum(currentPrices.addonTelegram)} ج)`);
       }
       if (document.getElementById('chkAddonBar').checked) {
         total += currentPrices.addonBar;

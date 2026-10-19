@@ -1241,7 +1241,7 @@
           </div>
 
           <div class="glass-card" style="padding: 22px; text-align: center; border-color: #84cc16; background: linear-gradient(180deg, rgba(132,204,22,0.12) 0%, rgba(15,23,42,0.85) 100%); transform: translateY(-4px);">
-            <span style="font-size: 0.8rem; color: #bef264; font-weight: 900; display: block; margin-bottom: 4px;">اشتراك سنوي (توفير شهرين)</span>
+            <span style="font-size: 0.8rem; color: #bef264; font-weight: 900; display: block; margin-bottom: 4px;">اشتراك سنوي</span>
             <div style="font-size: 2.2rem; font-weight: 900; color: #ffffff; font-family: var(--font-mono); margin: 8px 0; display: flex; align-items: center; justify-content: center; gap: 4px;">
               <span class="price-static-val" id="lblPriceYearly">٣٬٥٠٠</span>
               <input type="number" class="price-input-live" id="inLivePriceYearly" value="3500" style="display: none;" oninput="onInlinePriceChange('yearly', this.value)">
@@ -1267,8 +1267,8 @@
             <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بصمة وجه: <strong class="addon-static-val" id="lblAddonFace" style="color: #a3e635; margin-right: 4px;">٤٬٠٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonFace" value="4000" style="display: none;" oninput="onInlinePriceChange('addonFace', this.value)"> ج</span>
             <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بصمة يد: <strong class="addon-static-val" id="lblAddonFingerprint" style="color: #a3e635; margin-right: 4px;">٣٬٥٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonFingerprint" value="3500" style="display: none;" oninput="onInlinePriceChange('addonFingerprint', this.value)"> ج</span>
             <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">باركود: <strong class="addon-static-val" id="lblAddonBarcode" style="color: #a3e635; margin-right: 4px;">٢٬٥٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonBarcode" value="2500" style="display: none;" oninput="onInlinePriceChange('addonBarcode', this.value)"> ج</span>
-            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">كود QR: <strong class="addon-static-val" id="lblAddonQr" style="color: #a3e635; margin-right: 4px;">١٬٥٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonQr" value="1500" style="display: none;" oninput="onInlinePriceChange('addonQr', this.value)"> ج</span>
-            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">بوت واتساب: <strong class="addon-static-val" id="lblAddonBot" style="color: #a3e635; margin-right: 4px;">٢٬٠٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonBot" value="2000" style="display: none;" oninput="onInlinePriceChange('addonBot', this.value)"> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;"><i class="fa-brands fa-whatsapp text-emerald-400"></i> إشعارات واتساب: <strong class="addon-static-val" id="lblAddonWhatsApp" style="color: #a3e635; margin-right: 4px;">١٬٥٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonWhatsApp" value="1500" style="display: none;" oninput="onInlinePriceChange('addonWhatsApp', this.value)"> ج</span>
+            <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;"><i class="fa-brands fa-telegram text-sky-400"></i> بوت تيليجرام: <strong class="addon-static-val" id="lblAddonTelegram" style="color: #a3e635; margin-right: 4px;">١٬٠٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonTelegram" value="1000" style="display: none;" oninput="onInlinePriceChange('addonTelegram', this.value)"> ج</span>
             <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem;">نقاط البار: <strong class="addon-static-val" id="lblAddonBar" style="color: #a3e635; margin-right: 4px;">١٬٥٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonBar" value="1500" style="display: none;" oninput="onInlinePriceChange('addonBar', this.value)"> ج</span>
             <span class="pill-item" style="padding: 4px 10px; font-size: 0.8rem; border-color: rgba(56,189,248,0.4);">Global Access: <strong class="addon-static-val" id="lblAddonGlobal" style="color: #38bdf8; margin-right: 4px;">٢٬٥٠٠</strong><input type="number" class="addon-input-live" id="inLiveAddonGlobal" value="2500" style="display: none;" oninput="onInlinePriceChange('addonGlobal', this.value)"> ج/سنة</span>
           </div>
@@ -1403,7 +1403,7 @@
           </label>
           <label class="glass-card" style="padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
             <div>
-              <strong style="font-size: 0.9rem; color: #fff; display: block;">سنوي (توفير شهرين)</strong>
+              <strong style="font-size: 0.9rem; color: #fff; display: block;">سنوي</strong>
               <span style="font-size: 0.75rem; color: #94a3b8;">
                 <input type="number" class="modal-price-live" id="inCalcPriceYearly" value="3500" oninput="onInlinePriceChange('yearly', this.value)" onclick="event.stopPropagation()"> ج/سنة
               </span>
@@ -1451,9 +1451,15 @@
           </label>
           <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
             <span style="font-size: 0.82rem; color: #fff;">
-              بوت واتساب وتليجرام (+<input type="number" class="modal-price-live" id="inCalcAddonBot" value="2000" oninput="onInlinePriceChange('addonBot', this.value)" onclick="event.stopPropagation()"> ج)
+              <i class="fa-brands fa-whatsapp text-emerald-400"></i> إشعارات واتساب (+<input type="number" class="modal-price-live" id="inCalcAddonWhatsApp" value="1500" oninput="onInlinePriceChange('addonWhatsApp', this.value)" onclick="event.stopPropagation()"> ج)
             </span>
-            <input type="checkbox" id="chkAddonBot" class="accent-lime-500" onchange="recalculatePackage()">
+            <input type="checkbox" id="chkAddonWhatsApp" class="accent-lime-500" onchange="recalculatePackage()">
+          </label>
+          <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+            <span style="font-size: 0.82rem; color: #fff;">
+              <i class="fa-brands fa-telegram text-sky-400"></i> بوت تيليجرام (+<input type="number" class="modal-price-live" id="inCalcAddonTelegram" value="1000" oninput="onInlinePriceChange('addonTelegram', this.value)" onclick="event.stopPropagation()"> ج)
+            </span>
+            <input type="checkbox" id="chkAddonTelegram" class="accent-lime-500" onchange="recalculatePackage()">
           </label>
           <label class="glass-card" style="padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
             <span style="font-size: 0.82rem; color: #fff;">
@@ -1514,8 +1520,8 @@
         <div class="form-group"><label class="form-label">بصمة وجه (ج)</label><input type="number" id="cfgAddonFace" class="form-input"></div>
         <div class="form-group"><label class="form-label">بصمة يد (ج)</label><input type="number" id="cfgAddonFingerprint" class="form-input"></div>
         <div class="form-group"><label class="form-label">باركود (ج)</label><input type="number" id="cfgAddonBarcode" class="form-input"></div>
-        <div class="form-group"><label class="form-label">كود QR (ج)</label><input type="number" id="cfgAddonQr" class="form-input"></div>
-        <div class="form-group"><label class="form-label">بوت واتساب (ج)</label><input type="number" id="cfgAddonBot" class="form-input"></div>
+        <div class="form-group"><label class="form-label">إشعارات واتساب (ج)</label><input type="number" id="cfgAddonWhatsApp" class="form-input"></div>
+        <div class="form-group"><label class="form-label">بوت تيليجرام (ج)</label><input type="number" id="cfgAddonTelegram" class="form-input"></div>
         <div class="form-group"><label class="form-label">نقاط البار (ج)</label><input type="number" id="cfgAddonBar" class="form-input"></div>
       </div>
 
@@ -1772,7 +1778,8 @@
         addonFingerprint: 3500,
         addonBarcode: 2500,
         addonQr: 1500,
-        addonBot: 2000,
+        addonWhatsApp: 1500,
+        addonTelegram: 1000,
         addonBar: 1500,
         addonGlobal: 2500,
         branchPrice: 2500
@@ -1790,13 +1797,13 @@
 
     function loadSavedConfig() {
       try {
-        const saved = localStorage.getItem('systemize_deck_config_v3');
+        const saved = localStorage.getItem('systemize_deck_config_v4');
         if (saved) appConfig = Object.assign({}, DEFAULT_CONFIG, JSON.parse(saved));
       } catch (e) {}
     }
 
     function saveConfigToStorage() {
-      localStorage.setItem('systemize_deck_config_v3', JSON.stringify(appConfig));
+      localStorage.setItem('systemize_deck_config_v4', JSON.stringify(appConfig));
     }
 
     function formatNumber(num) {
@@ -1819,7 +1826,8 @@
       setTxt('lblAddonFingerprint', formatNumber(p.addonFingerprint));
       setTxt('lblAddonBarcode', formatNumber(p.addonBarcode));
       setTxt('lblAddonQr', formatNumber(p.addonQr));
-      setTxt('lblAddonBot', formatNumber(p.addonBot));
+      setTxt('lblAddonWhatsApp', formatNumber(p.addonWhatsApp));
+      setTxt('lblAddonTelegram', formatNumber(p.addonTelegram));
       setTxt('lblAddonBar', formatNumber(p.addonBar));
       setTxt('lblAddonGlobal', formatNumber(p.addonGlobal));
 
@@ -1833,7 +1841,8 @@
       setVal('inLiveAddonFingerprint', p.addonFingerprint);
       setVal('inLiveAddonBarcode', p.addonBarcode);
       setVal('inLiveAddonQr', p.addonQr);
-      setVal('inLiveAddonBot', p.addonBot);
+      setVal('inLiveAddonWhatsApp', p.addonWhatsApp);
+      setVal('inLiveAddonTelegram', p.addonTelegram);
       setVal('inLiveAddonBar', p.addonBar);
       setVal('inLiveAddonGlobal', p.addonGlobal);
 
@@ -1845,7 +1854,8 @@
       setVal('inCalcAddonFingerprint', p.addonFingerprint);
       setVal('inCalcAddonBarcode', p.addonBarcode);
       setVal('inCalcAddonQr', p.addonQr);
-      setVal('inCalcAddonBot', p.addonBot);
+      setVal('inCalcAddonWhatsApp', p.addonWhatsApp);
+      setVal('inCalcAddonTelegram', p.addonTelegram);
       setVal('inCalcAddonBar', p.addonBar);
       setVal('inCalcAddonGlobal', p.addonGlobal);
       setVal('inCalcBranchPrice', p.branchPrice || 2500);
@@ -2065,7 +2075,8 @@
       if (document.getElementById('chkAddonFingerprint').checked) oneTimeTotal += p.addonFingerprint;
       if (document.getElementById('chkAddonBarcode').checked) oneTimeTotal += p.addonBarcode;
       if (document.getElementById('chkAddonQr').checked) oneTimeTotal += p.addonQr;
-      if (document.getElementById('chkAddonBot').checked) oneTimeTotal += p.addonBot;
+      if (document.getElementById('chkAddonWhatsApp').checked) oneTimeTotal += p.addonWhatsApp;
+      if (document.getElementById('chkAddonTelegram').checked) oneTimeTotal += p.addonTelegram;
       if (document.getElementById('chkAddonBar').checked) oneTimeTotal += p.addonBar;
 
       let annualExtra = 0;
@@ -2100,7 +2111,8 @@
       document.getElementById('cfgAddonFingerprint').value = p.addonFingerprint;
       document.getElementById('cfgAddonBarcode').value = p.addonBarcode;
       document.getElementById('cfgAddonQr').value = p.addonQr;
-      document.getElementById('cfgAddonBot').value = p.addonBot;
+      document.getElementById('cfgAddonWhatsApp').value = p.addonWhatsApp;
+      document.getElementById('cfgAddonTelegram').value = p.addonTelegram;
       document.getElementById('cfgAddonBar').value = p.addonBar;
       openModal('presenterSettingsModal');
     }
@@ -2113,7 +2125,8 @@
       appConfig.prices.addonFingerprint = Number(document.getElementById('cfgAddonFingerprint').value) || 3500;
       appConfig.prices.addonBarcode = Number(document.getElementById('cfgAddonBarcode').value) || 2500;
       appConfig.prices.addonQr = Number(document.getElementById('cfgAddonQr').value) || 1500;
-      appConfig.prices.addonBot = Number(document.getElementById('cfgAddonBot').value) || 2000;
+      appConfig.prices.addonWhatsApp = Number(document.getElementById('cfgAddonWhatsApp').value) || 1500;
+      appConfig.prices.addonTelegram = Number(document.getElementById('cfgAddonTelegram').value) || 1000;
       appConfig.prices.addonBar = Number(document.getElementById('cfgAddonBar').value) || 1500;
 
       saveConfigToStorage();
