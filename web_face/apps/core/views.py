@@ -775,7 +775,85 @@ def manager_dashboard_view(request):
     debtors_count = base_members.filter(current_remaining__gt=0).count()
     avg_debt = round(total_remaining / max(1, debtors_count), 2) if total_remaining > 0 else Decimal("0.00")
 
+    # === MEMBER MOVEMENT & ATTENDANCE DYNAMICS ===
+    active_members_qs = base_members.filter(last_subscription_end__gte=today)
+    active_count_total = active_members_qs.count()
+    seven_days_ago = today - timedelta(days=7)
+    recent_checkin_member_ids = set(
+        base_checkins.filter(checked_in_at__date__gte=seven_days_ago).values_list("member_id", flat=True)
+    )
+    inactive_7d_count = active_members_qs.exclude(id__in=recent_checkin_member_ids).count()
+    inactive_7d_pct = round((inactive_7d_count / max(1, active_count_total)) * 100) if active_count_total > 0 else 0
+
+    period_days_count = max(1, (period_end - period_start).days + 1)
+    avg_daily_attendance = round(period_checkins / period_days_count, 1)
+    attendance_rate = round((avg_daily_attendance / max(1, active_count_total)) * 100, 1) if active_count_total > 0 else 0
+    net_member_flow = period_new_members + period_renewals - period_ended_count
+
     smart_insights = []
+
+    # Advice 1: Member Movement & Inactivity Drop-off (حركة وغياب الأعضاء)
+    if inactive_7d_count > 0:
+        smart_insights.append({
+            "type": "movement",
+            "badge": "تنبيه انقطاع وغياب الأعضاء",
+            "icon": "🏃‍♂️",
+            "color": "#f59e0b",
+            "title": f"رصد {inactive_7d_count} مشترك نشط لم يحضروا للتمرين منذ 7 أيام ({inactive_7d_pct}%)",
+            "text": (
+                f"يوجد {inactive_7d_count} مشترك عضويتهم سارية لكنهم لم يسجلوا أي دخول للصالة خلال آخر أسبوع. "
+                f"إحصائياً، انقطاع اللاعب عن الصالة لأكثر من 7 أيام هو المؤشر الأكبر لعدم التجديد مستقبلاً (خطر التسرب Churn). "
+                f"التوصية الذكية: توجيه كابتن الصالة أو الاستقبال لمراسلتهم برسالة تشجيعية عبر الواتساب للاطمئنان عليهم وتحفيزهم للعودة."
+            ),
+        })
+    else:
+        smart_insights.append({
+            "type": "movement",
+            "badge": "حركة أعضاء ممتازة",
+            "icon": "🔥",
+            "color": "#84cc16",
+            "title": "معدل الحضور والتزام الأعضاء مرتفع جداً",
+            "text": "كافة الأعضاء المشتركين يترددون بانتظام على الصالة هذا الأسبوع، ومؤشر الالتزام بالحضور مثالي.",
+        })
+
+    # Advice 2: Net Member Flow & Growth Dynamics (صافي حركة وتدفق الأعضاء)
+    if net_member_flow > 0:
+        smart_insights.append({
+            "type": "flow",
+            "badge": "صافي نمو وتدفق إيجابي",
+            "icon": "📈",
+            "color": "#22c55e",
+            "title": f"صافي تدفق الأعضاء بالفترة إيجابي (+{net_member_flow} مشترك)",
+            "text": (
+                f"حققت الصالة توسعاً صافياً في قاعدة المشتركين: تم تسجيل {period_new_members} عضو جديد و{period_renewals} تجديد، "
+                f"في مقابل انتهاء {period_ended_count} اشتراك. الجيم يكتسب أعضاء بوتيرة أسرع من خروجهم."
+            ),
+        })
+    elif net_member_flow < 0:
+        smart_insights.append({
+            "type": "flow",
+            "badge": "تنبيه تراجع صافي التدفق",
+            "icon": "📉",
+            "color": "#ef4444",
+            "title": f"تراجع صافي حركة الأعضاء ({net_member_flow} مشترك)",
+            "text": (
+                f"خلال هذه الفترة انتهت عضويات {period_ended_count} لاعباً بينما بلغ مجموع المشتركين الجدد والتجديدات {period_new_members + period_renewals} فقط. "
+                f"يُنصح بسرعة التواصل مع المنتهية عضوياتهم وطرح عروض تجديد فورية لسد هذا العجز."
+            ),
+        })
+
+    # Advice 3: Daily Floor Traffic & Attendance Rate (معدل النشاط اليومي بالصالة)
+    smart_insights.append({
+        "type": "traffic",
+        "badge": "حركة وتدفق الصالة اليومي",
+        "icon": "⚡",
+        "color": "#38bdf8",
+        "title": f"متوسط الحضور اليومي: {avg_daily_attendance} متدرب/يوم (معدل النشاط {attendance_rate}%)",
+        "text": (
+            f"تم تسجيل إجمالي {period_checkins} حركة دخول خلال الفترة بمعدل {avg_daily_attendance} لاعب يومياً. "
+            f"نسبة الإشغال اليومي تعادل {attendance_rate}% من الأعضاء النشطين."
+        ),
+    })
 
     # Advice 1: Retention & Anti-Churn
     if expiring_3_days_count > 0 or expired_last_7_days > 0:
@@ -1101,8 +1179,12 @@ def manager_dashboard_view(request):
         "avg_payment_amount": avg_payment_amount,
         "top_plans": top_plans,
         "plans_source_label": plans_source_label,
-        "payment_methods_breakdown": payment_methods_breakdown,
         "smart_insights": smart_insights,
+        "inactive_7d_count": inactive_7d_count,
+        "inactive_7d_pct": inactive_7d_pct,
+        "avg_daily_attendance": avg_daily_attendance,
+        "attendance_rate": attendance_rate,
+        "net_member_flow": net_member_flow,
         # Discounts (Separated from Debts), Private Add-on, Payroll, Coaches & Audit
         "period_discounts_lost": period_discounts_lost,
         "period_discounted_subs_count": period_discounted_subs_count,

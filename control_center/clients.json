@@ -51,9 +51,35 @@
       "developer_message": "تم إيقاف تشغيل هذه النسخة مؤقتاً لعدم السداد. يرجى التواصل مع المطور لتسوية الحساب.",
       "created_at": "2026-10-20T13:05:21.960379+00:00",
       "last_seen": null
+    },
+    "HWID-DFF6-3FC6-1712-8F5A": {
+      "name": "hero",
+      "phone": "01080922432",
+      "status": "active",
+      "license_type": "lifetime",
+      "valid_until": "NONE",
+      "features": {
+        "face_recognition": true,
+        "face": true,
+        "gate_relay": true,
+        "whatsapp": true,
+        "telegram": true,
+        "bar": true,
+        "payroll": true,
+        "retention": true,
+        "reports": true,
+        "barcode": true,
+        "expenses": true,
+        "multi_branch": false
+      },
+      "branches": [],
+      "managed_users": [],
+      "developer_message": "شكراً لاشتراككم في نظام Systemize.",
+      "created_at": "2026-10-20T16:24:06.660741+00:00",
+      "last_seen": null
     }
   },
   "default_demo_days": 7,
   "system_announcement": "",
-  "last_updated": "2026-10-20T13:08:22.639162+00:00"
+  "last_updated": "2026-10-20T16:24:06.660741+00:00"
 }
