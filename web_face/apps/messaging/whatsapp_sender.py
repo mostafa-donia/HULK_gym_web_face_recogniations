@@ -66,6 +66,25 @@ def random_delay(min_seconds: float = 0.25, max_seconds: float = 1.2) -> float:
     return delay
 
 
+def _safe_ease_out_quad(n: float) -> float:
+    return -n * (n - 2.0)
+
+
+def _safe_ease_in_out_quad(n: float) -> float:
+    if n < 0.5:
+        return 2.0 * n * n
+    return -2.0 * n * n + 4.0 * n - 1.0
+
+
+try:
+    import pytweening
+    _tween_out = pytweening.easeOutQuad
+    _tween_in_out = pytweening.easeInOutQuad
+except Exception:
+    _tween_out = _safe_ease_out_quad
+    _tween_in_out = _safe_ease_in_out_quad
+
+
 def human_move_to(x: float, y: float, duration_range: tuple = (0.35, 0.5), jitter: int = 18) -> None:
     """Move the mouse in a slightly human-like, imperfect path."""
     start_x, start_y = pyautogui.position()
@@ -81,8 +100,8 @@ def human_move_to(x: float, y: float, duration_range: tuple = (0.35, 0.5), jitte
     duration = random.uniform(*duration_range)
     per_step = duration / max(len(points) - 1, 1)
     for px, py in points[1:]:
-        pyautogui.moveTo(px, py, duration=max(per_step * 0.6, 0.05), tween=pyautogui.easeOutQuad)
-    pyautogui.moveTo(x, y, duration=random.uniform(0.08, 0.2), tween=pyautogui.easeInOutQuad)
+        pyautogui.moveTo(px, py, duration=max(per_step * 0.6, 0.05), tween=_tween_out)
+    pyautogui.moveTo(x, y, duration=random.uniform(0.08, 0.2), tween=_tween_in_out)
 
 
 def set_keyboard_layout_to_english():
