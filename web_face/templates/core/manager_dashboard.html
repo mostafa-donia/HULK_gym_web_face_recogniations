@@ -3,7 +3,7 @@
 {% block title %}لوحة المدير — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
 {% block content %}
-<div class="manager-dashboard-container" style="display: flex; flex-direction: column; gap: 16px;">
+<div class="manager-dashboard-container" style="display: flex; flex-direction: column; gap: 24px; max-width: 1560px; margin: 0 auto; padding-bottom: 40px;">
 
   <!-- ==================== 1. UNIFIED EXECUTIVE HEADER & TOOLBAR ==================== -->
   <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 14px;">
@@ -67,6 +67,12 @@
 
       <!-- Quick Action Buttons -->
       <div class="no-print" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+        <button type="button" onclick="history.back()" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; font-weight: 800;" title="العودة للصفحة السابقة">
+          ← رجوع
+        </button>
+        <a href="{% url 'core:index' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; font-weight: 800;" title="الصفحة الرئيسية">
+          🏠 الرئيسية
+        </a>
         <button type="button" onclick="openManagerReportModal()" class="btn btn-sm" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; background: #22c55e; color: #052e16; font-weight: 900; border: none; border-radius: 8px; cursor: pointer;">
           📱 تقرير الواتساب للمدير
         </button>
@@ -215,26 +221,73 @@
 
   </div>
 
-  <!-- ==================== 3. CLEAN FINANCIAL SUB-STRIP ==================== -->
-  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; font-size: 0.85rem;">
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <span style="color: var(--text-muted);">🏋️‍♂️ <strong>تدريب خاص (برايفت):</strong></span>
-      <span style="color: #38bdf8; font-weight: 800;">{{ period_private_revenue }} {{ gym_profile.currency|default:"ج" }}</span>
-      <span style="color: var(--text-muted); font-size: 0.78rem;">(عمولة الكباتن: <strong style="color: #38bdf8;">{{ period_coaches_commission }} ج</strong> | صافي الصالة: <strong style="color: var(--accent-green);">{{ period_gym_private_profit }} ج</strong>)</span>
+  <!-- ==================== 3. 3-PILLAR FINANCIAL BREAKDOWN ==================== -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+    <!-- Card 1: Private PT -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+          🏋️‍♂️ تدريب خاص (برايفت)
+        </span>
+        <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 0.75rem; font-weight: 800; padding: 3px 8px; border-radius: 6px;">
+          PT
+        </span>
+      </div>
+      <div>
+        <div style="color: #38bdf8; font-size: 1.6rem; font-weight: 900; line-height: 1.2;">
+          {{ period_private_revenue }} <small style="font-size: 0.85rem; font-weight: 700;">{{ gym_profile.currency|default:"ج" }}</small>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 0.78rem;">
+        <span style="color: var(--text-muted);">عمولة الكباتن: <strong style="color: #38bdf8;">{{ period_coaches_commission }} ج</strong></span>
+        <span style="color: var(--text-muted);">صافي الصالة: <strong style="color: var(--accent-green);">{{ period_gym_private_profit }} ج</strong></span>
+      </div>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <span style="color: var(--text-muted);">🥤 <strong>مبيعات البار:</strong></span>
-      <span style="color: #38bdf8; font-weight: 800;">{{ period_bar_revenue }} {{ gym_profile.currency|default:"ج" }}</span>
-      {% if period_bar_unpaid > 0 %}
-        <span style="color: #c084fc; font-size: 0.78rem;">(معلق آجل: <strong>{{ period_bar_unpaid }} ج</strong>)</span>
-      {% endif %}
+    <!-- Card 2: Bar Sales -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+          🥤 مبيعات وتغذية البار
+        </span>
+        <span style="background: rgba(168, 85, 247, 0.15); color: #c084fc; font-size: 0.75rem; font-weight: 800; padding: 3px 8px; border-radius: 6px;">
+          BAR
+        </span>
+      </div>
+      <div>
+        <div style="color: #c084fc; font-size: 1.6rem; font-weight: 900; line-height: 1.2;">
+          {{ period_bar_revenue }} <small style="font-size: 0.85rem; font-weight: 700;">{{ gym_profile.currency|default:"ج" }}</small>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 0.78rem;">
+        <span style="color: var(--text-muted);">المحصل نقداً: <strong style="color: var(--accent-green);">{{ period_bar_revenue }} ج</strong></span>
+        {% if period_bar_unpaid > 0 %}
+          <span style="color: #f59e0b;">معلق آجل: <strong>{{ period_bar_unpaid }} ج</strong></span>
+        {% else %}
+          <span style="color: var(--text-muted);">لا ديون معلقة بالبار</span>
+        {% endif %}
+      </div>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <span style="color: var(--text-muted);">🎁 <strong>الخصومات الممنوحة:</strong></span>
-      <span style="color: #FF5C67; font-weight: 800;">{{ period_discounts_lost }} {{ gym_profile.currency|default:"ج" }}</span>
-      <span style="color: var(--text-muted); font-size: 0.78rem;">(على {{ period_discounted_subs_count }} اشتراك)</span>
+    <!-- Card 3: Discounts Lost -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+          🎁 إجمالي الخصومات الممنوحة
+        </span>
+        <span style="background: rgba(255, 92, 103, 0.15); color: #FF5C67; font-size: 0.75rem; font-weight: 800; padding: 3px 8px; border-radius: 6px;">
+          DISCOUNT
+        </span>
+      </div>
+      <div>
+        <div style="color: #FF5C67; font-size: 1.6rem; font-weight: 900; line-height: 1.2;">
+          {{ period_discounts_lost }} <small style="font-size: 0.85rem; font-weight: 700;">{{ gym_profile.currency|default:"ج" }}</small>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border-color); font-size: 0.78rem;">
+        <span style="color: var(--text-muted);">عدد الاشتراكات المخفضة: <strong style="color: #FF5C67;">{{ period_discounted_subs_count }}</strong></span>
+        <span style="color: var(--text-muted);">حسب سياسة الخصومات</span>
+      </div>
     </div>
   </div>
 

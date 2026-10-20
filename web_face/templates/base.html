@@ -294,7 +294,25 @@
 <body>
 
   <!-- Top Horizontal Navigation Bar -->
-  {% if is_demo and system_license.license_type != 'lifetime' and license_info.license_type != 'lifetime' and system_license.license_type != 'perpetual' %}
+  {% if is_grace_period %}
+  <!-- New Machine 24-Hour Emergency Grace Period Banner -->
+  <div style="background: linear-gradient(90deg, #dc2626, #991b1b); color: #FFFFFF; padding: 4px 16px; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid #f87171; z-index: 9999; flex-wrap: nowrap; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+      <span style="background: #000; padding: 2px 7px; border-radius: 4px; font-size: 10px; color: #fca5a5;">⚠️ جهاز جديد منقول</span>
+      <span>فترة سماح مؤقتة: متبقي <strong>{{ grace_remaining_hours }} ساعة</strong> و <strong>{{ grace_remaining_minutes }} دقيقة</strong> قبل قفل النظام!</span>
+      <span style="opacity: 0.9; font-size: 10px; font-family: monospace; font-weight: 700;">(كود هذا الجهاز: {{ license_info.machine_id }})</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+      {% with phone=license_info.phone|default:"01080922432" %}
+      <a href="https://wa.me/2{{ phone }}?text=مرحباً، قمت بنقل نظام Systemize لجهاز جديد وأود تفعيل الترخيص. كود جهازي الجديد هو: {{ license_info.machine_id }}"
+         target="_blank"
+         style="background: #22c55e; color: #000; padding: 2px 10px; border-radius: 6px; text-decoration: none; font-size: 11px; font-weight: 900; display: inline-flex; align-items: center; gap: 4px;">
+        <span>تفعيل الترخيص لهذا الجهاز الآن</span>
+      </a>
+      {% endwith %}
+    </div>
+  </div>
+  {% elif is_demo and system_license.license_type != 'lifetime' and license_info.license_type != 'lifetime' and system_license.license_type != 'perpetual' %}
   <!-- Demo Mode Countdown Banner (Slim Compact) -->
   <div style="background: linear-gradient(90deg, #d97706, #b45309); color: #FFFFFF; padding: 2px 14px; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(251, 191, 36, 0.4); z-index: 9999; flex-wrap: nowrap; gap: 8px;">
     <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
@@ -319,14 +337,27 @@
     <div class="top-navbar-container">
       
       <!-- Brand & Gym Name on Right (RTL) -->
-      <a href="{% url 'core:dashboard' %}" class="top-brand">
-        {% if gym_profile.logo %}
-          <img src="{{ gym_profile.logo.url }}" alt="Logo" class="top-brand-logo">
-        {% else %}
-          <img src="{% static 'images/logo.png' %}" alt="Logo" class="top-brand-logo" onerror="this.style.display='none'">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="{% url 'core:dashboard' %}" class="top-brand">
+          {% if gym_profile.logo %}
+            <img src="{{ gym_profile.logo.url }}" alt="Logo" class="top-brand-logo">
+          {% else %}
+            <img src="{% static 'images/logo.png' %}" alt="Logo" class="top-brand-logo" onerror="this.style.display='none'">
+          {% endif %}
+          <span>{{ gym_profile.gym_name|default:"الصالة الرياضية" }}</span>
+        </a>
+
+        <!-- Universal Navigation Back Button (shown on inner pages) -->
+        {% if request.path != '/' and request.path != '/dashboard/' %}
+        <button type="button" onclick="if(window.history.length > 1) { window.history.back(); } else { window.location.href='/'; }" 
+                class="top-navbar-back-btn" 
+                title="الرجوع للصفحة السابقة"
+                style="cursor: pointer; display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 12px; border-radius: 8px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16); color: var(--text-main, #fff); font-weight: 800; font-size: 0.8rem; transition: all 0.2s; white-space: nowrap;">
+          <span style="font-size: 0.95rem;">←</span>
+          <span>رجوع</span>
+        </button>
         {% endif %}
-        <span>{{ gym_profile.gym_name|default:"الصالة الرياضية" }}</span>
-      </a>
+      </div>
 
       <!-- Horizontal Navigation Links (Clean Text Only - No Icons) -->
       <nav class="top-nav-links">
@@ -550,6 +581,26 @@
       </div>
     </footer>
   </main>
+  <!-- Floating Trial / License Expiry Widget (Fixed Bottom Left) -->
+  <div id="floatingTrialStatusWidget" class="no-print" style="position: fixed; bottom: 12px; left: 14px; z-index: 9995; direction: rtl; pointer-events: auto;">
+    {% if is_grace_period %}
+      <div style="background: rgba(220, 38, 38, 0.95); backdrop-filter: blur(8px); border: 1.5px solid #fca5a5; color: #fff; padding: 5px 13px; border-radius: 20px; font-size: 0.76rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.45);">
+        <span>⚠️ فترة سماح مؤقتة: متبقي {{ grace_remaining_hours }} س و {{ grace_remaining_minutes }} د</span>
+      </div>
+    {% elif is_demo %}
+      <div style="background: rgba(217, 119, 6, 0.92); backdrop-filter: blur(8px); border: 1.5px solid #fde68a; color: #fff; padding: 5px 13px; border-radius: 20px; font-size: 0.76rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);">
+        <span>⏳ تنتهي الفترة التجريبية في: <strong>{{ license_valid_until_date|default:"بعد 7 أيام" }}</strong> (متبقي: {{ remaining_demo_days }} يوم و {{ remaining_demo_hours }} ساعة)</span>
+      </div>
+    {% elif system_license.license_type == 'lifetime' or license_info.license_type == 'lifetime' %}
+      <div style="background: rgba(16, 185, 129, 0.88); backdrop-filter: blur(8px); border: 1.5px solid #6ee7b7; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.74rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);">
+        <span>✓ الترخيص دائم (مدى الحياة Lifetime)</span>
+      </div>
+    {% elif license_valid_until_date %}
+      <div style="background: rgba(30, 41, 59, 0.92); backdrop-filter: blur(8px); border: 1.5px solid #93c5fd; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.74rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);">
+        <span>📅 ينتهي الترخيص في: <strong>{{ license_valid_until_date }}</strong></span>
+      </div>
+    {% endif %}
+  </div>
 
   <!-- Floating Technical Support CTA Pill (Fixed Bottom Right) -->
   <div id="floatingTechSupportBtn" style="position: fixed; bottom: 12px; right: 12px; z-index: 9995;">

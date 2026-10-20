@@ -98,6 +98,89 @@ def check_anti_clock_rollback(license_obj) -> bool:
     return True
 
 
+def check_new_machine_grace(current_hwid: str, license_obj) -> tuple[bool, int, int]:
+    """
+    Checks if a newly copied machine is within its 24-hour (1-day) temporary emergency grace period.
+    Returns (in_grace_period: bool, remaining_hours: int, remaining_minutes: int).
+    """
+    import os, json, hashlib
+    from django.conf import settings
+
+    grace_dir = os.path.join(settings.BASE_DIR, "runtime")
+    if not os.path.exists(grace_dir):
+        grace_dir = os.path.join(settings.BASE_DIR)
+    grace_file = os.path.join(grace_dir, ".machine_grace.json")
+
+    now = timezone.now()
+    now_iso = now.isoformat()
+
+    records = {}
+    if os.path.exists(grace_file):
+        try:
+            with open(grace_file, "r", encoding="utf-8") as f:
+                records = json.load(f)
+        except Exception:
+            records = {}
+
+    mach_rec = records.get(current_hwid)
+    if not mach_rec:
+        sig = hashlib.sha256(f"GRACE_{current_hwid}_{now_iso}_SYSTEMIZE".encode("utf-8")).hexdigest()
+        records[current_hwid] = {
+            "first_seen": now_iso,
+            "last_seen": now_iso,
+            "grace_hours": 24,
+            "sig": sig,
+        }
+        try:
+            with open(grace_file, "w", encoding="utf-8") as f:
+                json.dump(records, f, indent=2)
+        except Exception:
+            pass
+        return True, 24, 0
+
+    first_seen_str = mach_rec.get("first_seen")
+    last_seen_str = mach_rec.get("last_seen")
+    expected_sig = hashlib.sha256(f"GRACE_{current_hwid}_{first_seen_str}_SYSTEMIZE".encode("utf-8")).hexdigest()
+
+    if mach_rec.get("sig") != expected_sig:
+        return False, 0, 0
+
+    try:
+        first_seen = datetime.fromisoformat(first_seen_str)
+        if timezone.is_naive(first_seen):
+            first_seen = timezone.make_aware(first_seen)
+    except Exception:
+        return False, 0, 0
+
+    if last_seen_str:
+        try:
+            last_seen = datetime.fromisoformat(last_seen_str)
+            if timezone.is_naive(last_seen):
+                last_seen = timezone.make_aware(last_seen)
+            if now < (last_seen - timedelta(minutes=10)):
+                return False, 0, 0
+        except Exception:
+            pass
+
+    mach_rec["last_seen"] = now_iso
+    try:
+        with open(grace_file, "w", encoding="utf-8") as f:
+            json.dump(records, f, indent=2)
+    except Exception:
+        pass
+
+    elapsed = (now - first_seen).total_seconds()
+    total_grace_seconds = 24 * 3600
+    remaining_seconds = total_grace_seconds - elapsed
+
+    if remaining_seconds > 0:
+        hours = int(remaining_seconds // 3600)
+        minutes = int((remaining_seconds % 3600) // 60)
+        return True, hours, minutes
+    else:
+        return False, 0, 0
+
+
 def validate_system_license(allow_remote_sync: bool = True) -> tuple[bool, str, str, dict]:
     """
     Master License Validation Engine.
@@ -110,16 +193,42 @@ def validate_system_license(allow_remote_sync: bool = True) -> tuple[bool, str, 
     license_obj, is_matching_machine = get_or_create_system_license()
 
     if not is_matching_machine or license_obj.machine_id != current_hwid:
-        return (
-            False,
-            "copied_unauthorized",
-            f"تم حظر تشغيل النظام: هذا المجلد تم نسخه لجهاز كمبيوتر آخر غير مصرح به.\nكود هذا الجهاز الجديد: {current_hwid}",
-            {
+        in_grace, g_hours, g_minutes = check_new_machine_grace(current_hwid, license_obj)
+        if in_grace:
+            msg = f"⚠️ تم تشغيل النظام على جهاز كمبيوتر جديد ({current_hwid}). النظام يعمل بفترة سماح مؤقتة لمدة 24 ساعة (متبقي: {g_hours} ساعة و {g_minutes} دقيقة). يرجى تزويد المطور بكود الجهاز لتفعيل الترخيص قبل انتهاء المهلة."
+            info = {
                 "machine_id": current_hwid,
-                "status": "unauthorized",
+                "status": "grace",
+                "is_grace_period": True,
+                "grace_remaining_hours": g_hours,
+                "grace_remaining_minutes": g_minutes,
                 "phone": license_obj.developer_contact_phone,
-            },
-        )
+                "features": {
+                    "face_recognition": True,
+                    "gate_relay": True,
+                    "whatsapp": True,
+                    "telegram": True,
+                    "bar": True,
+                    "payroll": True,
+                    "retention": True,
+                    "reports": True,
+                    "barcode": True,
+                    "expenses": True,
+                    "multi_branch": True,
+                },
+            }
+            return True, "grace_period", msg, info
+        else:
+            return (
+                False,
+                "copied_unauthorized",
+                f"انتهت فترة السماح المؤقتة (24 ساعة) لهذا الجهاز الجديد ({current_hwid}). يرجى تزويد المطور بكود الجهاز لتفعيل الترخيص الدائم.",
+                {
+                    "machine_id": current_hwid,
+                    "status": "unauthorized",
+                    "phone": license_obj.developer_contact_phone,
+                },
+            )
 
     # 1. Anti-Tamper Hash Verification
     is_tamper_valid = verify_tamper_token(

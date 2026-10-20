@@ -440,14 +440,65 @@ def remember_current_window():
         print(f"[remember_current_window] Warning: {e}")
 
 
-_overlay_keeper_active = False
+def get_window_title_w(hwnd) -> str:
+    user32 = ctypes.windll.user32
+    length = user32.GetWindowTextLengthW(hwnd)
+    if length > 0:
+        buf = ctypes.create_unicode_buffer(length + 1)
+        user32.GetWindowTextW(hwnd, buf, length + 1)
+        return buf.value or ""
+    return ""
+
+
+def is_overlay_window_open() -> bool:
+    import win32gui
+    user32 = ctypes.windll.user32
+    found = []
+    target_keys = ["systemize_wa_overlay", "systemizewhatsappoverlay", "طابور إرسال واتساب", "whatsappoverlay", "طابور إرسال"]
+
+    def enum_cb(hwnd, _):
+        if win32gui.IsWindow(hwnd) and user32.IsWindowVisible(hwnd):
+            title = get_window_title_w(hwnd).lower()
+            if any(k in title for k in target_keys):
+                found.append(hwnd)
+
+    win32gui.EnumWindows(enum_cb, None)
+    return len(found) > 0
+
+
+def ensure_overlay_window_open():
+    """
+    If no overlay window is currently open, automatically launches a standalone
+    frameless window via Chrome/Edge --app flag. Completely bypasses browser popup blockers.
+    """
+    if is_overlay_window_open():
+        return
+    try:
+        browser = get_browser_executable()
+        url = "http://127.0.0.1:8000/messaging/overlay-window/"
+        user32 = ctypes.windll.user32
+        screen_w = user32.GetSystemMetrics(0)
+        pos_x = max(20, screen_w - 360)
+        pos_y = 25
+        cmd = [
+            browser,
+            f"--app={url}",
+            "--window-size=340,165",
+            f"--window-position={pos_x},{pos_y}",
+        ]
+        import subprocess
+        subprocess.Popen(cmd)
+        sleep(0.8)
+        pin_overlay_window_topmost()
+    except Exception as e:
+        print(f"[ensure_overlay_window_open] Warning: {e}")
 
 
 def pin_overlay_window_topmost() -> bool:
     """
     Searches for any active Systemize WhatsApp Overlay Counter window
     and asserts HWND_TOPMOST (-1) and WS_EX_TOPMOST so it stays pinned above WhatsApp Desktop
-    even when mouse clicks occur.
+    even when mouse clicks occur, without stealing keyboard focus from WhatsApp.
     """
     try:
         ensure_desktop_attached()
@@ -456,18 +507,16 @@ def pin_overlay_window_topmost() -> bool:
         import win32con
 
         matched_hwnds = []
+        target_keys = ["systemize_wa_overlay", "systemizewhatsappoverlay", "طابور إرسال واتساب", "whatsappoverlay", "طابور إرسال"]
 
         def enum_cb(hwnd, _):
             if win32gui.IsWindow(hwnd):
-                title = (win32gui.GetWindowText(hwnd) or "").strip()
-                t_lower = title.lower()
-                target_keys = ["systemize_wa_overlay", "systemizewhatsappoverlay", "طابور إرسال واتساب", "whatsappoverlay", "طابور إرسال"]
-                if any(k in t_lower for k in target_keys):
-                    # Restore if minimized
+                title = get_window_title_w(hwnd).lower()
+                if any(k in title for k in target_keys):
                     if user32.IsIconic(hwnd):
                         user32.ShowWindow(hwnd, 9)  # SW_RESTORE
                     else:
-                        user32.ShowWindow(hwnd, 5)  # SW_SHOW
+                        user32.ShowWindow(hwnd, 4)  # SW_SHOWNOACTIVATE
 
                     # 1. Set WS_EX_TOPMOST in GWL_EXSTYLE
                     try:
@@ -477,12 +526,9 @@ def pin_overlay_window_topmost() -> bool:
                     except Exception:
                         pass
 
-                    # 2. Assert HWND_TOPMOST (-1)
-                    user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
-                    try:
-                        win32gui.BringWindowToTop(hwnd)
-                    except Exception:
-                        pass
+                    # 2. Assert HWND_TOPMOST (-1) with SWP_NOACTIVATE (0x0010) so WhatsApp retains input focus
+                    flags = win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_NOACTIVATE | win32con.SWP_SHOWWINDOW
+                    user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, flags)
                     matched_hwnds.append(hwnd)
 
         win32gui.EnumWindows(enum_cb, None)
@@ -602,6 +648,7 @@ def whatsupp_ready() -> bool:
 
     sleep(0.8)
     # Ensure our overlay counter window stays Always On Top of WhatsApp Desktop!
+    ensure_overlay_window_open()
     pin_overlay_window_topmost()
     start_overlay_keeper()
 

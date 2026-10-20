@@ -41,11 +41,18 @@ def gym_context(request):
     active_b_name = get_active_branch_display(request) if is_mb else "الفرع الافتراضي"
     branches = Branch.objects.filter(is_active=True).order_by("-is_main", "name") if is_mb else []
 
+    valid_until_dt = (license_obj.valid_until if license_obj else None) or license_info.get("valid_until")
+    valid_until_str = valid_until_dt.strftime("%Y-%m-%d %H:%M") if valid_until_dt else None
+
     return {
         "gym_profile": profile,
         "system_license": license_obj,
         "license_info": license_info,
         "is_demo": is_demo,
+        "is_grace_period": bool(license_info.get("is_grace_period", False)),
+        "grace_remaining_hours": license_info.get("grace_remaining_hours", 0),
+        "grace_remaining_minutes": license_info.get("grace_remaining_minutes", 0),
+        "license_valid_until_date": valid_until_str,
         "remaining_demo_days": license_info.get("remaining_demo_days", 0),
         "remaining_demo_hours": license_info.get("remaining_demo_hours", 0),
         "license_features": features,
