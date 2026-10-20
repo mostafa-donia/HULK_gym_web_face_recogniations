@@ -42,22 +42,37 @@ with open(os.path.join(CC_DIR, "apps", "core", "__init__.py"), "w") as f:
 # 4. Write portable START_CONTROL_CENTER.bat
 bat_content = """@echo off
 chcp 65001 > nul
+set PYTHONUTF8=1
+set PYTHONIOENCODING=utf-8
 title Systemize - Central Control Center
 color 0B
 
 cd /d "%~dp0"
 
 echo ===================================================================
-echo     SYSTEMIZE — DEVELOPER COMMAND AND CONTROL CENTER (PORT 9000)
+echo     SYSTEMIZE — DEVELOPER COMMAND AND CONTROL CENTER
 echo     Standalone Portable Edition (Zero Python / Zero SQL Needed)
 echo ===================================================================
 echo.
 
-echo [*] Launching Control Center dashboard at http://127.0.0.1:9000 ...
-start http://127.0.0.1:9000
+if exist "runtime\\python.exe" (
+    set "PY_EXE=runtime\\python.exe"
+) else (
+    set "PY_EXE=python"
+)
 
-"runtime\\python.exe" app.py
-pause
+echo [*] Starting Central Control Server...
+echo [*] The dashboard browser will open automatically when ready...
+echo.
+
+"%PY_EXE%" -s app.py
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo ===================================================================
+    echo  [!] An error occurred while running the Control Center.
+    echo ===================================================================
+    pause
+)
 """
 
 with open(os.path.join(CC_DIR, "START_CONTROL_CENTER.bat"), "w", encoding="utf-8") as f:

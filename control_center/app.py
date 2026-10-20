@@ -1,5 +1,14 @@
 import os
 import sys
+
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 import json
 from datetime import datetime, timedelta, timezone
 from flask import Flask, render_template, request, jsonify, send_file
@@ -608,6 +617,40 @@ def live_sync_endpoint():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 9000))
-    print(f"\n🚀 SYSTEMIZE DEVELOPER CONTROL CENTER RUNNING ON: http://127.0.0.1:{port}\n")
+    import socket
+    import threading
+    import time
+    import webbrowser
+
+    default_port = int(os.environ.get("PORT", 9000))
+    port = default_port
+
+    # Test if port is available; if not, find the next available port
+    for test_port in range(default_port, default_port + 20):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(0.4)
+                if s.connect_ex(("127.0.0.1", test_port)) != 0:
+                    port = test_port
+                    break
+        except Exception:
+            port = test_port
+            break
+
+    url = f"http://127.0.0.1:{port}"
+
+    def open_browser():
+        time.sleep(1.2)
+        try:
+            webbrowser.open(url)
+        except Exception:
+            pass
+
+    threading.Thread(target=open_browser, daemon=True).start()
+
+    print("\n" + "=" * 64)
+    print("  SYSTEMIZE DEVELOPER COMMAND & CONTROL CENTER")
+    print(f"  Dashboard Live at: {url}")
+    print("=" * 64 + "\n")
+
     app.run(host="0.0.0.0", port=port, debug=False)
