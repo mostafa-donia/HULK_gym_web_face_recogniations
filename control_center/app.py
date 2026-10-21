@@ -616,6 +616,127 @@ def live_sync_endpoint():
     return jsonify(data)
 
 
+# ==========================================
+# CRM LEADS & SALES FOLLOW-UP ENDPOINTS
+# ==========================================
+import crm_service
+
+
+@app.route("/api/crm/leads/", methods=["GET"])
+def get_crm_leads_api():
+    """Returns all CRM leads, stats, and follow-up alerts."""
+    try:
+        data = crm_service.load_crm_data()
+        result = crm_service.calculate_followup_stats(data.get("leads", {}))
+        return jsonify({
+            "success": True,
+            "leads": result["leads"],
+            "stats": result["stats"],
+            "templates": data.get("templates", crm_service.DEFAULT_TEMPLATES)
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/crm/leads/save/", methods=["POST"])
+def save_crm_lead_api():
+    """Adds or updates a lead."""
+    req = request.get_json() or {}
+    try:
+        res = crm_service.add_or_update_lead(req)
+        return jsonify({"success": True, "lead_id": res["lead_id"], "lead": res["lead"], "is_new": res["is_new"]})
+    except ValueError as ve:
+        return jsonify({"success": False, "message": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/crm/leads/followup/", methods=["POST"])
+def record_lead_followup_api():
+    """Records call/meeting note and schedules next follow-up in X days."""
+    req = request.get_json() or {}
+    lead_id = req.get("lead_id")
+    note = req.get("note", "").strip()
+    next_days = req.get("next_days")
+    new_status = req.get("status")
+
+    if not lead_id:
+        return jsonify({"success": False, "message": "معرف العميل مطلوب."}), 400
+
+    try:
+        days_val = int(next_days) if next_days is not None and str(next_days).isdigit() else None
+        res = crm_service.record_followup_call(lead_id, note, days_val, new_status)
+        return jsonify({"success": True, "lead": res["lead"]})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/crm/leads/delete/", methods=["POST"])
+def delete_crm_lead_api():
+    """Deletes a lead from CRM."""
+    req = request.get_json() or {}
+    lead_id = req.get("lead_id")
+    if not lead_id:
+        return jsonify({"success": False, "message": "معرف العميل مطلوب."}), 400
+    success = crm_service.delete_lead(lead_id)
+    return jsonify({"success": success})
+
+
+@app.route("/api/crm/whatsapp/send/", methods=["POST"])
+def send_crm_whatsapp_api():
+    """Sends WhatsApp message to lead via Desktop Automation or web link."""
+    req = request.get_json() or {}
+    lead_id = req.get("lead_id")
+    message = req.get("message", "").strip()
+    auto_desktop = bool(req.get("auto_desktop", False))
+
+    if not lead_id or not message:
+        return jsonify({"success": False, "message": "معرف العميل ونص الرسالة مطلوبان."}), 400
+
+    try:
+        res = crm_service.send_whatsapp_to_lead(lead_id, message, auto_desktop=auto_desktop)
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/crm/whatsapp/bulk/", methods=["POST"])
+def bulk_crm_whatsapp_api():
+    """Starts background automated WhatsApp campaign to multiple leads."""
+    req = request.get_json() or {}
+    lead_ids = req.get("lead_ids", [])
+    message = req.get("message", "").strip()
+    delay = int(req.get("delay", 4))
+
+    if not lead_ids or not message:
+        return jsonify({"success": False, "message": "يرجى تحديد العملاء ونص الرسالة."}), 400
+
+    started, msg = crm_service.start_bulk_whatsapp_campaign(lead_ids, message, delay)
+    return jsonify({"success": started, "message": msg})
+
+
+@app.route("/api/crm/whatsapp/status/", methods=["GET"])
+def get_bulk_whatsapp_status_api():
+    """Returns status of ongoing WhatsApp bulk queue."""
+    return jsonify({"success": True, "status": crm_service.get_bulk_queue_status()})
+
+
+@app.route("/api/crm/templates/", methods=["GET", "POST"])
+def crm_templates_api():
+    """Gets or updates WhatsApp message templates."""
+    data = crm_service.load_crm_data()
+    if request.method == "POST":
+        req = request.get_json() or {}
+        new_templates = req.get("templates")
+        if isinstance(new_templates, list):
+            data["templates"] = new_templates
+            crm_service.save_crm_data(data)
+            return jsonify({"success": True, "templates": data["templates"]})
+        return jsonify({"success": False, "message": "بيانات القوالب غير صالحة."}), 400
+
+    return jsonify({"success": True, "templates": data.get("templates", crm_service.DEFAULT_TEMPLATES)})
+
+
 if __name__ == "__main__":
     import socket
     import threading

@@ -45,15 +45,20 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
-                <button onclick="openAddClientModal()" class="bg-lime-500 hover:bg-lime-400 text-slate-950 font-black text-sm px-4 py-2.5 rounded-xl shadow-lg shadow-lime-500/20 transition flex items-center gap-2">
-                    <i class="fa fa-plus-circle"></i>
-                    <span>إضافة عميل / ترخيص جديد</span>
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <button onclick="openAddLeadModal()" id="topAddLeadBtn" class="bg-lime-500 hover:bg-lime-400 text-slate-950 font-black text-xs sm:text-sm px-3.5 sm:px-4 py-2.5 rounded-xl shadow-lg shadow-lime-500/20 transition flex items-center gap-1.5">
+                    <i class="fa fa-user-plus"></i>
+                    <span>+ عميل محتمل جديد</span>
                 </button>
 
-                <button onclick="openExportModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5" title="تصدير ملف JSON لرفعه على السيرفر السحابي أو GitHub Gist">
+                <button onclick="openAddClientModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5" title="إصدار ترخيص جيم جديد">
+                    <i class="fa fa-shield-halved text-lime-400"></i>
+                    <span>+ ترخيص جديد</span>
+                </button>
+
+                <button onclick="openExportModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5" title="تصدير سحابي">
                     <i class="fa fa-cloud-arrow-up text-sky-400"></i>
-                    <span>تصدير سحابي (Gist)</span>
+                    <span class="hidden sm:inline">تصدير سحابي</span>
                 </button>
             </div>
         </div>
@@ -61,88 +66,326 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
 
-        <!-- Top Live Sync Status Bar -->
-        <div class="glass-card rounded-2xl p-4 px-6 flex flex-wrap items-center justify-between gap-4 border-l-4 border-l-lime-500">
-            <div class="flex items-center gap-3">
-                <span class="relative flex h-3 w-3">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-lime-500"></span>
-                </span>
-                <div>
-                    <span class="text-xs font-bold text-slate-400">سيرفر المزامنة الحية يعمل بنشاط:</span>
-                    <span id="syncUrlText" class="code-font text-xs font-bold text-lime-400 mr-2">http://127.0.0.1:9000/api/license/sync/</span>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2 text-xs">
-                <button onclick="copySyncUrl()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1">
-                    <i class="fa fa-copy"></i>
-                    <span id="copySyncBtnText">نسخ رابط المزامنة للعملاء</span>
+        <!-- Top Main Navigation Tabs (CRM vs Follow-ups vs WhatsApp vs Licenses) -->
+        <div class="glass-card rounded-2xl p-2.5 flex items-center justify-between gap-3 flex-wrap border-b-2 border-b-lime-500/40">
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="switchMainTab('crm')" id="tabBtnCrm" class="main-tab-btn active bg-lime-500 text-slate-950 font-black text-xs sm:text-sm px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-lime-500/20">
+                    <i class="fa fa-users-gear text-sm"></i>
+                    <span>إدارة العملاء المحتملين (CRM Leads)</span>
+                    <span id="tabCountCrm" class="bg-black/20 text-slate-950 text-xs px-2 py-0.5 rounded-full font-black">0</span>
                 </button>
-                <button onclick="refreshClients()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg border border-slate-700 transition" title="تحديث القائمة">
-                    <i class="fa fa-rotate"></i>
+
+                <button onclick="switchMainTab('followups')" id="tabBtnFollowups" class="main-tab-btn bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 transition flex items-center gap-2">
+                    <i class="fa fa-phone-volume text-amber-400"></i>
+                    <span>متابعات اليوم والاتصالات</span>
+                    <span id="tabCountToday" class="bg-amber-500/20 text-amber-300 text-xs px-2 py-0.5 rounded-full font-black">0</span>
+                    <span id="tabBadgeOverdue" class="hidden bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">0 متأخر</span>
                 </button>
-            </div>
-        </div>
 
-        <!-- Metric Stat Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div class="glass-card rounded-2xl p-5 border-t-2 border-t-slate-500">
-                <span class="text-xs font-bold text-slate-400 block mb-1">إجمالي العملاء</span>
-                <span id="statTotal" class="text-3xl font-black text-white">0</span>
-                <span class="text-[11px] text-slate-500 block mt-1">المسجلين في النظام</span>
-            </div>
+                <button onclick="switchMainTab('whatsapp')" id="tabBtnWhatsapp" class="main-tab-btn bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-emerald-400"></i>
+                    <span>مرسل الواتساب وبنك الرسائل</span>
+                </button>
 
-            <div class="glass-card rounded-2xl p-5 border-t-2 border-t-emerald-500">
-                <span class="text-xs font-bold text-slate-400 block mb-1">تراخيص نشطة</span>
-                <span id="statActive" class="text-3xl font-black text-emerald-400">0</span>
-                <span class="text-[11px] text-emerald-500/80 block mt-1">مشتركون ومسددون ✓</span>
-            </div>
-
-            <div class="glass-card rounded-2xl p-5 border-t-2 border-t-amber-500">
-                <span class="text-xs font-bold text-slate-400 block mb-1">فترات تجريبية (Demo)</span>
-                <span id="statDemo" class="text-3xl font-black text-amber-400">0</span>
-                <span class="text-[11px] text-amber-500/80 block mt-1">فترة 7 أيام مجانية</span>
-            </div>
-
-            <div class="glass-card rounded-2xl p-5 border-t-2 border-t-rose-500">
-                <span class="text-xs font-bold text-slate-400 block mb-1">معلق / متوقف</span>
-                <span id="statSuspended" class="text-3xl font-black text-rose-400">0</span>
-                <span class="text-[11px] text-rose-500/80 block mt-1">تم إيقافهم لعدم السداد</span>
-            </div>
-
-            <div class="glass-card rounded-2xl p-5 border-t-2 border-t-sky-500 col-span-2 md:col-span-1">
-                <span class="text-xs font-bold text-slate-400 block mb-1">ينتهي خلال 7 أيام</span>
-                <span id="statExpiring" class="text-3xl font-black text-sky-400">0</span>
-                <span class="text-[11px] text-sky-500/80 block mt-1">يحتاجون تذكير للتجديد</span>
-            </div>
-        </div>
-
-        <!-- Filter & Search Controls -->
-        <div class="glass-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-3 flex-1 min-w-[280px]">
-                <div class="relative w-full max-w-md">
-                    <i class="fa fa-search absolute right-3.5 top-3.5 text-slate-500 text-sm"></i>
-                    <input type="text" id="searchInput" oninput="filterClients()" placeholder="بحث بالاسم، رقم الموبايل، أو كود الجهاز HWID..."
-                           class="w-full bg-slate-900 border border-slate-700 rounded-xl pr-10 pl-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-lime-500 transition">
-                </div>
+                <button onclick="switchMainTab('licenses')" id="tabBtnLicenses" class="main-tab-btn bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 transition flex items-center gap-2">
+                    <i class="fa fa-shield-halved text-lime-400"></i>
+                    <span>تراخيص الصالات والعملاء</span>
+                    <span id="tabCountLicenses" class="bg-slate-800 text-slate-400 text-xs px-2 py-0.5 rounded-full font-black">0</span>
+                </button>
             </div>
 
             <div class="flex items-center gap-2">
-                <button onclick="setStatusFilter('all')" class="filter-btn active text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 transition" data-filter="all">الكل</button>
-                <button onclick="setStatusFilter('active')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="active">النشطة</button>
-                <button onclick="setStatusFilter('demo')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="demo">التجريبية</button>
-                <button onclick="setStatusFilter('suspended')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="suspended">المعلقة</button>
-                <button onclick="setStatusFilter('expired')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="expired">المنتهية</button>
+                <button onclick="openBulkWhatsAppModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/10">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    <span>حملة واتساب جماعية</span>
+                </button>
             </div>
         </div>
 
-        <!-- Clients Cards / Table Grid -->
-        <div id="clientsContainer" class="space-y-4">
-            <!-- Dynamic Client Cards Injected Here -->
-            <div class="text-center py-12 text-slate-500">
-                <i class="fa fa-circle-notch fa-spin text-2xl text-lime-400 mb-2"></i>
-                <p>جاري تحميل بيانات العملاء والتراخيص...</p>
+        <!-- ======================================================== -->
+        <!-- SECTION 1: CRM LEADS MANAGEMENT (العملاء المحتملين والمبيعات) -->
+        <!-- ======================================================== -->
+        <div id="sectionCrm" class="space-y-8">
+            <!-- CRM Metric Stat Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-3.5">
+                <div class="glass-card rounded-2xl p-4 border-t-2 border-t-slate-500">
+                    <span class="text-[11px] font-bold text-slate-400 block mb-1">إجمالي العملاء المحتملين</span>
+                    <span id="crmStatTotal" class="text-2xl font-black text-white">0</span>
+                    <span class="text-[10px] text-slate-500 block mt-1">مسجلين في الـ CRM</span>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 border-t-2 border-t-amber-500">
+                    <span class="text-[11px] font-bold text-amber-400 block mb-1">مطلوب متابعتهم اليوم 🔔</span>
+                    <span id="crmStatToday" class="text-2xl font-black text-amber-400">0</span>
+                    <span class="text-[10px] text-amber-500/80 block mt-1">مواعيد اتصالات اليوم</span>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 border-t-2 border-t-rose-500">
+                    <span class="text-[11px] font-bold text-rose-400 block mb-1">متابعات متأخرة ⚠️</span>
+                    <span id="crmStatOverdue" class="text-2xl font-black text-rose-400">0</span>
+                    <span class="text-[10px] text-rose-500/80 block mt-1">فات موعد الاتصال بهم</span>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 border-t-2 border-t-sky-500">
+                    <span class="text-[11px] font-bold text-sky-400 block mb-1">مهتم / ديمو / عرض</span>
+                    <span id="crmStatPipeline" class="text-2xl font-black text-sky-400">0</span>
+                    <span class="text-[10px] text-sky-500/80 block mt-1">قيد التفاوض النشط</span>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 border-t-2 border-t-emerald-500">
+                    <span class="text-[11px] font-bold text-emerald-400 block mb-1">تم التعاقد والبيع 🎉</span>
+                    <span id="crmStatWon" class="text-2xl font-black text-emerald-400">0</span>
+                    <span class="text-[10px] text-emerald-500/80 block mt-1">صفقات ناجحة مرخصة</span>
+                </div>
+
+                <div class="glass-card rounded-2xl p-4 border-t-2 border-t-indigo-500">
+                    <span class="text-[11px] font-bold text-indigo-400 block mb-1">عملاء جدد (New)</span>
+                    <span id="crmStatNew" class="text-2xl font-black text-indigo-400">0</span>
+                    <span class="text-[10px] text-indigo-500/80 block mt-1">لم يتم التواصل بعد</span>
+                </div>
+            </div>
+
+            <!-- CRM Search & Pipeline Filter Bar -->
+            <div class="glass-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3 flex-1 min-w-[280px]">
+                    <div class="relative w-full max-w-md">
+                        <i class="fa fa-search absolute right-3.5 top-3.5 text-slate-500 text-sm"></i>
+                        <input type="text" id="crmSearchInput" oninput="filterCrmLeads()" placeholder="بحث باسم الجيم، اسم الكابتن، رقم الواتساب، أو المحافظة..."
+                               class="w-full bg-slate-900 border border-slate-700 rounded-xl pr-10 pl-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-lime-500 transition">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <button onclick="setCrmFilter('all')" class="crm-filter-btn active text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 transition" data-filter="all">الكل</button>
+                    <button onclick="setCrmFilter('today')" class="crm-filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition" data-filter="today">🔔 اليوم</button>
+                    <button onclick="setCrmFilter('overdue')" class="crm-filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition" data-filter="overdue">⚠️ متأخر</button>
+                    <button onclick="setCrmFilter('new')" class="crm-filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="new">جديد</button>
+                    <button onclick="setCrmFilter('contacted')" class="crm-filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="contacted">تم التواصل</button>
+                    <button onclick="setCrmFilter('interested')" class="crm-filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="interested">مهتم</button>
+                    <button onclick="setCrmFilter('demo_scheduled')" class="crm-filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="demo_scheduled">ديمو</button>
+                    <button onclick="setCrmFilter('offer_sent')" class="crm-filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="offer_sent">عرض سعر</button>
+                    <button onclick="setCrmFilter('followup')" class="crm-filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="followup">متابعة</button>
+                    <button onclick="setCrmFilter('won')" class="crm-filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition" data-filter="won">تم التعاقد ✓</button>
+                </div>
+            </div>
+
+            <!-- CRM Leads Cards Container -->
+            <div id="crmLeadsContainer" class="space-y-4">
+                <div class="text-center py-12 text-slate-500">
+                    <i class="fa fa-circle-notch fa-spin text-2xl text-lime-400 mb-2"></i>
+                    <p>جاري تحميل العملاء المحتملين...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- SECTION 2: TODAY'S FOLLOW-UPS & REMINDERS (متابعات اليوم) -->
+        <!-- ======================================================== -->
+        <div id="sectionFollowups" class="space-y-8 hidden">
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-l-amber-500">
+                <div class="flex items-center justify-between gap-4 flex-wrap">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl font-black">
+                            <i class="fa fa-headset"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-black text-white">مركز متابعات اليوم والاتصالات المجدولة</h2>
+                            <p class="text-xs text-slate-400">قائمة مركزة بالعملاء المطلوب الاتصال بهم اليوم وتدارك الاتصالات المتأخرة لتأكيد الصفقات</p>
+                        </div>
+                    </div>
+
+                    <button onclick="fetchCrmLeads()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-xl border border-slate-700 text-xs font-bold flex items-center gap-1.5">
+                        <i class="fa fa-rotate"></i>
+                        <span>تحديث المتابعات</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Overdue List -->
+            <div class="space-y-3">
+                <div class="flex items-center gap-2 text-rose-400 font-black text-sm">
+                    <i class="fa fa-triangle-exclamation"></i>
+                    <span>اتصالات ومتابعات متأخرة تحتاج تدارك سريع (Overdue):</span>
+                    <span id="overdueListBadge" class="bg-rose-500/20 text-rose-300 text-xs px-2 py-0.5 rounded-full">0</span>
+                </div>
+                <div id="overdueContainer" class="space-y-3">
+                    <!-- Overdue items -->
+                </div>
+            </div>
+
+            <!-- Due Today List -->
+            <div class="space-y-3 pt-2">
+                <div class="flex items-center gap-2 text-amber-400 font-black text-sm">
+                    <i class="fa fa-bell"></i>
+                    <span>مطلوب الاتصال بهم اليوم (Due Today):</span>
+                    <span id="todayListBadge" class="bg-amber-500/20 text-amber-300 text-xs px-2 py-0.5 rounded-full">0</span>
+                </div>
+                <div id="todayContainer" class="space-y-3">
+                    <!-- Today items -->
+                </div>
+            </div>
+
+            <!-- Upcoming List -->
+            <div class="space-y-3 pt-2">
+                <div class="flex items-center gap-2 text-sky-400 font-black text-sm">
+                    <i class="fa fa-calendar-days"></i>
+                    <span>المتابعات القادمة في الأيام القادمة (Upcoming):</span>
+                    <span id="upcomingListBadge" class="bg-sky-500/20 text-sky-300 text-xs px-2 py-0.5 rounded-full">0</span>
+                </div>
+                <div id="upcomingContainer" class="space-y-3">
+                    <!-- Upcoming items -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- SECTION 3: WHATSAPP AUTOMATION & MESSAGE BANK (الواتساب) -->
+        <!-- ======================================================== -->
+        <div id="sectionWhatsapp" class="space-y-8 hidden">
+            <!-- Header Banner -->
+            <div class="glass-card rounded-2xl p-6 border-l-4 border-l-emerald-500">
+                <div class="flex items-center justify-between gap-4 flex-wrap">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl font-black">
+                            <i class="fa-brands fa-whatsapp"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-black text-white">مرسل الواتساب التلقائي وبنك الرسائل الذكي</h2>
+                            <p class="text-xs text-slate-400">إرسال آلي عبر WhatsApp Desktop أو روابط مباشرة، مع قوالب بيعية مدروسة لاستهداف الجيمات</p>
+                        </div>
+                    </div>
+
+                    <button onclick="openBulkWhatsAppModal()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-4 py-2.5 rounded-xl transition flex items-center gap-2 text-xs sm:text-sm shadow-lg shadow-emerald-500/20">
+                        <i class="fa fa-paper-plane"></i>
+                        <span>إطلاق حملة إرسال جماعية</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bulk Sending Status Banner (Live) -->
+            <div id="bulkStatusBanner" class="glass-card rounded-2xl p-5 border border-emerald-500/40 bg-emerald-950/20 hidden space-y-3">
+                <div class="flex items-center justify-between gap-4 flex-wrap">
+                    <div class="flex items-center gap-3">
+                        <span class="relative flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                        </span>
+                        <div>
+                            <div class="text-sm font-black text-emerald-300" id="bulkStatusTitle">جاري إرسال الحملة التلقائية في الخلفية...</div>
+                            <div class="text-xs text-slate-400" id="bulkCurrentLead">العميل الحالي: ...</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 text-xs font-mono font-bold">
+                        <span class="bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-lg">تم بنجاح: <span id="bulkSentCount">0</span></span>
+                        <span class="bg-rose-500/20 text-rose-300 px-3 py-1 rounded-lg">فشل: <span id="bulkFailedCount">0</span></span>
+                        <span class="bg-slate-800 text-slate-300 px-3 py-1 rounded-lg">إجمالي: <span id="bulkTotalCount">0</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message Templates Bank -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-sm font-black text-white flex items-center gap-2">
+                        <i class="fa fa-folder-open text-amber-400"></i>
+                        <span>نماذج وقوالب الرسائل البيعية المعتمدة (Message Bank):</span>
+                    </h3>
+                    <span class="text-xs text-slate-400">المتغيرات المتاحة: <code class="text-lime-400 code-font">{name}</code>, <code class="text-lime-400 code-font">{gym_name}</code>, <code class="text-lime-400 code-font">{city}</code></span>
+                </div>
+
+                <div id="templatesListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Templates rendered dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- SECTION 4: LICENSES & GYMS (التراخيص والاشتراكات) -->
+        <!-- ======================================================== -->
+        <div id="sectionLicenses" class="space-y-8 hidden">
+            <!-- Top Live Sync Status Bar -->
+            <div class="glass-card rounded-2xl p-4 px-6 flex flex-wrap items-center justify-between gap-4 border-l-4 border-l-lime-500">
+                <div class="flex items-center gap-3">
+                    <span class="relative flex h-3 w-3">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-lime-500"></span>
+                    </span>
+                    <div>
+                        <span class="text-xs font-bold text-slate-400">سيرفر المزامنة الحية يعمل بنشاط:</span>
+                        <span id="syncUrlText" class="code-font text-xs font-bold text-lime-400 mr-2">http://127.0.0.1:9000/api/license/sync/</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs">
+                    <button onclick="copySyncUrl()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1">
+                        <i class="fa fa-copy"></i>
+                        <span id="copySyncBtnText">نسخ رابط المزامنة للعملاء</span>
+                    </button>
+                    <button onclick="refreshClients()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg border border-slate-700 transition" title="تحديث القائمة">
+                        <i class="fa fa-rotate"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Metric Stat Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="glass-card rounded-2xl p-5 border-t-2 border-t-slate-500">
+                    <span class="text-xs font-bold text-slate-400 block mb-1">إجمالي الصالات المرخصة</span>
+                    <span id="statTotal" class="text-3xl font-black text-white">0</span>
+                    <span class="text-[11px] text-slate-500 block mt-1">المسجلين في النظام</span>
+                </div>
+
+                <div class="glass-card rounded-2xl p-5 border-t-2 border-t-emerald-500">
+                    <span class="text-xs font-bold text-slate-400 block mb-1">تراخيص نشطة</span>
+                    <span id="statActive" class="text-3xl font-black text-emerald-400">0</span>
+                    <span class="text-[11px] text-emerald-500/80 block mt-1">مشتركون ومسددون ✓</span>
+                </div>
+
+                <div class="glass-card rounded-2xl p-5 border-t-2 border-t-amber-500">
+                    <span class="text-xs font-bold text-slate-400 block mb-1">فترات تجريبية (Demo)</span>
+                    <span id="statDemo" class="text-3xl font-black text-amber-400">0</span>
+                    <span class="text-[11px] text-amber-500/80 block mt-1">فترة 7 أيام مجانية</span>
+                </div>
+
+                <div class="glass-card rounded-2xl p-5 border-t-2 border-t-rose-500">
+                    <span class="text-xs font-bold text-slate-400 block mb-1">معلق / متوقف</span>
+                    <span id="statSuspended" class="text-3xl font-black text-rose-400">0</span>
+                    <span class="text-[11px] text-rose-500/80 block mt-1">تم إيقافهم لعدم السداد</span>
+                </div>
+
+                <div class="glass-card rounded-2xl p-5 border-t-2 border-t-sky-500 col-span-2 md:col-span-1">
+                    <span class="text-xs font-bold text-slate-400 block mb-1">ينتهي خلال 7 أيام</span>
+                    <span id="statExpiring" class="text-3xl font-black text-sky-400">0</span>
+                    <span class="text-[11px] text-sky-500/80 block mt-1">يحتاجون تذكير للتجديد</span>
+                </div>
+            </div>
+
+            <!-- Filter & Search Controls -->
+            <div class="glass-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3 flex-1 min-w-[280px]">
+                    <div class="relative w-full max-w-md">
+                        <i class="fa fa-search absolute right-3.5 top-3.5 text-slate-500 text-sm"></i>
+                        <input type="text" id="searchInput" oninput="filterClients()" placeholder="بحث بالاسم، رقم الموبايل، أو كود الجهاز HWID..."
+                               class="w-full bg-slate-900 border border-slate-700 rounded-xl pr-10 pl-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-lime-500 transition">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="setStatusFilter('all')" class="filter-btn active text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 transition" data-filter="all">الكل</button>
+                    <button onclick="setStatusFilter('active')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="active">النشطة</button>
+                    <button onclick="setStatusFilter('demo')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="demo">التجريبية</button>
+                    <button onclick="setStatusFilter('suspended')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="suspended">المعلقة</button>
+                    <button onclick="setStatusFilter('expired')" class="filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition" data-filter="expired">المنتهية</button>
+                </div>
+            </div>
+
+            <!-- Clients Cards / Table Grid -->
+            <div id="clientsContainer" class="space-y-4">
+                <!-- Dynamic Client Cards Injected Here -->
+                <div class="text-center py-12 text-slate-500">
+                    <i class="fa fa-circle-notch fa-spin text-2xl text-lime-400 mb-2"></i>
+                    <p>جاري تحميل بيانات العملاء والتراخيص...</p>
+                </div>
             </div>
         </div>
 
@@ -678,6 +921,326 @@
                     <span id="copyExportBtnText">نسخ JSON للحافظة</span>
                 </button>
             </div>
+    <!-- ========================================== -->
+    <!-- MODAL: ADD / EDIT CRM LEAD -->
+    <!-- ========================================== -->
+    <div id="addEditLeadModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden overflow-y-auto">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-5 shadow-2xl my-8">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-lime-500/20 text-lime-400 flex items-center justify-center text-lg font-black">
+                        <i class="fa fa-user-plus"></i>
+                    </div>
+                    <div>
+                        <h3 id="leadModalTitle" class="text-lg font-black text-white">إضافة عميل محتمل جديد (Lead)</h3>
+                        <p class="text-xs text-slate-400">تسجيل بيانات الصالة وتحديد موعد التواصل والمتابعة</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('addEditLeadModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times text-lg"></i></button>
+            </div>
+
+            <form id="leadForm" onsubmit="submitLeadForm(event)" class="space-y-4">
+                <input type="hidden" id="leadId" value="">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">اسم الصالة / الجيم *</label>
+                        <input type="text" id="leadGymName" required placeholder="مثال: Hulk Gym / صالة الأبطال"
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-lime-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">اسم المسؤول / الكابتن *</label>
+                        <input type="text" id="leadContactName" required placeholder="مثال: كابتن محمد / أستاذ أحمد"
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-lime-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">رقم الواتساب / الهاتف *</label>
+                        <input type="tel" id="leadPhone" required placeholder="010XXXXXXXX"
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-lime-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">المحافظة / المنطقة</label>
+                        <input type="text" id="leadCity" placeholder="مثال: القاهرة - المعادي / الجيزة"
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-lime-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">مرحلة العميل (Stage)</label>
+                        <select id="leadStatus" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-100 focus:outline-none focus:border-lime-500">
+                            <option value="new">عميل جديد (New)</option>
+                            <option value="contacted">تم التواصل المبدئي</option>
+                            <option value="interested">مهتم ويطلب تفاصيل</option>
+                            <option value="demo_scheduled">تحديد موعد ديمو / معاينة</option>
+                            <option value="offer_sent">تم إرسال عرض السعر</option>
+                            <option value="followup">متابعة وتفاوض</option>
+                            <option value="won">تم التعاقد والبيع ✓</option>
+                            <option value="lost">مؤجل / غير مهتم</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">مصدر العميل</label>
+                        <input type="text" id="leadSource" placeholder="فيسبوك / واتساب / ترشيح"
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-lime-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">الميزانية المتوقعة</label>
+                        <input type="text" id="leadBudget" placeholder="مثال: 12,000 ج / تقسيط"
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-lime-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">الباقة أو الإضافات المهتم بها</label>
+                    <input type="text" id="leadPackage" placeholder="مثال: رخصة مدى الحياة + بصمة وجه وقفل سوكريت"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-lime-500">
+                </div>
+
+                <!-- Next Followup Section ("أكلمه بعد قد إيه") -->
+                <div class="bg-slate-950 border border-amber-500/30 rounded-2xl p-4 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-black text-amber-400 flex items-center gap-1.5">
+                            <i class="fa fa-calendar-check"></i>
+                            <span>أكلمه وأتابعه بعد قد إيه؟ (موعد المتابعة القادمة)</span>
+                        </label>
+                        <span class="text-[10px] text-slate-400">اختر مدة سريعة بنقرة واحدة:</span>
+                    </div>
+
+                    <!-- Quick Interval Buttons -->
+                    <div class="grid grid-cols-5 gap-1.5">
+                        <button type="button" onclick="setLeadDaysInterval(1)" class="interval-btn bg-slate-900 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 text-[11px] font-bold py-1.5 rounded-lg border border-slate-700 transition">
+                            غداً (+1)
+                        </button>
+                        <button type="button" onclick="setLeadDaysInterval(2)" class="interval-btn bg-slate-900 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 text-[11px] font-bold py-1.5 rounded-lg border border-slate-700 transition">
+                            بعد يومين
+                        </button>
+                        <button type="button" onclick="setLeadDaysInterval(3)" class="interval-btn bg-slate-900 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 text-[11px] font-bold py-1.5 rounded-lg border border-slate-700 transition">
+                            بعد 3 أيام
+                        </button>
+                        <button type="button" onclick="setLeadDaysInterval(7)" class="interval-btn bg-slate-900 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 text-[11px] font-bold py-1.5 rounded-lg border border-slate-700 transition">
+                            أسبوع (+7)
+                        </button>
+                        <button type="button" onclick="setLeadDaysInterval(14)" class="interval-btn bg-slate-900 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 text-[11px] font-bold py-1.5 rounded-lg border border-slate-700 transition">
+                            أسبوعين
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        <div>
+                            <input type="text" id="leadNextFollowupDate" placeholder="تاريخ ووقت المتابعة (YYYY-MM-DD HH:MM)"
+                                   class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-amber-300 code-font focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <input type="text" id="leadFollowupNote" placeholder="ملاحظة المتابعة (مثال: معرفة قراره في العرض)"
+                                   class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">ملاحظات إضافية عن المكالمة أو الجيم</label>
+                    <textarea id="leadNewNote" rows="2" placeholder="اكتب أي ملاحظة تم الاتفاق عليها مع العميل..."
+                              class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-lime-500 resize-none"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeModal('addEditLeadModal')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2.5 rounded-xl text-xs transition">
+                        إلغاء
+                    </button>
+                    <button type="submit" class="bg-lime-500 hover:bg-lime-400 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs transition flex items-center gap-2 shadow-lg shadow-lime-500/20">
+                        <i class="fa fa-check"></i>
+                        <span>حفظ بيانات العميل والمتابعة</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: QUICK RECORD FOLLOW-UP CALL -->
+    <!-- ========================================== -->
+    <div id="recordFollowupModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-base font-black">
+                        <i class="fa fa-phone-flip"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-white" id="followupModalGymName">تسجيل نتيجة التواصل</h3>
+                        <p class="text-[11px] text-slate-400" id="followupModalContactName">تحديث حالة المتابعة وتحديد الموعد القادم</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('recordFollowupModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times"></i></button>
+            </div>
+
+            <form id="recordFollowupForm" onsubmit="submitFollowupCall(event)" class="space-y-3.5">
+                <input type="hidden" id="followupLeadId" value="">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">ماذا تم في المكالمة / المقابلة؟ *</label>
+                    <textarea id="followupNoteText" required rows="3" placeholder="مثال: كلمت الكابتن وقال إنه هيبعتلي اللوجو بكرة ونجهز الديمو على جهاز الريسبشن..."
+                              class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-amber-500 resize-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">تحديث مرحلة العميل:</label>
+                    <select id="followupNewStatus" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-100 focus:outline-none focus:border-amber-500">
+                        <option value="">(الاحتفاظ بالمرحلة الحالية)</option>
+                        <option value="contacted">تم التواصل</option>
+                        <option value="interested">مهتم ومتحمس</option>
+                        <option value="demo_scheduled">تحديد موعد ديمو / تشغيل</option>
+                        <option value="offer_sent">إرسال عرض السعر النهائي</option>
+                        <option value="followup">يحتاج متابعة وتفكير</option>
+                        <option value="won">تم التعاقد والبيع بنجاح ✓</option>
+                        <option value="lost">غير مهتم حالياً</option>
+                    </select>
+                </div>
+
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
+                    <label class="block text-[11px] font-black text-amber-400">أكلمه وأتابعه بعد قد إيه؟</label>
+                    <div class="grid grid-cols-3 gap-1.5 text-center">
+                        <button type="button" onclick="setQuickFollowupDays(1)" class="bg-slate-900 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 text-xs font-bold py-1.5 rounded-lg border border-slate-700 transition">غداً (+1)</button>
+                        <button type="button" onclick="setQuickFollowupDays(2)" class="bg-slate-900 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 text-xs font-bold py-1.5 rounded-lg border border-slate-700 transition">بعد يومين</button>
+                        <button type="button" onclick="setQuickFollowupDays(3)" class="bg-slate-900 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 text-xs font-bold py-1.5 rounded-lg border border-slate-700 transition">بعد 3 أيام</button>
+                        <button type="button" onclick="setQuickFollowupDays(7)" class="bg-slate-900 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 text-xs font-bold py-1.5 rounded-lg border border-slate-700 transition">أسبوع (+7)</button>
+                        <button type="button" onclick="setQuickFollowupDays(14)" class="bg-slate-900 hover:bg-amber-500/20 text-slate-300 hover:text-amber-300 text-xs font-bold py-1.5 rounded-lg border border-slate-700 transition">أسبوعين</button>
+                        <button type="button" onclick="setQuickFollowupDays(0)" class="bg-slate-900 hover:bg-rose-500/20 text-slate-300 hover:text-rose-400 text-xs font-bold py-1.5 rounded-lg border border-slate-700 transition">إنهاء المتابعة</button>
+                    </div>
+                    <input type="hidden" id="quickDaysVal" value="2">
+                    <div id="quickDaysNotice" class="text-[10px] text-amber-400/90 font-bold text-center pt-1">الموعد القادم: بعد يومين</div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="closeModal('recordFollowupModal')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-2 rounded-xl text-xs font-bold">إلغاء</button>
+                    <button type="submit" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
+                        <i class="fa fa-save"></i>
+                        <span>حفظ المتابعة والجدولة</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: SEND SINGLE WHATSAPP MESSAGE -->
+    <!-- ========================================== -->
+    <div id="whatsappLeadModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg font-black">
+                        <i class="fa-brands fa-whatsapp"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-white" id="waModalGymName">إرسال واتساب للعميل</h3>
+                        <p class="text-[11px] text-slate-400" id="waModalRecipientInfo">تجهيز الرسالة وإرسالها أوتوماتيكياً</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('whatsappLeadModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times"></i></button>
+            </div>
+
+            <div class="space-y-3.5">
+                <input type="hidden" id="waLeadId" value="">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">اختر قالباً جاهزاً من بنك الرسائل:</label>
+                    <select id="waTemplateSelect" onchange="onWaTemplateSelected()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-100 focus:outline-none focus:border-emerald-500">
+                        <!-- Filled by JS -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">نص الرسالة (يمكنك التعديل والإضافة بحرية):</label>
+                    <textarea id="waMessageText" rows="6" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 resize-none font-sans leading-relaxed"></textarea>
+                </div>
+
+                <!-- Action Sending Buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="executeWhatsAppSend(true)" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+                        <i class="fa fa-robot"></i>
+                        <span>إرسال أوتوماتيكي عبر ديسكتوب</span>
+                    </button>
+
+                    <button type="button" onclick="executeWhatsAppSend(false)" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/40 font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                        <i class="fa fa-arrow-up-right-from-square"></i>
+                        <span>فتح المحادثة برابط مباشر</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: BULK WHATSAPP CAMPAIGN -->
+    <!-- ========================================== -->
+    <div id="bulkWhatsAppModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg font-black">
+                        <i class="fa fa-paper-plane"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-white">إطلاق حملة واتساب أوتوماتيكية</h3>
+                        <p class="text-[11px] text-slate-400">إرسال جماعي في الخلفية مع فواصل زمنية آمنة</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('bulkWhatsAppModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times"></i></button>
+            </div>
+
+            <form onsubmit="startBulkCampaignSubmit(event)" class="space-y-3.5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">اختر الشريحة المستهدفة من العملاء:</label>
+                    <select id="bulkTargetStage" onchange="updateBulkTargetCount()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-100 focus:outline-none focus:border-emerald-500">
+                        <option value="all">جميع العملاء المحتملين المسجلين</option>
+                        <option value="today">مطلوب متابعتهم اليوم فقط</option>
+                        <option value="overdue">المتابعات المتأخرة فقط</option>
+                        <option value="new">العملاء الجدد (New)</option>
+                        <option value="contacted">تم التواصل المبدئي</option>
+                        <option value="interested">العملاء المهتمين</option>
+                        <option value="offer_sent">من تم إرسال عرض سعر لهم</option>
+                    </select>
+                    <span id="bulkCountNotice" class="text-[10px] text-emerald-400 font-bold block mt-1">عدد العملاء المستهدفين: 0</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">اختر نموذج الرسالة:</label>
+                    <select id="bulkTemplateSelect" onchange="onBulkTemplateChange()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-100 focus:outline-none focus:border-emerald-500">
+                        <!-- Templates -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">نص الرسالة المرسلة:</label>
+                    <textarea id="bulkMessageText" required rows="5" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 resize-none font-sans leading-relaxed"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between text-xs text-slate-400 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <span>فاصل الأمان بين كل رسالة:</span>
+                    <select id="bulkDelaySeconds" class="bg-slate-900 border border-slate-700 text-lime-400 rounded-lg px-2 py-1 font-bold text-xs">
+                        <option value="4">4 ثواني (سريع وآمن)</option>
+                        <option value="6" selected>6 ثواني (موصى به لتفادي الحظر)</option>
+                        <option value="10">10 ثواني (فائق الأمان)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+                    <button type="button" onclick="closeModal('bulkWhatsAppModal')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-2 rounded-xl text-xs font-bold">إلغاء</button>
+                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20">
+                        <i class="fa fa-play"></i>
+                        <span>بدء الإرسال الأوتوماتيكي في الخلفية</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1485,8 +2048,768 @@
         function filterClients() { renderClients(); }
         function refreshClients() { fetchClients(); }
 
-        // Initial Load
+        // ========================================================
+        // CRM LEADS & SALES AUTOMATION LOGIC
+        // ========================================================
+        let allLeads = [];
+        let allTemplates = [];
+        let currentCrmFilter = 'all';
+        let currentMainTab = 'crm';
+        let bulkStatusPollInterval = null;
+
+        function switchMainTab(tab) {
+            currentMainTab = tab;
+            const tabs = ['crm', 'followups', 'whatsapp', 'licenses'];
+            tabs.forEach(t => {
+                const btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+                const sec = document.getElementById('section' + t.charAt(0).toUpperCase() + t.slice(1));
+                if (t === tab) {
+                    if (btn) {
+                        btn.className = 'main-tab-btn active bg-lime-500 text-slate-950 font-black text-xs sm:text-sm px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-lime-500/20';
+                    }
+                    if (sec) sec.classList.remove('hidden');
+                } else {
+                    if (btn) {
+                        btn.className = 'main-tab-btn bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 transition flex items-center gap-2';
+                    }
+                    if (sec) sec.classList.add('hidden');
+                }
+            });
+
+            if (tab === 'crm' || tab === 'followups' || tab === 'whatsapp') {
+                fetchCrmLeads();
+            } else if (tab === 'licenses') {
+                fetchClients();
+            }
+        }
+
+        async function fetchCrmLeads() {
+            try {
+                const res = await fetch('/api/crm/leads/');
+                const data = await res.json();
+                if (data.success) {
+                    allLeads = data.leads || [];
+                    allTemplates = data.templates || [];
+                    updateCrmStats(data.stats);
+                    renderCrmLeads();
+                    renderFollowups();
+                    renderTemplates();
+                    updateBulkTargetCount();
+                }
+            } catch (err) {
+                console.error('Error fetching CRM leads:', err);
+                document.getElementById('crmLeadsContainer').innerHTML = `
+                    <div class="text-center py-12 text-rose-400">
+                        <i class="fa fa-exclamation-triangle text-3xl mb-2"></i>
+                        <p>تعذر تحميل بيانات العملاء المحتملين.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function updateCrmStats(stats) {
+            if (!stats) return;
+            document.getElementById('crmStatTotal').innerText = stats.total || 0;
+            document.getElementById('crmStatToday').innerText = stats.today || 0;
+            document.getElementById('crmStatOverdue').innerText = stats.overdue || 0;
+            document.getElementById('crmStatWon').innerText = (stats.stages && stats.stages.won) || 0;
+            document.getElementById('crmStatNew').innerText = (stats.stages && stats.stages.new) || 0;
+
+            const pipelineCount = ((stats.stages && stats.stages.interested) || 0) +
+                                  ((stats.stages && stats.stages.demo_scheduled) || 0) +
+                                  ((stats.stages && stats.stages.offer_sent) || 0) +
+                                  ((stats.stages && stats.stages.followup) || 0);
+            document.getElementById('crmStatPipeline').innerText = pipelineCount;
+
+            // Update Header Tab Badges
+            document.getElementById('tabCountCrm').innerText = stats.total || 0;
+            document.getElementById('tabCountToday').innerText = stats.today || 0;
+
+            const overdueBadge = document.getElementById('tabBadgeOverdue');
+            if (stats.overdue > 0) {
+                overdueBadge.innerText = `${stats.overdue} متأخر`;
+                overdueBadge.classList.remove('hidden');
+            } else {
+                overdueBadge.classList.add('hidden');
+            }
+        }
+
+        function setCrmFilter(filter) {
+            currentCrmFilter = filter;
+            document.querySelectorAll('.crm-filter-btn').forEach(btn => {
+                if (btn.getAttribute('data-filter') === filter) {
+                    btn.className = 'crm-filter-btn active text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 transition';
+                } else {
+                    btn.className = 'crm-filter-btn text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 transition';
+                }
+            });
+            renderCrmLeads();
+        }
+
+        function filterCrmLeads() {
+            renderCrmLeads();
+        }
+
+        function getStageBadge(status) {
+            const map = {
+                'new': '<span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[11px] font-black px-2.5 py-0.5 rounded-full">عميل جديد (New)</span>',
+                'contacted': '<span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[11px] font-black px-2.5 py-0.5 rounded-full">تم التواصل</span>',
+                'interested': '<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-black px-2.5 py-0.5 rounded-full">مهتم ويطلب تفاصيل</span>',
+                'demo_scheduled': '<span class="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[11px] font-black px-2.5 py-0.5 rounded-full">موعد ديمو / معاينة</span>',
+                'offer_sent': '<span class="bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[11px] font-black px-2.5 py-0.5 rounded-full">تم إرسال العرض</span>',
+                'followup': '<span class="bg-orange-500/20 text-orange-300 border border-orange-500/30 text-[11px] font-black px-2.5 py-0.5 rounded-full">متابعة وتفاوض</span>',
+                'won': '<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-black px-2.5 py-0.5 rounded-full">تم التعاقد والبيع ✓</span>',
+                'lost': '<span class="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[11px] font-black px-2.5 py-0.5 rounded-full">مؤجل / غير مهتم</span>'
+            };
+            return map[status] || `<span class="bg-slate-800 text-slate-300 text-[11px] px-2 py-0.5 rounded-full">${status}</span>`;
+        }
+
+        function renderCrmLeads() {
+            const container = document.getElementById('crmLeadsContainer');
+            const search = (document.getElementById('crmSearchInput').value || '').trim().toLowerCase();
+
+            let filtered = allLeads.filter(lead => {
+                // Filter by stage / timing
+                if (currentCrmFilter === 'today' && lead.timing_status !== 'today') return false;
+                if (currentCrmFilter === 'overdue' && lead.timing_status !== 'overdue') return false;
+                if (currentCrmFilter !== 'all' && currentCrmFilter !== 'today' && currentCrmFilter !== 'overdue') {
+                    if (lead.status !== currentCrmFilter) return false;
+                }
+
+                // Search query
+                if (search) {
+                    const haystack = `${lead.gym_name || ''} ${lead.contact_name || ''} ${lead.phone || ''} ${lead.city || ''} ${lead.source || ''}`.toLowerCase();
+                    if (!haystack.includes(search)) return false;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-card rounded-2xl p-12 text-center text-slate-400 space-y-3">
+                        <i class="fa fa-users text-4xl text-slate-600"></i>
+                        <p class="font-bold text-sm">لا يوجد عملاء محتملين يطابقون خيارات البحث الحالية.</p>
+                        <button onclick="openAddLeadModal()" class="bg-lime-500 hover:bg-lime-400 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition inline-flex items-center gap-2 mt-2">
+                            <i class="fa fa-plus"></i>
+                            <span>إضافة عميل محتمل جديد</span>
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(lead => {
+                const phone = lead.phone || 'بدون هاتف';
+                const cleanPhone = phone.replace(/\D/g, '');
+                const waLink = `https://wa.me/20${cleanPhone.replace(/^0+/, '')}`;
+
+                // Followup Timing Box
+                let followupHtml = '';
+                if (lead.status !== 'won' && lead.status !== 'lost') {
+                    if (lead.timing_status === 'overdue') {
+                        const daysAgo = Math.abs(lead.remaining_days || 1);
+                        followupHtml = `
+                            <div class="bg-rose-950/40 border border-rose-500/40 rounded-xl p-3 flex items-center justify-between gap-3 flex-wrap">
+                                <div class="flex items-center gap-2 text-rose-300 text-xs font-bold">
+                                    <i class="fa fa-triangle-exclamation text-rose-400 text-sm"></i>
+                                    <span>⚠️ متابعة متأخرة منذ ${daysAgo} يوم!</span>
+                                    <span class="text-[11px] text-slate-400">(${lead.next_followup_date || ''})</span>
+                                </div>
+                                <span class="text-xs text-rose-200 font-bold">${lead.followup_note || 'مطلوب الاتصال بالعميل فوراً'}</span>
+                            </div>
+                        `;
+                    } else if (lead.timing_status === 'today') {
+                        followupHtml = `
+                            <div class="bg-amber-950/40 border border-amber-500/50 rounded-xl p-3 flex items-center justify-between gap-3 flex-wrap shadow-lg shadow-amber-500/5">
+                                <div class="flex items-center gap-2 text-amber-300 text-xs font-black">
+                                    <span class="relative flex h-2.5 w-2.5">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                                    </span>
+                                    <span>🔔 ميعاد التواصل محدد اليوم!</span>
+                                    <span class="text-[11px] text-slate-400">(${lead.next_followup_date || ''})</span>
+                                </div>
+                                <span class="text-xs text-amber-200 font-bold">${lead.followup_note || 'اتصال ومتابعة العرض'}</span>
+                            </div>
+                        `;
+                    } else if (lead.next_followup_date) {
+                        const inDays = lead.remaining_days !== null ? `بعد ${lead.remaining_days} يوم` : '';
+                        followupHtml = `
+                            <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-3 flex-wrap text-xs text-slate-300">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa fa-calendar-check text-sky-400"></i>
+                                    <span>المتابعة القادمة: <strong class="text-sky-300">${inDays} (${lead.next_followup_date})</strong></span>
+                                </div>
+                                <span class="text-slate-400 text-[11px]">${lead.followup_note || ''}</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                // Notes count & WhatsApp sent count
+                const notesCount = (lead.notes || []).length;
+                const waSentCount = (lead.whatsapp_history || []).length;
+                const lastNote = notesCount > 0 ? lead.notes[notesCount - 1].text : '';
+
+                return `
+                    <div class="glass-card rounded-2xl p-5 space-y-4 border border-slate-800 hover:border-slate-700 transition">
+                        <!-- Top Header: Gym Name, Contact, Status -->
+                        <div class="flex items-start justify-between gap-4 flex-wrap">
+                            <div class="flex items-center gap-3">
+                                <div class="w-11 h-11 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-lime-400 text-lg font-black shadow-inner">
+                                    <i class="fa fa-dumbbell"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2.5 flex-wrap">
+                                        <h3 class="text-base font-black text-white">${lead.gym_name}</h3>
+                                        ${getStageBadge(lead.status)}
+                                    </div>
+                                    <div class="flex items-center gap-3 text-xs text-slate-400 mt-1 flex-wrap">
+                                        <span><i class="fa fa-user text-slate-500 mr-1"></i>${lead.contact_name}</span>
+                                        ${lead.city ? `<span><i class="fa fa-location-dot text-slate-500 mr-1"></i>${lead.city}</span>` : ''}
+                                        ${lead.source ? `<span class="bg-slate-800/80 px-2 py-0.5 rounded text-[10px] text-slate-300 border border-slate-700/60">${lead.source}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Phone & Direct WhatsApp Actions -->
+                            <div class="flex items-center gap-2">
+                                <a href="tel:${cleanPhone}" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition" title="اتصال هاتفي">
+                                    <i class="fa fa-phone text-sky-400"></i>
+                                    <span dir="ltr">${phone}</span>
+                                </a>
+
+                                <button onclick="openWhatsAppLeadModal('${lead.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-emerald-500/10" title="إرسال رسالة واتساب">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                                    <span>واتساب (${waSentCount})</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Package & Budget Info -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                            <div>
+                                <span class="text-slate-500 font-bold block mb-0.5">الباقة المهتم بها:</span>
+                                <span class="text-slate-200 font-bold">${lead.interested_package || 'باقة غير محددة'}</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 font-bold block mb-0.5">الميزانية المتوقعة:</span>
+                                <span class="text-lime-400 font-black">${lead.budget || 'غير محددة'}</span>
+                            </div>
+                        </div>
+
+                        <!-- Followup Timing Alert Box -->
+                        ${followupHtml}
+
+                        <!-- Latest Note Preview -->
+                        ${lastNote ? `
+                            <div class="text-[11px] text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 flex items-start gap-2">
+                                <i class="fa fa-comment-dots text-amber-400/80 mt-0.5"></i>
+                                <div>
+                                    <strong class="text-slate-300">آخر ملاحظة:</strong> ${lastNote}
+                                    <span class="text-slate-500 text-[10px] mr-2">(${notesCount} ملاحظات مسجلة)</span>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Action Bar: Log Call & Followup, Edit, Convert to License, Delete -->
+                        <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80 flex-wrap">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <!-- Fast Call Log / Reschedule Button -->
+                                <button onclick="openFollowupModal('${lead.id}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5" title="تسجيل مكالمة وتحديد أكلمه بعد قد إيه">
+                                    <i class="fa fa-phone-volume"></i>
+                                    <span>تسجيل مكالمة وميعاد (+ موعد)</span>
+                                </button>
+
+                                <!-- Convert to Licensed Client Button -->
+                                <button onclick="convertLeadToLicense('${lead.id}')" class="bg-lime-500/10 hover:bg-lime-500/20 text-lime-400 border border-lime-500/30 px-3 py-1.5 rounded-xl text-xs font-black transition flex items-center gap-1.5" title="تم البيع! تحويله فوراً لعميل مرخص في النظام">
+                                    <i class="fa fa-award"></i>
+                                    <span>تحويل لترخيص جيم 🏆</span>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button onclick="openEditLeadModal('${lead.id}')" class="text-slate-400 hover:text-white text-xs font-bold px-2 py-1 transition flex items-center gap-1" title="تعديل بيانات العميل">
+                                    <i class="fa fa-pen"></i>
+                                    <span>تعديل</span>
+                                </button>
+                                <button onclick="deleteCrmLead('${lead.id}')" class="text-slate-500 hover:text-rose-400 text-xs font-bold px-2 py-1 transition flex items-center gap-1" title="حذف العميل">
+                                    <i class="fa fa-trash"></i>
+                                    <span>حذف</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ========================================================
+        // TODAY'S & OVERDUE FOLLOW-UPS RENDERER
+        // ========================================================
+        function renderFollowups() {
+            const overdueCont = document.getElementById('overdueContainer');
+            const todayCont = document.getElementById('todayContainer');
+            const upcomingCont = document.getElementById('upcomingContainer');
+
+            const overdues = allLeads.filter(l => l.timing_status === 'overdue');
+            const todays = allLeads.filter(l => l.timing_status === 'today');
+            const upcomings = allLeads.filter(l => l.timing_status === 'upcoming');
+
+            document.getElementById('overdueListBadge').innerText = overdues.length;
+            document.getElementById('todayListBadge').innerText = todays.length;
+            document.getElementById('upcomingListBadge').innerText = upcomings.length;
+
+            const renderItem = (lead, borderClass, bgBadgeClass) => {
+                const phone = lead.phone || '';
+                const cleanPhone = phone.replace(/\D/g, '');
+                return `
+                    <div class="glass-card rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap border-r-4 ${borderClass}">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-white font-black text-sm">
+                                <i class="fa fa-phone"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="text-sm font-black text-white">${lead.gym_name}</h4>
+                                    <span class="text-xs text-slate-300 font-bold">(${lead.contact_name})</span>
+                                    ${getStageBadge(lead.status)}
+                                </div>
+                                <div class="text-xs text-slate-400 mt-0.5">
+                                    <span class="text-amber-400 font-bold">${lead.next_followup_date || 'اليوم'}</span> — 
+                                    <span>${lead.followup_note || 'اتصال متابعة وتأكيد'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <a href="tel:${cleanPhone}" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1">
+                                <i class="fa fa-phone text-sky-400"></i>
+                                <span dir="ltr">${phone}</span>
+                            </a>
+                            <button onclick="openWhatsAppLeadModal('${lead.id}')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 shadow-lg shadow-emerald-500/10">
+                                <i class="fa-brands fa-whatsapp"></i>
+                                <span>واتساب</span>
+                            </button>
+                            <button onclick="openFollowupModal('${lead.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1 shadow-lg shadow-amber-500/10">
+                                <i class="fa fa-check"></i>
+                                <span>تم الاتصال وتأجيل الموعد</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            };
+
+            overdueCont.innerHTML = overdues.length > 0
+                ? overdues.map(l => renderItem(l, 'border-r-rose-500', 'bg-rose-500/20 text-rose-300')).join('')
+                : '<div class="text-xs text-slate-500 p-3 bg-slate-900/40 rounded-xl">لا توجد اتصالات متأخرة حالياً، ممتاز ✓</div>';
+
+            todayCont.innerHTML = todays.length > 0
+                ? todays.map(l => renderItem(l, 'border-r-amber-500', 'bg-amber-500/20 text-amber-300')).join('')
+                : '<div class="text-xs text-slate-500 p-3 bg-slate-900/40 rounded-xl">لا توجد اتصالات مجدولة لهذا اليوم.</div>';
+
+            upcomingCont.innerHTML = upcomings.length > 0
+                ? upcomings.map(l => renderItem(l, 'border-r-sky-500', 'bg-sky-500/20 text-sky-300')).join('')
+                : '<div class="text-xs text-slate-500 p-3 bg-slate-900/40 rounded-xl">لا توجد اتصالات مجدولة للأيام القادمة.</div>';
+        }
+
+        // ========================================================
+        // WHATSAPP TEMPLATES & BULK SENDING
+        // ========================================================
+        function renderTemplates() {
+            const container = document.getElementById('templatesListContainer');
+            if (!container) return;
+
+            container.innerHTML = allTemplates.map(tpl => {
+                return `
+                    <div class="glass-card rounded-2xl p-5 space-y-3 border border-slate-800">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="bg-amber-500/20 text-amber-300 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-500/30">${tpl.category || 'عام'}</span>
+                            <h4 class="text-sm font-black text-white flex-1 mr-2">${tpl.title}</h4>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 whitespace-pre-line leading-relaxed font-sans max-h-36 overflow-y-auto">
+                            ${tpl.text}
+                        </div>
+                        <div class="flex items-center justify-end gap-2 pt-1">
+                            <button onclick="copyTemplateText('${tpl.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-700 transition flex items-center gap-1">
+                                <i class="fa fa-copy"></i>
+                                <span>نسخ النص</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function copyTemplateText(tplId) {
+            const tpl = allTemplates.find(t => t.id === tplId);
+            if (tpl) {
+                navigator.clipboard.writeText(tpl.text).then(() => {
+                    alert('تم نسخ نص الرسالة إلى الحافظة بنجاح ✓');
+                });
+            }
+        }
+
+        // ========================================================
+        // LEAD FORM MODAL HANDLERS
+        // ========================================================
+        function openAddLeadModal() {
+            document.getElementById('leadModalTitle').innerText = 'إضافة عميل محتمل جديد (Lead)';
+            document.getElementById('leadId').value = '';
+            document.getElementById('leadGymName').value = '';
+            document.getElementById('leadContactName').value = '';
+            document.getElementById('leadPhone').value = '';
+            document.getElementById('leadCity').value = '';
+            document.getElementById('leadSource').value = 'مباشر / إعلان';
+            document.getElementById('leadStatus').value = 'new';
+            document.getElementById('leadBudget').value = '';
+            document.getElementById('leadPackage').value = 'باقة مدى الحياة + بصمة وجه';
+            setLeadDaysInterval(2);
+            document.getElementById('leadFollowupNote').value = 'متابعة الديمو ومعرفة رأيه';
+            document.getElementById('leadNewNote').value = '';
+            openModal('addEditLeadModal');
+        }
+
+        function openEditLeadModal(leadId) {
+            const lead = allLeads.find(l => l.id === leadId);
+            if (!lead) return;
+
+            document.getElementById('leadModalTitle').innerText = 'تعديل بيانات العميل المحتمل';
+            document.getElementById('leadId').value = lead.id;
+            document.getElementById('leadGymName').value = lead.gym_name || '';
+            document.getElementById('leadContactName').value = lead.contact_name || '';
+            document.getElementById('leadPhone').value = lead.phone || '';
+            document.getElementById('leadCity').value = lead.city || '';
+            document.getElementById('leadSource').value = lead.source || '';
+            document.getElementById('leadStatus').value = lead.status || 'new';
+            document.getElementById('leadBudget').value = lead.budget || '';
+            document.getElementById('leadPackage').value = lead.interested_package || '';
+            document.getElementById('leadNextFollowupDate').value = lead.next_followup_date || '';
+            document.getElementById('leadFollowupNote').value = lead.followup_note || '';
+            document.getElementById('leadNewNote').value = '';
+            openModal('addEditLeadModal');
+        }
+
+        function setLeadDaysInterval(days) {
+            const now = new Date();
+            now.setDate(now.getDate() + days);
+            const pad = n => String(n).padStart(2, '0');
+            const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} 14:00`;
+            document.getElementById('leadNextFollowupDate').value = dateStr;
+        }
+
+        async function submitLeadForm(e) {
+            e.preventDefault();
+            const payload = {
+                id: document.getElementById('leadId').value,
+                gym_name: document.getElementById('leadGymName').value,
+                contact_name: document.getElementById('leadContactName').value,
+                phone: document.getElementById('leadPhone').value,
+                city: document.getElementById('leadCity').value,
+                source: document.getElementById('leadSource').value,
+                status: document.getElementById('leadStatus').value,
+                budget: document.getElementById('leadBudget').value,
+                interested_package: document.getElementById('leadPackage').value,
+                next_followup_date: document.getElementById('leadNextFollowupDate').value,
+                followup_note: document.getElementById('leadFollowupNote').value,
+                new_note: document.getElementById('leadNewNote').value
+            };
+
+            try {
+                const res = await fetch('/api/crm/leads/save/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeModal('addEditLeadModal');
+                    fetchCrmLeads();
+                } else {
+                    alert('خطأ: ' + (data.message || 'فشل حفظ العميل'));
+                }
+            } catch (err) {
+                alert('تعذر الاتصال بالسيرفر.');
+            }
+        }
+
+        // ========================================================
+        // QUICK FOLLOW-UP CALL LOGGER
+        // ========================================================
+        function openFollowupModal(leadId) {
+            const lead = allLeads.find(l => l.id === leadId);
+            if (!lead) return;
+
+            document.getElementById('followupLeadId').value = lead.id;
+            document.getElementById('followupModalGymName').innerText = `${lead.gym_name} — تسجيل المتابعة`;
+            document.getElementById('followupModalContactName').innerText = `المسؤول: ${lead.contact_name} | هاتف: ${lead.phone}`;
+            document.getElementById('followupNoteText').value = '';
+            document.getElementById('followupNewStatus').value = lead.status || '';
+            setQuickFollowupDays(2);
+            openModal('recordFollowupModal');
+        }
+
+        function setQuickFollowupDays(days) {
+            document.getElementById('quickDaysVal').value = days;
+            const notice = document.getElementById('quickDaysNotice');
+            if (days === 0) notice.innerText = 'تم إنهاء المتابعة ولا داعي لاتصال لاحق.';
+            else if (days === 1) notice.innerText = 'الموعد القادم: غداً إن شاء الله (+1 يوم)';
+            else if (days === 2) notice.innerText = 'الموعد القادم: بعد يومين';
+            else if (days === 3) notice.innerText = 'الموعد القادم: بعد 3 أيام';
+            else if (days === 7) notice.innerText = 'الموعد القادم: بعد أسبوع (+7 أيام)';
+            else if (days === 14) notice.innerText = 'الموعد القادم: بعد أسبوعين (+14 يوم)';
+        }
+
+        async function submitFollowupCall(e) {
+            e.preventDefault();
+            const leadId = document.getElementById('followupLeadId').value;
+            const note = document.getElementById('followupNoteText').value;
+            const days = parseInt(document.getElementById('quickDaysVal').value);
+            const newStatus = document.getElementById('followupNewStatus').value;
+
+            try {
+                const res = await fetch('/api/crm/leads/followup/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        lead_id: leadId,
+                        note: note,
+                        next_days: days,
+                        status: newStatus
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeModal('recordFollowupModal');
+                    fetchCrmLeads();
+                } else {
+                    alert('خطأ: ' + (data.message || 'فشل تحديث المتابعة'));
+                }
+            } catch (err) {
+                alert('تعذر الاتصال بالسيرفر.');
+            }
+        }
+
+        async function deleteCrmLead(leadId) {
+            if (!confirm('هل أنت متأكد من حذف هذا العميل المحتمل من النظام نهائياً؟')) return;
+            try {
+                const res = await fetch('/api/crm/leads/delete/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({lead_id: leadId})
+                });
+                const data = await res.json();
+                if (data.success) fetchCrmLeads();
+            } catch (err) {
+                alert('تعذر الحذف.');
+            }
+        }
+
+        // ========================================================
+        // WHATSAPP SENDING MODAL HANDLERS
+        // ========================================================
+        let activeWaLead = null;
+
+        function openWhatsAppLeadModal(leadId) {
+            activeWaLead = allLeads.find(l => l.id === leadId);
+            if (!activeWaLead) return;
+
+            document.getElementById('waLeadId').value = activeWaLead.id;
+            document.getElementById('waModalGymName').innerText = `إرسال واتساب — ${activeWaLead.gym_name}`;
+            document.getElementById('waModalRecipientInfo').innerText = `المستلم: ${activeWaLead.contact_name} | هاتف: ${activeWaLead.phone}`;
+
+            // Populate Templates select
+            const tplSelect = document.getElementById('waTemplateSelect');
+            tplSelect.innerHTML = allTemplates.map(t => `<option value="${t.id}">${t.title} (${t.category || 'عام'})</option>`).join('');
+
+            onWaTemplateSelected();
+            openModal('whatsappLeadModal');
+        }
+
+        function onWaTemplateSelected() {
+            const tplId = document.getElementById('waTemplateSelect').value;
+            const tpl = allTemplates.find(t => t.id === tplId);
+            if (tpl && activeWaLead) {
+                let text = tpl.text;
+                text = text.replace(/{name}/g, activeWaLead.contact_name || 'كابتن');
+                text = text.replace(/{gym_name}/g, activeWaLead.gym_name || 'صالتكم الرياضية');
+                text = text.replace(/{city}/g, activeWaLead.city || 'مدينتكم');
+                text = text.replace(/{budget}/g, activeWaLead.budget || '');
+                text = text.replace(/{package}/g, activeWaLead.interested_package || 'باقة Systemize');
+                document.getElementById('waMessageText').value = text;
+            }
+        }
+
+        async function executeWhatsAppSend(autoDesktop) {
+            const leadId = document.getElementById('waLeadId').value;
+            const msg = document.getElementById('waMessageText').value;
+
+            if (!msg.trim()) {
+                alert('يرجى كتابة نص الرسالة أولاً.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/crm/whatsapp/send/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        lead_id: leadId,
+                        message: msg,
+                        auto_desktop: autoDesktop
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (!autoDesktop && data.web_link) {
+                        window.open(data.web_link, '_blank');
+                    } else if (autoDesktop) {
+                        if (data.auto_desktop_success) {
+                            alert('تم إرسال الرسالة عبر WhatsApp Desktop تلقائياً بنجاح ✓');
+                        } else {
+                            alert('تم فتح WhatsApp ولكن يرجى التحقق: ' + (data.error_message || 'تم فتح المحادثة'));
+                        }
+                    }
+                    closeModal('whatsappLeadModal');
+                    fetchCrmLeads();
+                } else {
+                    alert('خطأ: ' + (data.message || 'فشل إرسال الواتساب'));
+                }
+            } catch (err) {
+                alert('تعذر إرسال الواتساب.');
+            }
+        }
+
+        // ========================================================
+        // BULK WHATSAPP CAMPAIGN MODAL
+        // ========================================================
+        function openBulkWhatsAppModal() {
+            // Populate Templates select
+            const tplSelect = document.getElementById('bulkTemplateSelect');
+            tplSelect.innerHTML = allTemplates.map(t => `<option value="${t.id}">${t.title} (${t.category || 'عام'})</option>`).join('');
+
+            onBulkTemplateChange();
+            updateBulkTargetCount();
+            openModal('bulkWhatsAppModal');
+        }
+
+        function onBulkTemplateChange() {
+            const tplId = document.getElementById('bulkTemplateSelect').value;
+            const tpl = allTemplates.find(t => t.id === tplId);
+            if (tpl) {
+                document.getElementById('bulkMessageText').value = tpl.text;
+            }
+        }
+
+        function updateBulkTargetCount() {
+            const stage = document.getElementById('bulkTargetStage').value;
+            let targetCount = 0;
+            if (stage === 'all') targetCount = allLeads.length;
+            else if (stage === 'today') targetCount = allLeads.filter(l => l.timing_status === 'today').length;
+            else if (stage === 'overdue') targetCount = allLeads.filter(l => l.timing_status === 'overdue').length;
+            else targetCount = allLeads.filter(l => l.status === stage).length;
+
+            document.getElementById('bulkCountNotice').innerText = `عدد العملاء المستهدفين في هذه الشريحة: ${targetCount} صالة/عميل`;
+        }
+
+        async function startBulkCampaignSubmit(e) {
+            e.preventDefault();
+            const stage = document.getElementById('bulkTargetStage').value;
+            const msg = document.getElementById('bulkMessageText').value;
+            const delay = parseInt(document.getElementById('bulkDelaySeconds').value);
+
+            let targetLeads = [];
+            if (stage === 'all') targetLeads = allLeads;
+            else if (stage === 'today') targetLeads = allLeads.filter(l => l.timing_status === 'today');
+            else if (stage === 'overdue') targetLeads = allLeads.filter(l => l.timing_status === 'overdue');
+            else targetLeads = allLeads.filter(l => l.status === stage);
+
+            const leadIds = targetLeads.map(l => l.id);
+            if (leadIds.length === 0) {
+                alert('لا يوجد أي عملاء في هذه الشريحة لإرسال الرسائل لهم.');
+                return;
+            }
+
+            if (!confirm(`هل أنت متأكد من إطلاق حملة الإرسال التلقائي لعدد (${leadIds.length}) عميل عبر WhatsApp Desktop؟`)) return;
+
+            try {
+                const res = await fetch('/api/crm/whatsapp/bulk/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        lead_ids: leadIds,
+                        message: msg,
+                        delay: delay
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeModal('bulkWhatsAppModal');
+                    switchMainTab('whatsapp');
+                    document.getElementById('bulkStatusBanner').classList.remove('hidden');
+                    startBulkStatusPolling();
+                } else {
+                    alert('خطأ: ' + (data.message || 'فشل بدء الحملة'));
+                }
+            } catch (err) {
+                alert('تعذر إطلاق الحملة.');
+            }
+        }
+
+        function startBulkStatusPolling() {
+            if (bulkStatusPollInterval) clearInterval(bulkStatusPollInterval);
+            bulkStatusPollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/crm/whatsapp/status/');
+                    const data = await res.json();
+                    if (data.success && data.status) {
+                        const st = data.status;
+                        document.getElementById('bulkSentCount').innerText = st.sent;
+                        document.getElementById('bulkFailedCount').innerText = st.failed;
+                        document.getElementById('bulkTotalCount').innerText = st.total;
+                        document.getElementById('bulkCurrentLead').innerText = `العميل الحالي: ${st.current_lead || '...'}`;
+
+                        if (!st.is_running) {
+                            clearInterval(bulkStatusPollInterval);
+                            document.getElementById('bulkStatusTitle').innerText = 'اكتملت حملة الإرسال الجماعي بنجاح ✓';
+                            fetchCrmLeads();
+                        }
+                    }
+                } catch (e) {}
+            }, 2500);
+        }
+
+        // ========================================================
+        // CONVERT LEAD TO LICENSED CLIENT
+        // ========================================================
+        function convertLeadToLicense(leadId) {
+            const lead = allLeads.find(l => l.id === leadId);
+            if (!lead) return;
+
+            // Switch to Licenses tab
+            switchMainTab('licenses');
+
+            // Open Add Client Modal with prefilled values
+            document.getElementById('addName').value = `${lead.gym_name} (${lead.contact_name})`;
+            document.getElementById('addPhone').value = lead.phone || '';
+            document.getElementById('addDuration').value = '30';
+            openAddClientModal();
+
+            // Also update lead status to 'won'
+            fetch('/api/crm/leads/save/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    id: lead.id,
+                    status: 'won',
+                    new_note: 'تم الاتفاق والتعاقد بنجاح وتحويل العميل لإصدار الترخيص.'
+                })
+            }).then(() => fetchCrmLeads());
+        }
+
+        // Initial Load of both Licenses & CRM Leads
         fetchClients();
+        fetchCrmLeads();
     </script>
 </body>
 </html>

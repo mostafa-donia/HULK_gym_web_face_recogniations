@@ -21,6 +21,9 @@ shutil.copytree(src_runtime, dst_runtime)
 # 2. Copy control_center app files
 src_cc = os.path.join(BASE_DIR, "control_center")
 shutil.copy2(os.path.join(src_cc, "app.py"), os.path.join(CC_DIR, "app.py"))
+shutil.copy2(os.path.join(src_cc, "crm_service.py"), os.path.join(CC_DIR, "crm_service.py"))
+if os.path.exists(os.path.join(src_cc, "crm_leads.json")):
+    shutil.copy2(os.path.join(src_cc, "crm_leads.json"), os.path.join(CC_DIR, "crm_leads.json"))
 shutil.copy2(os.path.join(src_cc, "clients.json"), os.path.join(CC_DIR, "clients.json"))
 shutil.copytree(os.path.join(src_cc, "templates"), os.path.join(CC_DIR, "templates"))
 
@@ -32,6 +35,15 @@ for fname in ["__init__.py", "crypto.py", "hwid.py"]:
     fpath = os.path.join(src_licensing, fname)
     if os.path.exists(fpath):
         shutil.copy2(fpath, os.path.join(dst_licensing, fname))
+
+# 3.5 Copy apps/messaging for native WhatsApp Sender
+dst_messaging = os.path.join(CC_DIR, "apps", "messaging")
+os.makedirs(dst_messaging, exist_ok=True)
+src_messaging = os.path.join(BASE_DIR, "web_face", "apps", "messaging")
+for fname in ["__init__.py", "whatsapp_sender.py"]:
+    fpath = os.path.join(src_messaging, fname)
+    if os.path.exists(fpath):
+        shutil.copy2(fpath, os.path.join(dst_messaging, fname))
 
 # Also create __init__.py in apps and apps/core
 with open(os.path.join(CC_DIR, "apps", "__init__.py"), "w") as f:
