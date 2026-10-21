@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>حاسبة أسعار وباقات منظومة Systemize لإدارة الصالات الرياضية</title>
+  
+  <style>
+    :root {
+      --bg-dark: #06090e;
+      --card-bg: #0f172a;
+      --card-subtle: #1e293b;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --border-focus: #84cc16;
+      --primary: #84cc16;
+      --primary-glow: rgba(132, 204, 22, 0.35);
+      --accent-blue: #38bdf8;
+      --accent-amber: #f59e0b;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-bottom: 60px;
+    }
+
+    /* Header */
+    .header-card {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85));
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .header-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 60%);
+      pointer-events: none;
+      opacity: 0.25;
+    }
+    .brand-title {
+      font-size: 1.75rem;
+      font-weight: 900;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .brand-badge {
+      background: rgba(132, 204, 22, 0.15);
+      color: var(--primary);
+      border: 1px solid rgba(132, 204, 22, 0.4);
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    /* Section Headers */
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-right: 4px;
+    }
+
+    /* Card Box */
+    .calc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      transition: border-color 0.2s;
+    }
+
+    /* Core Features List */
+    .core-features-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .core-feature-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+    .core-feature-title {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .core-feature-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Plan Selectors */
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .plan-card {
+      background: var(--card-subtle);
+      border: 2px solid transparent;
+      border-radius: 14px;
+      padding: 16px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .plan-card.active {
+      border-color: var(--primary);
+      background: rgba(132, 204, 22, 0.08);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+    .plan-name {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .plan-price {
+      font-size: 1.45rem;
+      font-weight: 900;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    .plan-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .plan-badge-best {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #eab308;
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: 900;
+      padding: 2px 10px;
+      border-radius: 999px;
+    }
+
+    /* Addons Checklist */
+    .addon-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .addon-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .addon-item.selected {
+      border-color: rgba(132, 204, 22, 0.5);
+      background: rgba(132, 204, 22, 0.06);
+    }
+    .addon-info {
+      flex: 1;
+    }
+    .addon-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+    .addon-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .addon-price {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--primary);
+      white-space: nowrap;
+      text-align: left;
+    }
+
+    /* Custom Checkbox */
+    .custom-checkbox {
+      width: 22px;
+      height: 22px;
+      border: 2px solid #64748b;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .addon-item.selected .custom-checkbox {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #000;
+      font-weight: 900;
+    }
+
+    /* Counters (Branches & Devices) */
+    .counter-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      margin-bottom: 10px;
+    }
+    .counter-info h4 {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .counter-info p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .counter-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .counter-btn {
+      width: 34px;
+      height: 34px;
+      background: var(--card-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .counter-btn:active {
+      transform: scale(0.92);
+      background: var(--primary);
+      color: #000;
+    }
+    .counter-val {
+      min-width: 32px;
+      text-align: center;
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--primary);
+    }
+
+    /* Mode Toggle (Offline vs Online) */
+    .mode-toggle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .mode-card {
+      background: var(--card-subtle);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .mode-card.active {
+      border-color: var(--accent-blue);
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .mode-card h4 {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .mode-card p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* Total Summary Floating / Bottom Box */
+    .total-box {
+      background: linear-gradient(135deg, #0f172a, #020617);
+      border: 2px solid var(--primary);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 40px rgba(132, 204, 22, 0.2);
+    }
+    .total-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    @media (max-width: 600px) {
+      .total-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .total-card-sub {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .total-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .total-value-cash {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--primary);
+      line-height: 1.1;
+    }
+    .total-value-installment {
+      font-size: 1.55rem;
+      font-weight: 900;
+      color: var(--accent-blue);
+      line-height: 1.1;
+    }
+
+    /* Installment Select Buttons */
+    .install-selector {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .install-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .install-btn.active {
+      background: var(--accent-blue);
+      color: #000;
+      border-color: var(--accent-blue);
+      font-weight: 800;
+    }
+
+    /* Client Info Form Fields */
+    .client-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 600px) {
+      .client-inputs {
+        grid-template-columns: 1fr;
+      }
+    }
+    .form-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Action WhatsApp Button */
+    .whatsapp-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #052e16;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 1.15rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.35);
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .whatsapp-btn:active {
+      transform: scale(0.98);
+      filter: brightness(1.1);
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- 1. HEADER -->
+    <div class="header-card">
+      <div class="brand-title">
+        <span>⚡ Systemize Gym OS</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px;">
+        المنظومة الذكية المتكاملة لإدارة الصالات الرياضية بالذكاء الاصطناعي وبصمة الوجه
+      </p>
+      <div class="brand-badge">📋 حاسبة الأسعار والعروض التفاعلية المباشرة</div>
+      <div style="margin-top: 12px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+        <a href="presentation/index.html" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+          <span>📺</span> استعراض مميزات النظام (Presentation)
+        </a>
+      </div>
+    </div>
+
+    <!-- 2. CORE SYSTEM (البرنامج الرئيسي) -->
+    <div class="calc-card">
+      <div class="section-title">
+        <span>🏋️‍♂️ 1. ميزات البرنامج الرئيسي (Core System)</span>
+      </div>
+      
+      <div class="core-features-list">
+        <div class="core-feature-item">
+          <div class="core-feature-title"><span>👥</span> إدارة المشتركين والملفات</div>
+          <div class="core-feature-desc">تسجيل كامل، أرشيف ذكي، حفظ الصور الشخصية، والبحث اللحظي برقم الهاتف.</div>
+        </div>
+
+        <div class="core-feature-item">
+          <div class="core-feature-title"><span>💳</span> باقات واشتراكات مرنة</div>
+          <div class="core-feature-desc">دعم الاشتراكات بالشهور أو الحصص أو الفترات الصباحية وإيقاف وتجميد العضويات.</div>
+        </div>
+
+        <div class="core-feature-item">
+          <div class="core-feature-title"><span>💵</span> الخزينة والمقبوضات</div>
+          <div class="core-feature-desc">فواتير آلية، إيصالات حرارية، ودعم الدفع كاش أو فيزا أو فودافون كاش وتقسيط المتبقي.</div>
+        </div>
+
+        <div class="core-feature-item">
+          <div class="core-feature-title"><span>📊</span> لوحة تحكم المدير</div>
+          <div class="core-feature-desc">متابعة لحظية للأرباح، الإيرادات والمصروفات وصافي الصندوق بدقة تامة.</div>
+        </div>
+
+        <div class="core-feature-item">
+          <div class="core-feature-title"><span>🧠</span> ذكاء اصطناعي لحركة الأعضاء</div>
+          <div class="core-feature-desc">إنذار ذكي برصد غياب المشتركين لمنع تسربهم، وتحليل أوقات الذروة والإشغال.</div>
+        </div>
+
+        <div class="core-feature-item">
+          <div class="core-feature-title"><span>🛡️</span> شفتات الاستقبال واليومية</div>
+          <div class="core-feature-desc">إقفال اليومية بدقة، تسليم وتسلم العهد النقدية، ومنع أي تلاعب مالي أو حذوفات.</div>
+        </div>
+
+        <div class="core-feature-item">
+          <div class="core-feature-title"><span>💪</span> رواتب وعمولات المدربين</div>
+          <div class="core-feature-desc">مسير رواتب شهري، وحساب عمولات تدريب البرايفت (PT) وحصص الكباتن آلياً.</div>
+        </div>
+
+        <div class="core-feature-item">
+          <div class="core-feature-title"><span>📑</span> إدارة المصروفات والنثريات</div>
+          <div class="core-feature-desc">تسجيل بنود الإيجار والكهرباء والصيانة، وحساب صافي الربح الحقيقي للصالة.</div>
+        </div>
+      </div>
+
+      <!-- Plan Selection Options -->
+      <div style="margin-top: 14px;">
+        <div style="font-size: 0.95rem; font-weight: 800; color: #fff; margin-bottom: 10px;">
+          اختر خطة ترخيص البرنامج الأساسي:
+        </div>
+
+        <div class="plan-grid">
+          <div class="plan-card" onclick="selectPlan('monthly', 450, this)">
+            <div class="plan-name">اشتراك شهري</div>
+            <div class="plan-price">450 <small style="font-size: 0.8rem;">ج/شهر</small></div>
+            <div class="plan-tag">تجديد شهري مرن</div>
+          </div>
+
+          <div class="plan-card" onclick="selectPlan('yearly', 4500, this)">
+            <div class="plan-name">اشتراك سنوي</div>
+            <div class="plan-price">4,500 <small style="font-size: 0.8rem;">ج/سنة</small></div>
+            <div class="plan-tag">وفر شهرين مجاناً</div>
+          </div>
+
+          <div class="plan-card active" onclick="selectPlan('lifetime', 7500, this)">
+            <div class="plan-badge-best">الأكثر طلباً وتوفيراً 🔥</div>
+            <div class="plan-name">رخصة مدى الحياة</div>
+            <div class="plan-price">7,500 <small style="font-size: 0.8rem;">ج</small></div>
+            <div class="plan-tag">تدفع مرة واحدة للأبد</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. ADDONS (الإضافات والموديولات) -->
+    <div class="calc-card">
+      <div class="section-title">
+        <span>🧩 2. الموديولات الذكية والإضافات (Add-ons)</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 14px;">
+        اختر الإضافات والميزات التي ترغب بتفعيلها في صالتك (اختياري حسب الاحتياج):
+      </p>
+
+      <!-- Addon 1: Face Recognition -->
+      <div class="addon-item selected" onclick="toggleAddon('face', 4600, this)">
+        <div class="custom-checkbox">✓</div>
+        <div class="addon-info">
+          <div class="addon-header">
+            <span>👤 بصمة الوجه الذكية بالذكاء الاصطناعي (AI SFace)</span>
+          </div>
+          <div class="addon-desc">تسجيل حضور بدون تلامس خلال 0.2 ثانية، ومنع تبادل الاشتراكات نهائياً بدقة 99.8%.</div>
+        </div>
+        <div class="addon-price">4,600 ج</div>
+      </div>
+
+      <!-- Addon 2: Fingerprint -->
+      <div class="addon-item" onclick="toggleAddon('fingerprint', 4100, this)">
+        <div class="custom-checkbox"></div>
+        <div class="addon-info">
+          <div class="addon-header">
+            <span>👆 قارئ بصمة الإصبع البيومترية</span>
+          </div>
+          <div class="addon-desc">ربط مباشر بأجهزة البصمة البيومترية لتأكيد حضور الأعضاء والموظفين بموثوقية عالية.</div>
+        </div>
+        <div class="addon-price">4,100 ج</div>
+      </div>
+
+      <!-- Addon 3: Barcode -->
+      <div class="addon-item" onclick="toggleAddon('barcode', 2600, this)">
+        <div class="custom-checkbox"></div>
+        <div class="addon-info">
+          <div class="addon-header">
+            <span>🏷️ قارئ الباركود وكروت RFID الذكية</span>
+          </div>
+          <div class="addon-desc">طباعة وقراءة كروت وأساور الأعضاء المشفرة بسرعة البرق على شاشة الاستقبال.</div>
+        </div>
+        <div class="addon-price">2,600 ج</div>
+      </div>
+
+      <!-- Addon 4: WhatsApp Sender -->
+      <div class="addon-item selected" onclick="toggleAddon('whatsapp', 1700, this)">
+        <div class="custom-checkbox">✓</div>
+        <div class="addon-info">
+          <div class="addon-header">
+            <span>📱 مرسل الواتساب التلقائي الذكي (WhatsApp Sender)</span>
+          </div>
+          <div class="addon-desc">إرسال فواتير الدفع، وتذكيرات التجديد، ورسائل الترحيب للعملاء على واتساب تلقائياً.</div>
+        </div>
+        <div class="addon-price">1,700 ج</div>
+      </div>
+
+      <!-- Addon 5: Telegram Bot -->
+      <div class="addon-item" onclick="toggleAddon('telegram', 1200, this)">
+        <div class="custom-checkbox"></div>
+        <div class="addon-info">
+          <div class="addon-header">
+            <span>🤖 بوت التيليجرام الإداري الفوري للمالك</span>
+          </div>
+          <div class="addon-desc">إشعارات فورية على موبايل المدير بكل عملية دفع بالخزينة أو حركة حضور بالصالة لحظة بلحظة.</div>
+        </div>
+        <div class="addon-price">1,200 ج</div>
+      </div>
+
+      <!-- Addon 6: Bar POS -->
+      <div class="addon-item" onclick="toggleAddon('bar', 1000, this)">
+        <div class="custom-checkbox"></div>
+        <div class="addon-info">
+          <div class="addon-header">
+            <span>🥤 موديول البار والمكملات ومخزن المشروبات</span>
+          </div>
+          <div class="addon-desc">إدارة مبيعات البروتين والمشروبات، جرد المخزن، ونظام تسجيل الآجل والديون للعملاء.</div>
+        </div>
+        <div class="addon-price">1,000 ج</div>
+      </div>
+    </div>
+
+    <!-- 4. BRANCHES & HARDWARE SETUP (الفروع والأجهزة) -->
+    <div class="calc-card">
+      <div class="section-title">
+        <span>🏢 3. الفروع والأجهزة ونمط التشغيل</span>
+      </div>
+
+      <!-- Branches Counter -->
+      <div class="counter-row">
+        <div class="counter-info">
+          <h4>إجمالي فروع الصالة (Branches)</h4>
+          <p>الفرع الرئيسي مشمول — كل فرع إضافي بـ <strong>3,500 ج</strong> (ربط موحد للبيانات).</p>
+        </div>
+        <div class="counter-control">
+          <button type="button" class="counter-btn" onclick="updateBranches(-1)">-</button>
+          <span class="counter-val" id="branchesCountVal">1</span>
+          <button type="button" class="counter-btn" onclick="updateBranches(1)">+</button>
+        </div>
+      </div>
+
+      <!-- Operation Mode: Offline vs Online -->
+      <div style="margin-top: 14px; margin-bottom: 6px;">
+        <span style="font-size: 0.9rem; font-weight: 800; color: #fff; display: block; margin-bottom: 8px;">
+          اختر نمط التشغيل:
+        </span>
+        <div class="mode-toggle-grid">
+          <div class="mode-card active" id="modeOfflineCard" onclick="selectOperatingMode('offline')">
+            <h4>🖥️ أوفلاين (شبكة داخلية)</h4>
+            <p>سريع ومستقر بدون إنترنت داخل الصالة</p>
+          </div>
+          <div class="mode-card" id="modeOnlineCard" onclick="selectOperatingMode('online')">
+            <h4>🌐 أونلاين سحابي (Web Cloud)</h4>
+            <p>دخول من أي مكان بالعالم + أجهزة غير محدودة</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Offline Devices Counter (Shown only in offline mode) -->
+      <div class="counter-row" id="offlineDevicesRow">
+        <div class="counter-info">
+          <h4>أجهزة الكمبيوتر الإضافية بالفرع</h4>
+          <p>جهاز السيرفر مشمول — كل جهاز إضافي بالفرع بـ <strong>800 ج</strong> (استقبال ثانٍ / بار / إدارة).</p>
+        </div>
+        <div class="counter-control">
+          <button type="button" class="counter-btn" onclick="updateDevices(-1)">-</button>
+          <span class="counter-val" id="extraDevicesVal">0</span>
+          <button type="button" class="counter-btn" onclick="updateDevices(1)">+</button>
+        </div>
+      </div>
+
+      <!-- Online Cloud Server Note (Shown only in online mode) -->
+      <div id="onlineNoticeRow" style="display: none; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;">
+        <div style="font-size: 0.88rem; font-weight: 800; color: var(--accent-blue); margin-bottom: 4px;">
+          ☁️ اشتراك السيرفر السحابي (Cloud Hosting)
+        </div>
+        <p style="font-size: 0.8rem; color: #cbd5e1; margin: 0;">
+          يتيح عدد أجهزة وموبايلات <strong>غير محدود</strong>، مع حماية ونسخ احتياطي يومي آلي. تكلفة تجديد السيرفر والنطاق السنوية: <strong>70 دولار / سنة</strong> (حوالي 3,500 ج).
+        </p>
+      </div>
+
+      <!-- Magnetic Door Locks -->
+      <div class="counter-row">
+        <div class="counter-info">
+          <h4>🚪 القفل المغناطيسي الذكي للأبواب (Magnetic Lock)</h4>
+          <p>قفل كهربائي مغناطيسي للأبواب الزجاج السوكريت أو الخشب بـ <strong>2,700 ج</strong> للباب (غير شامل ثمن السلك).</p>
+        </div>
+        <div class="counter-control">
+          <button type="button" class="counter-btn" onclick="updateLocks(-1)">-</button>
+          <span class="counter-val" id="locksCountVal">0</span>
+          <button type="button" class="counter-btn" onclick="updateLocks(1)">+</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 5. TOTALS & INSTALLMENTS SUMMARY (الإجمالي وخطة التقسيط) -->
+    <div class="total-box">
+      <div class="section-title" style="margin-bottom: 16px;">
+        <span>💰 4. ملخص التكلفة وخيارات الدفع والتقسيط</span>
+      </div>
+
+      <div class="total-grid">
+        <!-- Cash Total -->
+        <div class="total-card-sub" style="border-color: rgba(132, 204, 22, 0.4);">
+          <div class="total-label">💵 إجمالي الدفع كاش (مرة واحدة):</div>
+          <div class="total-value-cash">
+            <span id="cashTotalDisplay">13,800</span>
+            <small style="font-size: 1rem; color: var(--text-muted);">جنيه</small>
+          </div>
+          <div style="font-size: 0.78rem; color: var(--primary); margin-top: 4px; font-weight: 700;" id="cashPlanNote">
+            شامل رخصة مدى الحياة وكافة الإضافات المحددة
+          </div>
+        </div>
+
+        <!-- Installments Total -->
+        <div class="total-card-sub" style="border-color: rgba(56, 189, 248, 0.4);">
+          <div class="total-label">💳 نظام التقسيط الشهري:</div>
+          <div class="total-value-installment">
+            <span id="installmentMonthDisplay">2,300</span>
+            <small style="font-size: 0.95rem; color: var(--text-muted);">ج / شهر</small>
+          </div>
+          <div class="install-selector">
+            <button type="button" class="install-btn" onclick="setInstallmentMonths(3, this)">3 شهور</button>
+            <button type="button" class="install-btn active" onclick="setInstallmentMonths(6, this)">6 شهور</button>
+            <button type="button" class="install-btn" onclick="setInstallmentMonths(10, this)">10 شهور</button>
+            <button type="button" class="install-btn" onclick="setInstallmentMonths(12, this)">12 شهر</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Client Info Input Form -->
+      <div class="client-inputs">
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">اسم الصالة الرياضية (الجيم):</label>
+          <input type="text" id="gymNameInput" class="form-input" placeholder="مثال: Number One Gym">
+        </div>
+        <div>
+          <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;">رقم هاتف التواصل:</label>
+          <input type="tel" id="gymPhoneInput" class="form-input" placeholder="مثال: 01012345678">
+        </div>
+      </div>
+
+      <!-- WhatsApp Order Button -->
+      <a href="#" id="sendWhatsAppBtn" onclick="sendOrderViaWhatsApp(event)" class="whatsapp-btn">
+        <span style="font-size: 1.4rem;">💬</span>
+        <span>إرسال العرض وحجز موعد التركيب عبر الواتساب</span>
+      </a>
+
+      <div class="footer-note">
+        🔒 ضمان تشغيلي شامل ودعم فني متواصل مع تدريب كامل لفريق العمل والاستقبال.
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // System Pricing State
+    const state = {
+      planType: 'lifetime',
+      planPrice: 7500,
+      addons: {
+        face: { name: 'بصمة الوجه الذكية AI', price: 4600, selected: true },
+        fingerprint: { name: 'بصمة الإصبع البيومترية', price: 4100, selected: false },
+        barcode: { name: 'قارئ الباركود وكروت RFID', price: 2600, selected: false },
+        whatsapp: { name: 'مرسل الواتساب التلقائي الذكي', price: 1700, selected: true },
+        telegram: { name: 'بوت التيليجرام الإداري الفوري', price: 1200, selected: false },
+        bar: { name: 'موديول البار والمكملات والمخزن', price: 1000, selected: false },
+      },
+      branches: 1, // First branch included
+      branchCostExtra: 3500,
+      mode: 'offline', // 'offline' or 'online'
+      onlineAnnualUSD: 70,
+      onlineAnnualEGP: 3500,
+      extraDevices: 0,
+      deviceCost: 800,
+      doorLocks: 0,
+      lockCost: 2700,
+      installmentMonths: 6,
+      developerPhone: '201080922432',
+    };
+
+    function selectPlan(type, price, el) {
+      state.planType = type;
+      state.planPrice = price;
+      document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
+      if (el) el.classList.add('active');
+      calculateTotal();
+    }
+
+    function toggleAddon(key, price, el) {
+      if (!state.addons[key]) return;
+      state.addons[key].selected = !state.addons[key].selected;
+      if (el) {
+        el.classList.toggle('selected', state.addons[key].selected);
+        const cb = el.querySelector('.custom-checkbox');
+        if (cb) cb.innerText = state.addons[key].selected ? '✓' : '';
+      }
+      calculateTotal();
+    }
+
+    function updateBranches(delta) {
+      state.branches = Math.max(1, state.branches + delta);
+      document.getElementById('branchesCountVal').innerText = state.branches;
+      calculateTotal();
+    }
+
+    function selectOperatingMode(mode) {
+      state.mode = mode;
+      document.getElementById('modeOfflineCard').classList.toggle('active', mode === 'offline');
+      document.getElementById('modeOnlineCard').classList.toggle('active', mode === 'online');
+      
+      const offlineDevRow = document.getElementById('offlineDevicesRow');
+      const onlineNotice = document.getElementById('onlineNoticeRow');
+      
+      if (mode === 'offline') {
+        offlineDevRow.style.display = 'flex';
+        onlineNotice.style.display = 'none';
+      } else {
+        offlineDevRow.style.display = 'none';
+        onlineNotice.style.display = 'block';
+      }
+      calculateTotal();
+    }
+
+    function updateDevices(delta) {
+      state.extraDevices = Math.max(0, state.extraDevices + delta);
+      document.getElementById('extraDevicesVal').innerText = state.extraDevices;
+      calculateTotal();
+    }
+
+    function updateLocks(delta) {
+      state.doorLocks = Math.max(0, state.doorLocks + delta);
+      document.getElementById('locksCountVal').innerText = state.doorLocks;
+      calculateTotal();
+    }
+
+    function setInstallmentMonths(months, el) {
+      state.installmentMonths = months;
+      document.querySelectorAll('.install-btn').forEach(b => b.classList.remove('active'));
+      if (el) el.classList.add('active');
+      calculateTotal();
+    }
+
+    function calculateTotal() {
+      // 1. Core Plan
+      let cashTotal = state.planPrice;
+
+      // 2. Addons
+      for (const k in state.addons) {
+        if (state.addons[k].selected) {
+          cashTotal += state.addons[k].price;
+        }
+      }
+
+      // 3. Branches (Branch 1 is free/included; extra branches +3500 each)
+      if (state.branches > 1) {
+        cashTotal += (state.branches - 1) * state.branchCostExtra;
+      }
+
+      // 4. Mode
+      if (state.mode === 'offline') {
+        // Extra offline devices
+        cashTotal += state.extraDevices * state.deviceCost;
+      } else {
+        // Online cloud server (adds first year server fee)
+        cashTotal += state.onlineAnnualEGP;
+      }
+
+      // 5. Door Locks
+      cashTotal += state.doorLocks * state.lockCost;
+
+      // Update UI Cash Total
+      document.getElementById('cashTotalDisplay').innerText = cashTotal.toLocaleString('en-US');
+
+      // Update Plan Note
+      const planNote = document.getElementById('cashPlanNote');
+      if (state.planType === 'monthly') {
+        planNote.innerText = 'تشمل تكلفة تفعيل وتجهيز الإضافات + اشتراك أول شهر';
+      } else if (state.planType === 'yearly') {
+        planNote.innerText = 'تشمل رخصة سنة كاملة + كافة الإضافات المحددة';
+      } else {
+        planNote.innerText = 'شامل رخصة مدى الحياة الدائمة + كافة الإضافات المحددة';
+      }
+
+      // Update Installments (Approx monthly based on selected months)
+      const monthlyInstallment = Math.round(cashTotal / state.installmentMonths);
+      document.getElementById('installmentMonthDisplay').innerText = monthlyInstallment.toLocaleString('en-US');
+    }
+
+    function sendOrderViaWhatsApp(e) {
+      if (e) e.preventDefault();
+
+      const gymName = (document.getElementById('gymNameInput').value || '').trim() || 'صالة رياضية (بدون اسم)';
+      const gymPhone = (document.getElementById('gymPhoneInput').value || '').trim() || 'غير محدد';
+      const cashTotal = document.getElementById('cashTotalDisplay').innerText;
+      const monthlyInst = document.getElementById('installmentMonthDisplay').innerText;
+
+      let planLabel = '';
+      if (state.planType === 'monthly') planLabel = 'شهري (450 ج/شهر)';
+      else if (state.planType === 'yearly') planLabel = 'سنوي (4,500 ج/سنة)';
+      else planLabel = 'مدى الحياة Lifetime (7,500 ج)';
+
+      // Selected addons
+      const selectedAddonsList = [];
+      for (const k in state.addons) {
+        if (state.addons[k].selected) {
+          selectedAddonsList.push(`• ${state.addons[k].name} (${state.addons[k].price.toLocaleString()} ج)`);
+        }
+      }
+
+      const modeText = state.mode === 'offline' 
+        ? `أوفلاين محلي (+${state.extraDevices} أجهزة إضافية)` 
+        : `أونلاين سحابي Web Cloud (اشتراك 70$ سنوياً)`;
+
+      let msg = `السلام عليكم ورحمة الله،\nأود طلب عرض سعر لنظام Systemize لإدارة الجيم:\n\n`;
+      msg += `🏢 اسم الصالة: ${gymName}\n`;
+      msg += `📱 هاتف التواصل: ${gymPhone}\n\n`;
+      msg += `📋 تفاصيل الباقة المختارة:\n`;
+      msg += `1. رخصة النظام الأساسي: ${planLabel}\n`;
+      
+      if (selectedAddonsList.length > 0) {
+        msg += `2. الإضافات والموديولات:\n${selectedAddonsList.join('\n')}\n`;
+      } else {
+        msg += `2. الإضافات: لا توجد إضافات مختارة\n`;
+      }
+
+      msg += `3. الفروع: ${state.branches} فرع\n`;
+      msg += `4. نمط التشغيل: ${modeText}\n`;
+      if (state.doorLocks > 0) {
+        msg += `5. أقفال الأبواب المغناطيسية: ${state.doorLocks} باب (${(state.doorLocks * state.lockCost).toLocaleString()} ج)\n`;
+      }
+
+      msg += `\n💰 الإجمالي كاش: ${cashTotal} ج\n`;
+      msg += `💳 خطة التقسيط المقترحة: ${monthlyInst} ج/شهرياً (على ${state.installmentMonths} شهور)\n\n`;
+      msg += `برجاء التواصل لتأكيد التفاصيل وتحديد موعد التركيب والتشغيل.`;
+
+      const encodedMsg = encodeURIComponent(msg);
+      const url = `https://wa.me/${state.developerPhone}?text=${encodedMsg}`;
+      window.open(url, '_blank');
+    }
+
+    // Initialize calculation on load
+    calculateTotal();
+  </script>
+</body>
+</html>
