@@ -333,7 +333,8 @@ def send_whatsapp_to_lead(lead_id: str, message_text: str, auto_desktop: bool = 
         raise ValueError("رقم الهاتف غير مسجل للعميل.")
 
     rendered = render_template_text(message_text, lead)
-    encoded_text = rendered.replace("\n", "%0A")
+    import urllib.parse
+    encoded_text = urllib.parse.quote(rendered)
     web_link = f"https://wa.me/{norm_phone}?text={encoded_text}"
 
     auto_success = False
@@ -341,23 +342,26 @@ def send_whatsapp_to_lead(lead_id: str, message_text: str, auto_desktop: bool = 
 
     if auto_desktop:
         try:
-            if _whatsapp_desktop_available and wa_engine:
-                success, err, _ = wa_engine.send_message(
-                    name=lead.get("contact_name", "كابتن"),
-                    phone=norm_phone,
-                    message_text=rendered,
-                    gym_name=lead.get("gym_name", "Systemize OS"),
-                    use_clipboard=True,
-                    close_after=True
-                )
-                auto_success = success
-                if not success:
-                    error_msg = err
+            # 1. Try native desktop automation if whatsapp_sender is available and WhatsApp Desktop is active
+            if _whatsapp_desktop_available and wa_engine and getattr(wa_engine, "whatsupp_ready", lambda: False)():
+                auto_success = bool(wa_engine.send_message(phone=norm_phone, message=rendered))
+                if not auto_success:
+                    # Fallback to direct protocol launch
+                    proto_url = f"whatsapp://send?phone={norm_phone}&text={encoded_text}"
+                    if sys.platform == "win32" and hasattr(os, "startfile"):
+                        os.startfile(proto_url)
+                    else:
+                        import webbrowser
+                        webbrowser.open(proto_url)
+                    auto_success = True
             else:
-                # Direct protocol launch
-                import webbrowser
+                # 2. Direct desktop protocol launch (opens WhatsApp Desktop with prefilled chat)
                 proto_url = f"whatsapp://send?phone={norm_phone}&text={encoded_text}"
-                webbrowser.open(proto_url)
+                if sys.platform == "win32" and hasattr(os, "startfile"):
+                    os.startfile(proto_url)
+                else:
+                    import webbrowser
+                    webbrowser.open(proto_url)
                 auto_success = True
         except Exception as ex:
             error_msg = str(ex)
