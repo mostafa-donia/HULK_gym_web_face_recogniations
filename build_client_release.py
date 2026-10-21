@@ -53,8 +53,8 @@ if not os.path.exists(db_src):
 print("[*] Copying initialized database template...")
 shutil.copy2(db_src, os.path.join(CLIENT_DIR, "gym_face.sqlite3"))
 
-# 6. Copy Icon and HTML Startup files
-for fname in ["gym_icon.ico", "startup.html"]:
+# 6. Copy Icon, HTML Startup files, and version.json
+for fname in ["gym_icon.ico", "startup.html", "version.json"]:
     for cand_dir in [DIST_SYS, SRC_DIR, BASE_DIR]:
         cand_p = os.path.join(cand_dir, fname)
         if os.path.exists(cand_p):
@@ -220,6 +220,16 @@ try:
     if not repo_root:
         raise ValueError("Could not find web_face in downloaded update package.")
 
+    # 1. Safe SQLite database backup before applying update
+    db_file = os.path.join(BASE_DIR, "gym_face.sqlite3")
+    if os.path.exists(db_file):
+        b_dir = os.path.join(BASE_DIR, "backups")
+        os.makedirs(b_dir, exist_ok=True)
+        from datetime import datetime
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        shutil.copy2(db_file, os.path.join(b_dir, f"backup_pre_update_{ts}.sqlite3"))
+        print(f"[*] Created safe database backup in backups/backup_pre_update_{ts}.sqlite3")
+
     print("[*] Applying code updates (Apps, Templates, Static)...")
     for fld in ["apps", "config", "templates", "static"]:
         src_fld = os.path.join(repo_root, fld)
@@ -231,6 +241,20 @@ try:
 
     # Copy updated manage.py
     shutil.copy2(os.path.join(repo_root, "manage.py"), os.path.join(BASE_DIR, "manage.py"))
+
+    # Update version.json
+    try:
+        import json
+        from datetime import datetime
+        v_file = os.path.join(BASE_DIR, "version.json")
+        v_data = {"version": "v2.0", "commit": "latest", "date": datetime.now().strftime("%Y-%m-%d"), "message": "Updated via GitHub"}
+        if os.path.exists(os.path.join(repo_root, "version.json")):
+            with open(os.path.join(repo_root, "version.json"), "r", encoding="utf-8") as rf:
+                v_data = json.load(rf)
+        with open(v_file, "w", encoding="utf-8") as wf:
+            json.dump(v_data, wf, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 
     # Compile new files to .pyc and strip .py
     print("[*] Compiling new update to bytecode (.pyc)...")

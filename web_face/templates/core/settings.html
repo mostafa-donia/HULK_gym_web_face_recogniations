@@ -63,9 +63,9 @@
         <span id="checkBtnText">فحص وجود تحديثات على GitHub</span>
       </button>
 
-      <button type="button" id="btnPerformUpdate" onclick="performSystemUpdate()" class="btn" style="background: #16a34a; border: none; color: #FFFFFF; font-weight: 900; font-size: 0.9rem; padding: 9px 22px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; opacity: 0.4; pointer-events: none;" disabled>
+      <button type="button" id="btnPerformUpdate" onclick="performSystemUpdate()" class="btn" style="background: #16a34a; border: none; color: #FFFFFF; font-weight: 900; font-size: 0.9rem; padding: 9px 22px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
         <span>⚡</span>
-        <span id="performBtnText">تحديث النظام الآن (Update Now)</span>
+        <span id="performBtnText">تحديث النظام الآن (GitHub Update)</span>
       </button>
     </div>
 
@@ -1946,28 +1946,42 @@ async function checkGitHubUpdates() {
       performBtn.disabled = false;
       performBtn.style.opacity = '1';
       performBtn.style.pointerEvents = 'auto';
+      performBtn.style.background = '#16a34a';
+      performBtn.innerHTML = '<span>🚀</span> <span id="performBtnText">تثبيت التحديث الجديد الآن</span>';
     } else if (data.success && !data.update_available) {
       banner.style.display = 'block';
       banner.style.background = 'rgba(59, 130, 246, 0.12)';
       banner.style.border = '1px solid #3b82f6';
       banner.style.color = '#93c5fd';
       banner.innerHTML = ` <strong>${data.message}</strong> (الـ Commit الحالي: <code>${data.current_commit}</code>)`;
-      performBtn.disabled = true;
-      performBtn.style.opacity = '0.4';
-      performBtn.style.pointerEvents = 'none';
+      performBtn.disabled = false;
+      performBtn.style.opacity = '1';
+      performBtn.style.pointerEvents = 'auto';
+      performBtn.style.background = '#2563eb';
+      performBtn.innerHTML = '<span>🔄</span> <span id="performBtnText">إعادة تثبيت / تحديث إجباري</span>';
     } else {
       banner.style.display = 'block';
       banner.style.background = 'rgba(239, 68, 68, 0.12)';
       banner.style.border = '1px solid #ef4444';
       banner.style.color = '#f87171';
       banner.innerHTML = ` ${data.message || 'حدث خطأ أثناء فحص التحديثات.'}`;
+      performBtn.disabled = false;
+      performBtn.style.opacity = '1';
+      performBtn.style.pointerEvents = 'auto';
+      performBtn.style.background = '#d97706';
+      performBtn.innerHTML = '<span>⚡</span> <span id="performBtnText">تحديث النظام المباشر من GitHub</span>';
     }
   } catch (err) {
     banner.style.display = 'block';
     banner.style.background = 'rgba(239, 68, 68, 0.12)';
     banner.style.border = '1px solid #ef4444';
     banner.style.color = '#f87171';
-    banner.innerHTML = `⚠️ تعذر فحص التحديثات (${err.message}). تأكد من اتصال الإنترنت أو استخدم ملف <code>UPDATE_SYSTEMIZE.bat</code> المباشر.`;
+    banner.innerHTML = `⚠️ تعذر فحص التحديثات (${err.message}). يمكنك الضغط على زر التحديث المباشر أدناه أو استخدام ملف <code>UPDATE_SYSTEMIZE.bat</code>.`;
+    performBtn.disabled = false;
+    performBtn.style.opacity = '1';
+    performBtn.style.pointerEvents = 'auto';
+    performBtn.style.background = '#16a34a';
+    performBtn.innerHTML = '<span>⚡</span> <span id="performBtnText">تحديث النظام الآن (تحديث مباشر)</span>';
   } finally {
     btn.disabled = false;
     icon.style.animation = 'none';
@@ -1976,7 +1990,7 @@ async function checkGitHubUpdates() {
 }
 
 async function performSystemUpdate() {
-  if (!confirm("هل أنت متأكد من رغبتك في تحديث النظام الآن؟\nسيتم حفظ نسخة احتياطية من قاعدة البيانات وسحب التحديثات وتطبيق التعديلات تلقائياً.")) {
+  if (!confirm("هل أنت متأكد من رغبتك في تحديث النظام الآن من GitHub؟\n\n• سيتم عمل نسخة احتياطية آمنة لقاعدة البيانات تلقائياً.\n• سيتم سحب أحدث ملفات وشاشات النظام وتطبيق ترقيات الجداول.\n• بيانات المشتركين والاشتراكات والمدفوعات والصور محفوظة بالكامل دون أي مساس.")) {
     return;
   }
 
