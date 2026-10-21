@@ -209,6 +209,16 @@
           </div>
         </div>
 
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="color: #f87171; font-weight: 800; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; font-size: 0.86rem;">
+            🛑 زر الطوارئ لإيقاف إرسال الواتساب (Kill Switch)
+          </label>
+          <input type="text" name="whatsapp_kill_switch" class="form-control" value="{{ profile.whatsapp_kill_switch|default:'ctrl+k' }}" style="background: var(--bg-surface-subtle); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; border-radius: 8px; padding: 7px 12px; width: 100%; font-family: monospace; font-weight: 800; direction: ltr; text-align: left;" placeholder="ctrl+k">
+          <small style="color: var(--text-muted); font-size: 0.76rem; display: block; margin-top: 3px;">
+            المفتاح الافتراضي: <code>ctrl+k</code>. عند الضغط عليه أثناء إرسال الرسائل يتم إيقاف الإرسال فوراً وإلغاء الطابور.
+          </small>
+        </div>
+
         <div class="form-group" style="margin-bottom: 16px;">
           <label class="form-label" style="color: var(--text-secondary); font-weight: 700; margin-bottom: 4px; display: block;">قالب رسالة انتهاء الاشتراك</label>
           <textarea name="expired_message_template" class="form-control" rows="2" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; padding: 8px; width: 100%;">{{ profile.expired_message_template }}</textarea>
@@ -1098,44 +1108,7 @@
         </div>
       </div>
 
-      <!-- Manager Face Enrollment Webcam Modal -->
-      <div id="mgrFaceModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
-        <div style="background: var(--bg-card, #0f172a); border: 1px solid var(--border-color, #1e293b); border-radius: 16px; width: 100%; max-width: 520px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); overflow: hidden; animation: popIn 0.25s ease-out;">
-          <div style="padding: 18px 22px; border-bottom: 1px solid var(--border-color, #1e293b); display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main, #f8fafc); display: flex; align-items: center; gap: 8px;">
-              📸 تسجيل بصمة وجه المدير
-            </h3>
-            <button type="button" onclick="closeMgrFaceModal()" style="background: none; border: none; color: var(--text-muted, #94a3b8); font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
-          </div>
 
-          <div style="padding: 22px; text-align: center;">
-            <p style="font-size: 0.88rem; color: var(--text-muted, #94a3b8); margin-bottom: 16px;">
-              يرجى النظر مباشرة إلى الكاميرا مع إضاءة جيدة لتسجيل بصمة الوجه الرياضية عالية الدقة.
-            </p>
-
-            <div style="position: relative; width: 100%; max-width: 420px; aspect-ratio: 4/3; margin: 0 auto; background: #020617; border-radius: 12px; overflow: hidden; border: 2px dashed #84cc16; display: flex; align-items: center; justify-content: center;">
-              <video id="mgrFaceVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
-              <div id="mgrFaceScanGuide" style="position: absolute; inset: 15%; border: 2px solid rgba(132, 204, 22, 0.6); border-radius: 50%; pointer-events: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);"></div>
-              <div id="mgrFaceLoadingOverlay" style="display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.75); flex-direction: column; align-items: center; justify-content: center; color: #fff; font-weight: 700; gap: 10px;">
-                <div style="width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #84cc16; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                <span id="mgrFaceLoadingText">جاري المعالجة واستخراج البصمة...</span>
-              </div>
-            </div>
-            <canvas id="mgrFaceCanvas" style="display: none;"></canvas>
-
-            <div id="mgrFaceModalError" style="display: none; margin-top: 14px; padding: 10px 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #f87171; font-size: 0.85rem; font-weight: 700;"></div>
-
-            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
-              <button type="button" id="btnCaptureMgrFace" onclick="captureAndEnrollMgrFace()" class="btn btn-primary" style="padding: 10px 24px; font-weight: 800; font-size: 0.95rem;">
-                📷 التقاط وحفظ بصمة الوجه
-              </button>
-              <button type="button" onclick="closeMgrFaceModal()" class="btn btn-secondary" style="padding: 10px 18px; font-weight: 700;">
-                إلغاء
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Dev Card 2: Face AI Models & Hardware Turnstile Relay Control -->
       <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px;">
@@ -1335,6 +1308,12 @@
               <input type="number" id="wa_dev_search_y" name="whatsapp_search_y" class="form-control" value="{{ profile.whatsapp_search_y|default:'120' }}" required style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 42px; border-radius: 8px; padding: 0 12px; width: 100%; font-family: monospace; font-size: 1rem;">
               <small style="color: #64748b; font-size: 0.75rem;">المسافة الرأسية بالبكسل من أعلى الشاشة (الافتراضي: 120).</small>
             </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" style="color: #f87171; font-weight: 800; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+              🛑 زر الطوارئ لإيقاف الإرسال فوراً (WhatsApp Kill Switch)
+            </label>
+            <input type="text" name="whatsapp_kill_switch" class="form-control" value="{{ profile.whatsapp_kill_switch|default:'ctrl+k' }}" style="background: var(--bg-surface-subtle); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%; font-family: monospace; font-weight: 800; font-size: 1rem; direction: ltr; text-align: left;" placeholder="ctrl+k">
+            <small style="color: #64748b; font-size: 0.75rem;">مفتاح الاختصار الفيزيائي (الافتراضي ctrl+k). عند الضغط عليه أثناء عمل روبوت الواتساب يتوقف فوراً.</small>
           </div>
 
           <!-- Quick Test Coordinates Button -->
@@ -1754,6 +1733,46 @@
     </div>
   {% endif %}
 
+</div>
+
+<!-- Manager Face Enrollment Webcam Modal (Root Level) -->
+<div id="mgrFaceModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: var(--bg-card, #0f172a); border: 1px solid var(--border-color, #1e293b); border-radius: 16px; width: 100%; max-width: 520px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); overflow: hidden; animation: popIn 0.25s ease-out;">
+    <div style="padding: 18px 22px; border-bottom: 1px solid var(--border-color, #1e293b); display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main, #f8fafc); display: flex; align-items: center; gap: 8px;">
+        📸 تسجيل بصمة وجه المدير
+      </h3>
+      <button type="button" onclick="closeMgrFaceModal()" style="background: none; border: none; color: var(--text-muted, #94a3b8); font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+
+    <div style="padding: 22px; text-align: center;">
+      <p style="font-size: 0.88rem; color: var(--text-muted, #94a3b8); margin-bottom: 16px;">
+        يرجى النظر مباشرة إلى الكاميرا مع إضاءة جيدة لتسجيل بصمة الوجه عالية الدقة.
+      </p>
+
+      <div style="position: relative; width: 100%; max-width: 420px; aspect-ratio: 4/3; margin: 0 auto; background: #020617; border-radius: 12px; overflow: hidden; border: 2px dashed #84cc16; display: flex; align-items: center; justify-content: center;">
+        <!-- Backend Live Camera Feed (Continuous OpenCV Stream) -->
+        <img id="mgrFaceBackendImg" src="" style="width: 100%; height: 100%; object-fit: cover;" alt="بث الكاميرا المباشر">
+        <div id="mgrFaceScanGuide" style="position: absolute; inset: 15%; border: 2px solid rgba(132, 204, 22, 0.6); border-radius: 50%; pointer-events: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);"></div>
+        <div id="mgrFaceLoadingOverlay" style="display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.75); flex-direction: column; align-items: center; justify-content: center; color: #fff; font-weight: 700; gap: 10px;">
+          <div style="width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #84cc16; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+          <span id="mgrFaceLoadingText">جاري المعالجة واستخراج البصمة...</span>
+        </div>
+      </div>
+      <canvas id="mgrFaceCanvas" style="display: none;"></canvas>
+
+      <div id="mgrFaceModalError" style="display: none; margin-top: 14px; padding: 10px 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #f87171; font-size: 0.85rem; font-weight: 700;"></div>
+
+      <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+        <button type="button" id="btnCaptureMgrFace" onclick="captureAndEnrollMgrFace()" class="btn btn-primary" style="padding: 10px 24px; font-weight: 800; font-size: 0.95rem;">
+          📷 التقاط وحفظ بصمة الوجه
+        </button>
+        <button type="button" onclick="closeMgrFaceModal()" class="btn btn-secondary" style="padding: 10px 18px; font-weight: 700;">
+          إلغاء
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -2213,68 +2232,88 @@ async function testGateTriggerSignal() {
 // Manager Face ID Enrollment & Management
 // ==========================================
 let mgrFaceStream = null;
+let isUsingBackendStream = false;
 
-async function openMgrFaceModal() {
+function openMgrFaceModal() {
   const modal = document.getElementById('mgrFaceModal');
-  const video = document.getElementById('mgrFaceVideo');
+  const backendImg = document.getElementById('mgrFaceBackendImg');
   const errorBox = document.getElementById('mgrFaceModalError');
-  if (errorBox) { errorBox.style.display = 'none'; errorBox.textContent = ''; }
-  if (modal) modal.style.display = 'flex';
+  const loading = document.getElementById('mgrFaceLoadingOverlay');
 
-  try {
-    mgrFaceStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
-    });
-    if (video) video.srcObject = mgrFaceStream;
-  } catch (err) {
-    console.error('Camera error:', err);
-    if (errorBox) {
-      errorBox.textContent = 'تعذر تشغيل الكاميرا. يرجى التأكد من توصيل الكاميرا وإعطاء الإذن للمتصفح، أو يمكنك رفع صورة واضحة من جهازك بدلاً من ذلك.';
-      errorBox.style.display = 'block';
-    }
+  if (errorBox) { errorBox.style.display = 'none'; errorBox.innerHTML = ''; }
+  if (modal) modal.style.display = 'flex';
+  if (loading) loading.style.display = 'none';
+
+  if (backendImg) {
+    backendImg.style.display = 'block';
+    backendImg.src = "{% url 'face_recognition:video_feed' %}?t=" + Date.now();
   }
 }
 
 function closeMgrFaceModal() {
   const modal = document.getElementById('mgrFaceModal');
+  const backendImg = document.getElementById('mgrFaceBackendImg');
   if (modal) modal.style.display = 'none';
-  if (mgrFaceStream) {
-    mgrFaceStream.getTracks().forEach(track => track.stop());
-    mgrFaceStream = null;
+  if (backendImg) {
+    backendImg.src = '';
   }
 }
 
 async function captureAndEnrollMgrFace() {
-  const video = document.getElementById('mgrFaceVideo');
+  const backendImg = document.getElementById('mgrFaceBackendImg');
   const canvas = document.getElementById('mgrFaceCanvas');
   const loading = document.getElementById('mgrFaceLoadingOverlay');
+  const loadingText = document.getElementById('mgrFaceLoadingText');
   const btnCapture = document.getElementById('btnCaptureMgrFace');
   const errorBox = document.getElementById('mgrFaceModalError');
-  if (errorBox) { errorBox.style.display = 'none'; }
+  if (errorBox) { errorBox.style.display = 'none'; errorBox.innerHTML = ''; }
 
-  if (!video || !video.videoWidth) {
-    if (errorBox) {
-      errorBox.textContent = 'الكاميرا غير جاهزة بعد، يرجى الانتظار ثانية ثم المحاولة.';
-      errorBox.style.display = 'block';
-    }
-    return;
+  let dataUrl = null;
+
+  if (loading) {
+    if (loadingText) loadingText.textContent = 'جاري التقاط الإطار واستخراج البصمة...';
+    loading.style.display = 'flex';
   }
-
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-
-  if (loading) loading.style.display = 'flex';
   if (btnCapture) btnCapture.disabled = true;
 
   try {
+    // 1. Grab raw frame directly from OpenCV face engine
+    try {
+      const frameRes = await fetch("{% url 'face_recognition:api_capture_frame' %}");
+      if (frameRes.ok) {
+        const frameData = await frameRes.json();
+        if (frameData.success && frameData.image_base64) {
+          dataUrl = frameData.image_base64;
+        }
+      }
+    } catch (e) {
+      console.warn("Backend capture API error, falling back to canvas:", e);
+    }
+
+    // 2. Fallback to drawing visible backendImg onto canvas
+    if (!dataUrl) {
+      if (backendImg && canvas && (backendImg.naturalWidth > 0 || backendImg.width > 0)) {
+        canvas.width = backendImg.naturalWidth || backendImg.width || 640;
+        canvas.height = backendImg.naturalHeight || backendImg.height || 480;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(backendImg, 0, 0, canvas.width, canvas.height);
+        dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      }
+    }
+
+    if (!dataUrl) {
+      if (errorBox) {
+        errorBox.innerHTML = 'الكاميرا غير جاهزة بعد. يرجى الانتظار ثانية ثم الضغط مجدداً، أو اختيار صورة لوجهك مباشرة من جهازك:<br><button type="button" onclick="document.getElementById(\'mgrFaceFileInput\').click()" class="btn btn-sm btn-secondary" style="margin-top: 8px; font-weight: 800;">📁 اختيار صورة من الجهاز</button>';
+        errorBox.style.display = 'block';
+      }
+      return;
+    }
+
     const formData = new FormData();
     formData.append('image', dataUrl);
     formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-    const res = await fetch('/face/manager/enroll/', {
+    const res = await fetch("{% url 'face_recognition:enroll_manager_face' %}", {
       method: 'POST',
       body: formData,
       headers: {
@@ -2284,7 +2323,7 @@ async function captureAndEnrollMgrFace() {
     const result = await res.json();
     if (result.success) {
       closeMgrFaceModal();
-      alert('تم حفظ وتنشيط بصمة وجه المدير بنجاح! يمكنك الآن فتح جميع الأقسام المحمية ببصمة الوجه.');
+      alert('✓ تم حفظ وتنشيط بصمة وجه المدير بنجاح!');
       window.location.reload();
     } else {
       if (errorBox) {
@@ -2294,7 +2333,7 @@ async function captureAndEnrollMgrFace() {
     }
   } catch (err) {
     if (errorBox) {
-      errorBox.textContent = 'حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.';
+      errorBox.textContent = 'حدث خطأ أثناء حفظ البصمة: ' + (err.message || err);
       errorBox.style.display = 'block';
     }
   } finally {
@@ -2312,7 +2351,7 @@ async function handleMgrFaceFileUpload(e) {
   formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
   try {
-    const res = await fetch('/face/manager/enroll/', {
+    const res = await fetch("{% url 'face_recognition:enroll_manager_face' %}", {
       method: 'POST',
       body: formData,
       headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -2336,7 +2375,7 @@ async function deleteMgrFace() {
   try {
     const formData = new FormData();
     formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-    const res = await fetch('/face/manager/delete/', {
+    const res = await fetch("{% url 'face_recognition:delete_manager_face' %}", {
       method: 'POST',
       body: formData,
       headers: { 'X-Requested-With': 'XMLHttpRequest' }

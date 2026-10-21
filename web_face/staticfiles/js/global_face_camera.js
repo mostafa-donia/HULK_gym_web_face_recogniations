@@ -198,6 +198,13 @@
           }
 
           setMemberCooldown(mId);
+
+          // Suppress visual overlay takeover during WhatsApp sending to prevent interrupting message flow
+          if (data.whatsapp_sending || window.isWhatsAppSending || (window.whatsappQueueRunner && window.whatsappQueueRunner.isRunning)) {
+            console.log("[FaceID] Silent check-in completed for #" + mId + " (overlay suppressed during WhatsApp dispatch)");
+            return;
+          }
+
           showFullscreenNotification(m, ev.score, ev.gate_opened);
         }
       } catch (e) {

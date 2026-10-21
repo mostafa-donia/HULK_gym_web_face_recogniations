@@ -1,9 +1,11 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from apps.payroll import views
 
 app_name = "payroll"
 
 urlpatterns = [
+    path("", RedirectView.as_view(url="trainers/", permanent=False), name="index"),
     path("trainers/", views.trainers_index_view, name="trainers_index"),
     path("trainers/lock/", views.trainers_lock_view, name="trainers_lock"),
     path("coaches/<int:employee_id>/", views.coach_detail_view, name="coach_detail"),

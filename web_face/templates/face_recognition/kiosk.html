@@ -499,6 +499,7 @@
               member: res.event.member,
               score: res.event.score,
               gate_opened: res.event.gate_opened,
+              whatsapp_sending: res.whatsapp_sending,
             });
           }
         }
@@ -559,7 +560,11 @@
 
       if (!isCooldown) {
         kioskMemberLastOverlayMap[m.id] = now;
-        showFullscreenNotification(m, data.score, data.gate_opened);
+        if (!data.whatsapp_sending && !window.isWhatsAppSending) {
+          showFullscreenNotification(m, data.score, data.gate_opened);
+        } else {
+          console.log("[Kiosk] Suppressed fullscreen overlay during active WhatsApp message dispatch");
+        }
       }
 
       clearTimeout(window._resetTimeout);

@@ -505,29 +505,16 @@ def generate_manager_report_image_file(report_data: dict) -> str:
     # Outer border / card
     draw.rounded_rectangle([20, 20, w - 20, h - 20], radius=18, fill=(15, 23, 42), outline=(30, 41, 59), width=2)
 
-    try:
-        font_badge = ImageFont.truetype("tahomabd.ttf", 14)
-        font_title = ImageFont.truetype("tahomabd.ttf", 26)
-        font_sub = ImageFont.truetype("tahoma.ttf", 15)
-        font_card_val = ImageFont.truetype("tahomabd.ttf", 22)
-        font_card_lbl = ImageFont.truetype("tahomabd.ttf", 14)
-        font_card_sub = ImageFont.truetype("tahoma.ttf", 13)
-        font_sec_title = ImageFont.truetype("tahomabd.ttf", 17)
-        font_normal = ImageFont.truetype("tahoma.ttf", 15)
-        font_sm = ImageFont.truetype("tahoma.ttf", 13)
-    except Exception:
-        try:
-            font_badge = ImageFont.truetype("arialbd.ttf", 14)
-            font_title = ImageFont.truetype("arialbd.ttf", 26)
-            font_sub = ImageFont.truetype("arial.ttf", 15)
-            font_card_val = ImageFont.truetype("arialbd.ttf", 22)
-            font_card_lbl = ImageFont.truetype("arialbd.ttf", 14)
-            font_card_sub = ImageFont.truetype("arial.ttf", 13)
-            font_sec_title = ImageFont.truetype("arialbd.ttf", 17)
-            font_normal = ImageFont.truetype("arial.ttf", 15)
-            font_sm = ImageFont.truetype("arial.ttf", 13)
-        except Exception:
-            font_badge = font_title = font_sub = font_card_val = font_card_lbl = font_card_sub = font_sec_title = font_normal = font_sm = ImageFont.load_default()
+    from apps.core.text_utils import get_arabic_font, reshape_arabic
+    font_badge = get_arabic_font(size=16, bold=True)
+    font_title = get_arabic_font(size=26, bold=True)
+    font_sub = get_arabic_font(size=16, bold=False)
+    font_card_val = get_arabic_font(size=22, bold=True)
+    font_card_lbl = get_arabic_font(size=16, bold=True)
+    font_card_sub = get_arabic_font(size=16, bold=False)
+    font_sec_title = get_arabic_font(size=18, bold=True)
+    font_normal = get_arabic_font(size=16, bold=False)
+    font_sm = get_arabic_font(size=16, bold=False)
 
     profile = GymProfile.get_solo()
     gym_name = profile.gym_name or report_data.get("gym_name", "سينا سبا | CINA SPA")

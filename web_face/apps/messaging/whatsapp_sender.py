@@ -26,6 +26,73 @@ MESSAGE_SEND_MODE = "paste"
 MESSAGE_CHAR_DELAY = 0.02
 
 ORIGINAL_BROWSER_HWND = None
+_overlay_keeper_active = False
+
+# Global state indicating WhatsApp desktop is actively typing/sending
+IS_WHATSAPP_SENDING = False
+KILL_SWITCH_REQUESTED = False
+
+
+class WhatsAppKillSwitchTriggered(Exception):
+    """Raised immediately when the emergency hotkey is detected during WhatsApp dispatch."""
+    pass
+
+
+def reset_kill_switch():
+    global KILL_SWITCH_REQUESTED
+    KILL_SWITCH_REQUESTED = False
+
+
+def check_kill_switch():
+    """
+    Checks if the user-configured emergency kill switch (default: Ctrl+K) has been physically pressed.
+    Uses GetAsyncKeyState for zero-latency cross-process detection across all Windows desktops.
+    """
+    global KILL_SWITCH_REQUESTED
+    if KILL_SWITCH_REQUESTED:
+        raise WhatsAppKillSwitchTriggered("تم إيقاف الإرسال بواسطة زر الطوارئ (Kill Switch)")
+
+    try:
+        from apps.core.models import GymProfile
+        prof = GymProfile.get_solo()
+        hotkey_str = getattr(prof, "whatsapp_kill_switch", "ctrl+k") or "ctrl+k"
+    except Exception:
+        hotkey_str = "ctrl+k"
+
+    user32 = ctypes.windll.user32
+    hotkey_str = hotkey_str.lower().strip()
+    keys = [k.strip() for k in hotkey_str.split("+")]
+
+    vk_map = {
+        "ctrl": 0x11, "control": 0x11,
+        "shift": 0x10,
+        "alt": 0x12,
+        "esc": 0x1B, "escape": 0x1B,
+        "space": 0x20,
+        "f1": 0x70, "f2": 0x71, "f3": 0x72, "f4": 0x73,
+        "f5": 0x74, "f6": 0x75, "f7": 0x76, "f8": 0x77,
+        "f9": 0x78, "f10": 0x79, "f11": 0x7A, "f12": 0x7B,
+    }
+
+    all_pressed = True
+    for k in keys:
+        if k in vk_map:
+            vk = vk_map[k]
+        elif len(k) == 1 and k.isalnum():
+            vk = ord(k.upper())
+        else:
+            all_pressed = False
+            break
+
+        # Check MSB of GetAsyncKeyState (key is physically pressed)
+        if not (user32.GetAsyncKeyState(vk) & 0x8000):
+            all_pressed = False
+            break
+
+    if all_pressed:
+        KILL_SWITCH_REQUESTED = True
+        print(f"[KillSwitch] Physical hotkey '{hotkey_str}' detected! ABORTING WhatsApp Sending immediately.")
+        raise WhatsAppKillSwitchTriggered(f"تم إيقاف الإرسال فوراً بواسطة زر الطوارئ ({hotkey_str})")
 
 
 def ensure_desktop_attached():
@@ -60,9 +127,12 @@ def apply_send_settings(settings=None):
 
 
 def random_delay(min_seconds: float = 0.25, max_seconds: float = 1.2) -> float:
-    """Sleep for a random duration while preserving human-like flow."""
+    """Sleep for a random duration while actively listening for the emergency kill switch."""
     delay = random.uniform(min_seconds, max_seconds)
-    sleep(delay)
+    end_t = time.time() + delay
+    while time.time() < end_t:
+        check_kill_switch()
+        sleep(min(0.04, max(0.0, end_t - time.time())))
     return delay
 
 
@@ -470,117 +540,28 @@ def get_window_title_w(hwnd) -> str:
 
 
 def is_overlay_window_open() -> bool:
-    import win32gui
-    user32 = ctypes.windll.user32
-    found = []
-    target_keys = ["systemize_wa_overlay", "systemizewhatsappoverlay", "طابور إرسال واتساب", "whatsappoverlay", "طابور إرسال"]
-
-    def enum_cb(hwnd, _):
-        if win32gui.IsWindow(hwnd) and user32.IsWindowVisible(hwnd):
-            title = get_window_title_w(hwnd).lower()
-            if any(k in title for k in target_keys):
-                found.append(hwnd)
-
-    win32gui.EnumWindows(enum_cb, None)
-    return len(found) > 0
+    return False
 
 
 def ensure_overlay_window_open():
-    """
-    If no overlay window is currently open, automatically launches a standalone
-    frameless window via Chrome/Edge --app flag. Completely bypasses browser popup blockers.
-    """
-    if is_overlay_window_open():
-        return
-    try:
-        browser = get_browser_executable()
-        url = "http://127.0.0.1:8000/messaging/overlay-window/"
-        user32 = ctypes.windll.user32
-        screen_w = user32.GetSystemMetrics(0)
-        pos_x = max(20, screen_w - 360)
-        pos_y = 25
-        cmd = [
-            browser,
-            f"--app={url}",
-            "--window-size=340,165",
-            f"--window-position={pos_x},{pos_y}",
-        ]
-        import subprocess
-        subprocess.Popen(cmd)
-        sleep(0.8)
-        pin_overlay_window_topmost()
-    except Exception as e:
-        print(f"[ensure_overlay_window_open] Warning: {e}")
+    """Overlay completely disabled per user preference."""
+    return
 
 
 def pin_overlay_window_topmost() -> bool:
-    """
-    Searches for any active Systemize WhatsApp Overlay Counter window
-    and asserts HWND_TOPMOST (-1) and WS_EX_TOPMOST so it stays pinned above WhatsApp Desktop
-    even when mouse clicks occur, without stealing keyboard focus from WhatsApp.
-    """
-    try:
-        ensure_desktop_attached()
-        user32 = ctypes.windll.user32
-        import win32gui
-        import win32con
-
-        matched_hwnds = []
-        target_keys = ["systemize_wa_overlay", "systemizewhatsappoverlay", "طابور إرسال واتساب", "whatsappoverlay", "طابور إرسال"]
-
-        def enum_cb(hwnd, _):
-            if win32gui.IsWindow(hwnd):
-                title = get_window_title_w(hwnd).lower()
-                if any(k in title for k in target_keys):
-                    if user32.IsIconic(hwnd):
-                        user32.ShowWindow(hwnd, 9)  # SW_RESTORE
-                    else:
-                        user32.ShowWindow(hwnd, 4)  # SW_SHOWNOACTIVATE
-
-                    # 1. Set WS_EX_TOPMOST in GWL_EXSTYLE
-                    try:
-                        ex_style = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
-                        if not (ex_style & win32con.WS_EX_TOPMOST):
-                            win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, ex_style | win32con.WS_EX_TOPMOST)
-                    except Exception:
-                        pass
-
-                    # 2. Assert HWND_TOPMOST (-1) with SWP_NOACTIVATE (0x0010) so WhatsApp retains input focus
-                    flags = win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_NOACTIVATE | win32con.SWP_SHOWWINDOW
-                    user32.SetWindowPos(hwnd, -1, 0, 0, 0, 0, flags)
-                    matched_hwnds.append(hwnd)
-
-        win32gui.EnumWindows(enum_cb, None)
-        return len(matched_hwnds) > 0
-    except Exception as e:
-        print(f"[pin_overlay_window_topmost] Warning: {e}")
+    """Overlay completely disabled per user preference."""
     return False
 
 
 def start_overlay_keeper():
-    """Starts a continuous daemon thread that keeps the overlay pinned topmost every 300ms."""
-    global _overlay_keeper_active
-    if _overlay_keeper_active:
-        return
-    _overlay_keeper_active = True
-
-    def _loop():
-        while _overlay_keeper_active:
-            try:
-                pin_overlay_window_topmost()
-            except Exception:
-                pass
-            sleep(0.3)
-
-    import threading
-    t = threading.Thread(target=_loop, daemon=True, name="WA_OverlayTopmostKeeper")
-    t.start()
+    """Overlay completely disabled per user preference."""
+    return
 
 
 def stop_overlay_keeper():
-    """Stops the overlay topmost keeper thread."""
-    global _overlay_keeper_active
-    _overlay_keeper_active = False
+    """Overlay completely disabled per user preference."""
+    return
+
 
 
 def find_whatsapp_window():
@@ -753,7 +734,41 @@ def send_message(
     """
     Sends a WhatsApp message and/or file attachment (invoice, report, image) to the specified phone.
     Works strictly on WhatsApp Desktop using user-configured search bar coordinates.
+    Safeguarded with emergency kill switch (default: Ctrl+K) and active sending state.
     """
+    global IS_WHATSAPP_SENDING
+    IS_WHATSAPP_SENDING = True
+    try:
+        check_kill_switch()
+        return _execute_send_message(
+            phone=phone,
+            message=message,
+            image=image,
+            x_search=x_search,
+            y_search=y_search,
+            return_to_system=return_to_system,
+            topic=topic,
+            message_bank=message_bank,
+            context=context,
+        )
+    except WhatsAppKillSwitchTriggered as exc:
+        print(f"[send_message] Aborted by kill switch: {exc}")
+        return False
+    finally:
+        IS_WHATSAPP_SENDING = False
+
+
+def _execute_send_message(
+    phone: str,
+    message: str = "",
+    image: str = None,
+    x_search: int = None,
+    y_search: int = None,
+    return_to_system: bool = False,
+    topic: str = None,
+    message_bank: dict = None,
+    context: dict = None,
+) -> bool:
     global sent, unsent
 
     # Retrieve coordinates from GymProfile if not explicitly provided

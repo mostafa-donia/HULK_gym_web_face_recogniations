@@ -9,7 +9,7 @@ from django.template.loader import render_to_string
 from PIL import Image, ImageDraw, ImageFont
 
 from apps.core.models import GymProfile
-from apps.core.text_utils import reshape_arabic
+from apps.core.text_utils import reshape_arabic, get_arabic_font
 from apps.messaging.models import WhatsAppMessage, MessageType, MessageStatus
 from apps.payments.models import Payment
 
@@ -84,21 +84,11 @@ def generate_invoice_image_file(payment: Payment, subscription=None) -> str:
     draw.rounded_rectangle([20, 20, w - 20, 115], radius=16, fill=(15, 23, 42))
     draw.rectangle([20, 95, w - 20, 115], fill=(15, 23, 42))
 
-    try:
-        font_title = ImageFont.truetype("tahomabd.ttf", 25)
-        font_sub = ImageFont.truetype("tahoma.ttf", 15)
-        font_bold = ImageFont.truetype("tahomabd.ttf", 16)
-        font_normal = ImageFont.truetype("tahoma.ttf", 15)
-        font_sm = ImageFont.truetype("tahoma.ttf", 13)
-    except Exception:
-        try:
-            font_title = ImageFont.truetype("arialbd.ttf", 25)
-            font_sub = ImageFont.truetype("arial.ttf", 15)
-            font_bold = ImageFont.truetype("arialbd.ttf", 16)
-            font_normal = ImageFont.truetype("arial.ttf", 15)
-            font_sm = ImageFont.truetype("arial.ttf", 13)
-        except Exception:
-            font_title = font_sub = font_bold = font_normal = font_sm = ImageFont.load_default()
+    font_title = get_arabic_font(size=25, bold=True)
+    font_sub = get_arabic_font(size=16, bold=False)
+    font_bold = get_arabic_font(size=18, bold=True)
+    font_normal = get_arabic_font(size=16, bold=False)
+    font_sm = get_arabic_font(size=16, bold=False)
 
     raw_gym_name = profile.gym_name or "سينا سبا | CINA SPA"
     curr = profile.currency or "ج.م"
@@ -157,8 +147,9 @@ def generate_invoice_image_file(payment: Payment, subscription=None) -> str:
         # Private Training status
         y += 34
         if subscription.has_private:
-            coach_str = f" - كابتن {subscription.coach.name}" if subscription.coach else ""
-            priv_text = f"شامل تدريب خاص ({subscription.private_price} {curr}){coach_str}"
+            c_name = subscription.coach.name.replace("كابتن", "").strip() if subscription.coach else ""
+            coach_str = f"كابتن {c_name}" if c_name else "مدرب خاص"
+            priv_text = f"{coach_str} ({subscription.private_price} {curr})"
             draw_rtl_row(y, "التدريب الخاص (Private):", priv_text, val_color=(124, 58, 237), is_bold=True)
         else:
             draw_rtl_row(y, "التدريب الخاص (Private):", "بدون تدريب خاص (غير مشترك)", val_color=(100, 116, 139), is_bold=False)

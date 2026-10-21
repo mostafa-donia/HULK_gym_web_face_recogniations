@@ -133,6 +133,12 @@ class GymProfile(models.Model):
         default=True,
         verbose_name="تنويع واختيار صياغات عشوائية تلقائياً من بنك الرسائل لمنع الحظر",
     )
+    whatsapp_kill_switch = models.CharField(
+        max_length=50,
+        default="ctrl+k",
+        verbose_name="زر الطوارئ لإيقاف إرسال الواتساب (Kill Switch)",
+        help_text="زر الاختصار لإيقاف إرسال الواتساب فوراً عند الطوارئ (الافتراضي ctrl+k)",
+    )
     
     # Trainers Page Security
     trainers_page_password = models.CharField(

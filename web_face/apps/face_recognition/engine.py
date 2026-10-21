@@ -120,31 +120,71 @@ class FaceEngine:
     def is_ready(self) -> bool:
         return self.detector is not None and self.recognizer is not None
 
+    def ensure_models_loaded(self, timeout: float = 6.0) -> bool:
+        """Waits for asynchronous model loading thread to complete if still in progress."""
+        if self.is_ready:
+            return True
+        start_t = time.time()
+        while getattr(self, "models_loading", False) and (time.time() - start_t < timeout):
+            time.sleep(0.1)
+        return self.is_ready
+
     def decode_image(self, image_data: Any) -> Optional[np.ndarray]:
-        """Accepts raw bytes, base64 data string, or numpy array and returns BGR image."""
+        """Accepts raw bytes, base64 data string, or numpy array and returns BGR image with correct EXIF orientation."""
         if image_data is None:
             return None
         if isinstance(image_data, np.ndarray):
-            return image_data
+            mat = image_data
+        else:
+            raw_bytes = None
+            if isinstance(image_data, str):
+                image_str = image_data.strip()
+                if "base64," in image_str:
+                    image_str = image_str.split("base64,")[1]
+                image_str = image_str.replace(" ", "+")
+                try:
+                    raw_bytes = base64.b64decode(image_str)
+                except Exception:
+                    raw_bytes = None
+            elif isinstance(image_data, (bytes, bytearray)):
+                raw_bytes = bytes(image_data)
 
-        if isinstance(image_data, str):
-            if "base64," in image_data:
-                image_data = image_data.split("base64,")[1]
-            try:
-                raw_bytes = base64.b64decode(image_data)
-                arr = np.frombuffer(raw_bytes, np.uint8)
-                return cv2.imdecode(arr, cv2.IMREAD_COLOR)
-            except Exception:
+            if not raw_bytes:
                 return None
 
-        if isinstance(image_data, (bytes, bytearray)):
+            mat = None
+            # 1. Try decoding with PIL to respect EXIF orientation (e.g. mobile selfies)
             try:
-                arr = np.frombuffer(image_data, np.uint8)
-                return cv2.imdecode(arr, cv2.IMREAD_COLOR)
+                from PIL import Image, ImageOps
+                import io
+                pil_img = Image.open(io.BytesIO(raw_bytes))
+                pil_img = ImageOps.exif_transpose(pil_img)
+                if pil_img.mode != "RGB":
+                    pil_img = pil_img.convert("RGB")
+                mat = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
             except Exception:
-                return None
+                mat = None
 
-        return None
+            # 2. Fallback to direct OpenCV imdecode
+            if mat is None:
+                try:
+                    arr = np.frombuffer(raw_bytes, np.uint8)
+                    mat = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+                except Exception:
+                    return None
+
+        if mat is None or mat.size == 0:
+            return None
+
+        # 3. Downscale if image is too large (> 1280px) to prevent YuNet anchor failure
+        h, w = mat.shape[:2]
+        max_dim = max(h, w)
+        if max_dim > 1280:
+            scale = 1280.0 / max_dim
+            new_w, new_h = int(w * scale), int(h * scale)
+            mat = cv2.resize(mat, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+        return mat
 
     def detect_faces(self, frame: np.ndarray, score_threshold: float = 0.55) -> List[np.ndarray]:
         """Detects faces in frame and returns list of face bounding/landmark arrays."""
@@ -172,14 +212,19 @@ class FaceEngine:
         Detects the most prominent face in the frame, extracts the 128-D SFace embedding,
         and returns a clean JPEG thumbnail crop.
         """
-        if not self.is_ready:
-            return False, None, None, "محرك الذكاء الاصطناعي ونماذج الوجه غير محملة."
+        if not self.ensure_models_loaded(timeout=5.0):
+            return False, None, None, "محرك الذكاء الاصطناعي ونماذج الوجه قيد التهيئة."
 
         mat = self.decode_image(frame)
         if mat is None or mat.size == 0:
             return False, None, None, "الصورة غير صالحة أو تعذر فك تشفيرها."
 
         faces = self.detect_faces(mat, score_threshold=score_threshold)
+        if not faces and score_threshold > 0.40:
+            faces = self.detect_faces(mat, score_threshold=0.40)
+        if not faces and score_threshold > 0.30:
+            faces = self.detect_faces(mat, score_threshold=0.30)
+
         if not faces:
             return False, None, None, "لم يتم العثور على أي وجه واضح في الصورة. يرجى النظر إلى الكاميرا مباشرة."
 

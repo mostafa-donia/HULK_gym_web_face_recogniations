@@ -569,19 +569,6 @@
         return;
       }
       let popupWin = null;
-      try {
-        const screenW = window.screen.availWidth || window.screen.width || 1920;
-        const popupW = 320;
-        const popupH = 155;
-        const popupX = Math.max(20, screenW - popupW - 30);
-        const popupY = 30;
-        popupWin = window.open(
-          "{% url 'messaging:whatsapp_overlay_window' %}",
-          "SystemizeWhatsAppOverlay",
-          `width=${popupW},height=${popupH},left=${popupX},top=${popupY},resizable=no,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`
-        );
-      } catch (e) {}
-
       if (window.whatsappQueueRunner) {
         window.whatsappQueueRunner.start(checkedBoxes, popupWin);
         return;
@@ -836,19 +823,6 @@
     }
 
     let popupWin = null;
-    try {
-      const screenW = window.screen.availWidth || window.screen.width || 1920;
-      const popupW = 320;
-      const popupH = 155;
-      const popupX = Math.max(20, screenW - popupW - 30);
-      const popupY = 30;
-      popupWin = window.open(
-        "{% url 'messaging:whatsapp_overlay_window' %}",
-        "SystemizeWhatsAppOverlay",
-        `width=${popupW},height=${popupH},left=${popupX},top=${popupY},resizable=no,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`
-      );
-    } catch (e) {}
-
     closeSendPendingModal();
 
     if (window.whatsappQueueRunner) {

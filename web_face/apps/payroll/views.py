@@ -867,7 +867,12 @@ def payroll_approve_view(request, period):
         payroll_run.approved_at = timezone.now()
         payroll_run.save()
 
-    messages.success(request, f"✓ تم اعتماد مسير رواتب شهر {period} نهائياً وإغلاق السجلات وتثبيت لقطات الرواتب!")
+    from apps.payroll.services import queue_all_approved_payroll_whatsapp
+    queued_count = queue_all_approved_payroll_whatsapp(payroll_run)
+    if queued_count > 0:
+        messages.success(request, f"✓ تم اعتماد مسير رواتب شهر {period} وإضافة {queued_count} كشف راتب مصور إلى طابور رسائل الواتساب المعلقة بنجاح!")
+    else:
+        messages.success(request, f"✓ تم اعتماد مسير رواتب شهر {period} نهائياً وتثبيت لقطات الرواتب!")
     return redirect("payroll:payroll_run_detail", period=period)
 
 
@@ -884,47 +889,18 @@ def payroll_statement_view(request, item_id):
 @login_required
 @manager_required
 def payroll_send_whatsapp_view(request, item_id):
-    """Queues approved individual salary statement to WhatsApp."""
+    """Queues approved individual salary statement to WhatsApp with image slip."""
     item = get_object_or_404(PayrollItem.objects.select_related("payroll_run", "employee"), id=item_id)
-    profile = GymProfile.get_solo()
-
-    if not item.employee.phone:
+    if not item.employee or not item.employee.phone:
         messages.error(request, f"لا يوجد رقم هاتف مسجل للموظف {item.employee_name_snapshot}.")
         return redirect("payroll:payroll_run_detail", period=item.payroll_run.period)
 
-    advances_line = f"السلف المسحوبة مقدمًا: -{item.advances} {profile.currency}\n" if item.advances > 0 else ""
-    msg_text = (
-        f"كشف راتب من {profile.gym_name}\n"
-        f"شهر: {item.payroll_run.period}\n"
-        f"الموظف: {item.employee_name_snapshot} ({item.role_snapshot})\n"
-        f"------------------------\n"
-        f"الراتب الأساسي: {item.fixed_salary} {profile.currency}\n"
-        f"عمولات التدريب الخاص: {item.commissions} {profile.currency}\n"
-        f"المكافآت المعتمدة: +{item.bonuses} {profile.currency}\n"
-        f"الخصومات والجزاءات: -{item.deductions} {profile.currency}\n"
-        f"{advances_line}"
-        f"------------------------\n"
-        f"صافي المستحق للصرف: {item.net_payable} {profile.currency}\n"
-        f"شكراً لمجهودك المتميز في {profile.gym_name} 💪"
-    )
-
-    dedup_key = f"salary:{item.employee.phone}:{item.payroll_run.period}"
-    WhatsAppMessage.objects.update_or_create(
-        dedup_key=dedup_key,
-        defaults={
-            "mobile": item.employee.phone,
-            "message": msg_text,
-            "msg_type": MessageType.SALARY_STATEMENT,
-            "recipient_name": item.employee_name_snapshot,
-            "recipient_type": "employee",
-            "status": "pending",
-        },
-    )
-
-    item.whatsapp_sent_at = timezone.now()
-    item.save(update_fields=["whatsapp_sent_at"])
-
-    messages.success(request, f"تمت جدولة إرسال كشف الراتب للكابتن/الموظف {item.employee_name_snapshot} عبر الواتساب بنجاح!")
+    from apps.payroll.services import queue_payroll_item_whatsapp
+    msg_obj = queue_payroll_item_whatsapp(item)
+    if msg_obj:
+        messages.success(request, f"تمت إضافة كشف الراتب المصور للموظف/الكابتن {item.employee_name_snapshot} لطابور رسائل الواتساب المعلقة بنجاح!")
+    else:
+        messages.error(request, f"تعذر إنشاء رسالة كشف الراتب للموظف {item.employee_name_snapshot}.")
     return redirect("payroll:payroll_run_detail", period=item.payroll_run.period)
 
 

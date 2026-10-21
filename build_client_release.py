@@ -43,7 +43,7 @@ for folder in ["static", "templates", "models", "data"]:
 # 4. Copy Media structure
 media_dst = os.path.join(CLIENT_DIR, "media")
 os.makedirs(media_dst, exist_ok=True)
-for sub in ["members", "invoices", "faces", "profiles"]:
+for sub in ["members", "invoices", "faces", "profiles", "salary_slips", "whatsapp_attachments"]:
     os.makedirs(os.path.join(media_dst, sub), exist_ok=True)
 
 # 5. Copy clean database template
@@ -91,16 +91,35 @@ for root, dirs, files in os.walk(CLIENT_DIR):
 
 print(f"  [V] Stripped and deleted {py_count} source (.py) files! ZERO .py files remain in the application.")
 
-# 9. Write Silent Launcher (Hidden Terminal)
+# 9. Compile Native Systemize Launcher (Systemize.exe)
+print("[*] Compiling Native Systemize Launcher (Systemize.exe)...")
+csc_exe = r"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+launcher_cs = os.path.join(BASE_DIR, "SystemizeLauncher.cs")
+launcher_out = os.path.join(CLIENT_DIR, "Systemize.exe")
+icon_path = os.path.join(CLIENT_DIR, "gym_icon.ico")
+
+if os.path.exists(csc_exe) and os.path.exists(launcher_cs):
+    csc_cmd = [
+        csc_exe,
+        "/target:winexe",
+        "/optimize+",
+        f"/win32icon:{icon_path}",
+        f"/out:{launcher_out}",
+        launcher_cs
+    ]
+    res = subprocess.run(csc_cmd, capture_output=True, text=True)
+    if res.returncode == 0:
+        print("  [V] Compiled Systemize.exe successfully with embedded icon!")
+    else:
+        print(f"  [!] Failed to compile Systemize.exe: {res.stderr}")
+else:
+    print("  [!] csc.exe or SystemizeLauncher.cs not found, skipping launcher compilation.")
+
+# Also write VBS as backup
 vbs_content = '''Set WshShell = CreateObject("WScript.Shell")
 WshShell.CurrentDirectory = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
-
-' Check if server is already running on port 8000
-' Launch background pythonw without any console window
-WshShell.Run "runtime\\pythonw.exe manage.pyc runserver 0.0.0.0:8000 --noreload", 0, False
-
-' Brief pause then open default browser
-WScript.Sleep 1600
+WshShell.Run "cmd.exe /c \"\"" & WshShell.CurrentDirectory & "\\runtime\\python.exe\" -s manage.pyc runserver 0.0.0.0:8000 --noreload > systemize_server.log 2>&1\"", 0, False
+WScript.Sleep 2000
 WshShell.Run "http://127.0.0.1:8000"
 '''
 with open(os.path.join(CLIENT_DIR, "Systemize_Silent.vbs"), "w", encoding="utf-8") as f:
@@ -327,11 +346,11 @@ Source: "{{#SourceDir}}\\media\\*"; DestDir: "{{app}}\\media"; Flags: onlyifdoes
 Source: "{{#SourceDir}}\\*"; DestDir: "{{app}}"; Flags: recursesubdirs createallsubdirs ignoreversion; Excludes: "gym_face.sqlite3,media\\*"
 
 [Icons]
-; Main Silent Desktop Shortcut (Zero Terminal / Console completely hidden!)
-Name: "{{autodesktop}}\\{{#MyAppName}}"; Filename: "{{sys}}\\wscript.exe"; Parameters: \"\"\"{{app}}\\Systemize_Silent.vbs\"\"\"; WorkingDir: "{{app}}"; IconFilename: "{{app}}\\gym_icon.ico"; Tasks: desktopicon
+; Main Native Desktop Shortcut (Zero Terminal / Clean Windows App)
+Name: "{{autodesktop}}\\{{#MyAppName}}"; Filename: "{{app}}\\Systemize.exe"; WorkingDir: "{{app}}"; IconFilename: "{{app}}\\gym_icon.ico"; Tasks: desktopicon
 
 ; Start Menu Shortcuts
-Name: "{{autoprograms}}\\{{#MyAppName}}\\{{#MyAppName}}"; Filename: "{{sys}}\\wscript.exe"; Parameters: \"\"\"{{app}}\\Systemize_Silent.vbs\"\"\"; WorkingDir: "{{app}}"; IconFilename: "{{app}}\\gym_icon.ico"
+Name: "{{autoprograms}}\\{{#MyAppName}}\\{{#MyAppName}}"; Filename: "{{app}}\\Systemize.exe"; WorkingDir: "{{app}}"; IconFilename: "{{app}}\\gym_icon.ico"
 Name: "{{autoprograms}}\\{{#MyAppName}}\\إيقاف تشغيل Systemize (Stop)"; Filename: "{{app}}\\STOP_SYSTEMIZE.bat"; WorkingDir: "{{app}}"
 Name: "{{autoprograms}}\\{{#MyAppName}}\\تحديث النظام من GitHub"; Filename: "{{app}}\\UPDATE_SYSTEMIZE.bat"; WorkingDir: "{{app}}"
 Name: "{{autoprograms}}\\{{#MyAppName}}\\تشغيل مع شاشة الأوامر (Debug)"; Filename: "{{app}}\\START_SYSTEMIZE.bat"; WorkingDir: "{{app}}"
@@ -339,10 +358,100 @@ Name: "{{autoprograms}}\\{{#MyAppName}}\\Uninstall Systemize"; Filename: "{{unin
 
 [Run]
 ; Auto-run migrations silently upon installation
-Filename: "{{app}}\\runtime\\python.exe"; Parameters: "manage.pyc migrate --noinput"; WorkingDir: "{{app}}"; StatusMsg: "Configuring database schema..."; Flags: runhidden
+Filename: "{{app}}\\runtime\\python.exe"; Parameters: "-s manage.pyc migrate --noinput"; WorkingDir: "{{app}}"; StatusMsg: "Configuring database schema..."; Flags: runhidden
 
-; Optional: Launch Systemize immediately after install
-Filename: "{{sys}}\\wscript.exe"; Parameters: \"\"\"{{app}}\\Systemize_Silent.vbs\"\"\"; WorkingDir: "{{app}}"; Description: "{{cm:LaunchProgram,{{#StringChange(MyAppName, '&', '&&')}}}}"; Flags: postinstall nowait
+; Apply custom gym onboarding parameters (Name, Theme, Logo, Clean vs Demo)
+Filename: "{{app}}\\runtime\\python.exe"; Parameters: "-s manage.pyc setup_custom_gym --name \"\"{{code:GetGymName}}\"\" --theme \"\"{{code:GetGymTheme}}\"\" --logo \"\"{{code:GetGymLogo}}\"\" {{code:GetDbModeFlag}}"; WorkingDir: "{{app}}"; StatusMsg: "Configuring gym branding & database..."; Flags: runhidden
+
+; Launch Systemize immediately after install
+Filename: "{{app}}\\Systemize.exe"; WorkingDir: "{{app}}"; Description: "{{cm:LaunchProgram,{{#StringChange(MyAppName, '&', '&&')}}}}"; Flags: postinstall nowait
+
+[Code]
+var
+  BrandingPage: TInputQueryWizardPage;
+  ThemeComboPage: TInputOptionWizardPage;
+  DbModePage: TInputOptionWizardPage;
+  LogoPage: TInputFileWizardPage;
+
+procedure InitializeWizard;
+begin
+  // Page 1: Gym Name (Optional)
+  BrandingPage := CreateInputQueryPage(wpSelectDir,
+    'تخصيص هوية وبيانات الجيم (اختياري)',
+    'Gym Branding & Identity (Optional)',
+    'يمكنك إدخال اسم الجيم الخاص بك الآن لطباعته على الإيصالات ولوحة التحكم (يمكن تركه وسيتم استخدام الاسم الافتراضي):');
+  BrandingPage.Add('اسم الصالة الرياضية (Gym Name):', False);
+  BrandingPage.Values[0] := 'Systemize Gym';
+
+  // Page 2: Theme Color Selection
+  ThemeComboPage := CreateInputOptionPage(BrandingPage.ID,
+    'طابع الألوان المعتمد (Theme Color)',
+    'اختر لون وهوية النظام المفضلة لديك:',
+    'يمكنك تغيير هذا الطابع في أي وقت من إعدادات النظام:',
+    True, False);
+  ThemeComboPage.Add('الأخضر الرياضي النيون (Neon Lime) - الافتراضي');
+  ThemeComboPage.Add('الأخضر الزمردي الراقي (Dark Emerald)');
+  ThemeComboPage.Add('أزرق تيتانيوم (Titanium Blue)');
+  ThemeComboPage.Add('برتقالي حماسي (Blaze Orange)');
+  ThemeComboPage.Add('أحمر طاقة (Power Red)');
+  ThemeComboPage.Add('أرجواني مميز (Cyber Purple)');
+  ThemeComboPage.Add('ذهبي ملكي (Royal Gold)');
+  ThemeComboPage.Add('أسود أحادي داكن (Obsidian Monochrome)');
+  ThemeComboPage.SelectedValueIndex := 0;
+
+  // Page 3: Database mode (Clean vs Demo)
+  DbModePage := CreateInputOptionPage(ThemeComboPage.ID,
+    'تهيئة قاعدة البيانات (Database Setup)',
+    'اختر نوع قاعدة البيانات التي تود البدء بها:',
+    'حدد ما إذا كنت تريد البدء بنظام نظيف للعمل الفعلي، أو بيانات تجريبية كاملة للمعاينة:',
+    True, False);
+  DbModePage.Add('بدء نظيف للعمل الفعلي (Start Clean) - قاعدة بيانات فارغة جاهزة لإدخال المشتركين الحقيقيين فوراً');
+  DbModePage.Add('بيانات تجريبية كاملة (Seed Demo Data) - مشتركين واشتراكات ومبيعات جاهزة لمعاينة النظام');
+  DbModePage.SelectedValueIndex := 0;
+
+  // Page 4: Optional Logo File
+  LogoPage := CreateInputFilePage(DbModePage.ID,
+    'شعار الجيم (اختياري - Gym Logo)',
+    'تحديد ملف اللوجو الخاص بالصالة',
+    'إذا كان لديك ملف شعار (PNG أو JPG)، يمكنك اختياره الآن ليتم ربطه تلقائياً بالنظام والإيصالات:');
+  LogoPage.Add('مسار ملف اللوجو (اتركه فارغاً للاحتفاظ باللوجو الافتراضي):', 'Image files (*.png;*.jpg;*.jpeg;*.ico)|*.png;*.jpg;*.jpeg;*.ico|All files (*.*)|*.*', '.png');
+end;
+
+function GetGymName(Param: String): String;
+begin
+  Result := Trim(BrandingPage.Values[0]);
+  if Result = '' then
+    Result := 'Systemize Gym';
+end;
+
+function GetGymTheme(Param: String): String;
+begin
+  case ThemeComboPage.SelectedValueIndex of
+    0: Result := 'lime';
+    1: Result := 'emerald';
+    2: Result := 'blue';
+    3: Result := 'orange';
+    4: Result := 'red';
+    5: Result := 'purple';
+    6: Result := 'gold';
+    7: Result := 'monochrome';
+  else
+    Result := 'lime';
+  end;
+end;
+
+function GetGymLogo(Param: String): String;
+begin
+  Result := Trim(LogoPage.Values[0]);
+end;
+
+function GetDbModeFlag(Param: String): String;
+begin
+  if DbModePage.SelectedValueIndex = 1 then
+    Result := '--seed-demo'
+  else
+    Result := '--clear-data';
+end;
 """
 
 iss_path = os.path.join(BASE_DIR, "Systemize_Setup.iss")

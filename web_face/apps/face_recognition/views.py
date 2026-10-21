@@ -343,6 +343,12 @@ def api_live_events_view(request):
         since_ts = 0.0
 
     camera_starting = getattr(engine, "camera_starting", False)
+    is_wa_sending = False
+    try:
+        from apps.messaging import whatsapp_sender
+        is_wa_sending = getattr(whatsapp_sender, "IS_WHATSAPP_SENDING", False)
+    except Exception:
+        pass
 
     # If initial poll from a newly loaded page (since_ts <= 0), synchronize timestamp and do not replay old past events
     if since_ts <= 0.0:
@@ -353,6 +359,7 @@ def api_live_events_view(request):
             "camera_running": engine.camera_running,
             "camera_starting": camera_starting,
             "camera_error": engine.camera_error,
+            "whatsapp_sending": is_wa_sending,
         })
 
     event = engine.get_latest_event()
@@ -365,6 +372,7 @@ def api_live_events_view(request):
             "camera_starting": camera_starting,
             "camera_error": engine.camera_error,
             "event": event,
+            "whatsapp_sending": is_wa_sending,
         })
 
     return JsonResponse({
@@ -374,6 +382,7 @@ def api_live_events_view(request):
         "camera_running": engine.camera_running,
         "camera_starting": camera_starting,
         "camera_error": engine.camera_error,
+        "whatsapp_sending": is_wa_sending,
     })
 
 
@@ -382,6 +391,15 @@ def api_capture_frame_view(request):
     Captures a high-resolution base64 frame from the independent camera for enrollment.
     """
     engine = get_face_engine()
+    if not engine.camera_running and not engine.camera_starting:
+        engine.start_camera(camera_index=0)
+
+    # Wait up to 2.5 seconds if camera was initializing
+    for _ in range(25):
+        if engine.current_raw_frame is not None:
+            break
+        time.sleep(0.1)
+
     success, b64_frame, msg = engine.capture_current_frame()
     if not success:
         return JsonResponse({"success": False, "message": msg}, status=503)
@@ -460,8 +478,9 @@ def api_enroll_manager_face(request):
         raw_img = request.POST.get("image")
     elif request.body:
         try:
-            data = json.loads(request.body)
-            raw_img = data.get("image")
+            body_str = request.body.decode("utf-8") if isinstance(request.body, bytes) else str(request.body)
+            data = json.loads(body_str)
+            raw_img = data.get("image") or data.get("image_base64")
         except Exception:
             pass
 
@@ -469,7 +488,7 @@ def api_enroll_manager_face(request):
         return JsonResponse({"success": False, "message": "لم يتم إرسال أي صورة لوجه المدير."}, status=400)
 
     engine = get_face_engine()
-    if not engine.is_ready:
+    if not engine.ensure_models_loaded(timeout=6.0):
         return JsonResponse({"success": False, "message": "محرك الذكاء الاصطناعي قيد التهيئة، يرجى المحاولة بعد لحظات."}, status=503)
 
     det_thresh = float(profile.face_min_confidence or 0.55)
@@ -484,6 +503,7 @@ def api_enroll_manager_face(request):
 
     profile.manager_face_embeddings = current_embs
     profile.manager_face_enrolled = True
+    profile.manager_face_unlock_enabled = True
     profile.manager_face_enrolled_at = timezone.now()
 
     if crop_bytes:
@@ -577,7 +597,7 @@ def api_verify_manager_face_unlock(request):
         return JsonResponse({"success": False, "message": "لم يتم التقاط صورة من الكاميرا."}, status=400)
 
     engine = get_face_engine()
-    if not engine.is_ready:
+    if not engine.ensure_models_loaded(timeout=6.0):
         return JsonResponse({"success": False, "message": "محرك الذكاء الاصطناعي قيد التحضير."}, status=503)
 
     det_thresh = float(profile.face_min_confidence or 0.55)

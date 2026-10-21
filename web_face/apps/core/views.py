@@ -1324,6 +1324,8 @@ def settings_view(request):
                     profile.whatsapp_search_y = int(request.POST.get("whatsapp_search_y", profile.whatsapp_search_y or 120))
                 except (ValueError, TypeError):
                     pass
+            if "whatsapp_kill_switch" in request.POST:
+                profile.whatsapp_kill_switch = request.POST.get("whatsapp_kill_switch", "ctrl+k").strip().lower() or "ctrl+k"
 
             if "form_telegram" in request.POST or "telegram_bot_token" in request.POST:
                 profile.telegram_bot_enabled = "telegram_bot_enabled" in request.POST
@@ -1810,5 +1812,69 @@ def submit_support_ticket_api(request):
         "message": "تم تسجيل طلب الدعم الفني بنجاح وجارٍ التحويل إلى واتساب المطور.",
         "developer_phone": "01080922432",
     })
+
+
+# ---------------------------------------------------------
+# Browser Heartbeat & Process Watchdog (Camera & Server Auto-Shutdown)
+# ---------------------------------------------------------
+import os
+import time
+import threading
+
+_LAST_HEARTBEAT_TIME = time.time()
+_FIRST_HEARTBEAT_SEEN = False
+_WATCHDOG_STARTED = False
+_WATCHDOG_LOCK = threading.Lock()
+
+
+def _watchdog_loop():
+    global _LAST_HEARTBEAT_TIME, _FIRST_HEARTBEAT_SEEN
+    time.sleep(60)  # Initial grace buffer
+    while True:
+        time.sleep(4)
+        if _FIRST_HEARTBEAT_SEEN:
+            elapsed = time.time() - _LAST_HEARTBEAT_TIME
+            if elapsed > 25:
+                print(f"[Systemize Watchdog] No active browser heartbeat for {elapsed:.1f}s. Releasing camera and exiting.")
+                try:
+                    from apps.face_recognition.engine import get_face_engine
+                    get_face_engine().stop_camera()
+                except Exception:
+                    pass
+                os._exit(0)
+
+
+def ensure_watchdog():
+    global _WATCHDOG_STARTED
+    with _WATCHDOG_LOCK:
+        if not _WATCHDOG_STARTED:
+            _WATCHDOG_STARTED = True
+            t = threading.Thread(target=_watchdog_loop, daemon=True, name="SystemizeHeartbeatWatchdog")
+            t.start()
+
+
+def api_heartbeat_view(request):
+    global _LAST_HEARTBEAT_TIME, _FIRST_HEARTBEAT_SEEN
+    _LAST_HEARTBEAT_TIME = time.time()
+    _FIRST_HEARTBEAT_SEEN = True
+    ensure_watchdog()
+    return JsonResponse({"status": "ok", "time": _LAST_HEARTBEAT_TIME})
+
+
+def api_shutdown_system_view(request):
+    if request.method == "POST":
+        print("[Systemize] Manual system shutdown initiated.")
+        def _exit_task():
+            time.sleep(0.4)
+            try:
+                from apps.face_recognition.engine import get_face_engine
+                get_face_engine().stop_camera()
+            except Exception:
+                pass
+            os._exit(0)
+        threading.Thread(target=_exit_task, daemon=True).start()
+        return JsonResponse({"status": "shutting_down"})
+    return JsonResponse({"error": "POST required"}, status=400)
+
 
 

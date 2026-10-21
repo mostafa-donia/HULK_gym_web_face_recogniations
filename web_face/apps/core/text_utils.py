@@ -1,6 +1,9 @@
 """
 Text utility functions for Arabic shaping, BiDi reordering, and image generation.
 """
+import os
+from PIL import ImageFont
+
 
 def reshape_arabic(text: str) -> str:
     """
@@ -12,7 +15,7 @@ def reshape_arabic(text: str) -> str:
         return ""
     text_str = str(text)
 
-    # Remove symbols/emojis not supported by Windows Tahoma/Arial fonts to prevent hollow boxes (□)
+    # Remove symbols/emojis not supported by standard Windows fonts to prevent hollow boxes (□)
     for unsupported in ["✓", "✔", "🏋️‍♂️", "🏋️", "♂️", "🚨", "📊", "💰", "📉", "💵", "🎁", "📝", "👤", "👋", "📄", "💪", "\ufe0f", "\u200d"]:
         if unsupported in text_str:
             text_str = text_str.replace(unsupported, "")
@@ -50,3 +53,39 @@ def reshape_arabic(text: str) -> str:
             return get_display(arabic_reshaper.reshape(text_str))
         except Exception:
             return text_str
+
+
+def get_arabic_font(size: int = 18, bold: bool = False):
+    """
+    Returns an ImageFont instance that renders connected Arabic text beautifully in PIL.
+    Prioritizes Segoe UI Bold / Segoe UI (Windows standard modern font with native Arabic cursive linking),
+    then Arial Bold / Arial.
+    Avoids Tahoma at sizes <= 16pt which causes broken/disconnected Arabic letters in FreeType.
+    """
+    safe_size = max(16, int(size))
+    candidates = []
+    if bold:
+        candidates = [
+            r"C:\Windows\Fonts\segoeuib.ttf",
+            r"C:\Windows\Fonts\arialbd.ttf",
+            "segoeuib.ttf",
+            "arialbd.ttf",
+        ]
+    else:
+        candidates = [
+            r"C:\Windows\Fonts\segoeui.ttf",
+            r"C:\Windows\Fonts\arial.ttf",
+            "segoeui.ttf",
+            "arial.ttf",
+        ]
+
+    for path in candidates:
+        try:
+            return ImageFont.truetype(path, safe_size)
+        except Exception:
+            continue
+
+    try:
+        return ImageFont.load_default()
+    except Exception:
+        return None

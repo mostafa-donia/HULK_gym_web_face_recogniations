@@ -535,6 +535,9 @@
         <a href="{% url 'accounts:logout' %}" class="top-btn-logout" title="تسجيل خروج">
           خروج
         </a>
+        <button type="button" onclick="shutdownSystemize()" class="top-btn-logout" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #f87171; cursor: pointer;" title="إغلاق النظام وإيقاف الكاميرا بالكامل">
+          🛑 إغلاق
+        </button>
       </div>
 
     </div>
@@ -1007,23 +1010,7 @@
         const btn = document.getElementById('btnWa30Send10');
         if (btn) btn.disabled = true;
 
-        // Open popup window IMMEDIATELY on user click so Chrome/Edge popup blocker NEVER blocks it!
         let popupWin = null;
-        try {
-          const screenW = window.screen.availWidth || window.screen.width || 1920;
-          const popupW = 320;
-          const popupH = 155;
-          const popupX = Math.max(20, screenW - popupW - 30);
-          const popupY = 30;
-          popupWin = window.open(
-            "{% url 'messaging:whatsapp_overlay_window' %}",
-            "SystemizeWhatsAppOverlay",
-            `width=${popupW},height=${popupH},left=${popupX},top=${popupY},resizable=no,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`
-          );
-        } catch (e) {
-          console.warn("Could not open overlay popup window:", e);
-        }
-
         dismiss30MinReminder();
 
         fetch("{% url 'messaging:whatsapp_pending_messages' %}", {
@@ -1061,11 +1048,11 @@
         }
       };
 
-      // Check on page load and every 60 seconds
-      setTimeout(check30MinWhatsAppReminder, 2000);
-      setInterval(check30MinWhatsAppReminder, 60 * 1000);
-    })();
-  </script>
+        // Auto-overlay popup disabled per user request
+        // setTimeout(check30MinWhatsAppReminder, 2000);
+        // setInterval(check30MinWhatsAppReminder, 60 * 1000);
+      })();
+    </script>
   {% endif %}
 
   <!-- Global Theme Switcher Logic -->
@@ -1200,33 +1187,13 @@
         this.isCancelled = false;
         this.isRunning = true;
 
-        // Use existing popup window if already opened by synchronous user click
-        if (existingPopupWin && !existingPopupWin.closed) {
-          this.popupWin = existingPopupWin;
-        } else {
-          try {
-            const screenW = window.screen.availWidth || window.screen.width || 1920;
-            const popupW = 320;
-            const popupH = 155;
-            const popupX = Math.max(20, screenW - popupW - 30);
-            const popupY = 30;
-            this.popupWin = window.open(
-              "{% url 'messaging:whatsapp_overlay_window' %}",
-              "SystemizeWhatsAppOverlay",
-              `width=${popupW},height=${popupH},left=${popupX},top=${popupY},resizable=no,scrollbars=no,status=no,toolbar=no,menubar=no,location=no`
-            );
-          } catch (e) {
-            console.warn("Could not open overlay popup window:", e);
-          }
-        }
+        this.popupWin = null;
 
         const widget = document.getElementById('whatsappOverlayWidget');
         const cancelBtn = document.getElementById('waOverlayCancelBtn');
         const pulse = document.getElementById('waOverlayPulse');
         if (widget) {
-          widget.style.display = 'block';
-          widget.style.opacity = '1';
-          widget.style.transform = 'translateY(0)';
+          widget.style.display = 'none';
         }
         if (cancelBtn) {
           cancelBtn.style.background = '#ef4444';
@@ -1410,6 +1377,42 @@
     };
 
     window.whatsappQueueRunner.init();
+
+    // Heartbeat ping: keeps background python server & camera alive while any browser tab is open
+    function sendHeartbeat() {
+      fetch("{% url 'core:api_heartbeat' %}", { credentials: 'same-origin' }).catch(() => {});
+    }
+    setInterval(sendHeartbeat, 8000);
+    sendHeartbeat();
+
+    // Global manual shutdown function
+    window.shutdownSystemize = async function() {
+      if (!confirm("هل أنت متأكد من رغبتك في إغلاق نظام Systemize بالكامل وإيقاف الكاميرا؟")) return;
+      try {
+        await fetch("{% url 'core:api_shutdown' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": (typeof getCookie === 'function' ? getCookie("csrftoken") : "") || ""
+          }
+        });
+        document.body.innerHTML = '<div style="display:flex;height:100vh;align-items:center;justify-content:center;background:#0b0f19;color:#fff;font-family:sans-serif;font-size:1.5rem;font-weight:bold;text-align:center;">تم إغلاق نظام Systemize وإيقاف الكاميرا بنجاح.<br><span style="font-size:1rem;color:#94a3b8;margin-top:10px;display:block;">يمكنك إغلاق هذه النافذة الآن.</span></div>';
+        setTimeout(() => { window.close(); }, 1500);
+      } catch (e) {
+        alert("تم إرسال أمر الإغلاق إلى النظام.");
+      }
+    };
+
+    // Kill switch listener for WhatsApp sending in the browser
+    window.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        if (window.whatsappQueueRunner && window.whatsappQueueRunner.isRunning) {
+          e.preventDefault();
+          console.warn("[KillSwitch] Ctrl+K pressed! Cancelling WhatsApp queue immediately.");
+          window.whatsappQueueRunner.cancel();
+        }
+      }
+    });
   </script>
 
   {% block extra_js %}{% endblock %}
