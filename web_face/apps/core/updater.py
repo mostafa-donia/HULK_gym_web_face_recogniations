@@ -4,11 +4,35 @@ import shutil
 import subprocess
 import json
 import time
+import ssl
 import urllib.request
 from datetime import datetime
 from pathlib import Path
 from django.conf import settings
 from django.utils import timezone
+
+try:
+    ssl._create_default_https_context = ssl._create_unverified_context
+except Exception:
+    pass
+
+
+def _get_ssl_context() -> ssl.SSLContext:
+    """
+    Returns an SSL context that will not fail on Windows systems
+    missing local root CA certificates.
+    """
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        pass
+
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
+
 
 
 def get_repo_dir() -> Path:
@@ -230,7 +254,7 @@ def check_updates_via_api(profile, current_info) -> dict:
         headers={"User-Agent": "Systemize-Gym-Updater", "Accept": "application/vnd.github.v3+json"}
     )
     try:
-        with urllib.request.urlopen(req, timeout=12) as resp:
+        with urllib.request.urlopen(req, context=_get_ssl_context(), timeout=12) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             sha = data.get("sha", "")[:7]
             msg = data.get("commit", {}).get("message", "").splitlines()[0]
@@ -334,7 +358,7 @@ def update_via_zip_download(profile, branch: str, logs: list, remote_info: dict 
         )
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_zip = Path(tmp_dir) / "update.zip"
-            with urllib.request.urlopen(req, timeout=60) as resp, open(tmp_zip, "wb") as out_file:
+            with urllib.request.urlopen(req, context=_get_ssl_context(), timeout=60) as resp, open(tmp_zip, "wb") as out_file:
                 shutil.copyfileobj(resp, out_file)
 
             logs.append("✓ تم تحميل حزمة التحديث بنجاح. جاري فحص واستخراج الملفات...")

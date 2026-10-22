@@ -180,8 +180,26 @@ updater_py = '''import os
 import sys
 import shutil
 import zipfile
+import ssl
 import urllib.request
 import compileall
+
+# Bypass Windows embedded python missing root CA certificates
+try:
+    ssl._create_default_https_context = ssl._create_unverified_context
+except Exception:
+    pass
+
+def _get_ssl_context():
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        pass
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
 
 REPO_ZIP_URL = "https://github.com/mostafa-donia/HULK_gym_web_face_recogniations/archive/refs/heads/main.zip"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -197,7 +215,7 @@ extract_dir = os.path.join(BASE_DIR, "_update_extracted")
 try:
     headers = {"User-Agent": "Systemize-Client-Updater"}
     req = urllib.request.Request(REPO_ZIP_URL, headers=headers)
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with urllib.request.urlopen(req, context=_get_ssl_context(), timeout=60) as resp:
         with open(zip_path, "wb") as f:
             f.write(resp.read())
     print("[*] Downloaded update package successfully.")
@@ -275,6 +293,14 @@ try:
     print("[*] Running database migrations...")
     py_exe = os.path.join(BASE_DIR, "runtime", "python.exe")
     os.system(f'"{py_exe}" -s manage.pyc migrate --noinput')
+
+    # Auto-install Google Contacts packages if missing
+    try:
+        import googleapiclient
+        import google_auth_oauthlib
+    except ImportError:
+        print("[*] Installing Google Contacts packages...")
+        os.system(f'"{py_exe}" -m pip install --no-warn-script-location google-api-python-client google-auth-httplib2 google-auth-oauthlib')
 
     # Cleanup temp zip
     if os.path.exists(zip_path): os.remove(zip_path)

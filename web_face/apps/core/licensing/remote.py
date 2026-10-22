@@ -1,7 +1,15 @@
 import json
+import ssl
 import urllib.parse
 import urllib.request
 from datetime import datetime
+
+
+def _get_ssl_context():
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    return ctx
 
 def fetch_remote_license_status(remote_url: str, machine_id: str, client_name: str = "") -> tuple[bool, dict, str]:
     """
@@ -29,7 +37,7 @@ def fetch_remote_license_status(remote_url: str, machine_id: str, client_name: s
             },
         )
 
-        with urllib.request.urlopen(req, timeout=3.5) as response:
+        with urllib.request.urlopen(req, context=_get_ssl_context(), timeout=3.5) as response:
             if response.status != 200:
                 return False, {}, f"Server returned status {response.status}"
             raw_text = response.read().decode("utf-8")

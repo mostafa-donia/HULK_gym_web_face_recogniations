@@ -3,6 +3,8 @@ import io
 import time
 import base64
 import threading
+import ssl
+import urllib.request
 from typing import Optional, Tuple, List, Dict, Any
 import numpy as np
 import cv2
@@ -452,7 +454,8 @@ class FaceEngine:
                         headers={"User-Agent": "Systemize-AccessGate/2.0"},
                         method=http_method.upper()
                     )
-                    with urllib.request.urlopen(req, timeout=2.5) as resp:
+                    ssl_ctx = ssl._create_unverified_context()
+                    with urllib.request.urlopen(req, context=ssl_ctx, timeout=2.5) as resp:
                         code = resp.getcode()
                         msg = f"تم إرسال إشارة فتح البوابة عبر الشبكة المحلية إلى ({target_url}) بنجاح (كود الاستجابة: {code})."
                         print(f"[Gate Trigger LAN] SUCCESS: {msg}")
