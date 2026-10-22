@@ -593,12 +593,21 @@ def api_verify_manager_face_unlock(request):
         except Exception:
             pass
 
-    if not raw_img:
-        return JsonResponse({"success": False, "message": "لم يتم التقاط صورة من الكاميرا."}, status=400)
-
     engine = get_face_engine()
     if not engine.ensure_models_loaded(timeout=6.0):
         return JsonResponse({"success": False, "message": "محرك الذكاء الاصطناعي قيد التحضير."}, status=503)
+
+    source = request.POST.get("source") or request.GET.get("source") or ""
+    if not raw_img or source == "same":
+        # Shared system camera: grab current live frame directly from OpenCV engine
+        with engine.frame_lock:
+            if engine.current_raw_frame is not None:
+                raw_img = engine.current_raw_frame.copy()
+            elif engine.latest_jpeg_bytes is not None:
+                raw_img = engine.latest_jpeg_bytes
+
+    if raw_img is None:
+        return JsonResponse({"success": False, "message": "لم يتم التقاط صورة من الكاميرا، وكاميرا النظام غير متصلة."}, status=400)
 
     det_thresh = float(profile.face_min_confidence or 0.55)
     success, query_emb, _, err = engine.extract_embedding_and_crop(raw_img, score_threshold=det_thresh)

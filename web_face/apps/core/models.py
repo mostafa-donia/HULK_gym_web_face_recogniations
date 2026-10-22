@@ -93,6 +93,16 @@ class GymProfile(models.Model):
         blank=True,
         verbose_name="تاريخ تسجيل بصمة وجه المدير",
     )
+    manager_face_camera_source = models.CharField(
+        max_length=20,
+        choices=[
+            ("same", "نفس كاميرا النظام المفتوحة (Shared System Camera)"),
+            ("separate", "كاميرا منفصلة / كاميرا ويب المتصفح (Separate Webcam)"),
+        ],
+        default="same",
+        verbose_name="مصدر كاميرا فتح وجه المدير",
+        help_text="اختر 'نفس كاميرا النظام' لتجنب تعارض الكاميرا والفتح التلقائي بدون أخطاء، أو 'كاميرا منفصلة' عند تخصيص كاميرا ثانية لمكتب المدير.",
+    )
 
     # Electronic Gate & Turnstile Network / Relay Settings
     gate_relay_enabled = models.BooleanField(default=False, verbose_name="تفعيل فتح البوابة تلقائياً عند التعرف بالوجه")

@@ -1052,20 +1052,37 @@
           <input type="hidden" name="form_manager_face" value="1">
           <input type="hidden" name="manager_face_unlock_present" value="1">
 
-          <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-            <div>
-              <label for="mgr_face_unlock_toggle" style="color: var(--text-main); font-weight: 800; font-size: 0.96rem; margin: 0; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="mgr_face_unlock_toggle" name="manager_face_unlock_enabled" {% if profile.manager_face_unlock_enabled %}checked{% endif %} style="width: 20px; height: 20px; accent-color: #84cc16; cursor: pointer;">
-                <span>تفعيل الفتح السريع ببصمة وجه المدير (Manager Face Unlock Enabled)</span>
-              </label>
-              <small style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 4px; margin-right: 28px;">
-                عند التفعيل، يمكن للمدير فتح لوحة المدير وصفحة الإعدادات والرواتب بالتعرف على الوجه بالكاميرا مباشرة.
-              </small>
+          <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div>
+                <label for="mgr_face_unlock_toggle" style="color: var(--text-main); font-weight: 800; font-size: 0.96rem; margin: 0; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="mgr_face_unlock_toggle" name="manager_face_unlock_enabled" {% if profile.manager_face_unlock_enabled %}checked{% endif %} style="width: 20px; height: 20px; accent-color: #84cc16; cursor: pointer;">
+                  <span>تفعيل الفتح السريع ببصمة وجه المدير (Manager Face Unlock Enabled)</span>
+                </label>
+                <small style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 4px; margin-right: 28px;">
+                  عند التفعيل، يمكن للمدير فتح لوحة المدير وصفحة الإعدادات والرواتب بالتعرف على الوجه بالكاميرا مباشرة وتلقائياً.
+                </small>
+              </div>
+
+              <button type="submit" class="btn btn-secondary btn-sm" style="font-weight: 800; height: 36px; padding: 0 16px;">
+                حفظ الإعدادات
+              </button>
             </div>
 
-            <button type="submit" class="btn btn-secondary btn-sm" style="font-weight: 800; height: 36px; padding: 0 16px;">
-              حفظ حالة التفعيل
-            </button>
+            <div style="padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <label style="color: var(--text-main); font-weight: 800; font-size: 0.88rem; display: block; margin-bottom: 3px;">
+                  مصدر كاميرا فتح قفل المدير (Face ID Camera Mode):
+                </label>
+                <span style="color: var(--text-muted); font-size: 0.78rem;">
+                  اختر "نفس كاميرا النظام المفتوحة" لمنع تعارض الكاميرا الواحدة وللفتح التلقائي السريع، أو "كاميرا ويب منفصلة" عند استخدام كاميرا ثانية لمكتب المدير.
+                </span>
+              </div>
+              <select name="manager_face_camera_source" class="form-control" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); font-weight: 700; height: 36px; border-radius: 8px; padding: 0 12px; font-size: 0.85rem;">
+                <option value="same" {% if profile.manager_face_camera_source == 'same' or not profile.manager_face_camera_source %}selected{% endif %}>📹 نفس كاميرا النظام المفتوحة (Shared Camera - موصى به)</option>
+                <option value="separate" {% if profile.manager_face_camera_source == 'separate' %}selected{% endif %}>📷 كاميرا ويب منفصلة للمدير (Separate Webcam)</option>
+              </select>
+            </div>
           </div>
         </form>
 

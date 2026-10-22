@@ -1307,6 +1307,8 @@ def settings_view(request):
 
             if "form_manager_face" in request.POST or "manager_face_unlock_present" in request.POST:
                 profile.manager_face_unlock_enabled = "manager_face_unlock_enabled" in request.POST
+                if "manager_face_camera_source" in request.POST:
+                    profile.manager_face_camera_source = request.POST.get("manager_face_camera_source", "same").strip()
 
             if "form_whatsapp" in request.POST or "whatsapp_send_mode" in request.POST:
                 profile.whatsapp_enabled = "whatsapp_enabled" in request.POST

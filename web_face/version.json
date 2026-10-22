@@ -1,7 +1,7 @@
 {
-  "version": "v2.0",
-  "commit": "41e9c0b",
-  "date": "2026-10-21",
-  "message": "Systemize v2.0 Client Release with Inno Setup and GitHub Auto-Updater",
-  "updated_at": "2026-10-21 22:20:00"
+  "version": "v2.1",
+  "commit": "auto-scan-face-id",
+  "date": "2026-10-22",
+  "message": "Auto face unlock without button click, shared system camera conflict prevention, camera switcher option",
+  "updated_at": "2026-10-22 13:45:00"
 }
