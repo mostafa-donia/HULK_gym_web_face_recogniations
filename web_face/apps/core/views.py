@@ -1459,6 +1459,15 @@ def settings_view(request):
                 messages.error(request, f"❌ {msg}")
             return redirect("core:settings")
 
+        elif action == "install_google_contacts_libs":
+            from apps.core.google_contacts import ensure_google_libraries_installed
+            ok, msg = ensure_google_libraries_installed()
+            if ok:
+                messages.success(request, f"✓ {msg}")
+            else:
+                messages.error(request, f"❌ {msg}")
+            return redirect("core:settings")
+
         elif action == "disconnect_google_account":
             reset_sync = request.POST.get("reset_members_sync") in ["1", "on", "true"]
             ok, msg = disconnect_google_account(reset_members_sync=reset_sync)

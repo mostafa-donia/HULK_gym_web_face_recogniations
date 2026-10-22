@@ -1,14 +1,16 @@
 {
   "clients": {
     "HWID-041E-9DC4-61D6-92B1": {
+      "product_id": "systemize_gym",
       "name": "mostafa-dev",
       "phone": "01080922432",
       "status": "active",
+      "is_paused": false,
+      "allow_updates": true,
       "license_type": "lifetime",
       "valid_until": "NONE",
       "features": {
         "face_recognition": true,
-        "face": true,
         "gate_relay": true,
         "whatsapp": true,
         "telegram": true,
@@ -22,19 +24,22 @@
       },
       "branches": [],
       "managed_users": [],
-      "developer_message": "تم تفعيل حسابكم بنجاح. شكراً لكم.",
+      "developer_message": "تم تفعيل وتشغيل حسابكم بنجاح. شكراً لكم.",
       "created_at": "2026-10-18T08:50:16.667361+00:00",
-      "last_seen": null
+      "last_seen": "2026-10-21T21:01:00.934051+00:00",
+      "pause_message": ""
     },
     "HWID-C63C-B762-F62C-75F0": {
+      "product_id": "systemize_gym",
       "name": "yousef fathy",
       "phone": "01050283220",
       "status": "suspended",
+      "is_paused": true,
+      "allow_updates": false,
       "license_type": "demo",
       "valid_until": "2026-10-27T13:05:21.960379+00:00",
       "features": {
         "face_recognition": true,
-        "face": true,
         "gate_relay": true,
         "whatsapp": true,
         "telegram": true,
@@ -50,17 +55,20 @@
       "managed_users": [],
       "developer_message": "تم إيقاف تشغيل هذه النسخة مؤقتاً لعدم السداد. يرجى التواصل مع المطور لتسوية الحساب.",
       "created_at": "2026-10-20T13:05:21.960379+00:00",
-      "last_seen": null
+      "last_seen": null,
+      "pause_message": "تم إيقاف تشغيل هذه النسخة مؤقتاً لعدم السداد. يرجى التواصل مع المطور لتسوية الحساب."
     },
     "HWID-DFF6-3FC6-1712-8F5A": {
+      "product_id": "systemize_gym",
       "name": "hero",
       "phone": "01080922432",
       "status": "active",
+      "is_paused": false,
+      "allow_updates": true,
       "license_type": "lifetime",
       "valid_until": "NONE",
       "features": {
         "face_recognition": true,
-        "face": true,
         "gate_relay": true,
         "whatsapp": true,
         "telegram": true,
@@ -76,10 +84,11 @@
       "managed_users": [],
       "developer_message": "شكراً لاشتراككم في نظام Systemize.",
       "created_at": "2026-10-20T16:24:06.660741+00:00",
-      "last_seen": null
+      "last_seen": null,
+      "pause_message": "شكراً لاشتراككم في نظام Systemize."
     }
   },
   "default_demo_days": 7,
   "system_announcement": "",
-  "last_updated": "2026-10-20T16:24:06.660741+00:00"
+  "last_updated": "2026-10-21T21:01:00.934051+00:00"
 }

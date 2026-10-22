@@ -1,0 +1,186 @@
+{
+  "products": {
+    "systemize_gym": {
+      "id": "systemize_gym",
+      "name": "Systemize Gym OS",
+      "arabic_name": "نظام الصالات والنوادي الرياضية وبصمة الوجه",
+      "icon": "fa-dumbbell",
+      "badge_color": "lime",
+      "repo_url": "https://github.com/mostafa-donia/HULK_gym_web_face_recogniations",
+      "branch": "main",
+      "current_version": "v2.0",
+      "updates_allowed": true,
+      "default_demo_days": 7,
+      "features": [
+        {
+          "key": "face_recognition",
+          "name": "بصمة الوجه الذكية بالذكاء الاصطناعي (AI Face ID)",
+          "default": true
+        },
+        {
+          "key": "gate_relay",
+          "name": "بوابات الدخول ومتحكم الريليه (Turnstile Relay)",
+          "default": true
+        },
+        {
+          "key": "whatsapp",
+          "name": "رسائل وتنبيهات الواتساب التلقائية (WhatsApp Automation)",
+          "default": true
+        },
+        {
+          "key": "telegram",
+          "name": "بوت إشعارات تليجرام للمدير (Telegram Bot)",
+          "default": true
+        },
+        {
+          "key": "bar",
+          "name": "مبيعات ومخزون البار والمشروبات (Bar POS)",
+          "default": true
+        },
+        {
+          "key": "payroll",
+          "name": "المدربين ومسيرات الرواتب والعمولات (Trainers Payroll)",
+          "default": true
+        },
+        {
+          "key": "retention",
+          "name": "تتبع ركود الأعضاء والتجديدات (Member Retention)",
+          "default": true
+        },
+        {
+          "key": "reports",
+          "name": "التقارير المالية والمحاسبية المتقدمة (Financial Reports)",
+          "default": true
+        },
+        {
+          "key": "barcode",
+          "name": "قارئ الباركود والبطاقات الذكية (Barcode/QR/RFID)",
+          "default": true
+        },
+        {
+          "key": "expenses",
+          "name": "المصروفات وسندات الصرف النقدية (Expenses Ledger)",
+          "default": true
+        },
+        {
+          "key": "multi_branch",
+          "name": "إدارة الفروع المتعددة (Multi-Branch Network)",
+          "default": false
+        }
+      ]
+    },
+    "systemize_pos": {
+      "id": "systemize_pos",
+      "name": "Systemize POS & Inventory",
+      "arabic_name": "نظام المخازن والمبيعات ونقاط البيع السريعة",
+      "icon": "fa-boxes-stacked",
+      "badge_color": "sky",
+      "repo_url": "https://github.com/mostafa-donia/inventory_win7_kareem",
+      "branch": "main",
+      "current_version": "v1.0",
+      "updates_allowed": true,
+      "default_demo_days": 7,
+      "features": [
+        {
+          "key": "pos_cashier",
+          "name": "شاشة الكاشير السريع وطباعة الإيصالات",
+          "default": true
+        },
+        {
+          "key": "barcode_scanner",
+          "name": "قارئ الباركود وطباعة ملصقات الباركود",
+          "default": true
+        },
+        {
+          "key": "inventory_alerts",
+          "name": "تنبيهات نواقص المخزن والحد الأدنى",
+          "default": true
+        },
+        {
+          "key": "purchases",
+          "name": "فواتير المشتريات وحسابات الموردين",
+          "default": true
+        },
+        {
+          "key": "sales_invoices",
+          "name": "فواتير المبيعات وضريبة القيمة المضافة",
+          "default": true
+        },
+        {
+          "key": "customer_debts",
+          "name": "حسابات وديون العملاء والبيع الآجل",
+          "default": true
+        },
+        {
+          "key": "whatsapp_receipts",
+          "name": "إرسال الفواتير وسندات القبض عبر واتساب",
+          "default": true
+        },
+        {
+          "key": "expenses",
+          "name": "المصروفات النثرية وسندات الصرف",
+          "default": true
+        },
+        {
+          "key": "reports",
+          "name": "تقارير الأرباح والمبيعات والجرد الدوري",
+          "default": true
+        },
+        {
+          "key": "multi_branch",
+          "name": "الفروع والمخازن المتعددة",
+          "default": false
+        }
+      ]
+    },
+    "systemize_clinic": {
+      "id": "systemize_clinic",
+      "name": "Systemize Clinic OS",
+      "arabic_name": "نظام العيادات والمراكز الطبية التخصصية",
+      "icon": "fa-stethoscope",
+      "badge_color": "violet",
+      "repo_url": "https://github.com/mostafa-donia/systemize_clinic",
+      "branch": "main",
+      "current_version": "v1.0",
+      "updates_allowed": true,
+      "default_demo_days": 7,
+      "features": [
+        {
+          "key": "patient_records",
+          "name": "السجلات والملفات الطبية للمرضى",
+          "default": true
+        },
+        {
+          "key": "appointments_calendar",
+          "name": "جدول الحجوزات والمواعيد اليومية",
+          "default": true
+        },
+        {
+          "key": "prescriptions",
+          "name": "الروشتات الطبية الإلكترونية والجرعات",
+          "default": true
+        },
+        {
+          "key": "doctor_commissions",
+          "name": "حساب نسب وعمولات الأطباء والأخصائيين",
+          "default": true
+        },
+        {
+          "key": "whatsapp_reminders",
+          "name": "تذكير المرضى بمواعيد الكشف آلياً",
+          "default": true
+        },
+        {
+          "key": "billing_invoices",
+          "name": "فواتير الكشف والعمليات والخدمات",
+          "default": true
+        },
+        {
+          "key": "reports",
+          "name": "التقارير المالية والطبية الشاملة",
+          "default": true
+        }
+      ]
+    }
+  }
+}

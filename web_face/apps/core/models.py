@@ -365,7 +365,7 @@ class SystemLicense(models.Model):
     tamper_hash = models.CharField(max_length=256, blank=True, default="", verbose_name="توقيع الأمان الرقمي")
     last_clock_check = models.DateTimeField(null=True, blank=True, verbose_name="آخر توقيت فحص للنظام")
     
-    # Remote Control Center
+    # Remote Control Center & Cloud Governance
     remote_control_url = models.CharField(
         max_length=300,
         blank=True,
@@ -374,6 +374,8 @@ class SystemLicense(models.Model):
         help_text="رابط الـ API أو JSON للتحكم المركزي في صلاحيات العميل عن بعد",
     )
     last_remote_sync = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ آخر مزامنة مع السيرفر")
+    updates_allowed = models.BooleanField(default=True, verbose_name="السماح بالتحديثات من GitHub")
+    update_block_reason = models.CharField(max_length=255, blank=True, default="", verbose_name="سبب حظر التحديثات")
     developer_notes = models.TextField(blank=True, default="", verbose_name="رسالة المطور أو إشعار الإيقاف")
     developer_contact_phone = models.CharField(
         max_length=30,

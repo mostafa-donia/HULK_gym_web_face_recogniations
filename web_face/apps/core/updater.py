@@ -129,6 +129,26 @@ def check_for_updates(profile=None) -> dict:
     branch = profile.github_branch or "main"
     current_info = get_current_version_info()
 
+    # Central Cloud updates permission check
+    try:
+        from apps.core.models import SystemLicense
+        lic = SystemLicense.get_solo()
+        if not lic.updates_allowed:
+            block_msg = lic.update_block_reason or "تم إيقاف التحديثات البرمجية لهذه النسخة مؤقتاً بقرار من إدارة النظام المركزية."
+            return {
+                "success": True,
+                "update_available": False,
+                "updates_blocked": True,
+                "commits_behind": 0,
+                "current_commit": current_info["commit"],
+                "remote_commit": current_info["commit"],
+                "branch": branch,
+                "message": f"🔒 التحديثات معطلة: {block_msg}",
+                "current_info": current_info,
+            }
+    except Exception as exc:
+        print(f"[check_for_updates] License check warning: {exc}")
+
     profile.last_update_check = timezone.now()
     profile.save(update_fields=["last_update_check"])
 
@@ -417,10 +437,25 @@ def perform_system_update(profile=None) -> dict:
     4. Refreshes AI face recognition caches
     5. Updates version.json and GymProfile
     """
-    from apps.core.models import GymProfile
+    from apps.core.models import GymProfile, SystemLicense
     profile = profile or GymProfile.get_solo()
     branch = profile.github_branch or "main"
     logs = []
+
+    # Check Central Cloud updates permission
+    try:
+        lic = SystemLicense.get_solo()
+        if not lic.updates_allowed:
+            block_msg = lic.update_block_reason or "تم إيقاف التحديثات البرمجية لهذه النسخة مؤقتاً بقرار من إدارة النظام المركزية."
+            logs.append(f"❌ التحديث مرفوض ومحظور: {block_msg}")
+            return {
+                "success": False,
+                "updates_blocked": True,
+                "message": block_msg,
+                "logs": logs,
+            }
+    except Exception as exc:
+        print(f"[perform_system_update] License check warning: {exc}")
 
     # 1. Database Backup
     logs.append("⏳ 1. جاري إنشاء نسخة احتياطية لقاعدة البيانات...")
@@ -496,6 +531,30 @@ def perform_system_update(profile=None) -> dict:
             logs.append(f"⚠️ تعذر تشغيل migrate تلقائياً: {str(e)}")
     else:
         logs.append("⚠️ لم يتم العثور على manage.py لتطبيق الترقيات.")
+
+    # 4. Check & auto-install Google Contacts libraries if missing
+    try:
+        import googleapiclient
+        import google_auth_oauthlib
+    except ImportError:
+        logs.append("⏳ 4. جاري فحص وتثبيت مكتبات Google Contacts في بيئة بايثون...")
+        try:
+            pip_proc = subprocess.run(
+                [str(python_bin), "-m", "pip", "install", "--no-warn-script-location", "google-api-python-client", "google-auth-httplib2", "google-auth-oauthlib"],
+                cwd=str(base_dir),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=120,
+            )
+            if pip_proc.returncode == 0:
+                logs.append("✓ تم تثبيت مكتبات Google Contacts بنجاح.")
+            else:
+                logs.append("⚠️ تعذر تثبيت حزم Google Contacts تلقائياً (تأكد من توفر اتصال بالإنترنت).")
+        except Exception as e:
+            logs.append(f"⚠️ ملاحظة أثناء تثبيت الحزم: {e}")
 
     # 5. Refresh AI Cache
     logs.append("⏳ 4. جاري تحديث ذاكرة التعرف على الوجه...")

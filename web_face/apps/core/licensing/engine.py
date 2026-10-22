@@ -264,16 +264,31 @@ def validate_system_license(allow_remote_sync: bool = True) -> tuple[bool, str, 
             },
         )
 
-    # 3. Online Remote Control Center Sync (if configured)
-    if allow_remote_sync and license_obj.remote_control_url:
+    # 3. Online Remote Control Center Sync (if configured or local default)
+    remote_url = (license_obj.remote_control_url or "").strip()
+    if not remote_url:
+        # Check GymProfile central_control_url or default local/central control center
+        try:
+            from apps.core.models import GymProfile
+            prof = GymProfile.get_solo()
+            remote_url = getattr(prof, "central_control_url", "")
+        except Exception:
+            remote_url = ""
+
+    if not remote_url:
+        remote_url = "http://127.0.0.1:9000/api/license/sync/"
+
+    if allow_remote_sync and remote_url:
         sync_ok, remote_data, sync_msg = fetch_remote_license_status(
-            license_obj.remote_control_url, current_hwid, license_obj.client_name
+            remote_url, current_hwid, license_obj.client_name
         )
         if sync_ok and remote_data:
-            # Process Developer Remote Overrides
-            new_status = remote_data.get("status", license_obj.status).lower().strip()
+            # Process Developer Remote Overrides & Pause Subsystem
+            is_paused = bool(remote_data.get("is_paused", False))
+            raw_status = (remote_data.get("status") or license_obj.status).lower().strip()
+            new_status = "suspended" if is_paused else raw_status
             new_type = remote_data.get("license_type", license_obj.license_type).lower().strip()
-            new_msg = remote_data.get("message") or remote_data.get("developer_message", "")
+            pause_msg = remote_data.get("pause_message") or remote_data.get("developer_message") or remote_data.get("message", "")
             valid_until_str = remote_data.get("valid_until")
 
             if valid_until_str:
@@ -287,8 +302,14 @@ def validate_system_license(allow_remote_sync: bool = True) -> tuple[bool, str, 
 
             license_obj.status = new_status
             license_obj.license_type = new_type
-            if new_msg:
-                license_obj.developer_notes = new_msg
+            if pause_msg:
+                license_obj.developer_notes = pause_msg
+
+            # Update Control Policy
+            if "updates_allowed" in remote_data:
+                license_obj.updates_allowed = bool(remote_data["updates_allowed"])
+            if "update_block_reason" in remote_data:
+                license_obj.update_block_reason = str(remote_data["update_block_reason"])
 
             # Remote Features Toggle
             ft = remote_data.get("features", {})
@@ -387,6 +408,9 @@ def validate_system_license(allow_remote_sync: bool = True) -> tuple[bool, str, 
         "machine_id": current_hwid,
         "client_name": license_obj.client_name,
         "status": license_obj.status,
+        "is_paused": bool(license_obj.status == "suspended"),
+        "updates_allowed": getattr(license_obj, "updates_allowed", True),
+        "update_block_reason": getattr(license_obj, "update_block_reason", ""),
         "license_type": license_obj.license_type,
         "valid_until": license_obj.valid_until,
         "phone": license_obj.developer_contact_phone,

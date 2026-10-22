@@ -32,8 +32,19 @@ class LicenseEnforcementMiddleware:
         )) or path.endswith((".ico", ".png", ".jpg", ".jpeg", ".svg", ".css", ".js", ".map", ".json")):
             return self.get_response(request)
 
-        # License validation
+        # License validation & periodic remote sync (every 3 minutes on any request or on / and /settings/)
         allow_remote = path in ["/", "/settings/"]
+        if not allow_remote:
+            try:
+                from apps.core.models import SystemLicense
+                from django.utils import timezone
+                lic = SystemLicense.objects.first()
+                if lic and lic.last_remote_sync:
+                    if (timezone.now() - lic.last_remote_sync).total_seconds() > 60:
+                        allow_remote = True
+            except Exception:
+                pass
+
         try:
             is_valid, reason, message, info = validate_system_license(allow_remote_sync=allow_remote)
         except Exception as exc:
@@ -66,6 +77,39 @@ class LicenseEnforcementMiddleware:
                 "license_message": message,
                 "license_info": info,
             }, status=403)
+
+        # Automatic Feature Enforcement
+        FEATURE_URL_MAP = {
+            "/bar/": ("bar", "مبيعات ومخزون البار"),
+            "/payroll/": ("payroll", "المدربين ومسيرات الرواتب"),
+            "/messaging/": ("whatsapp", "رسائل وتنبيهات الواتساب الآلية"),
+            "/face/": ("face_recognition", "بصمة الوجه الذكية AI"),
+            "/kiosk/": ("face_recognition", "كشك تسجيل الحضور بالوجه"),
+            "/expenses/": ("expenses", "سندات ومصروفات الصالة"),
+        }
+        for prefix, (feat_key, feat_title) in FEATURE_URL_MAP.items():
+            if path.startswith(prefix):
+                features = info.get("features", {})
+                if not features.get(feat_key, True):
+                    is_ajax = (
+                        request.headers.get("x-requested-with") == "XMLHttpRequest"
+                        or "application/json" in (request.headers.get("accept") or "").lower()
+                        or "/api/" in path
+                    )
+                    err_msg = f"ميزة ({feat_title}) غير مفعلة في باقة اشتراككم الحالية. يرجى التواصل مع إدارة النظام لترقية الباقة وتفعيلها."
+                    if is_ajax:
+                        return JsonResponse({
+                            "success": False,
+                            "feature_locked": True,
+                            "feature": feat_key,
+                            "message": err_msg,
+                        }, status=403)
+                    return render(request, "core/feature_locked.html", {
+                        "feature_name": feat_key,
+                        "feature_title": feat_title,
+                        "error_message": err_msg,
+                        "developer_phone": info.get("phone", "01080922432"),
+                    }, status=403)
 
         return self.get_response(request)
 

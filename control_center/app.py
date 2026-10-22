@@ -25,13 +25,124 @@ from apps.core.licensing.crypto import (
 )
 from apps.core.licensing.hwid import get_hardware_fingerprint
 
-app = Flask(__name__, template_folder=os.path.join(BASE_DIR, "templates"), static_folder=os.path.join(BASE_DIR, "static"))
-DATA_FILE = os.path.join(BASE_DIR, "clients.json")
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static"),
+)
 
+CLIENTS_FILE = os.path.join(BASE_DIR, "clients.json")
+PRODUCTS_FILE = os.path.join(BASE_DIR, "products.json")
+
+
+# ==========================================
+# PRODUCTS CATALOG MANAGEMENT
+# ==========================================
+
+DEFAULT_PRODUCTS = {
+    "systemize_gym": {
+        "id": "systemize_gym",
+        "name": "Systemize Gym OS",
+        "arabic_name": "نظام النوادي والصالات الرياضية الذكي",
+        "icon": "fa-dumbbell",
+        "badge_color": "lime",
+        "repo_url": "https://github.com/mostafa-donia/HULK_gym_web_face_recogniations",
+        "branch": "main",
+        "current_version": "v2.0",
+        "updates_allowed": True,
+        "default_demo_days": 7,
+        "features": [
+            {"key": "face_recognition", "name": "بصمة الوجه الذكية AI", "default": True},
+            {"key": "gate_relay", "name": "بوابات الدخول ومتحكم الريليه", "default": True},
+            {"key": "whatsapp", "name": "رسائل وتنبيهات الواتساب الآلية", "default": True},
+            {"key": "telegram", "name": "بوت إشعارات تليجرام للمدير", "default": True},
+            {"key": "bar", "name": "مبيعات ومخزون البار والمشروبات", "default": True},
+            {"key": "payroll", "name": "المدربين وحساب الرواتب والعمولات", "default": True},
+            {"key": "retention", "name": "تتبع تجديدات وركود الأعضاء", "default": True},
+            {"key": "reports", "name": "التقارير المالية والمحاسبية", "default": True},
+            {"key": "barcode", "name": "قارئ الباركود والـ QR", "default": True},
+            {"key": "expenses", "name": "المصروفات وسندات الصرف", "default": True},
+            {"key": "multi_branch", "name": "إدارة الفروع المتعددة", "default": False}
+        ]
+    },
+    "systemize_pos": {
+        "id": "systemize_pos",
+        "name": "Systemize POS & Inventory",
+        "arabic_name": "نظام المخازن ونقاط البيع والتجارة",
+        "icon": "fa-boxes-stacked",
+        "badge_color": "sky",
+        "repo_url": "https://github.com/mostafa-donia/inventory_win7_kareem",
+        "branch": "main",
+        "current_version": "v1.0",
+        "updates_allowed": True,
+        "default_demo_days": 7,
+        "features": [
+            {"key": "pos_cashier", "name": "شاشة الكاشير السريع وطباعة الفواتير", "default": True},
+            {"key": "barcode_scanner", "name": "قارئ الباركود وطباعة الملصقات", "default": True},
+            {"key": "inventory_alerts", "name": "تنبيهات نواقص المخزن والحد الأدنى", "default": True},
+            {"key": "purchases", "name": "فواتير المشتريات وحسابات الموردين", "default": True},
+            {"key": "sales_invoices", "name": "فواتير المبيعات وضريبة القيمة المضافة", "default": True},
+            {"key": "customer_debts", "name": "حسابات وديون العملاء والآجل", "default": True},
+            {"key": "whatsapp_receipts", "name": "إرسال الفواتير وسندات القبض عبر واتساب", "default": True},
+            {"key": "expenses", "name": "المصروفات النثرية وسندات الصرف", "default": True},
+            {"key": "reports", "name": "تقارير الأرباح والمبيعات والجرد", "default": True},
+            {"key": "multi_branch", "name": "الفروع والمخازن المتعددة", "default": False}
+        ]
+    },
+    "systemize_clinic": {
+        "id": "systemize_clinic",
+        "name": "Systemize Clinic OS",
+        "arabic_name": "نظام العيادات والمراكز الطبية التخصصية",
+        "icon": "fa-stethoscope",
+        "badge_color": "violet",
+        "repo_url": "https://github.com/mostafa-donia/systemize_clinic",
+        "branch": "main",
+        "current_version": "v1.0",
+        "updates_allowed": True,
+        "default_demo_days": 7,
+        "features": [
+            {"key": "patient_records", "name": "السجلات والملفات الطبية للمرضى", "default": True},
+            {"key": "appointments_calendar", "name": "جدول الحجوزات والمواعيد اليومية", "default": True},
+            {"key": "prescriptions", "name": "الروشتات الطبية الإلكترونية والجرعات", "default": True},
+            {"key": "doctor_commissions", "name": "حساب نسب وعمولات الأطباء", "default": True},
+            {"key": "whatsapp_reminders", "name": "تذكير المرضى بمواعيد الكشف آلياً", "default": True},
+            {"key": "billing_invoices", "name": "فواتير الكشف والخدمات وسندات القبض", "default": True},
+            {"key": "reports", "name": "التقارير المالية والطبية الشاملة", "default": True}
+        ]
+    }
+}
+
+
+def load_products_data() -> dict:
+    """Loads products catalog from JSON file."""
+    if not os.path.exists(PRODUCTS_FILE):
+        data = {"products": DEFAULT_PRODUCTS}
+        save_products_data(data)
+        return data
+
+    try:
+        with open(PRODUCTS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if "products" not in data or not data["products"]:
+                data["products"] = DEFAULT_PRODUCTS
+            return data
+    except Exception:
+        return {"products": DEFAULT_PRODUCTS}
+
+
+def save_products_data(data: dict):
+    """Saves products catalog safely."""
+    with open(PRODUCTS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+# ==========================================
+# CLIENTS DATA & REPOSITORY
+# ==========================================
 
 def load_clients_data() -> dict:
-    """Loads clients data from JSON file with initial seed if empty."""
-    if not os.path.exists(DATA_FILE):
+    """Loads clients data from JSON file with migration to multi-product attributes."""
+    if not os.path.exists(CLIENTS_FILE):
         initial_data = {
             "clients": {},
             "default_demo_days": 7,
@@ -42,10 +153,21 @@ def load_clients_data() -> dict:
         return initial_data
 
     try:
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
+        with open(CLIENTS_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
             if "clients" not in data:
                 data["clients"] = {}
+
+            # Backwards compatibility defaults
+            for hwid, c in data["clients"].items():
+                if "product_id" not in c:
+                    c["product_id"] = "systemize_gym"
+                if "allow_updates" not in c:
+                    c["allow_updates"] = True
+                if "is_paused" not in c:
+                    c["is_paused"] = (c.get("status") == "suspended")
+                if "pause_message" not in c:
+                    c["pause_message"] = c.get("developer_message", "")
             return data
     except Exception:
         return {"clients": {}, "default_demo_days": 7, "system_announcement": ""}
@@ -54,7 +176,7 @@ def load_clients_data() -> dict:
 def save_clients_data(data: dict):
     """Saves clients data and syncs with parent sample_central_control.json."""
     data["last_updated"] = datetime.now(timezone.utc).isoformat()
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
+    with open(CLIENTS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     # Sync with root sample file
@@ -72,15 +194,123 @@ def index():
     return render_template("dashboard.html")
 
 
+# ==========================================
+# PRODUCTS API ENDPOINTS
+# ==========================================
+
+@app.route("/api/products/", methods=["GET", "POST"])
+def products_api():
+    """Returns all products with computed live stats or creates/updates a product."""
+    prod_data = load_products_data()
+    products = prod_data.get("products", {})
+    clients_data = load_clients_data()
+    all_clients = clients_data.get("clients", {})
+
+    if request.method == "POST":
+        req = request.get_json() or {}
+        prod_id = (req.get("id") or "").strip().lower().replace(" ", "_")
+        name = (req.get("name") or "").strip()
+        arabic_name = (req.get("arabic_name") or name).strip()
+        icon = (req.get("icon") or "fa-cube").strip()
+        badge_color = (req.get("badge_color") or "emerald").strip()
+        repo_url = (req.get("repo_url") or "").strip()
+        branch = (req.get("branch") or "main").strip()
+        current_version = (req.get("current_version") or "v1.0").strip()
+        updates_allowed = bool(req.get("updates_allowed", True))
+        features = req.get("features") or []
+
+        if not prod_id or not name:
+            return jsonify({"success": False, "message": "معرف المنتج واسم المنتج مطلوبان."}), 400
+
+        products[prod_id] = {
+            "id": prod_id,
+            "name": name,
+            "arabic_name": arabic_name,
+            "icon": icon,
+            "badge_color": badge_color,
+            "repo_url": repo_url,
+            "branch": branch,
+            "current_version": current_version,
+            "updates_allowed": updates_allowed,
+            "features": features,
+        }
+        save_products_data(prod_data)
+        return jsonify({"success": True, "message": f"تم حفظ المنتج '{name}' بنجاح!", "product": products[prod_id]})
+
+    # GET: Compute stats per product
+    product_list = []
+    for pid, p in products.items():
+        p_clients = [c for c in all_clients.values() if c.get("product_id", "systemize_gym") == pid]
+        active_count = sum(1 for c in p_clients if c.get("status") == "active" and not c.get("is_paused"))
+        paused_count = sum(1 for c in p_clients if c.get("status") == "suspended" or c.get("is_paused"))
+        demo_count = sum(1 for c in p_clients if c.get("status") == "demo")
+        expired_count = sum(1 for c in p_clients if c.get("status") == "expired")
+
+        product_list.append({
+            "id": pid,
+            "name": p.get("name", pid),
+            "arabic_name": p.get("arabic_name", pid),
+            "icon": p.get("icon", "fa-cube"),
+            "badge_color": p.get("badge_color", "emerald"),
+            "repo_url": p.get("repo_url", ""),
+            "branch": p.get("branch", "main"),
+            "current_version": p.get("current_version", "v1.0"),
+            "updates_allowed": p.get("updates_allowed", True),
+            "features": p.get("features", []),
+            "stats": {
+                "total_clients": len(p_clients),
+                "active": active_count,
+                "paused": paused_count,
+                "demo": demo_count,
+                "expired": expired_count,
+            }
+        })
+
+    return jsonify({"success": True, "products": product_list})
+
+
+@app.route("/api/products/<product_id>/toggle-updates/", methods=["POST"])
+def toggle_product_updates_api(product_id: str):
+    """Toggles global update permission for all clients of a specific product."""
+    prod_data = load_products_data()
+    products = prod_data.get("products", {})
+    if product_id not in products:
+        return jsonify({"success": False, "message": "المنتج غير موجود."}), 404
+
+    prod = products[product_id]
+    current = prod.get("updates_allowed", True)
+    req = request.get_json() or {}
+    new_allowed = req.get("updates_allowed") if "updates_allowed" in req else not current
+
+    prod["updates_allowed"] = bool(new_allowed)
+    save_products_data(prod_data)
+
+    action_text = "السماح بالتحديثات السحابية" if new_allowed else "تعطيل ومنع التحديثات"
+    return jsonify({
+        "success": True,
+        "message": f"تم {action_text} لجميع عملاء '{prod.get('name')}' بنجاح.",
+        "updates_allowed": new_allowed,
+        "product_id": product_id,
+    })
+
+
+# ==========================================
+# CLIENTS API (MULTI-PRODUCT & PAUSING)
+# ==========================================
+
 @app.route("/api/clients/", methods=["GET"])
 def get_clients_api():
-    """Returns all clients with computed stats."""
+    """Returns all clients filtered by product_id with computed stats and update flags."""
+    product_filter = request.args.get("product_id", "").strip().lower()
     data = load_clients_data()
+    prod_data = load_products_data()
+    products = prod_data.get("products", {})
+
     clients = data.get("clients", {})
     now = datetime.now(timezone.utc)
 
     client_list = []
-    total_count = len(clients)
+    total_count = 0
     active_count = 0
     demo_count = 0
     suspended_count = 0
@@ -88,7 +318,16 @@ def get_clients_api():
     expiring_soon_count = 0
 
     for hwid, c in clients.items():
+        client_prod = c.get("product_id", "systemize_gym")
+        if product_filter and product_filter != "all" and client_prod != product_filter:
+            continue
+
+        total_count += 1
         status = c.get("status", "active")
+        is_paused = bool(c.get("is_paused", status == "suspended"))
+        if is_paused:
+            status = "suspended"
+
         exp_str = c.get("valid_until")
         lic_type = c.get("license_type", "monthly")
 
@@ -110,50 +349,52 @@ def get_clients_api():
             except Exception:
                 pass
 
-        if status == "active" and not is_expired:
-            active_count += 1
+        if is_paused or status == "suspended":
+            suspended_count += 1
+        elif is_expired or status == "expired":
+            expired_count += 1
         elif status == "demo":
             demo_count += 1
-        elif status == "suspended":
-            suspended_count += 1
-        elif status == "expired" or is_expired:
-            expired_count += 1
+        elif status == "active":
+            active_count += 1
+
+        # Check effective updates permission
+        prod_obj = products.get(client_prod, {})
+        prod_updates = prod_obj.get("updates_allowed", True)
+        client_updates = c.get("allow_updates", True)
+        effective_updates = bool(prod_updates and client_updates)
 
         client_list.append({
             "hwid": hwid,
+            "product_id": client_prod,
+            "product_name": prod_obj.get("name", "Systemize OS"),
+            "product_icon": prod_obj.get("icon", "fa-cube"),
             "name": c.get("name", "عميل بدون اسم"),
             "phone": c.get("phone", ""),
             "status": status,
+            "is_paused": is_paused,
+            "allow_updates": client_updates,
+            "effective_updates_allowed": effective_updates,
             "license_type": lic_type,
             "valid_until": exp_str,
             "remaining_days": remaining_days,
             "is_expired": is_expired,
-            "features": {
-                "face_recognition": c.get("features", {}).get("face_recognition", True),
-                "gate_relay": c.get("features", {}).get("gate_relay", True),
-                "whatsapp": c.get("features", {}).get("whatsapp", True),
-                "telegram": c.get("features", {}).get("telegram", True),
-                "bar": c.get("features", {}).get("bar", True),
-                "payroll": c.get("features", {}).get("payroll", True),
-                "retention": c.get("features", {}).get("retention", True),
-                "reports": c.get("features", {}).get("reports", True),
-                "barcode": c.get("features", {}).get("barcode", True),
-                "expenses": c.get("features", {}).get("expenses", True),
-                "multi_branch": c.get("features", {}).get("multi_branch", False),
-            },
+            "features": c.get("features", {}),
             "branches": c.get("branches", []),
             "managed_users": c.get("managed_users", []),
             "developer_message": c.get("developer_message", ""),
+            "pause_message": c.get("pause_message", ""),
             "created_at": c.get("created_at", ""),
             "last_seen": c.get("last_seen", ""),
         })
 
-    # Sort: Expiring soon and active first
-    client_list.sort(key=lambda x: (x["status"] != "active", x["remaining_days"] or 9999))
+    # Sort: paused / expiring soon first
+    client_list.sort(key=lambda x: (not x["is_paused"], x["status"] != "active", x["remaining_days"] or 9999))
 
     return jsonify({
         "success": True,
         "clients": client_list,
+        "product_id": product_filter or "all",
         "stats": {
             "total": total_count,
             "active": active_count,
@@ -169,26 +410,15 @@ def get_clients_api():
 
 @app.route("/api/clients/add/", methods=["POST"])
 def add_client_api():
-    """Adds a new client to the database."""
+    """Adds a new client to the database under a specific product."""
     req = request.get_json() or {}
     hwid = (req.get("hwid") or "").strip().upper()
     name = (req.get("name") or "").strip()
     phone = (req.get("phone") or "").strip()
+    product_id = (req.get("product_id") or "systemize_gym").strip().lower()
     duration = req.get("duration", "30")  # 7, 30, 90, 365, lifetime
-    default_features = {
-        "face_recognition": True,
-        "gate_relay": True,
-        "whatsapp": True,
-        "telegram": True,
-        "bar": True,
-        "payroll": True,
-        "retention": True,
-        "reports": True,
-        "barcode": True,
-        "expenses": True,
-        "multi_branch": False,
-    }
-    features = req.get("features") or default_features
+    features = req.get("features") or {}
+    allow_updates = bool(req.get("allow_updates", True))
 
     if not hwid or not name:
         return jsonify({"success": False, "message": "اسم العميل وكود الجهاز (HWID) مطلوبان."}), 400
@@ -224,22 +454,25 @@ def add_client_api():
             valid_until = (now + timedelta(days=30)).isoformat()
 
     data["clients"][hwid] = {
+        "product_id": product_id,
         "name": name,
         "phone": phone,
         "status": "active",
+        "is_paused": False,
+        "allow_updates": allow_updates,
         "license_type": lic_type,
         "valid_until": valid_until,
         "features": features,
         "branches": req.get("branches") or [],
         "managed_users": req.get("managed_users") or [],
         "developer_message": req.get("developer_message", "شكراً لاشتراككم في نظام Systemize."),
+        "pause_message": "",
         "created_at": now.isoformat(),
         "last_seen": None,
     }
 
     save_clients_data(data)
 
-    # Also generate initial token
     token = generate_offline_license_token(
         machine_id=hwid,
         client_name=name,
@@ -252,6 +485,81 @@ def add_client_api():
         "success": True,
         "message": f"تمت إضافة العميل {name} بنجاح!",
         "token": token,
+        "hwid": hwid,
+    })
+
+
+@app.route("/api/clients/<hwid>/pause/", methods=["POST"])
+def pause_client_api(hwid: str):
+    """
+    Subsystem Pause & Freeze Engine:
+    Instantly pauses/suspends or unpauses a client.
+    When paused, client's live requests or heartbeat immediately lock screen.
+    """
+    hwid = hwid.strip().upper()
+    req = request.get_json() or {}
+    action = req.get("action")  # "pause", "resume", or toggle
+    custom_msg = req.get("message", "").strip()
+
+    data = load_clients_data()
+    if hwid not in data["clients"]:
+        return jsonify({"success": False, "message": "العميل غير موجود."}), 404
+
+    client = data["clients"][hwid]
+    current_paused = client.get("is_paused", client.get("status") == "suspended")
+
+    if action == "pause":
+        new_paused = True
+    elif action == "resume":
+        new_paused = False
+    else:
+        new_paused = not current_paused
+
+    client["is_paused"] = new_paused
+    client["status"] = "suspended" if new_paused else "active"
+
+    if new_paused:
+        default_pause_msg = "تم إيقاف تشغيل هذه النسخة مؤقتاً لعدم السداد. يرجى التواصل مع إدارة النظام لتسوية الحساب وإعادة التفعيل فوراً."
+        client["developer_message"] = custom_msg or default_pause_msg
+        client["pause_message"] = client["developer_message"]
+    else:
+        client["developer_message"] = "تم تفعيل وتشغيل حسابكم بنجاح. شكراً لكم."
+        client["pause_message"] = ""
+
+    save_clients_data(data)
+
+    action_text = "تجميد وإيقاف" if new_paused else "إعادة تشغيل وتفعيل"
+    return jsonify({
+        "success": True,
+        "message": f"تم {action_text} العميل ({client.get('name')}) بنجاح!",
+        "is_paused": new_paused,
+        "status": client["status"],
+        "developer_message": client["developer_message"],
+    })
+
+
+@app.route("/api/clients/<hwid>/toggle-updates/", methods=["POST"])
+def toggle_client_updates_api(hwid: str):
+    """Toggles update permission (allow_updates) for a specific client."""
+    hwid = hwid.strip().upper()
+    req = request.get_json() or {}
+    data = load_clients_data()
+
+    if hwid not in data["clients"]:
+        return jsonify({"success": False, "message": "العميل غير موجود."}), 404
+
+    client = data["clients"][hwid]
+    current = client.get("allow_updates", True)
+    new_allowed = req.get("allow_updates") if "allow_updates" in req else not current
+
+    client["allow_updates"] = bool(new_allowed)
+    save_clients_data(data)
+
+    txt = "السماح بالتحديثات" if new_allowed else "حظر وإيقاف التحديثات"
+    return jsonify({
+        "success": True,
+        "message": f"تم {txt} للعميل ({client.get('name')}) بنجاح.",
+        "allow_updates": new_allowed,
     })
 
 
@@ -274,7 +582,6 @@ def extend_client_api(hwid: str):
         client["license_type"] = "lifetime"
     else:
         days_num = int(days)
-        # If client is already active and future, extend from valid_until; else from now
         current_exp = client.get("valid_until")
         base_date = now
         if current_exp and current_exp != "NONE":
@@ -297,6 +604,7 @@ def extend_client_api(hwid: str):
             client["license_type"] = "yearly"
 
     client["status"] = "active"
+    client["is_paused"] = False
     client["developer_message"] = "تم تجديد الاشتراك بنجاح. شكراً لثقتكم بنا."
     save_clients_data(data)
 
@@ -316,59 +624,9 @@ def extend_client_api(hwid: str):
     })
 
 
-@app.route("/api/clients/<hwid>/toggle-status/", methods=["POST"])
-def toggle_status_api(hwid: str):
-    """Toggles client status between active and suspended."""
-    hwid = hwid.strip().upper()
-    req = request.get_json() or {}
-    data = load_clients_data()
-
-    if hwid not in data["clients"]:
-        return jsonify({"success": False, "message": "العميل غير موجود."}), 404
-
-    client = data["clients"][hwid]
-    current = client.get("status", "active")
-    new_status = "suspended" if current == "active" else "active"
-    client["status"] = new_status
-
-    if new_status == "suspended":
-        msg = req.get("message") or "تم إيقاف تشغيل هذه النسخة مؤقتاً لعدم السداد. يرجى التواصل مع المطور لتسوية الحساب."
-        client["developer_message"] = msg
-    else:
-        client["developer_message"] = "تم تفعيل حسابكم بنجاح. شكراً لكم."
-
-    save_clients_data(data)
-    action_text = "إيقاف / تعليق" if new_status == "suspended" else "إعادة تفعيل"
-    return jsonify({
-        "success": True,
-        "message": f"تم {action_text} ترخيص {client.get('name')} بنجاح.",
-        "new_status": new_status,
-    })
-
-
-@app.route("/api/clients/<hwid>/token/", methods=["GET"])
-def get_client_token_api(hwid: str):
-    """Generates an offline signed license token for this client."""
-    hwid = hwid.strip().upper()
-    data = load_clients_data()
-
-    if hwid not in data["clients"]:
-        return jsonify({"success": False, "message": "العميل غير موجود."}), 404
-
-    client = data["clients"][hwid]
-    token = generate_offline_license_token(
-        machine_id=hwid,
-        client_name=client.get("name", ""),
-        license_type=client.get("license_type", "monthly"),
-        valid_until_iso=client.get("valid_until"),
-        features=client.get("features"),
-    )
-    return jsonify({"success": True, "token": token, "client": client})
-
-
 @app.route("/api/clients/<hwid>/update/", methods=["POST"])
 def update_client_api(hwid: str):
-    """Updates client features, duration, name, phone, or status."""
+    """Updates client product, features, duration, name, phone, or status."""
     hwid = hwid.strip().upper()
     req = request.get_json() or {}
     data = load_clients_data()
@@ -381,10 +639,20 @@ def update_client_api(hwid: str):
         client["name"] = req["name"].strip()
     if "phone" in req:
         client["phone"] = req["phone"].strip()
-    if "status" in req and req["status"] in ["active", "suspended", "expired"]:
+    if "product_id" in req:
+        client["product_id"] = req["product_id"].strip().lower()
+    if "allow_updates" in req:
+        client["allow_updates"] = bool(req["allow_updates"])
+    if "is_paused" in req:
+        client["is_paused"] = bool(req["is_paused"])
+        client["status"] = "suspended" if client["is_paused"] else "active"
+    if "status" in req and req["status"] in ["active", "suspended", "expired", "demo"]:
         client["status"] = req["status"]
+        client["is_paused"] = (req["status"] == "suspended")
     if "developer_message" in req:
         client["developer_message"] = req["developer_message"].strip()
+    if "pause_message" in req:
+        client["pause_message"] = req["pause_message"].strip()
 
     # Features update
     if "features" in req and isinstance(req["features"], dict):
@@ -434,7 +702,6 @@ def update_client_api(hwid: str):
 
     save_clients_data(data)
 
-    # Immediately regenerate a fresh offline token
     fresh_token = generate_offline_license_token(
         machine_id=hwid,
         client_name=client.get("name", ""),
@@ -449,6 +716,26 @@ def update_client_api(hwid: str):
         "client": client,
         "token": fresh_token,
     })
+
+
+@app.route("/api/clients/<hwid>/token/", methods=["GET"])
+def get_client_token_api(hwid: str):
+    """Generates an offline signed license token for this client."""
+    hwid = hwid.strip().upper()
+    data = load_clients_data()
+
+    if hwid not in data["clients"]:
+        return jsonify({"success": False, "message": "العميل غير موجود."}), 404
+
+    client = data["clients"][hwid]
+    token = generate_offline_license_token(
+        machine_id=hwid,
+        client_name=client.get("name", ""),
+        license_type=client.get("license_type", "monthly"),
+        valid_until_iso=client.get("valid_until"),
+        features=client.get("features"),
+    )
+    return jsonify({"success": True, "token": token, "client": client})
 
 
 @app.route("/api/clients/<hwid>/delete/", methods=["DELETE", "POST"])
@@ -481,7 +768,6 @@ def client_branches_api(hwid: str):
     if request.method == "GET":
         return jsonify({"success": True, "branches": client["branches"]})
 
-    # POST: Add, update or delete branch
     req = request.get_json() or {}
     action = req.get("action", "save")
     branch_code = (req.get("code") or "").strip().upper()
@@ -560,7 +846,6 @@ def client_users_api(hwid: str):
     full_name = (req.get("full_name") or "").strip()
     old_username = (req.get("old_username") or "").strip().lower()
 
-    # Find existing user entry by old_username or username
     target_idx = None
     for i, u in enumerate(client["managed_users"]):
         u_uname = u.get("username", "").lower()
@@ -578,7 +863,6 @@ def client_users_api(hwid: str):
         user_entry["password"] = password
 
     if target_idx is not None:
-        # If password wasn't changed, retain previous password
         if not password and "password" in client["managed_users"][target_idx]:
             user_entry["password"] = client["managed_users"][target_idx]["password"]
         client["managed_users"][target_idx] = user_entry
@@ -600,39 +884,65 @@ def client_users_api(hwid: str):
 def live_sync_endpoint():
     """
     Live Remote Sync Endpoint:
-    Called by client gym systems automatically over the internet.
+    Called automatically by client software installations across all products.
     """
     hwid = request.args.get("hwid", "").strip().upper()
     data = load_clients_data()
+    prod_data = load_products_data()
+    products = prod_data.get("products", {})
 
-    # If specific HWID requested, update last_seen and return client's config
+    # If specific HWID requested, return client's live payload
     if hwid and hwid in data.get("clients", {}):
         client = data["clients"][hwid]
         client["last_seen"] = datetime.now(timezone.utc).isoformat()
         save_clients_data(data)
-        return jsonify(client)
 
-    # Otherwise return full clients map
+        # Check effective updates permission
+        prod_id = client.get("product_id", "systemize_gym")
+        prod_obj = products.get(prod_id, {})
+        prod_updates = prod_obj.get("updates_allowed", True)
+        client_updates = client.get("allow_updates", True)
+        effective_updates = bool(prod_updates and client_updates)
+
+        is_paused = bool(client.get("is_paused", client.get("status") == "suspended"))
+        effective_status = "suspended" if is_paused else client.get("status", "active")
+
+        resp = dict(client)
+        resp["status"] = effective_status
+        resp["is_paused"] = is_paused
+        resp["updates_allowed"] = effective_updates
+        if not effective_updates:
+            resp["update_block_reason"] = "تم قفل التحديثات لهذه النسخة بقرار من إدارة النظام السحابية."
+        resp["product_info"] = {
+            "id": prod_id,
+            "name": prod_obj.get("name", "Systemize OS"),
+            "current_version": prod_obj.get("current_version", "v2.0"),
+        }
+        return jsonify(resp)
+
+    # Return full clients map
     return jsonify(data)
 
 
 # ==========================================
-# CRM LEADS & SALES FOLLOW-UP ENDPOINTS
+# CRM LEADS & SALES PIPELINE ENDPOINTS
 # ==========================================
 import crm_service
 
 
 @app.route("/api/crm/leads/", methods=["GET"])
 def get_crm_leads_api():
-    """Returns all CRM leads, stats, and follow-up alerts."""
+    """Returns CRM leads, stats, and follow-up alerts scoped by product_id."""
+    product_id = request.args.get("product_id", "").strip().lower()
     try:
         data = crm_service.load_crm_data()
-        result = crm_service.calculate_followup_stats(data.get("leads", {}))
+        result = crm_service.calculate_followup_stats(data.get("leads", {}), product_id=product_id)
         return jsonify({
             "success": True,
             "leads": result["leads"],
             "stats": result["stats"],
-            "templates": data.get("templates", crm_service.DEFAULT_TEMPLATES)
+            "templates": data.get("templates", crm_service.DEFAULT_TEMPLATES),
+            "product_id": product_id or "all"
         })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
@@ -640,7 +950,7 @@ def get_crm_leads_api():
 
 @app.route("/api/crm/leads/save/", methods=["POST"])
 def save_crm_lead_api():
-    """Adds or updates a lead."""
+    """Adds or updates a CRM lead with product tagging."""
     req = request.get_json() or {}
     try:
         res = crm_service.add_or_update_lead(req)
@@ -653,7 +963,7 @@ def save_crm_lead_api():
 
 @app.route("/api/crm/leads/followup/", methods=["POST"])
 def record_lead_followup_api():
-    """Records call/meeting note and schedules next follow-up in X days."""
+    """Records interaction note and schedules next follow-up."""
     req = request.get_json() or {}
     lead_id = req.get("lead_id")
     note = req.get("note", "").strip()
@@ -746,7 +1056,6 @@ if __name__ == "__main__":
     default_port = int(os.environ.get("PORT", 9000))
     port = default_port
 
-    # Test if port is available; if not, find the next available port
     for test_port in range(default_port, default_port + 20):
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -770,7 +1079,7 @@ if __name__ == "__main__":
     threading.Thread(target=open_browser, daemon=True).start()
 
     print("\n" + "=" * 64)
-    print("  SYSTEMIZE DEVELOPER COMMAND & CONTROL CENTER")
+    print("  SYSTEMIZE MULTI-PRODUCT COMMAND & CONTROL CENTER")
     print(f"  Dashboard Live at: {url}")
     print("=" * 64 + "\n")
 

@@ -1379,8 +1379,16 @@
     window.whatsappQueueRunner.init();
 
     // Heartbeat ping: keeps background python server & camera alive while any browser tab is open
+    // Also acts as live pause/license enforcement sensor (instantly freezes if locked/suspended)
     function sendHeartbeat() {
-      fetch("{% url 'core:api_heartbeat' %}", { credentials: 'same-origin' }).catch(() => {});
+      fetch("{% url 'core:api_heartbeat' %}", { credentials: 'same-origin' })
+        .then(function(res) {
+          if (res.status === 403) {
+            // Subscription paused/suspended or license locked! Immediately lock UI
+            window.location.href = "{% url 'core:dashboard' %}";
+          }
+        })
+        .catch(function() {});
     }
     setInterval(sendHeartbeat, 8000);
     sendHeartbeat();

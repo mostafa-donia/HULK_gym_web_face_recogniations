@@ -31,11 +31,9 @@
 
     <!-- Top Navigation Header -->
     <header class="border-b border-slate-800 bg-slate-950/80 sticky top-0 z-40 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <div class="w-11 h-11 rounded-xl bg-lime-500/10 border border-lime-500/30 flex items-center justify-center text-lime-400 text-xl font-black shadow-lg shadow-lime-500/10">
-                    <i class="fa fa-shield-halved"></i>
-                </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <img src="/static/img/systemize_logo.png" alt="Systemize Logo" class="w-12 h-12 rounded-xl object-contain shadow-lg shadow-lime-500/10 border border-lime-500/30 bg-slate-900 p-1">
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-black tracking-wide text-white">Systemize</h1>
@@ -43,6 +41,25 @@
                     </div>
                     <p class="text-xs text-slate-400">مركز التحكم المركزي وإدارة تراخيص وباقات العملاء</p>
                 </div>
+            </div>
+
+            <!-- Central Product Switcher & Global Updates Toggle -->
+            <div class="hidden md:flex items-center gap-2.5 bg-slate-900/90 border border-slate-800 rounded-xl px-3 py-1.5 shadow-inner">
+                <div class="flex items-center gap-1.5 text-xs text-slate-400 font-bold">
+                    <i class="fa fa-cubes text-lime-400"></i>
+                    <span>المنتج:</span>
+                </div>
+                <select id="activeProductSelect" onchange="onProductChange(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs font-black rounded-lg px-2.5 py-1 focus:ring-1 focus:ring-lime-500 focus:outline-none">
+                    <option value="all">🌐 كافة المنتجات (All Products)</option>
+                    <option value="systemize_gym">🏋️ Systemize Gym OS</option>
+                    <option value="systemize_pos">🛒 Systemize POS & Inventory</option>
+                    <option value="systemize_clinic">🏥 Systemize Clinic OS</option>
+                </select>
+                
+                <button id="productUpdatesToggleBtn" onclick="toggleCurrentProductUpdates()" class="text-xs font-black px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20" title="السماح بالتحديثات أو حظرها للمنتج المختار">
+                    <i class="fa fa-cloud-arrow-down" id="productUpdatesIcon"></i>
+                    <span id="productUpdatesToggleText">تحديثات المنتج: مسموحة ✓</span>
+                </button>
             </div>
 
             <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
@@ -65,6 +82,36 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+
+        <!-- Multi-Product Active Bar -->
+        <div class="glass-card rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap border-r-4 border-r-indigo-500 bg-gradient-to-r from-slate-900/90 via-slate-900/60 to-slate-950">
+            <div class="flex items-center gap-3.5">
+                <img src="/static/img/systemize_logo.png" alt="Systemize" class="w-10 h-10 rounded-xl object-contain bg-slate-900 p-1 border border-indigo-500/30 shadow-md">
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs font-bold text-slate-400">المنتج النشط:</span>
+                        <span id="activeProductBadge" class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs font-black px-2.5 py-0.5 rounded-full">🌐 كافة المنتجات (All Products)</span>
+                        <span id="activeProductVersionBadge" class="bg-slate-800 text-slate-400 text-[10px] font-mono px-2 py-0.5 rounded">v2.0-stable</span>
+                    </div>
+                    <p id="activeProductDesc" class="text-xs text-slate-400 mt-0.5">مركز التحكم السحابي الموحد لإدارة منتجات وحسابات وتراخيص Systemize</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <div class="md:hidden flex items-center gap-1.5">
+                    <select id="mobileProductSelect" onchange="onProductChange(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs font-black rounded-xl px-3 py-2 focus:ring-1 focus:ring-lime-500 focus:outline-none">
+                        <option value="all">🌐 كافة المنتجات</option>
+                        <option value="systemize_gym">🏋️ Systemize Gym OS</option>
+                        <option value="systemize_pos">🛒 Systemize POS & Inventory</option>
+                        <option value="systemize_clinic">🏥 Systemize Clinic OS</option>
+                    </select>
+                </div>
+                <button onclick="openProductSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 transition flex items-center gap-1.5" title="إدارة المنتجات والميزات">
+                    <i class="fa fa-cubes text-indigo-400"></i>
+                    <span>كتالوج المنتجات</span>
+                </button>
+            </div>
+        </div>
 
         <!-- Top Main Navigation Tabs (CRM vs Follow-ups vs WhatsApp vs Licenses) -->
         <div class="glass-card rounded-2xl p-2.5 flex items-center justify-between gap-3 flex-wrap border-b-2 border-b-lime-500/40">
@@ -393,15 +440,13 @@
 
     <!-- Modal: Add New Client -->
     <div id="addClientModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl max-h-[92vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-800 pb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-lime-500/20 text-lime-400 flex items-center justify-center text-lg font-black">
-                        <i class="fa fa-user-plus"></i>
-                    </div>
+                    <img src="/static/img/systemize_logo.png" alt="Systemize" class="w-10 h-10 rounded-xl object-contain bg-slate-950 p-1 border border-lime-500/30">
                     <div>
                         <h3 class="text-lg font-black text-white">إضافة عميل / ترخيص جديد</h3>
-                        <p class="text-xs text-slate-400">ربط جيم جديد ببصمة جهازه وإصدار الترخيص</p>
+                        <p class="text-xs text-slate-400">ربط عميل أو منشأة ببصمة جهازها وإصدار ترخيص المنتج</p>
                     </div>
                 </div>
                 <button onclick="closeModal('addClientModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times text-lg"></i></button>
@@ -409,8 +454,17 @@
 
             <form id="addClientForm" onsubmit="submitAddClient(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1.5">اسم العميل أو اسم الجيم *</label>
-                    <input type="text" id="addName" required placeholder="مثال: كابتن أحمد - جيم الأبطال"
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">المنتج / النظام البرمجي المطلوب (Product) *</label>
+                    <select id="addClientProduct" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-lime-400 font-bold focus:outline-none focus:border-lime-500">
+                        <option value="systemize_gym">🏋️ Systemize Gym OS (نظام إدارة الصالات الرياضية)</option>
+                        <option value="systemize_pos">🛒 Systemize POS & Inventory (نظام نقاط البيع والمخازن)</option>
+                        <option value="systemize_clinic">🏥 Systemize Clinic OS (نظام العيادات والمراكز الطبية)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">اسم العميل أو اسم المنشأة *</label>
+                    <input type="text" id="addName" required placeholder="مثال: كابتن أحمد - جيم الأبطال / سوبر ماركت النور"
                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-lime-500">
                 </div>
 
@@ -439,6 +493,15 @@
                         <option value="lifetime">شراء مدى الحياة (Lifetime License)</option>
                     </select>
                 </div>
+
+                <!-- Allow Updates Switch -->
+                <label class="flex items-center justify-between text-xs text-slate-200 cursor-pointer bg-slate-950 p-2.5 rounded-xl border border-slate-800 transition hover:border-emerald-500/40">
+                    <span class="flex items-center gap-2">
+                        <i class="fa fa-cloud-arrow-down text-emerald-400"></i>
+                        <span class="font-bold">السماح بتحديثات البرنامج التلقائية (Allow Updates)</span>
+                    </span>
+                    <input type="checkbox" id="addAllowUpdates" checked class="accent-emerald-500 w-4 h-4 rounded cursor-pointer">
+                </label>
 
                 <!-- Features Checklist -->
                 <div>
@@ -506,9 +569,7 @@
         <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-lime-500/20 text-lime-400 flex items-center justify-center text-lg font-black">
-                        <i class="fa fa-key"></i>
-                    </div>
+                    <img src="/static/img/systemize_logo.png" alt="Systemize" class="w-10 h-10 rounded-xl object-contain bg-slate-950 p-1 border border-lime-500/30">
                     <div>
                         <h3 class="text-lg font-black text-white">كود الترخيص المشفر (Offline Token)</h3>
                         <p id="tokenClientSubtitle" class="text-xs text-slate-400">خاص بالعميل</p>
@@ -546,12 +607,10 @@
         <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl max-h-[92vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-800 pb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg font-black">
-                        <i class="fa fa-sliders"></i>
-                    </div>
+                    <img src="/static/img/systemize_logo.png" alt="Systemize" class="w-10 h-10 rounded-xl object-contain bg-slate-950 p-1 border border-indigo-500/30">
                     <div>
                         <h3 class="text-lg font-black text-white">تعديل بيانات وصلاحيات العميل</h3>
-                        <p class="text-xs text-slate-400">التحكم في الميزات المفعلة ومدة الاشتراك</p>
+                        <p class="text-xs text-slate-400">التحكم في الميزات المفعلة، التجميد، ومدة التحديثات</p>
                     </div>
                 </div>
                 <button onclick="closeModal('editClientModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times text-lg"></i></button>
@@ -567,6 +626,35 @@
                             <i class="fa fa-copy"></i>
                         </button>
                     </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">نظام المنتج البرمجي (Product)</label>
+                    <select id="editClientProduct" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-lime-400 font-bold focus:outline-none focus:border-indigo-500">
+                        <option value="systemize_gym">🏋️ Systemize Gym OS</option>
+                        <option value="systemize_pos">🛒 Systemize POS & Inventory</option>
+                        <option value="systemize_clinic">🏥 Systemize Clinic OS</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Instant Pause / Freeze Toggle Switch -->
+                    <label class="flex items-center justify-between text-xs text-rose-300 cursor-pointer bg-rose-950/20 p-2.5 rounded-xl border border-rose-900/50 transition hover:bg-rose-950/30">
+                        <span class="flex items-center gap-2">
+                            <i class="fa fa-pause-circle text-rose-400 text-base"></i>
+                            <span class="font-bold">تجميد النظام فورياً (Pause)</span>
+                        </span>
+                        <input type="checkbox" id="editIsPaused" class="accent-rose-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
+
+                    <!-- Allow Updates Toggle Switch -->
+                    <label class="flex items-center justify-between text-xs text-emerald-300 cursor-pointer bg-emerald-950/20 p-2.5 rounded-xl border border-emerald-900/50 transition hover:bg-emerald-950/30">
+                        <span class="flex items-center gap-2">
+                            <i class="fa fa-cloud-arrow-down text-emerald-400 text-base"></i>
+                            <span class="font-bold">إذن التحديثات (Updates)</span>
+                        </span>
+                        <input type="checkbox" id="editAllowUpdates" class="accent-emerald-500 w-4 h-4 rounded cursor-pointer">
+                    </label>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -897,9 +985,7 @@
         <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl">
             <div class="flex items-center justify-between border-b border-slate-800 pb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-lg font-black">
-                        <i class="fa fa-cloud-arrow-up"></i>
-                    </div>
+                    <img src="/static/img/systemize_logo.png" alt="Systemize" class="w-10 h-10 rounded-xl object-contain bg-slate-950 p-1 border border-sky-500/30">
                     <div>
                         <h3 class="text-lg font-black text-white">تصدير مركز التحكم السحابي (Cloud Sync)</h3>
                         <p class="text-xs text-slate-400">لرفع بيانات التراخيص على GitHub Gist أو أي سيرفر للتحكم عن بعد</p>
@@ -924,6 +1010,26 @@
         </div>
     </div>
 
+    <!-- Modal: Products Catalog & Global Settings -->
+    <div id="productSettingsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden overflow-y-auto">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full p-6 sm:p-8 space-y-6 shadow-2xl my-8 max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <img src="/static/img/systemize_logo.png" alt="Systemize" class="w-10 h-10 rounded-xl object-contain bg-slate-950 p-1 border border-indigo-500/30">
+                    <div>
+                        <h3 class="text-lg font-black text-white">كتالوج منتجات وأنظمة Systemize</h3>
+                        <p class="text-xs text-slate-400">إدارة إصدارات المنتجات، باقات الميزات، وتصاريح التحديثات المركزية</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('productSettingsModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times text-lg"></i></button>
+            </div>
+
+            <div id="productCatalogCardsContainer" class="space-y-4">
+                <!-- Dynamically rendered via renderProductCatalog() -->
+            </div>
+        </div>
+    </div>
+
     <!-- ========================================== -->
     <!-- MODAL: ADD / EDIT CRM LEAD -->
     <!-- ========================================== -->
@@ -931,12 +1037,10 @@
         <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-5 shadow-2xl my-8">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-lime-500/20 text-lime-400 flex items-center justify-center text-lg font-black">
-                        <i class="fa fa-user-plus"></i>
-                    </div>
+                    <img src="/static/img/systemize_logo.png" alt="Systemize" class="w-10 h-10 rounded-xl object-contain bg-slate-950 p-1 border border-lime-500/30">
                     <div>
                         <h3 id="leadModalTitle" class="text-lg font-black text-white">إضافة عميل محتمل جديد (Lead)</h3>
-                        <p class="text-xs text-slate-400">تسجيل بيانات الصالة وتحديد موعد التواصل والمتابعة</p>
+                        <p class="text-xs text-slate-400">تسجيل بيانات العميل وتحديد موعد التواصل والمتابعة</p>
                     </div>
                 </div>
                 <button onclick="closeModal('addEditLeadModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times text-lg"></i></button>
@@ -945,10 +1049,19 @@
             <form id="leadForm" onsubmit="submitLeadForm(event)" class="space-y-4">
                 <input type="hidden" id="leadId" value="">
 
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">نظام المنتج المطلوب (Product) *</label>
+                    <select id="leadProduct" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-lime-400 font-bold focus:outline-none focus:border-lime-500">
+                        <option value="systemize_gym">🏋️ Systemize Gym OS (نظام إدارة الصالات الرياضية)</option>
+                        <option value="systemize_pos">🛒 Systemize POS & Inventory (نظام نقاط البيع والمخازن)</option>
+                        <option value="systemize_clinic">🏥 Systemize Clinic OS (نظام العيادات والمراكز الطبية)</option>
+                    </select>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">اسم الصالة / الجيم *</label>
-                        <input type="text" id="leadGymName" required placeholder="مثال: Hulk Gym / صالة الأبطال"
+                        <label class="block text-xs font-bold text-slate-300 mb-1">اسم المنشأة / الجيم / المحل *</label>
+                        <input type="text" id="leadGymName" required placeholder="مثال: Hulk Gym / صيدلية النور / ماركت السلام"
                                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-lime-500">
                     </div>
 
@@ -1250,11 +1363,269 @@
     <!-- Script Logic -->
     <script>
         let allClients = [];
+        let allProducts = [];
+        let currentSelectedProduct = 'all';
         let currentFilter = 'all';
+
+        // Load Products & Initialize Controls
+        async function fetchProducts() {
+            try {
+                const res = await fetch('/api/products/');
+                const data = await res.json();
+                if (data.success) {
+                    allProducts = data.products || [];
+                    populateProductSelectors();
+                    updateProductUpdatesButtonState();
+                }
+            } catch (err) {
+                console.error('Error fetching products:', err);
+            }
+        }
+
+        function openProductSettingsModal() {
+            renderProductCatalog();
+            openModal('productSettingsModal');
+        }
+
+        function renderProductCatalog() {
+            const container = document.getElementById('productCatalogCardsContainer');
+            if (!container) return;
+
+            container.innerHTML = allProducts.map(p => {
+                const isAllowed = (p.updates_allowed !== false);
+                const featKeys = Object.keys(p.features || {});
+                return `
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800 space-y-3.5 bg-slate-950/60">
+                        <div class="flex items-start justify-between gap-4 flex-wrap">
+                            <div class="flex items-center gap-3">
+                                <div class="text-3xl p-2 bg-slate-900 rounded-xl border border-slate-800">${p.icon || '📦'}</div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="text-base font-black text-white">${p.name}</h4>
+                                        <span class="bg-indigo-500/20 text-indigo-300 text-xs font-mono font-bold px-2 py-0.5 rounded border border-indigo-500/30">v${p.latest_version || '2.0'}</span>
+                                        <span class="bg-slate-800 text-slate-300 text-xs font-bold px-2 py-0.5 rounded">${p.active_clients_count || 0} عميل نشط</span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mt-1">${p.description || ''}</p>
+                                </div>
+                            </div>
+
+                            <button onclick="toggleProductUpdatesDirectly('${p.id}', ${isAllowed})" class="${isAllowed ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30'} text-xs font-black px-3.5 py-2 rounded-xl transition flex items-center gap-1.5">
+                                <i class="fa ${isAllowed ? 'fa-cloud-arrow-down' : 'fa-ban'}"></i>
+                                <span>${isAllowed ? 'التحديثات: مسموحة ✓' : 'التحديثات: محظورة 🔒'}</span>
+                            </button>
+                        </div>
+
+                        <!-- Features overview -->
+                        <div class="flex items-center gap-1.5 flex-wrap pt-1 text-[11px]">
+                            <span class="text-slate-500 text-[10px]">باقات الميزات (${featKeys.length}):</span>
+                            ${featKeys.map(k => {
+                                const f = p.features[k];
+                                return `<span class="bg-slate-900 text-slate-300 border border-slate-800 px-2 py-0.5 rounded">${f.name || k}</span>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function toggleProductUpdatesDirectly(prodId, currentAllowed) {
+            const actionText = currentAllowed ? 'حظر وقفل التحديثات' : 'السماح بفتح التحديثات';
+            if (!confirm(`هل أنت متأكد من ${actionText} لهذا المنتج؟`)) return;
+
+            try {
+                const res = await fetch(`/api/products/${encodeURIComponent(prodId)}/toggle-updates/`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ allow: !currentAllowed })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await fetchProducts();
+                    await fetchClients();
+                    renderProductCatalog();
+                    alert(data.message);
+                } else {
+                    alert('خطأ: ' + data.message);
+                }
+            } catch (err) {
+                alert('تعذر تغيير إعدادات تحديثات المنتج.');
+            }
+        }
+
+        function populateProductSelectors() {
+            const selects = [
+                document.getElementById('activeProductSelect'),
+                document.getElementById('mobileProductSelect')
+            ];
+
+            selects.forEach(sel => {
+                if (!sel) return;
+                const prev = sel.value;
+                sel.innerHTML = '<option value="all">🌐 كافة المنتجات (All Products)</option>' +
+                    allProducts.map(p => `<option value="${p.id}">${p.icon || '📦'} ${p.name}</option>`).join('');
+                if (prev) sel.value = prev;
+            });
+
+            // Add Client Product Select
+            const addSel = document.getElementById('addClientProduct');
+            if (addSel) {
+                addSel.innerHTML = allProducts.map(p => `<option value="${p.id}">${p.icon || '📦'} ${p.name}</option>`).join('');
+                if (currentSelectedProduct !== 'all') addSel.value = currentSelectedProduct;
+            }
+
+            // Edit Client Product Select
+            const editSel = document.getElementById('editClientProduct');
+            if (editSel) {
+                editSel.innerHTML = allProducts.map(p => `<option value="${p.id}">${p.icon || '📦'} ${p.name}</option>`).join('');
+            }
+
+            // Lead Product Select
+            const leadSel = document.getElementById('leadProduct');
+            if (leadSel) {
+                leadSel.innerHTML = allProducts.map(p => `<option value="${p.id}">${p.icon || '📦'} ${p.name}</option>`).join('');
+                if (currentSelectedProduct !== 'all') leadSel.value = currentSelectedProduct;
+            }
+        }
+
+        function onProductChange(prodId) {
+            currentSelectedProduct = prodId || 'all';
+
+            // Sync top selects
+            const topSel = document.getElementById('activeProductSelect');
+            if (topSel) topSel.value = currentSelectedProduct;
+            const mobSel = document.getElementById('mobileProductSelect');
+            if (mobSel) mobSel.value = currentSelectedProduct;
+
+            // Update badge in banner
+            const badge = document.getElementById('activeProductBadge');
+            const desc = document.getElementById('activeProductDesc');
+            const verBadge = document.getElementById('activeProductVersionBadge');
+
+            if (currentSelectedProduct === 'all') {
+                if (badge) badge.innerText = '🌐 كافة المنتجات (All Products)';
+                if (desc) desc.innerText = 'مركز التحكم السحابي الموحد لإدارة منتجات وحسابات وتراخيص Systemize';
+                if (verBadge) verBadge.innerText = 'v2.0-suite';
+            } else {
+                const prod = allProducts.find(p => p.id === currentSelectedProduct);
+                if (prod) {
+                    if (badge) badge.innerText = `${prod.icon || '📦'} ${prod.name}`;
+                    if (desc) desc.innerText = prod.description || '';
+                    if (verBadge) verBadge.innerText = `v${prod.latest_version || '2.0'}`;
+                }
+            }
+
+            updateProductUpdatesButtonState();
+            fetchClients();
+            fetchCrmLeads();
+        }
+
+        function updateProductUpdatesButtonState() {
+            const btn = document.getElementById('productUpdatesToggleBtn');
+            const txt = document.getElementById('productUpdatesToggleText');
+            const icon = document.getElementById('productUpdatesIcon');
+
+            const mobBtn = document.getElementById('mobileProductUpdatesBtn');
+            const mobTxt = document.getElementById('mobileProductUpdatesText');
+
+            if (currentSelectedProduct === 'all') {
+                if (txt) txt.innerText = 'تحديثات المنتجات: حسب المنتج';
+                if (icon) icon.className = 'fa fa-cubes';
+                if (btn) btn.className = 'text-xs font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 border border-slate-700 bg-slate-800 text-slate-400';
+                if (mobTxt) mobTxt.innerText = 'تحديثات: متعدد';
+                return;
+            }
+
+            const prod = allProducts.find(p => p.id === currentSelectedProduct);
+            const isAllowed = prod ? prod.updates_allowed : true;
+
+            if (isAllowed) {
+                if (txt) txt.innerText = 'تحديثات المنتج: مسموحة ✓';
+                if (icon) icon.className = 'fa fa-cloud-arrow-down';
+                if (btn) btn.className = 'text-xs font-black px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20';
+                if (mobTxt) mobTxt.innerText = 'تحديثات: مسموحة ✓';
+            } else {
+                if (txt) txt.innerText = 'تحديثات المنتج: محظورة 🔒';
+                if (icon) icon.className = 'fa fa-ban';
+                if (btn) btn.className = 'text-xs font-black px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 border border-rose-500/40 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20';
+                if (mobTxt) mobTxt.innerText = 'تحديثات: محظورة 🔒';
+            }
+        }
+
+        async function toggleCurrentProductUpdates() {
+            if (currentSelectedProduct === 'all') {
+                alert('يرجى اختيار منتج محدد أولاً (من القائمة المنسدلة بالأعلى) لفتح أو حظر تحديثاته.');
+                return;
+            }
+            const prod = allProducts.find(p => p.id === currentSelectedProduct);
+            const currentAllowed = prod ? prod.updates_allowed : true;
+            const actionText = currentAllowed ? 'حظر وقفل التحديثات' : 'السماح وفتح التحديثات';
+            if (!confirm(`هل أنت متأكد من ${actionText} لمنتج "${prod ? prod.name : currentSelectedProduct}"؟`)) return;
+
+            try {
+                const res = await fetch(`/api/products/${encodeURIComponent(currentSelectedProduct)}/toggle-updates/`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ allow: !currentAllowed })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await fetchProducts();
+                    await fetchClients();
+                    alert(data.message);
+                } else {
+                    alert('خطأ: ' + data.message);
+                }
+            } catch (err) {
+                alert('تعذر تغيير إعدادات تحديثات المنتج.');
+            }
+        }
+
+        async function quickTogglePause(hwid, currentPaused) {
+            const action = currentPaused ? 'resume' : 'pause';
+            const actionText = currentPaused ? 'فك التجميد وإعادة تشغيل النظام فورياً' : 'تجميد فوري وإيقاف تشغيل البرنامج عند هذا العميل (Lockscreen)';
+            if (!confirm(`هل ترغب في ${actionText}؟`)) return;
+
+            try {
+                const res = await fetch(`/api/clients/${encodeURIComponent(hwid)}/pause/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await fetchClients();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('تعذر تغيير حالة تجميد العميل.');
+            }
+        }
+
+        async function quickToggleClientUpdates(hwid, currentAllowed) {
+            try {
+                const res = await fetch(`/api/clients/${encodeURIComponent(hwid)}/toggle-updates/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ allow: !currentAllowed })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await fetchClients();
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                alert('تعذر تغيير إذن تحديثات العميل.');
+            }
+        }
 
         async function fetchClients() {
             try {
-                const res = await fetch('/api/clients/');
+                const url = (currentSelectedProduct && currentSelectedProduct !== 'all')
+                    ? `/api/clients/?product_id=${encodeURIComponent(currentSelectedProduct)}`
+                    : '/api/clients/';
+                const res = await fetch(url);
                 const data = await res.json();
                 if (data.success) {
                     allClients = data.clients || [];
@@ -1285,16 +1656,15 @@
             const search = document.getElementById('searchInput').value.trim().toLowerCase();
 
             const filtered = allClients.filter(c => {
-                // Filter by status
                 if (currentFilter !== 'all' && c.status !== currentFilter) {
                     return false;
                 }
-                // Filter by search query
                 if (search) {
                     const matchName = (c.name || '').toLowerCase().includes(search);
                     const matchHwid = (c.hwid || '').toLowerCase().includes(search);
                     const matchPhone = (c.phone || '').toLowerCase().includes(search);
-                    return matchName || matchHwid || matchPhone;
+                    const matchProd = (c.product_name || '').toLowerCase().includes(search);
+                    return matchName || matchHwid || matchPhone || matchProd;
                 }
                 return true;
             });
@@ -1305,7 +1675,7 @@
                         <i class="fa fa-users-slash text-3xl mb-3 text-slate-600"></i>
                         <p class="text-sm font-bold">لا يوجد عملاء يطابقون خيارات البحث.</p>
                         <button onclick="openAddClientModal()" class="mt-4 text-xs bg-lime-500/10 text-lime-400 border border-lime-500/30 px-3 py-1.5 rounded-lg hover:bg-lime-500/20 transition">
-                            + إضافة أول عميل الآن
+                            + إضافة ترخيص عميل الآن
                         </button>
                     </div>
                 `;
@@ -1317,13 +1687,14 @@
 
         function renderClientCard(c) {
             const isSuspended = c.status === 'suspended';
+            const isPaused = Boolean(c.is_paused || isSuspended);
             const isDemo = c.status === 'demo';
             const isExpired = c.is_expired || c.status === 'expired';
-            const isActive = c.status === 'active' && !isExpired;
+            const isActive = c.status === 'active' && !isExpired && !isPaused;
 
             let badgeHtml = '';
-            if (isSuspended) {
-                badgeHtml = '<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-black px-2.5 py-1 rounded-full"><i class="fa fa-lock ml-1"></i> معلق / متوقف</span>';
+            if (isPaused) {
+                badgeHtml = '<span class="bg-rose-500/20 text-rose-400 border border-rose-500/40 text-xs font-black px-2.5 py-1 rounded-full animate-pulse"><i class="fa fa-pause-circle ml-1"></i> مجمّد / موقوف فورياً</span>';
             } else if (isDemo) {
                 badgeHtml = `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-black px-2.5 py-1 rounded-full"><i class="fa fa-clock ml-1"></i> تجريبي (${c.remaining_days ?? 0} يوم متبقي)</span>`;
             } else if (isExpired) {
@@ -1332,23 +1703,35 @@
                 badgeHtml = `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-black px-2.5 py-1 rounded-full"><i class="fa fa-circle-check ml-1"></i> نشط (${c.remaining_days ?? 'مدى الحياة'} يوم متبقي)</span>`;
             }
 
+            const allowUpdates = (c.allow_updates !== false);
+            const effectiveUpdates = (c.effective_updates_allowed !== false);
+            const updatesBadge = effectiveUpdates 
+                ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-2 py-0.5 rounded flex items-center gap-1"><i class="fa fa-cloud-arrow-down"></i> تحديثات: مسموحة</span>`
+                : `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/30 text-[10px] font-black px-2 py-0.5 rounded flex items-center gap-1"><i class="fa fa-ban"></i> تحديثات: محظورة</span>`;
+
+            const prodName = c.product_name || 'Systemize Gym OS';
+            const prodBadge = `<span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-[11px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1"><i class="fa fa-cube text-indigo-400"></i> ${prodName}</span>`;
+
             const features = c.features || {};
 
             return `
-                <div class="glass-card rounded-2xl p-5 border transition-all ${isSuspended ? 'border-rose-500/30 bg-rose-950/10' : 'border-slate-800'}">
+                <div class="glass-card rounded-2xl p-5 border transition-all ${isPaused ? 'border-rose-500/40 bg-rose-950/20 shadow-lg shadow-rose-950/20' : 'border-slate-800'}">
                     <div class="flex flex-wrap items-center justify-between gap-4">
                         
                         <!-- Client Info -->
-                        <div class="space-y-1.5 flex-1 min-w-[260px]">
-                            <div class="flex items-center gap-3">
+                        <div class="space-y-2 flex-1 min-w-[260px]">
+                            <div class="flex items-center gap-2.5 flex-wrap">
+                                <img src="/static/img/systemize_logo.png" alt="Systemize" class="w-6 h-6 rounded-md object-contain bg-slate-900 p-0.5 border border-slate-700">
                                 <h3 class="text-base font-black text-white">${c.name}</h3>
+                                ${prodBadge}
                                 ${badgeHtml}
+                                ${updatesBadge}
                                 <span class="text-xs text-slate-500 font-bold bg-slate-900 px-2 py-0.5 rounded border border-slate-800">${c.license_type}</span>
                             </div>
                             
                             <div class="flex items-center gap-4 text-xs text-slate-400 flex-wrap">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="text-slate-500">كود الجهاز:</span>
+                                    <span class="text-slate-500">كود الجهاز (HWID):</span>
                                     <span class="code-font font-bold text-lime-400">${c.hwid}</span>
                                     <button onclick="copyText('${c.hwid}', this)" class="text-[10px] text-slate-400 hover:text-white ml-1" title="نسخ HWID"><i class="fa fa-copy"></i></button>
                                 </div>
@@ -1362,6 +1745,11 @@
                                     <span class="text-slate-500">ينتهي في:</span>
                                     <span class="font-bold text-slate-300 font-mono">${c.valid_until ? c.valid_until.split('T')[0] : 'مدى الحياة'}</span>
                                 </div>
+                                ${c.pause_message ? `
+                                    <div class="w-full text-rose-300 text-xs bg-rose-950/40 border border-rose-900/50 px-2.5 py-1 rounded-lg">
+                                        <i class="fa fa-info-circle ml-1"></i> رسالة التجميد للعميل: "${c.pause_message}"
+                                    </div>
+                                ` : ''}
                             </div>
 
                             <!-- Features List -->
@@ -1383,10 +1771,22 @@
 
                         <!-- Action Buttons -->
                         <div class="flex items-center gap-2 flex-wrap">
+                            <!-- Instant Freeze / Unpause Subsystem Button -->
+                            <button onclick="quickTogglePause('${c.hwid}', ${isPaused})" class="${isPaused ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400' : 'bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-700/80'} text-xs font-black px-3 py-2 rounded-xl transition flex items-center gap-1.5" title="${isPaused ? 'فك التجميد وإعادة تشغيل النظام فورياً' : 'تجميد فوري وإيقاف تشغيل البرنامج عند العميل'}">
+                                <i class="fa ${isPaused ? 'fa-play' : 'fa-pause-circle'}"></i>
+                                <span>${isPaused ? 'فك التجميد والتفعيل' : 'تجميد فوري'}</span>
+                            </button>
+
+                            <!-- Client Updates Toggle Button -->
+                            <button onclick="quickToggleClientUpdates('${c.hwid}', ${allowUpdates})" class="${allowUpdates ? 'bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 hover:bg-slate-700 text-rose-400 border border-rose-500/30'} text-xs font-black px-2.5 py-2 rounded-xl transition flex items-center gap-1" title="التحكم في إذن التحديثات البرمجية لهذا العميل">
+                                <i class="fa ${allowUpdates ? 'fa-cloud-arrow-down' : 'fa-ban'}"></i>
+                                <span>${allowUpdates ? 'تحديث: مسموح' : 'تحديث: محظور'}</span>
+                            </button>
+
                             <!-- Branches & Users Management Button -->
-                            <button onclick="openBranchesUsersModal('${c.hwid}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-black px-3 py-2 rounded-xl transition flex items-center gap-1.5" title="إدارة فروع الجيم وحسابات المالك والمديرين والاستقبال وتغيير الباسورد">
+                            <button onclick="openBranchesUsersModal('${c.hwid}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-black px-3 py-2 rounded-xl transition flex items-center gap-1.5" title="إدارة فروع وحسابات المالك والمديرين والاستقبال">
                                 <i class="fa fa-building-user"></i>
-                                <span>الفروع والمستخدمين (${(c.branches || []).length} فرع / ${(c.managed_users || []).length} يوزر)</span>
+                                <span>الفروع واليوزرز (${(c.branches || []).length}/${(c.managed_users || []).length})</span>
                             </button>
 
                             <!-- Edit Client & Features Button -->
@@ -1411,12 +1811,6 @@
 
                             <button onclick="quickExtend('${c.hwid}', 365)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold px-2.5 py-2 rounded-xl transition" title="تمديد سنة كاملة">
                                 <span>+ سنة</span>
-                            </button>
-
-                            <!-- Toggle Suspend / Resume -->
-                            <button onclick="toggleSuspend('${c.hwid}')" class="${isSuspended ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/60'} text-xs font-black px-3 py-2 rounded-xl transition flex items-center gap-1.5">
-                                <i class="fa ${isSuspended ? 'fa-play' : 'fa-pause'}"></i>
-                                <span>${isSuspended ? 'تفعيل' : 'إيقاف'}</span>
                             </button>
 
                             <!-- Delete Button -->
@@ -1449,6 +1843,16 @@
             document.getElementById('editValidUntil').value = client.valid_until ? client.valid_until.split('T')[0] : '';
             document.getElementById('editDevMsg').value = client.developer_message || '';
 
+            if (document.getElementById('editClientProduct')) {
+                document.getElementById('editClientProduct').value = client.product_id || 'systemize_gym';
+            }
+            if (document.getElementById('editIsPaused')) {
+                document.getElementById('editIsPaused').checked = Boolean(client.is_paused || client.status === 'suspended');
+            }
+            if (document.getElementById('editAllowUpdates')) {
+                document.getElementById('editAllowUpdates').checked = (client.allow_updates !== false);
+            }
+
             const ft = client.features || {};
             document.getElementById('editFeatFace').checked = (ft.face !== false && ft.face_recognition !== false);
             document.getElementById('editFeatGateRelay').checked = (ft.gate_relay !== false);
@@ -1472,10 +1876,17 @@
             btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> <span>جاري التحديث وتوليد الكود...</span>';
 
             const hwid = document.getElementById('editHwid').value;
+            const isPausedVal = document.getElementById('editIsPaused') ? document.getElementById('editIsPaused').checked : false;
+            const allowUpdatesVal = document.getElementById('editAllowUpdates') ? document.getElementById('editAllowUpdates').checked : true;
+            const prodVal = document.getElementById('editClientProduct') ? document.getElementById('editClientProduct').value : undefined;
+
             const payload = {
+                product_id: prodVal,
                 name: document.getElementById('editName').value.trim(),
                 phone: document.getElementById('editPhone').value.trim(),
-                status: document.getElementById('editStatus').value,
+                status: isPausedVal ? 'suspended' : document.getElementById('editStatus').value,
+                is_paused: isPausedVal,
+                allow_updates: allowUpdatesVal,
                 duration: document.getElementById('editDuration').value,
                 valid_until: document.getElementById('editValidUntil').value || null,
                 developer_message: document.getElementById('editDevMsg').value.trim(),
@@ -1508,7 +1919,7 @@
                     if (data.token) {
                         openTokenModal(data.client.hwid, data.client.name, data.client.phone, data.token);
                     } else {
-                        alert('تم تحديث بيانات العميل بنجاح!');
+                        alert('تم تحديث بيانات وتراخيص العميل بنجاح!');
                     }
                 } else {
                     alert('خطأ: ' + (data.message || 'فشل التحديث'));
@@ -1528,7 +1939,12 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> جاري الحفظ...';
 
+            const prodId = document.getElementById('addClientProduct') ? document.getElementById('addClientProduct').value : (currentSelectedProduct !== 'all' ? currentSelectedProduct : 'systemize_gym');
+            const allowUpdatesVal = document.getElementById('addAllowUpdates') ? document.getElementById('addAllowUpdates').checked : true;
+
             const payload = {
+                product_id: prodId,
+                allow_updates: allowUpdatesVal,
                 name: document.getElementById('addName').value.trim(),
                 phone: document.getElementById('addPhone').value.trim(),
                 hwid: document.getElementById('addHwid').value.trim(),
@@ -2088,7 +2504,10 @@
 
         async function fetchCrmLeads() {
             try {
-                const res = await fetch('/api/crm/leads/');
+                const url = (currentSelectedProduct && currentSelectedProduct !== 'all')
+                    ? `/api/crm/leads/?product_id=${encodeURIComponent(currentSelectedProduct)}`
+                    : '/api/crm/leads/';
+                const res = await fetch(url);
                 const data = await res.json();
                 if (data.success) {
                     allLeads = data.leads || [];
@@ -2459,6 +2878,9 @@
         function openAddLeadModal() {
             document.getElementById('leadModalTitle').innerText = 'إضافة عميل محتمل جديد (Lead)';
             document.getElementById('leadId').value = '';
+            if (document.getElementById('leadProduct')) {
+                document.getElementById('leadProduct').value = (currentSelectedProduct !== 'all') ? currentSelectedProduct : 'systemize_gym';
+            }
             document.getElementById('leadGymName').value = '';
             document.getElementById('leadContactName').value = '';
             document.getElementById('leadPhone').value = '';
@@ -2479,6 +2901,9 @@
 
             document.getElementById('leadModalTitle').innerText = 'تعديل بيانات العميل المحتمل';
             document.getElementById('leadId').value = lead.id;
+            if (document.getElementById('leadProduct')) {
+                document.getElementById('leadProduct').value = lead.product_id || 'systemize_gym';
+            }
             document.getElementById('leadGymName').value = lead.gym_name || '';
             document.getElementById('leadContactName').value = lead.contact_name || '';
             document.getElementById('leadPhone').value = lead.phone || '';
@@ -2503,8 +2928,10 @@
 
         async function submitLeadForm(e) {
             e.preventDefault();
+            const prodVal = document.getElementById('leadProduct') ? document.getElementById('leadProduct').value : (currentSelectedProduct !== 'all' ? currentSelectedProduct : 'systemize_gym');
             const payload = {
                 id: document.getElementById('leadId').value,
+                product_id: prodVal,
                 gym_name: document.getElementById('leadGymName').value,
                 contact_name: document.getElementById('leadContactName').value,
                 phone: document.getElementById('leadPhone').value,
@@ -2796,6 +3223,9 @@
             document.getElementById('addName').value = `${lead.gym_name} (${lead.contact_name})`;
             document.getElementById('addPhone').value = lead.phone || '';
             document.getElementById('addDuration').value = '30';
+            if (document.getElementById('addClientProduct')) {
+                document.getElementById('addClientProduct').value = lead.product_id || 'systemize_gym';
+            }
             openAddClientModal();
 
             // Also update lead status to 'won'
@@ -2810,9 +3240,11 @@
             }).then(() => fetchCrmLeads());
         }
 
-        // Initial Load of both Licenses & CRM Leads
-        fetchClients();
-        fetchCrmLeads();
+        // Initial Load of Products, Licenses & CRM Leads
+        fetchProducts().then(() => {
+            fetchClients();
+            fetchCrmLeads();
+        });
     </script>
 </body>
 </html>

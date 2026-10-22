@@ -1,5 +1,8 @@
 import json
 import logging
+import os
+import subprocess
+import sys
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -11,6 +14,40 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 GOOGLE_CONTACTS_SCOPES = ["https://www.googleapis.com/auth/contacts"]
+
+
+def ensure_google_libraries_installed() -> Tuple[bool, str]:
+    """
+    Checks if Google API and OAuth client libraries are installed.
+    If missing, attempts to pip install them automatically.
+    """
+    try:
+        from google.auth.transport.requests import Request
+        from google.oauth2.credentials import Credentials
+        from googleapiclient.discovery import build
+        from google_auth_oauthlib.flow import InstalledAppFlow
+        return True, "مكتبات Google Contacts مثبتة وجاهزة للعمل بنجاح."
+    except ImportError:
+        pass
+
+    try:
+        cmd = [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--no-warn-script-location",
+            "google-api-python-client",
+            "google-auth-httplib2",
+            "google-auth-oauthlib",
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if res.returncode == 0:
+            return True, "تم تثبيت مكتبات Google Contacts بنجاح في بيئة بايثون!"
+        return False, f"فشل تثبيت الحزم عبر pip: {res.stderr or res.stdout}"
+    except Exception as exc:
+        return False, f"حدث خطأ أثناء محاولة التثبيت التلقائي: {exc}"
+
 
 
 def resolve_google_contact_paths() -> Tuple[Path, Path]:
@@ -92,8 +129,18 @@ def get_google_contacts_service() -> Tuple[Optional[Any], str]:
         from google.auth.transport.requests import Request
         from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
-    except ImportError:
-        return None, "مكتبات Google Contacts غير مثبتة في بيئة بايثون."
+    except ImportError as e:
+        logger.warning("Google contacts libraries missing: %s. Attempting auto-install...", e)
+        ok_install, _ = ensure_google_libraries_installed()
+        if ok_install:
+            try:
+                from google.auth.transport.requests import Request
+                from google.oauth2.credentials import Credentials
+                from googleapiclient.discovery import build
+            except ImportError:
+                return None, f"مكتبات Google Contacts غير مثبتة في بيئة بايثون ({e})."
+        else:
+            return None, f"مكتبات Google Contacts غير مثبتة في بيئة بايثون ({e})."
 
     cred_path, token_path = resolve_google_contact_paths()
 
@@ -178,7 +225,18 @@ def check_google_contacts_status() -> Dict[str, Any]:
         "total_members": total_members,
         "synced_members": synced_members,
         "pending_members": pending_members,
+        "libs_installed": True,
+        "libs_missing": False,
     }
+
+    try:
+        import googleapiclient
+        import google_auth_oauthlib
+    except ImportError:
+        info["libs_installed"] = False
+        info["libs_missing"] = True
+        info["message"] = "مكتبات Google Contacts غير مثبتة في بيئة بايثون (اضغط على زر التثبيت التلقائي أدناه)."
+        return info
 
     if not cred_path.exists():
         info["message"] = "بيانات الربط (credentials.json / Client ID) غير مضافة بعد."
@@ -191,6 +249,9 @@ def check_google_contacts_status() -> Dict[str, Any]:
     service, msg = get_google_contacts_service()
     if not service:
         info["message"] = msg
+        if "غير مثبتة" in msg:
+            info["libs_installed"] = False
+            info["libs_missing"] = True
         return info
 
     try:

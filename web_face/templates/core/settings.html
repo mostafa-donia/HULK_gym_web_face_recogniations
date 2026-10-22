@@ -320,7 +320,16 @@
         </span>
       </div>
 
-      <div>
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        {% if google_status.libs_missing %}
+          <form method="post" action="{% url 'core:settings' %}" style="margin: 0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="install_google_contacts_libs">
+            <button type="submit" class="btn" style="background: #f59e0b; color: #000; font-weight: 800; font-size: 0.82rem; padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              <span>📦 تثبيت مكتبات Google Contacts تلقائياً (One-Click)</span>
+            </button>
+          </form>
+        {% endif %}
         {% if google_status.connected %}
           <span style="background: rgba(126,211,33,0.15); border: 1px solid #7ED321; color: #7ED321; font-weight: 800; font-size: 0.84rem; padding: 6px 14px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;">
             ● متصل بـ Google People API
@@ -1381,6 +1390,16 @@
 
         <!-- Sync Buttons & Credentials Upload -->
         <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+          {% if google_status.libs_missing %}
+            <form method="post" action="{% url 'core:settings' %}" style="margin: 0;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="install_google_contacts_libs">
+              <button type="submit" class="btn" style="background: #f59e0b; color: #000; font-weight: 800; font-size: 0.85rem; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;">
+                📦 تثبيت حزم ومكتبات Google Contacts الآن
+              </button>
+            </form>
+          {% endif %}
+
           <form method="post" action="{% url 'core:settings' %}" style="margin: 0;">
             {% csrf_token %}
             <input type="hidden" name="action" value="sync_google_contacts">
@@ -2165,6 +2184,7 @@ async function sendTelegramTestMsg() {
     if (resSpan) {
       resSpan.style.color = '#f87171';
       resSpan.textContent = 'خطأ في الاتصال بالخادم.';
+    }
   }
 }
 

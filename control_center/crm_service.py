@@ -29,35 +29,65 @@ except Exception as e:
     _whatsapp_desktop_available = False
 
 DEFAULT_TEMPLATES = [
+    # Systemize Gym OS Templates
     {
-        "id": "intro_calc",
-        "title": "عرض النظام وحاسبة الأسعار التفاعلية",
-        "category": "تعريف وعرض",
-        "text": "أهلاً بحضرتك كابتن {name}، يسعدنا تواصلك بخصوص نظام Systemize لإدارة الجيمات وبصمة الوجه الذكية AI.\nتقدر تحسب تكلفة باقتك وإمكانية التقسيط بنفسك مباشرة عبر الرابط التالي:\nhttps://mostafa-donia.github.io/HULK_gym_web_face_recogniations/\nجاهز لأي استفسار أو تحديد موعد ديمو تجريبي لصالتك {gym_name}."
+        "id": "gym_intro_calc",
+        "product_id": "systemize_gym",
+        "title": "عرض جيم: حاسبة الأسعار وبصمة الوجه الذكية",
+        "category": "Gym OS",
+        "text": "أهلاً بحضرتك كابتن {name}، يسعدنا تواصلك بخصوص نظام Systemize لإدارة الجيمات وبصمة الوجه الذكية AI.\nتقدر تحسب تكلفة باقتك وإمكانية التقسيط بنفسك مباشرة عبر الرابط التالي:\nhttps://mostafa-donia.github.io/HULK_gym_web_face_recogniations/\nجاهز لأي استفسار أو تحديد موعد ديمو تجريبي لصالتك {business_name}."
     },
     {
-        "id": "roi_loss",
-        "title": "دراسة الجدوى وتوفير الخسائر (احسبها صح)",
-        "category": "مبيعات وإقناع",
-        "text": "كابتن {name}، دراسة بسيطة:\nلو كل يوم بتخسر اشتراك واحد بس بـ 400 ج، ده معناه 12,000 ج شهرياً و 144,000 ج سنوياً مهدرة!\nنظام بصمة الوجه والواتساب الآلي بيقفلوا التسريب ده وبيدفعوا تمنهم بنفسهم من أول شهر.\nاحسبها لصالتك {gym_name} وشوف التفاصيل:\nhttps://mostafa-donia.github.io/HULK_gym_web_face_recogniations/"
+        "id": "gym_roi_loss",
+        "product_id": "systemize_gym",
+        "title": "عرض جيم: دراسة الجدوى وتوفير الخسائر (احسبها صح)",
+        "category": "Gym OS",
+        "text": "كابتن {name}، دراسة بسيطة:\nلو كل يوم بتخسر اشتراك واحد بس بـ 400 ج، ده معناه 12,000 ج شهرياً و 144,000 ج سنوياً مهدرة!\nنظام بصمة الوجه والواتساب الآلي بيقفلوا التسريب ده وبيدفعوا تمنهم بنفسهم من أول شهر.\nاحسبها لصالتك {business_name} وشوف التفاصيل:\nhttps://mostafa-donia.github.io/HULK_gym_web_face_recogniations/"
     },
     {
-        "id": "installment_offer",
-        "title": "عرض التقسيط المرن (3 شهور أو 6 شهور)",
-        "category": "عروض وأسعار",
-        "text": "مساء الخير كابتن {name}، متاح حالياً تقسيط نظام Systemize لصالة {gym_name} على 3 شهور (+10%) أو 6 شهور (+20%) فقط لتسهيل التشغيل الفوري بدون ضغط مالي.\nهل تحب نجهز لحضرتك ديمو تجريبي أو نحدد موعد للتركيب؟"
+        "id": "gym_installment",
+        "product_id": "systemize_gym",
+        "title": "عرض جيم: عرض التقسيط المرن (3 أو 6 شهور)",
+        "category": "Gym OS",
+        "text": "مساء الخير كابتن {name}، متاح حالياً تقسيط نظام Systemize Gym OS لصالة {business_name} على 3 شهور (+10%) أو 6 شهور (+20%) فقط لتسهيل التشغيل الفوري بدون ضغط مالي.\nهل تحب نجهز لحضرتك ديمو تجريبي أو نحدد موعد للتركيب؟"
     },
     {
-        "id": "followup_check",
-        "title": "متابعة واستفسار بعد إرسال العرض",
-        "category": "متابعة دورية",
-        "text": "أهلاً كابتن {name}، بنتابع مع حضرتك بخصوص نظام {gym_name}.. هل اطلعت على العرض والحاسبة؟ ولو في أي استفسار أو حابب نجرب السيستم مع حضرتك أنا تحت أمرك في أي وقت."
+        "id": "gym_followup",
+        "product_id": "systemize_gym",
+        "title": "عرض جيم: متابعة واستفسار بعد إرسال العرض",
+        "category": "Gym OS",
+        "text": "أهلاً كابتن {name}، بنتابع مع حضرتك بخصوص نظام {business_name}.. هل اطلعت على العرض والحاسبة؟ ولو في أي استفسار أو حابب نجرب السيستم مع حضرتك أنا تحت أمرك في أي وقت."
+    },
+    # Systemize POS & Inventory Templates
+    {
+        "id": "pos_intro",
+        "product_id": "systemize_pos",
+        "title": "عرض محلات: نظام الكاشير السريع والمخازن",
+        "category": "POS & Inventory",
+        "text": "مساء الخير أستاذ {name}، بخصوص إدارة مبيعات ومخازن {business_name}، بنقدم لحضرتك نظام Systemize POS & Inventory:\n• شاشة كاشير فوري تدعم الباركود والطباعة الحرارية.\n• جرد دوري وتنبيهات فورية بنواقص المخزون.\n• إدارة ديون العملاء وحسابات الموردين وفواتير الشراء.\nجاهز لتحديد موعد لمعاينة ديمو مباشر للمحل."
     },
     {
-        "id": "demo_invite",
-        "title": "دعوة لتجربة ديمو مجاني",
-        "category": "تجربة مجانية",
-        "text": "كابتن {name}، بنقدم لحضرتك نسخة ديمو تجريبية مجانية لنظام Systemize لصالة {gym_name} لتجربة كل الميزات على أرض الواقع.\nنقدر نحدد موعد لتجهيز النسخة في الوقت المناسب لحضرتك."
+        "id": "pos_security",
+        "product_id": "systemize_pos",
+        "title": "عرض محلات: منع عجز الدرج وضبط أرباح المحل",
+        "category": "POS & Inventory",
+        "text": "أستاذ {name}، مع نظام Systemize POS تقدر تقفل ثغرات عجز الدرج والسرقات تماماً عن طريق تقفيل شيفتات الكاشير وسندات الصرف النقدية ومتابعة الأرباح الصافية لكل صنف في {business_name}.\nهل تحب نجهز لحضرتك ديمو تجريبي للبرنامج؟"
+    },
+    # Systemize Clinic OS Templates
+    {
+        "id": "clinic_intro",
+        "product_id": "systemize_clinic",
+        "title": "عرض عيادات: إدارة المواعيد والملفات الطبية والروشتات",
+        "category": "Clinic OS",
+        "text": "دكتور {name}، تحياتنا لحضرتك من Systemize Clinic OS:\nنظام متكامل لتنظيم عيادتكم / مركزكم الطبي {business_name}:\n• حجز المواعيد اليومية ومنع تكدس المرضى.\n• سجل طبي شامل لتاريخ المريض والروشتات المطبوعة.\n• رسائل واتساب آلية لتذكير المرضى بميعاد الكشف والاستشارة.\nجاهزون لترتيب تجربة سريعة للنظام بالعيادة."
+    },
+    # General Followup
+    {
+        "id": "general_followup",
+        "product_id": "all",
+        "title": "رسالة متابعة عامة ودية",
+        "category": "عام",
+        "text": "أهلاً بحضرتك {name}، بنتواصل للمتابعة مع حضرتك بخصوص {business_name}.. هل في أي تفاصيل أو استفسار بخصوص البرنامج تحب نوضحه لحضرتك؟ تحت أمرك في أي وقت."
     }
 ]
 
@@ -117,8 +147,8 @@ def normalize_phone(phone: str) -> str:
     return digits
 
 
-def calculate_followup_stats(leads_dict: dict) -> dict:
-    """Calculates counts for today, overdue, upcoming, and status counts."""
+def calculate_followup_stats(leads_dict: dict, product_id: str = None) -> dict:
+    """Calculates counts for today, overdue, upcoming, and status counts with product scoping."""
     now = datetime.now()
     today_start = datetime(now.year, now.month, now.day, 0, 0, 0)
     today_end = datetime(now.year, now.month, now.day, 23, 59, 59)
@@ -139,6 +169,11 @@ def calculate_followup_stats(leads_dict: dict) -> dict:
     }
 
     for lead_id, lead in leads_dict.items():
+        # Product filter
+        lead_prod = lead.get("product_id", "systemize_gym")
+        if product_id and product_id != "all" and lead_prod != product_id:
+            continue
+
         st = lead.get("status", "new")
         if st in stage_counts:
             stage_counts[st] += 1
@@ -149,7 +184,6 @@ def calculate_followup_stats(leads_dict: dict) -> dict:
 
         if fdate_str and st not in ["won", "lost"]:
             try:
-                # Accept ISO or YYYY-MM-DD format
                 if "T" in fdate_str:
                     fdate = datetime.fromisoformat(fdate_str.replace("Z", "+00:00")).astimezone().replace(tzinfo=None)
                 else:
@@ -172,8 +206,11 @@ def calculate_followup_stats(leads_dict: dict) -> dict:
 
         lead_copy = dict(lead)
         lead_copy["id"] = lead_id
+        lead_copy["product_id"] = lead_prod
         lead_copy["timing_status"] = timing_status
         lead_copy["remaining_days"] = remaining_days
+        # Ensure business_name is present
+        lead_copy["business_name"] = lead.get("business_name") or lead.get("gym_name", "نشاط بدون اسم")
         leads_list.append(lead_copy)
 
     # Sort: overdue first, then today, then upcoming, then rest
@@ -198,7 +235,7 @@ def calculate_followup_stats(leads_dict: dict) -> dict:
 
 
 def add_or_update_lead(lead_data: dict) -> dict:
-    """Adds a new lead or updates existing lead."""
+    """Adds a new lead or updates existing lead with multi-product tagging."""
     data = load_crm_data()
     leads = data["leads"]
 
@@ -210,14 +247,15 @@ def add_or_update_lead(lead_data: dict) -> dict:
 
     now_iso = datetime.now().isoformat()
 
-    gym_name = (lead_data.get("gym_name") or "").strip()
+    business_name = (lead_data.get("business_name") or lead_data.get("gym_name") or "").strip()
     contact_name = (lead_data.get("contact_name") or "").strip()
     phone = (lead_data.get("phone") or "").strip()
 
-    if not gym_name and not contact_name:
-        raise ValueError("يجب كتابة اسم الجيم أو اسم المسؤول على الأقل.")
+    if not business_name and not contact_name:
+        raise ValueError("يجب كتابة اسم النشاط التجاري أو اسم المسؤول على الأقل.")
 
     existing = leads.get(lead_id, {})
+    product_id = lead_data.get("product_id") or existing.get("product_id") or "systemize_gym"
 
     # Compute next followup date if interval provided
     interval_days = lead_data.get("followup_days_interval")
@@ -236,14 +274,16 @@ def add_or_update_lead(lead_data: dict) -> dict:
         })
 
     lead_record = {
-        "gym_name": gym_name or existing.get("gym_name", "جيم غير مسمى"),
-        "contact_name": contact_name or existing.get("contact_name", "كابتن"),
+        "product_id": product_id,
+        "gym_name": business_name or existing.get("gym_name", "نشاط تجاري"),
+        "business_name": business_name or existing.get("business_name", existing.get("gym_name", "نشاط تجاري")),
+        "contact_name": contact_name or existing.get("contact_name", "العميل"),
         "phone": phone or existing.get("phone", ""),
         "city": (lead_data.get("city") or existing.get("city", "")).strip(),
         "source": (lead_data.get("source") or existing.get("source", "مباشر / فيسبوك")).strip(),
         "status": lead_data.get("status") or existing.get("status", "new"),
         "budget": lead_data.get("budget") or existing.get("budget", ""),
-        "interested_package": lead_data.get("interested_package") or existing.get("interested_package", "باقة أساسية + بصمة وجه"),
+        "interested_package": lead_data.get("interested_package") or existing.get("interested_package", "باقة أساسية"),
         "next_followup_date": next_fdate if next_fdate is not None else existing.get("next_followup_date", ""),
         "followup_note": lead_data.get("followup_note") or existing.get("followup_note", ""),
         "notes": notes,
@@ -279,14 +319,12 @@ def record_followup_call(lead_id: str, note_text: str, next_days: int = None, ne
     if new_status:
         lead["status"] = new_status
 
-    if next_days is not None and next_days > 0:
-        lead["next_followup_date"] = (datetime.now() + timedelta(days=next_days)).strftime("%Y-%m-%d 14:00")
-    elif next_days == 0:
-        # Done or closed
-        lead["next_followup_date"] = ""
+    if next_days is not None and int(next_days) > 0:
+        lead["next_followup_date"] = (datetime.now() + timedelta(days=int(next_days))).strftime("%Y-%m-%d %H:%M")
+        lead["followup_note"] = note_text[:80] if note_text else "متابعة دورية"
 
     save_crm_data(data)
-    return {"success": True, "lead": lead}
+    return {"lead_id": lead_id, "lead": lead}
 
 
 def delete_lead(lead_id: str) -> bool:
@@ -299,153 +337,151 @@ def delete_lead(lead_id: str) -> bool:
     return False
 
 
-def render_template_text(template_text: str, lead: dict) -> str:
-    """Fills placeholders in template text with lead info."""
-    name = lead.get("contact_name") or "كابتن"
-    gym_name = lead.get("gym_name") or "صالتكم الرياضية"
+def format_template_message(template_text: str, lead: dict) -> str:
+    """Replaces placeholders in template text with lead values."""
+    contact_name = lead.get("contact_name") or "كابتن"
+    b_name = lead.get("business_name") or lead.get("gym_name") or "صالتكم"
     city = lead.get("city") or "مدينتكم"
-    budget = lead.get("budget") or "الميزانية المحددة"
-    pkg = lead.get("interested_package") or "باقة النظام"
 
-    text = template_text.replace("{name}", name)
-    text = text.replace("{gym_name}", gym_name)
+    text = template_text
+    text = text.replace("{name}", contact_name)
+    text = text.replace("{contact_name}", contact_name)
+    text = text.replace("{gym_name}", b_name)
+    text = text.replace("{business_name}", b_name)
     text = text.replace("{city}", city)
-    text = text.replace("{budget}", budget)
-    text = text.replace("{package}", pkg)
     return text
 
 
-def send_whatsapp_to_lead(lead_id: str, message_text: str, auto_desktop: bool = False) -> dict:
-    """
-    Sends WhatsApp message to a lead.
-    - If auto_desktop is True, uses native desktop automation.
-    - Also generates clean wa.me link for browser/phone view.
-    """
+def send_whatsapp_to_lead(lead_id: str, message: str, auto_desktop: bool = False) -> dict:
+    """Sends WhatsApp message to lead via Desktop Automation or web link fallback."""
     data = load_crm_data()
     if lead_id not in data["leads"]:
         raise ValueError("العميل غير موجود.")
 
     lead = data["leads"][lead_id]
-    phone = lead.get("phone", "")
-    norm_phone = normalize_phone(phone)
+    phone = normalize_phone(lead.get("phone", ""))
+    if not phone:
+        raise ValueError("رقم الهاتف غير مسجل لهذا العميل.")
 
-    if not norm_phone:
-        raise ValueError("رقم الهاتف غير مسجل للعميل.")
-
-    rendered = render_template_text(message_text, lead)
-    import urllib.parse
-    encoded_text = urllib.parse.quote(rendered)
-    web_link = f"https://wa.me/{norm_phone}?text={encoded_text}"
-
-    auto_success = False
-    error_msg = ""
-
-    if auto_desktop:
-        try:
-            # 1. Try native desktop automation if whatsapp_sender is available and WhatsApp Desktop is active
-            if _whatsapp_desktop_available and wa_engine and getattr(wa_engine, "whatsupp_ready", lambda: False)():
-                auto_success = bool(wa_engine.send_message(phone=norm_phone, message=rendered))
-                if not auto_success:
-                    # Fallback to direct protocol launch
-                    proto_url = f"whatsapp://send?phone={norm_phone}&text={encoded_text}"
-                    if sys.platform == "win32" and hasattr(os, "startfile"):
-                        os.startfile(proto_url)
-                    else:
-                        import webbrowser
-                        webbrowser.open(proto_url)
-                    auto_success = True
-            else:
-                # 2. Direct desktop protocol launch (opens WhatsApp Desktop with prefilled chat)
-                proto_url = f"whatsapp://send?phone={norm_phone}&text={encoded_text}"
-                if sys.platform == "win32" and hasattr(os, "startfile"):
-                    os.startfile(proto_url)
-                else:
-                    import webbrowser
-                    webbrowser.open(proto_url)
-                auto_success = True
-        except Exception as ex:
-            error_msg = str(ex)
-            auto_success = False
-
-    # Log in lead's history
+    formatted_msg = format_template_message(message, lead)
     now_iso = datetime.now().isoformat()
+
     lead.setdefault("whatsapp_history", []).append({
         "timestamp": now_iso,
-        "text": rendered,
-        "auto_sent": auto_success if auto_desktop else False,
-        "phone": norm_phone
+        "text": formatted_msg,
+        "auto_sent": auto_desktop,
+        "phone": phone
     })
     lead["last_contacted_at"] = now_iso
     save_crm_data(data)
 
+    if auto_desktop and _whatsapp_desktop_available and wa_engine:
+        def _send_bg():
+            try:
+                wa_engine.send_whatsapp_message_direct(phone, formatted_msg)
+            except Exception as e:
+                print(f"[CRM WhatsApp Error]: {e}")
+
+        threading.Thread(target=_send_bg, daemon=True).start()
+        return {
+            "success": True,
+            "mode": "desktop_automation",
+            "message": "جاري إرسال الرسالة عبر تطبيق واتساب لسطح المكتب في الخلفية..."
+        }
+
+    # Fallback to direct WhatsApp Web URL
+    import urllib.parse
+    encoded = urllib.parse.quote(formatted_msg)
+    wa_url = f"https://wa.me/{phone}?text={encoded}"
     return {
         "success": True,
-        "web_link": web_link,
-        "auto_desktop_attempted": auto_desktop,
-        "auto_desktop_success": auto_success,
-        "error_message": error_msg,
-        "rendered_message": rendered,
-        "phone": norm_phone
+        "mode": "web_url",
+        "url": wa_url,
+        "message": "تم تجهيز رابط المحادثة المباشر عبر واتساب."
     }
 
 
-def start_bulk_whatsapp_campaign(lead_ids: list, template_text: str, delay_between_seconds: int = 4):
-    """Starts a background thread to send automated WhatsApp messages to multiple leads safely."""
+def start_bulk_whatsapp_campaign(lead_ids: list, message_template: str, delay_seconds: int = 4) -> tuple[bool, str]:
+    """Starts background automated WhatsApp campaign to multiple leads."""
     global _bulk_queue_status
 
     with _bulk_queue_lock:
         if _bulk_queue_status["is_running"]:
-            return False, "هناك حملة إرسال أخرى قيد التشغيل بالفعل حالياً."
+            return False, "توجد حملة واتساب جماعية قيد التنفيذ بالفعل حالياً."
 
         _bulk_queue_status["is_running"] = True
         _bulk_queue_status["total"] = len(lead_ids)
         _bulk_queue_status["sent"] = 0
         _bulk_queue_status["failed"] = 0
         _bulk_queue_status["current_lead"] = ""
-        _bulk_queue_status["logs"] = []
+        _bulk_queue_status["logs"] = [f"بدء إرسال الحملة إلى {len(lead_ids)} عميل محتمل..."]
 
     def _worker():
         global _bulk_queue_status
         data = load_crm_data()
         leads = data.get("leads", {})
 
-        for idx, lid in enumerate(lead_ids):
-            if lid not in leads:
+        for lid in lead_ids:
+            with _bulk_queue_lock:
+                if not _bulk_queue_status["is_running"]:
+                    break
+
+            lead = leads.get(lid)
+            if not lead:
                 continue
 
-            lead = leads[lid]
-            lead_name = f"{lead.get('gym_name', '')} ({lead.get('contact_name', '')})"
-            with _bulk_queue_lock:
-                _bulk_queue_status["current_lead"] = lead_name
+            phone = normalize_phone(lead.get("phone", ""))
+            name = lead.get("contact_name") or lead.get("business_name", "عميل")
 
-            try:
-                res = send_whatsapp_to_lead(lid, template_text, auto_desktop=True)
-                with _bulk_queue_lock:
-                    if res.get("auto_desktop_success", False):
-                        _bulk_queue_status["sent"] += 1
-                        _bulk_queue_status["logs"].append(f"✓ تم الإرسال بنجاح إلى: {lead_name}")
-                    else:
-                        _bulk_queue_status["failed"] += 1
-                        _bulk_queue_status["logs"].append(f"⚠ تعذر الإرسال التلقائي إلى: {lead_name}")
-            except Exception as e:
+            with _bulk_queue_lock:
+                _bulk_queue_status["current_lead"] = f"{name} ({phone})"
+
+            if not phone:
                 with _bulk_queue_lock:
                     _bulk_queue_status["failed"] += 1
-                    _bulk_queue_status["logs"].append(f"✗ خطأ عند إرسال: {lead_name} ({e})")
+                    _bulk_queue_status["logs"].append(f"⚠️ تخطي {name}: رقم الهاتف غير صحيح.")
+                continue
 
-            # Safe human-like pause between messages to avoid WhatsApp spam triggers
-            sleep_time = random.uniform(max(2.5, delay_between_seconds - 1), delay_between_seconds + 2.5)
-            time.sleep(sleep_time)
+            msg = format_template_message(message_template, lead)
+
+            sent_ok = False
+            if _whatsapp_desktop_available and wa_engine:
+                try:
+                    res = wa_engine.send_whatsapp_message_direct(phone, msg)
+                    sent_ok = bool(res.get("success", False)) if isinstance(res, dict) else True
+                except Exception as e:
+                    sent_ok = False
+
+            now_iso = datetime.now().isoformat()
+            lead.setdefault("whatsapp_history", []).append({
+                "timestamp": now_iso,
+                "text": msg,
+                "auto_sent": True,
+                "phone": phone
+            })
+            lead["last_contacted_at"] = now_iso
+
+            with _bulk_queue_lock:
+                if sent_ok:
+                    _bulk_queue_status["sent"] += 1
+                    _bulk_queue_status["logs"].append(f"✓ تم الإرسال إلى {name} بنجاح.")
+                else:
+                    _bulk_queue_status["failed"] += 1
+                    _bulk_queue_status["logs"].append(f"❌ تعذر الإرسال إلى {name}.")
+
+            time.sleep(max(2, delay_seconds))
+
+        save_crm_data(data)
 
         with _bulk_queue_lock:
             _bulk_queue_status["is_running"] = False
-            _bulk_queue_status["current_lead"] = "اكتملت الحملة بنجاح ✓"
+            _bulk_queue_status["logs"].append("🎉 اكتمل تنفيذ حملة الواتساب الجماعية.")
 
-    t = threading.Thread(target=_worker, daemon=True)
-    t.start()
-    return True, "تم بدء حملة الإرسال التلقائي في الخلفية بنجاح."
+    threading.Thread(target=_worker, daemon=True).start()
+    return True, f"تم بدء إرسال الحملة إلى {len(lead_ids)} عميل محتمل في الخلفية."
 
 
 def get_bulk_queue_status() -> dict:
-    """Returns the current state of the background WhatsApp sending queue."""
+    """Returns status of ongoing WhatsApp bulk queue."""
     with _bulk_queue_lock:
         return dict(_bulk_queue_status)
