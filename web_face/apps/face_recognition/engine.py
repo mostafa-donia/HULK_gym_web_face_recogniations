@@ -69,6 +69,8 @@ class FaceEngine:
         self.latest_event = None
         self.last_event_time = 0
         self.member_last_overlay_time: Dict[int, float] = {}
+        self.staff_last_overlay_time: Dict[int, float] = {}
+        self._cached_employees: List[Any] = []
         self.last_detected_manager: Optional[dict] = None
         self.camera_starting = False
         self._placeholder_jpeg = None
@@ -350,6 +352,25 @@ class FaceEngine:
                 self.inactive_matrix = None
                 self.inactive_ids = None
 
+            # Cache enrolled employees & trainers for biometric staff recognition & attendance
+            try:
+                from apps.payroll.models import Employee, EmployeeStatus
+                new_cached_emps = []
+                emp_qs = Employee.objects.filter(face_enrolled=True, status=EmployeeStatus.ACTIVE)
+                for emp in emp_qs:
+                    e_vecs = []
+                    for e in (emp.face_embeddings or []):
+                        if isinstance(e, list) and len(e) == 128:
+                            arr = np.array(e, dtype=np.float32)
+                            n = np.linalg.norm(arr)
+                            if n > 0:
+                                e_vecs.append(arr / n)
+                    if e_vecs:
+                        new_cached_emps.append((emp, e_vecs))
+                self._cached_employees = new_cached_emps
+            except Exception as e:
+                pass
+
             self.cache_timestamp = now
 
     def match_face_vector(
@@ -408,6 +429,70 @@ class FaceEngine:
 
         top_score = max(best_active_score, best_inactive_score, 0.0)
         return None, top_score
+
+    def log_employee_attendance(self, employee):
+        """
+        Automatically logs employee attendance upon face recognition:
+        - First face detection of the day -> Check-In (حضور)
+        - Computes late minutes and calculates penalty deduction if after shift_start_time
+        - Subsequent face detection (> 45 min later) -> Check-Out (انصراف)
+        - Computes overtime minutes and bonus if after shift_end_time
+        """
+        try:
+            from apps.payroll.models import EmployeeAttendance
+            from django.utils import timezone
+            from decimal import Decimal
+
+            today = timezone.localdate()
+            now_time = timezone.localtime().time()
+
+            att, created = EmployeeAttendance.objects.get_or_create(
+                employee=employee,
+                date=today,
+                defaults={
+                    "check_in": now_time,
+                    "check_in_method": "face",
+                }
+            )
+
+            if created:
+                if employee.shift_start_time:
+                    shift_mins = employee.shift_start_time.hour * 60 + employee.shift_start_time.minute
+                    cur_mins = now_time.hour * 60 + now_time.minute
+                    late_diff = cur_mins - shift_mins
+                    if late_diff > 0:
+                        att.late_minutes = late_diff
+                        tier_days = Decimal("0.00")
+                        if late_diff >= employee.late_deduction_tier3_minutes:
+                            tier_days = employee.late_deduction_tier3_days
+                        elif late_diff >= employee.late_deduction_tier2_minutes:
+                            tier_days = employee.late_deduction_tier2_days
+                        elif late_diff >= employee.late_deduction_tier1_minutes:
+                            tier_days = employee.late_deduction_tier1_days
+
+                        if tier_days > 0 and employee.fixed_salary > 0:
+                            day_salary = employee.fixed_salary / Decimal("30")
+                            att.calculated_late_deduction = (day_salary * tier_days).quantize(Decimal("0.01"))
+                        att.save()
+            else:
+                if att.check_in:
+                    in_mins = att.check_in.hour * 60 + att.check_in.minute
+                    cur_mins = now_time.hour * 60 + now_time.minute
+                    if (cur_mins - in_mins) >= 45:
+                        att.check_out = now_time
+                        att.check_out_method = "face"
+                        if employee.shift_end_time:
+                            end_mins = employee.shift_end_time.hour * 60 + employee.shift_end_time.minute
+                            ot_diff = cur_mins - end_mins
+                            if ot_diff > 0:
+                                att.overtime_minutes = ot_diff
+                                ot_hours = ot_diff // 60
+                                ot_half_hours = (ot_diff % 60) // 30
+                                ot_val = (Decimal(str(ot_hours)) * employee.hourly_overtime_rate) + (Decimal(str(ot_half_hours)) * employee.half_hourly_overtime_rate)
+                                att.calculated_overtime_bonus = ot_val.quantize(Decimal("0.01"))
+                        att.save()
+        except Exception as e:
+            logger.error("Error logging employee face attendance: %s", e)
 
     def trigger_gate_relay(self, profile=None, sync_execute: bool = False) -> tuple[bool, str]:
         """
@@ -706,6 +791,39 @@ class FaceEngine:
                             "box": [x, y, w, h],
                             "timestamp": time.time(),
                         }
+                    continue
+
+                # 2. Check if face belongs to an enrolled Employee / Trainer
+                matched_emp = None
+                best_emp_score = -1.0
+                cached_emps = getattr(self, "_cached_employees", [])
+                if cached_emps:
+                    emb_arr = np.array(emb, dtype=np.float32)
+                    emb_norm = np.linalg.norm(emb_arr)
+                    if emb_norm > 0:
+                        emb_arr = emb_arr / emb_norm
+                        emp_thresh = min(0.58, max(0.50, thresh - 0.06))
+                        for emp_obj, emp_vecs in cached_emps:
+                            for vec in emp_vecs:
+                                sc = float(np.dot(emb_arr, vec))
+                                if sc > best_emp_score:
+                                    best_emp_score = sc
+                                    if sc >= emp_thresh:
+                                        matched_emp = emp_obj
+
+                if matched_emp and best_emp_score >= min(0.58, max(0.50, thresh - 0.06)):
+                    # Draw distinctive Blue/Cyan box for Staff / Trainer
+                    staff_color = (255, 140, 0)
+                    cv2.rectangle(annotated, (x, y), (x + w, y + h), staff_color, 3)
+                    staff_label = f"STAFF: {matched_emp.name} ({matched_emp.get_role_display()}) {round(best_emp_score * 100)}%"
+                    cv2.putText(annotated, staff_label, (x, max(28, y - 10)),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.70, staff_color, 2, cv2.LINE_AA)
+
+                    now_ts = time.time()
+                    last_staff_ts = self.staff_last_overlay_time.get(matched_emp.id, 0.0)
+                    if (now_ts - last_staff_ts) >= 30.0:
+                        self.staff_last_overlay_time[matched_emp.id] = now_ts
+                        threading.Thread(target=self.log_employee_attendance, args=(matched_emp,), daemon=True).start()
                     continue
 
                 member_id, match_score = self.match_face_vector(emb, cosine_threshold=thresh)

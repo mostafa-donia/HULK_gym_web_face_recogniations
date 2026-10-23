@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}تعديل راتب موظف معتمد — {{ item.employee_name_snapshot }} — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 30px auto;">
+  <div class="card" style="border-radius: 16px; box-shadow: var(--shadow-sm);">
+    <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding: 18px 22px;">
+      <h2 class="card-title" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+        <span>✏️ تعديل كشف راتب: {{ item.employee_name_snapshot }}</span>
+      </h2>
+      <span style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; display: block;">
+        مسير شهر {{ run.period }} ({{ item.role_snapshot }}) — يؤثر التعديل على رصيد الخزينة والمصروفات فورياً
+      </span>
+    </div>
+
+    <div style="padding: 22px;">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next_url }}">
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label">الراتب الأساسي الثابت (ج.م)</label>
+          <input type="number" step="0.01" min="0" name="fixed_salary" id="fixed_salary" class="form-control" value="{{ item.fixed_salary }}" oninput="recalcNet()" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="color: #38bdf8;">عمولات التدريب الخاص (ج.م)</label>
+          <input type="number" step="0.01" min="0" name="commissions" id="commissions" class="form-control" value="{{ item.commissions }}" oninput="recalcNet()" style="color: #38bdf8; font-weight: 700;">
+        </div>
+
+        <div class="grid-2" style="gap: 12px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label class="form-label" style="color: #22c55e;">المكافآت والبونص المعتمد (+)</label>
+            <input type="number" step="0.01" min="0" name="bonuses" id="bonuses" class="form-control" value="{{ item.bonuses }}" oninput="recalcNet()" style="color: #22c55e; font-weight: 700;">
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="color: #ef4444;">الخصومات والجزاءات (-)</label>
+            <input type="number" step="0.01" min="0" name="deductions" id="deductions" class="form-control" value="{{ item.deductions }}" oninput="recalcNet()" style="color: #ef4444; font-weight: 700;">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label" style="color: #f59e0b;">السلف المسحوبة خلال الشهر (-)</label>
+          <input type="number" step="0.01" min="0" name="advances" id="advances" class="form-control" value="{{ item.advances }}" oninput="recalcNet()" style="color: #f59e0b; font-weight: 700;">
+        </div>
+
+        <!-- Calculated Net Box -->
+        <div style="background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">صافي الراتب المستحق للصرف:</span>
+          <span id="calculatedNet" style="color: #22c55e; font-weight: 900; font-size: 1.45rem;">
+            {{ item.net_payable }} {{ gym_profile.currency|default:"ج" }}
+          </span>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 22px;">
+          <label class="form-label">سبب ومبرر التعديل (لتوثيق سجل العمليات) *</label>
+          <input type="text" name="edit_reason" class="form-control" placeholder="مثال: تصحيح ساعات إضافية / خصم غياب متأخر..." required>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          {% if next_url == 'checklist' %}
+          <a href="{% url 'payroll:payout_checklist' run.period %}" class="btn btn-secondary">إلغاء</a>
+          {% else %}
+          <a href="{% url 'payroll:payroll_run_detail' run.period %}" class="btn btn-secondary">إلغاء</a>
+          {% endif %}
+          <button type="submit" class="btn btn-primary" style="font-weight: 800; padding: 10px 24px;">
+            حفظ التعديل وتحديث الخزينة 💾
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function recalcNet() {
+  const f = parseFloat(document.getElementById('fixed_salary').value) || 0;
+  const c = parseFloat(document.getElementById('commissions').value) || 0;
+  const b = parseFloat(document.getElementById('bonuses').value) || 0;
+  const d = parseFloat(document.getElementById('deductions').value) || 0;
+  const a = parseFloat(document.getElementById('advances').value) || 0;
+  const net = Math.max(0, f + c + b - d - a);
+  document.getElementById('calculatedNet').textContent = net.toFixed(2) + ' {{ gym_profile.currency|default:"ج" }}';
+}
+</script>
+{% endblock %}

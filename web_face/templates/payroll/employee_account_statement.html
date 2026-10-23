@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block title %}كشف حساب موظف — {{ employee.name }} — {{ profile.gym_name|default:"Systemize Gym" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <!-- Header & Biometric Strip -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 22px 26px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div style="display: flex; align-items: center; gap: 16px;">
+      {% if employee.face_photo %}
+      <img src="{{ employee.face_photo.url }}" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid #84cc16; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+      {% else %}
+      <div style="width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 2px dashed var(--border-color);">
+        👤
+      </div>
+      {% endif %}
+
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <h1 style="color: var(--text-main); font-size: 1.5rem; font-weight: 900; margin: 0;">
+            {{ employee.name }}
+          </h1>
+          <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 0.8rem; font-weight: 800;">
+            {{ employee.get_role_display }}
+          </span>
+          {% if employee.status == 'ACTIVE' %}
+          <span class="badge badge-active" style="font-size: 0.78rem;">نشط بالعمل</span>
+          {% else %}
+          <span class="badge badge-debt" style="font-size: 0.78rem;">متوقف</span>
+          {% endif %}
+        </div>
+
+        <div style="display: flex; gap: 16px; margin-top: 6px; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap;">
+          <span>📞 {{ employee.phone|default:"-" }}</span>
+          <span>📅 تاريخ التعيين: {{ employee.hire_date|default:"-" }}</span>
+          <span>💼 الراتب الأساسي: <strong style="color: var(--text-main);">{{ employee.fixed_salary }} {{ profile.currency }}</strong></span>
+          <span>⚡ الإضافي: <strong>{{ employee.hourly_overtime_rate }} {{ profile.currency }}/ساعة</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions & Biometric Button -->
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      {% if employee.face_enrolled %}
+      <span style="background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.4); padding: 6px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+        <span>✓ بصمة الوجه مفعلة</span>
+      </span>
+      <button type="button" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); font-size: 0.78rem;" onclick="deleteEmployeeFace({{ employee.id }})">
+        حذف البصمة
+      </button>
+      {% else %}
+      <button type="button" class="btn btn-sm" style="background: rgba(168, 85, 247, 0.18); border: 1px solid rgba(168, 85, 247, 0.45); color: #c084fc; font-weight: 800; font-size: 0.82rem; padding: 6px 14px;" onclick="openStaffFaceEnrollModal({{ employee.id }}, '{{ employee.name }}')">
+        📸 تسجيل بصمة الوجه بالكاميرا
+      </button>
+      {% endif %}
+
+      <button type="button" onclick="window.print()" class="btn btn-secondary btn-sm" style="padding: 6px 14px;">
+        🖨️ طباعة كشف الحساب
+      </button>
+      <a href="{% url 'payroll:employee_edit' employee.id %}" class="btn btn-secondary btn-sm" style="padding: 6px 14px;">
+        ✏️ تعديل البيانات
+      </a>
+      <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary btn-sm" style="padding: 6px 14px;">
+        ← العودة
+      </a>
+    </div>
+  </div>
+
+  <!-- 4 Summary Financial KPI Cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+    
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; display: block;">إجمالي الاستحقاقات التاريخية</span>
+      <div style="color: #ffffff; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
+        {{ total_earned }} <small style="font-size: 0.85rem; color: var(--text-muted);">{{ profile.currency }}</small>
+      </div>
+      <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">
+        مجموع صافي كشوف الرواتب المعتمدة
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; display: block;">المبالغ المصروفة والمسلمة</span>
+      <div style="color: #22c55e; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
+        {{ total_paid }} <small style="font-size: 0.85rem;">{{ profile.currency }}</small>
+      </div>
+      <div style="font-size: 0.76rem; color: #22c55e; margin-top: 4px; font-weight: 700;">
+        ✓ تم الصرف الفعلي من الخزينة
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; display: block;">المتبقي المعلق للصرف</span>
+      <div style="color: #f59e0b; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
+        {{ total_pending }} <small style="font-size: 0.85rem;">{{ profile.currency }}</small>
+      </div>
+      <div style="font-size: 0.76rem; color: #f59e0b; margin-top: 4px; font-weight: 700;">
+        ⏳ مستحق بانتظار التسليم
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; display: block;">إجمالي السلف المسحوبة</span>
+      <div style="color: #ef4444; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
+        {{ total_advances }} <small style="font-size: 0.85rem; color: var(--text-muted);">{{ profile.currency }}</small>
+      </div>
+      <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">
+        سلف نقدية مخصومة من الرواتب
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Contract & Shift Regulations Box -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px 22px; box-shadow: var(--shadow-sm);">
+    <h3 style="margin: 0 0 12px 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main);">
+      ⚙️ قواعد الوردية، الحضور، الإضافي والجزاءات
+    </h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; font-size: 0.86rem;">
+      <div style="background: var(--bg-surface-subtle); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+        <strong style="color: var(--text-muted); display: block;">مواعيد الوردية:</strong>
+        <span style="color: var(--text-main); font-weight: 700;">من {{ employee.shift_start_time|default:"09:00" }} إلى {{ employee.shift_end_time|default:"17:00" }} ({{ employee.daily_working_hours|default:"8" }} ساعات/يوم)</span>
+      </div>
+
+      <div style="background: var(--bg-surface-subtle); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+        <strong style="color: var(--text-muted); display: block;">سعر الإضافي / البونص:</strong>
+        <span style="color: #22c55e; font-weight: 800;">ساعة: {{ employee.hourly_overtime_rate|default:"0.00" }} {{ profile.currency }} | نصف ساعة: {{ employee.half_hourly_overtime_rate|default:"0.00" }} {{ profile.currency }}</span>
+      </div>
+
+      <div style="background: var(--bg-surface-subtle); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+        <strong style="color: var(--text-muted); display: block;">شرائح خصم التأخير اليومي:</strong>
+        <span style="color: #ef4444; font-weight: 700;">
+          +{{ employee.late_deduction_tier1_minutes|default:15 }} د: خصم {{ employee.late_deduction_tier1_days|default:"0.25" }} يوم | 
+          +{{ employee.late_deduction_tier2_minutes|default:30 }} د: خصم {{ employee.late_deduction_tier2_days|default:"0.50" }} يوم | 
+          +{{ employee.late_deduction_tier3_minutes|default:120 }} د: خصم {{ employee.late_deduction_tier3_days|default:"1.00" }} يوم
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historical Payroll Runs Table -->
+  <div class="card" style="border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-sm);">
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main);">
+        📜 سجل كشوف الرواتب الشهرية السابقة
+      </h3>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" style="margin: 0; width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color);">
+            <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.82rem;">الشهر</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">الأساسي</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">العمولات</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">المكافآت</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">الخصومات</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">السلف</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">الصافي</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">حالة التسليم</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">طريقة الدفع</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for it in payroll_items %}
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 12px 16px; font-weight: 800; color: #84cc16;">{{ it.payroll_run.period }}</td>
+            <td style="padding: 12px 16px; text-align: center;">{{ it.fixed_salary }} {{ profile.currency }}</td>
+            <td style="padding: 12px 16px; text-align: center; color: #38bdf8;">+{{ it.commissions }} {{ profile.currency }}</td>
+            <td style="padding: 12px 16px; text-align: center; color: #22c55e;">+{{ it.bonuses }} {{ profile.currency }}</td>
+            <td style="padding: 12px 16px; text-align: center; color: #ef4444;">-{{ it.deductions }} {{ profile.currency }}</td>
+            <td style="padding: 12px 16px; text-align: center; color: #f59e0b;">-{{ it.advances }} {{ profile.currency }}</td>
+            <td style="padding: 12px 16px; text-align: center; font-weight: 900; color: #ffffff; font-size: 1.05rem;">
+              {{ it.net_payable }} {{ profile.currency }}
+            </td>
+            <td style="padding: 12px 16px; text-align: center;">
+              {% if it.is_paid %}
+              <span style="background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.4); padding: 3px 10px; border-radius: 999px; font-size: 0.76rem; font-weight: 800;">
+                ✓ تم التسليم
+              </span>
+              {% else %}
+              <span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); padding: 3px 10px; border-radius: 999px; font-size: 0.76rem; font-weight: 800;">
+                ⏳ معلق
+              </span>
+              {% endif %}
+            </td>
+            <td style="padding: 12px 16px; text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+              {{ it.paid_method|default:"-" }}
+            </td>
+            <td style="padding: 12px 16px; text-align: center;">
+              <div style="display: flex; gap: 6px; justify-content: center;">
+                <a href="{% url 'payroll:payroll_item_edit' it.id %}" class="btn btn-sm btn-secondary" style="font-size: 0.74rem; padding: 3px 8px;">
+                  ✏️ تعديل
+                </a>
+                <a href="{% url 'payroll:payroll_statement' it.id %}" target="_blank" class="btn btn-sm btn-secondary" style="font-size: 0.74rem; padding: 3px 8px;">
+                  🖨️ إيصال
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10" style="padding: 24px; text-align: center; color: var(--text-muted);">
+              لا توجد كشوف رواتب معتمدة لهذا الموظف حتى الآن.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- This Month's Attendance Log -->
+  <div class="card" style="border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-sm);">
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main);">
+        ⏱️ سجل الحضور والانصراف بالوجه لهذا الشهر ({{ attended_days_count }} يوم تمرين/عمل)
+      </h3>
+      <div style="display: flex; gap: 12px; font-size: 0.82rem;">
+        <span style="color: #ef4444; font-weight: 700;">تأخيرات: {{ total_late_minutes }} دقيقة (خصم: {{ total_late_deductions }} {{ profile.currency }})</span>
+        <span style="color: #22c55e; font-weight: 700;">إضافي: {{ total_overtime_minutes }} دقيقة (بونص: {{ total_ot_bonuses }} {{ profile.currency }})</span>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" style="margin: 0; width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color);">
+            <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.82rem;">التاريخ</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">وقت الحضور</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">وقت الانصراف</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">دقائق التأخير</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">خصم التأخير</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">دقائق الإضافي</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">بونص الإضافي</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">طريقة التسجيل</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for att in attendances %}
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 12px 16px; font-weight: 700; color: var(--text-main);">{{ att.date }}</td>
+            <td style="padding: 12px 16px; text-align: center; color: #22c55e; font-weight: 700;">{{ att.check_in|default:"-" }}</td>
+            <td style="padding: 12px 16px; text-align: center; color: #38bdf8; font-weight: 700;">{{ att.check_out|default:"-" }}</td>
+            <td style="padding: 12px 16px; text-align: center; color: {% if att.late_minutes > 0 %}#ef4444{% else %}var(--text-muted){% endif %}; font-weight: 700;">
+              {% if att.late_minutes > 0 %}{{ att.late_minutes }} دقيقة{% else %}-{% endif %}
+            </td>
+            <td style="padding: 12px 16px; text-align: center; color: #ef4444; font-weight: 800;">
+              {% if att.calculated_late_deduction > 0 %}-{{ att.calculated_late_deduction }} {{ profile.currency }}{% else %}-{% endif %}
+            </td>
+            <td style="padding: 12px 16px; text-align: center; color: {% if att.overtime_minutes > 0 %}#22c55e{% else %}var(--text-muted){% endif %}; font-weight: 700;">
+              {% if att.overtime_minutes > 0 %}{{ att.overtime_minutes }} دقيقة{% else %}-{% endif %}
+            </td>
+            <td style="padding: 12px 16px; text-align: center; color: #22c55e; font-weight: 800;">
+              {% if att.calculated_overtime_bonus > 0 %}+{{ att.calculated_overtime_bonus }} {{ profile.currency }}{% else %}-{% endif %}
+            </td>
+            <td style="padding: 12px 16px; text-align: center;">
+              <span class="badge" style="background: rgba(168, 85, 247, 0.12); color: #c084fc; font-size: 0.74rem;">
+                {{ att.get_check_in_method_display }}
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" style="padding: 24px; text-align: center; color: var(--text-muted);">
+              لا توجد حركات حضور مسجلة لهذا الشهر بعد.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Staff Face Enrollment Modal (5-Pose Wizard) -->
+<div id="staffFaceEnrollModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 24px; width: 500px; max-width: 95%; box-shadow: 0 12px 45px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 14px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main);">
+        📸 تسجيل بصمة وجه الموظف للكاميرا
+      </h3>
+      <button type="button" onclick="closeStaffFaceModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer;">✕</button>
+    </div>
+    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
+      الموظف: <strong id="staffEnrollName" style="color: var(--text-main);"></strong> — سيتم التقاط بصمة الوجه وربطها بنظام الحضور والانصراف التلقائي
+    </p>
+
+    <!-- Video Element -->
+    <div style="width: 100%; height: 280px; background: #000; border-radius: 12px; overflow: hidden; position: relative;">
+      <video id="staffEnrollVideo" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+      <canvas id="staffEnrollCanvas" style="display: none;"></canvas>
+      <div id="staffEnrollOverlay" style="position: absolute; inset: 0; border: 2px dashed rgba(132, 204, 22, 0.6); margin: 30px; border-radius: 50%; pointer-events: none;"></div>
+    </div>
+
+    <!-- Status & Progress -->
+    <div id="staffEnrollStatus" style="font-size: 0.85rem; color: #84cc16; font-weight: 700; text-align: center;">
+      اضغط "التقاط البصمة" عند مواجهة الكاميرا
+    </div>
+
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button type="button" class="btn btn-secondary" onclick="closeStaffFaceModal()">إلغاء</button>
+      <button type="button" id="staffCaptureBtn" class="btn btn-primary" onclick="captureAndEnrollStaffFace()" style="font-weight: 800; padding: 8px 20px;">
+        التقاط البصمة وحفظ 🚀
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentStaffId = null;
+let staffStream = null;
+
+function openStaffFaceEnrollModal(empId, empName) {
+  currentStaffId = empId;
+  document.getElementById('staffEnrollName').textContent = empName;
+  document.getElementById('staffFaceEnrollModal').style.display = 'flex';
+  startStaffWebcam();
+}
+
+function closeStaffFaceModal() {
+  if (staffStream) {
+    staffStream.getTracks().forEach(t => t.stop());
+    staffStream = null;
+  }
+  document.getElementById('staffFaceEnrollModal').style.display = 'none';
+}
+
+function startStaffWebcam() {
+  const vid = document.getElementById('staffEnrollVideo');
+  navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } })
+    .then(stream => {
+      staffStream = stream;
+      vid.srcObject = stream;
+    })
+    .catch(err => {
+      document.getElementById('staffEnrollStatus').textContent = 'تعذر فتح الكاميرا: ' + err.message;
+      document.getElementById('staffEnrollStatus').style.color = '#ef4444';
+    });
+}
+
+function captureAndEnrollStaffFace() {
+  const vid = document.getElementById('staffEnrollVideo');
+  const canvas = document.getElementById('staffEnrollCanvas');
+  const statusEl = document.getElementById('staffEnrollStatus');
+  const btn = document.getElementById('staffCaptureBtn');
+
+  if (!vid.videoWidth) {
+    statusEl.textContent = 'الكاميرا غير جاهزة بعد، يرجى الانتظار ثوانٍ.';
+    return;
+  }
+
+  canvas.width = vid.videoWidth;
+  canvas.height = vid.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+
+  statusEl.textContent = 'جاري استخراج وتحليل بصمة الوجه...';
+  statusEl.style.color = '#38bdf8';
+  btn.disabled = true;
+
+  const fd = new FormData();
+  fd.append('image', dataUrl);
+  fd.append('step', '1');
+
+  fetch('/face-recognition/employee/enroll/' + currentStaffId + '/', {
+    method: 'POST',
+    body: fd,
+  })
+  .then(r => r.json())
+  .then(data => {
+    btn.disabled = false;
+    if (data.success) {
+      statusEl.textContent = '✓ ' + data.message;
+      statusEl.style.color = '#22c55e';
+      setTimeout(() => {
+        closeStaffFaceModal();
+        window.location.reload();
+      }, 1200);
+    } else {
+      statusEl.textContent = '❌ ' + (data.message || 'فشل تسجيل البصمة.');
+      statusEl.style.color = '#ef4444';
+    }
+  })
+  .catch(err => {
+    btn.disabled = false;
+    statusEl.textContent = 'حدث خطأ بالاتصال: ' + err.message;
+    statusEl.style.color = '#ef4444';
+  });
+}
+
+function deleteEmployeeFace(empId) {
+  if (!confirm('هل أنت متأكد من حذف بصمة وجه هذا الموظف؟ لن يتعرف عليه النظام بالكاميرا بعد ذلك.')) return;
+  fetch('/face-recognition/employee/delete/' + empId + '/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      alert(data.message);
+      window.location.reload();
+    }
+  });
+}
+</script>
+{% endblock %}

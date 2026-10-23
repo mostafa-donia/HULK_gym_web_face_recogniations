@@ -1,69 +1,167 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
-{% block title %}{% if is_edit %}تعديل موظف{% else %}إضافة موظف جديد{% endif %} — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
+{% block title %}{% if is_edit %}تعديل موظف / مدرب{% else %}إضافة موظف / مدرب جديد{% endif %} — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
 {% block content %}
-<div style="max-width: 580px; margin: 30px auto;">
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        {% if is_edit %}✏️ تعديل بيانات: {{ employee.name }}{% else %}➕ إضافة موظف / مدرب جديد{% endif %}
+<div style="max-width: 680px; margin: 30px auto;">
+  <div class="card" style="border-radius: 16px; box-shadow: var(--shadow-sm);">
+    <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding: 20px 24px;">
+      <h2 class="card-title" style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+        {% if is_edit %}✏️ تعديل بيانات: {{ employee.name }}{% else %}➕ إضافة موظف / كابتن جديد{% endif %}
       </h2>
+      <span style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; display: block;">
+        تحديد الراتب الأساسي، ساعات الوردية، سعر الإضافي (ساعة/نصف ساعة)، وشرائح خصم التأخيرات
+      </span>
     </div>
 
-    <form method="post">
-      {% csrf_token %}
+    <div style="padding: 24px;">
+      <form method="post">
+        {% csrf_token %}
 
-      <div class="form-group">
-        <label class="form-label">الاسم بالكامل *</label>
-        <input type="text" name="name" class="form-control" value="{% if is_edit %}{{ employee.name }}{% endif %}" placeholder="الاسم ثلاثي..." required autofocus>
-      </div>
+        <!-- Basic Info -->
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label">الاسم بالكامل *</label>
+          <input type="text" name="name" class="form-control" value="{% if is_edit %}{{ employee.name }}{% endif %}" placeholder="الاسم ثلاثي..." required autofocus>
+        </div>
 
-      <div class="form-group">
-        <label class="form-label">رقم الهاتف (واتساب) *</label>
-        <input type="tel" name="phone" class="form-control" value="{% if is_edit %}{{ employee.phone }}{% endif %}" placeholder="010XXXXXXXX" required>
-      </div>
+        <div class="grid-2" style="gap: 14px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف (واتساب) *</label>
+            <input type="tel" name="phone" class="form-control" value="{% if is_edit %}{{ employee.phone }}{% endif %}" placeholder="010XXXXXXXX" required>
+          </div>
 
-      <div class="grid-3" style="gap: 12px;">
-        <div class="form-group">
-          <label class="form-label">المسمى الوظيفي</label>
-          <select name="role" class="form-control">
-            <option value="TRAINER" {% if is_edit and employee.role == 'TRAINER' %}selected{% endif %}>مدرب (كابتن)</option>
-            <option value="ASSISTANT" {% if is_edit and employee.role == 'ASSISTANT' %}selected{% endif %}>موظف استقبال</option>
-            <option value="MANAGER" {% if is_edit and employee.role == 'MANAGER' %}selected{% endif %}>مدير صالة</option>
+          <div class="form-group">
+            <label class="form-label">المسمى الوظيفي *</label>
+            <select name="role" class="form-control" style="font-weight: 700;">
+              <option value="TRAINER" {% if is_edit and employee.role == 'TRAINER' %}selected{% endif %}>مدرب (كابتن)</option>
+              <option value="RECEPTION" {% if is_edit and employee.role == 'RECEPTION' %}selected{% endif %}>موظف استقبال</option>
+              <option value="ASSISTANT" {% if is_edit and employee.role == 'ASSISTANT' %}selected{% endif %}>موظف استقبال / إداري</option>
+              <option value="ADMIN" {% if is_edit and employee.role == 'ADMIN' %}selected{% endif %}>إداري / محاسب</option>
+              <option value="MANAGER" {% if is_edit and employee.role == 'MANAGER' %}selected{% endif %}>مدير صالة</option>
+              <option value="CLEANING" {% if is_edit and employee.role == 'CLEANING' %}selected{% endif %}>خدمات ومعاونة</option>
+              <option value="SECURITY" {% if is_edit and employee.role == 'SECURITY' %}selected{% endif %}>أمن وحراسة</option>
+              <option value="OTHER" {% if is_edit and employee.role == 'OTHER' %}selected{% endif %}>موظف عام</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Financial & Salary settings -->
+        <div class="grid-2" style="gap: 14px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label class="form-label">الراتب الأساسي الشهري (ج.م) *</label>
+            <input type="number" step="0.01" name="fixed_salary" class="form-control" value="{% if is_edit %}{{ employee.fixed_salary }}{% else %}0.00{% endif %}" min="0" required style="font-weight: 800;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="color: #38bdf8;">نسبة عمولة البرايفت الافتراضية (%)</label>
+            <input type="number" step="0.5" min="0" max="100" name="commission_percentage" class="form-control" value="{% if is_edit %}{{ employee.commission_percentage|default:'50.00' }}{% else %}50.00{% endif %}" style="color: #38bdf8; font-weight: 800;">
+          </div>
+        </div>
+
+        <!-- Overtime Rates (خاصة بالاستقبال والموظفين) -->
+        <div style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.25); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+          <h4 style="margin: 0 0 10px 0; font-size: 0.92rem; font-weight: 800; color: #22c55e;">
+            ⚡ بدلات وسعر ساعات العمل الإضافي (Overtime Bonus)
+          </h4>
+          <div class="grid-2" style="gap: 12px;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.8rem;">سعر ساعة الإضافي (ج.م)</label>
+              <input type="number" step="0.5" min="0" name="hourly_overtime_rate" class="form-control" value="{% if is_edit %}{{ employee.hourly_overtime_rate|default:'0.00' }}{% else %}0.00{% endif %}" placeholder="0.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.8rem;">سعر نصف ساعة الإضافي (ج.م)</label>
+              <input type="number" step="0.5" min="0" name="half_hourly_overtime_rate" class="form-control" value="{% if is_edit %}{{ employee.half_hourly_overtime_rate|default:'0.00' }}{% else %}0.00{% endif %}" placeholder="0.00">
+            </div>
+          </div>
+        </div>
+
+        <!-- Shift Working Hours -->
+        <div style="background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+          <h4 style="margin: 0 0 10px 0; font-size: 0.92rem; font-weight: 800; color: #38bdf8;">
+            ⏱️ مواعيد وردية العمل اليومية
+          </h4>
+          <div class="grid-3" style="gap: 12px;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.8rem;">بداية الوردية</label>
+              <input type="time" name="shift_start_time" class="form-control" value="{% if is_edit and employee.shift_start_time %}{{ employee.shift_start_time|time:'H:i' }}{% else %}09:00{% endif %}">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.8rem;">نهاية الوردية</label>
+              <input type="time" name="shift_end_time" class="form-control" value="{% if is_edit and employee.shift_end_time %}{{ employee.shift_end_time|time:'H:i' }}{% else %}17:00{% endif %}">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.8rem;">ساعات العمل اليومية</label>
+              <input type="number" step="0.5" min="1" max="24" name="daily_working_hours" class="form-control" value="{% if is_edit %}{{ employee.daily_working_hours|default:'8.0' }}{% else %}8.0{% endif %}">
+            </div>
+          </div>
+        </div>
+
+        <!-- Late Deduction Tiers (شرائح خصم التأخيرات) -->
+        <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+          <h4 style="margin: 0 0 10px 0; font-size: 0.92rem; font-weight: 800; color: #ef4444;">
+            ⚠️ شرائح وقواعد خصم التأخير اليومي عن بداية الوردية
+          </h4>
+          
+          <!-- Tier 1 -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.78rem;">تأخير شريحة 1 (دقائق)</label>
+              <input type="number" min="1" name="late_deduction_tier1_minutes" class="form-control" value="{% if is_edit %}{{ employee.late_deduction_tier1_minutes|default:15 }}{% else %}15{% endif %}">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.78rem;">الخصم المطبق (أيام عمل)</label>
+              <input type="number" step="0.05" min="0" max="5" name="late_deduction_tier1_days" class="form-control" value="{% if is_edit %}{{ employee.late_deduction_tier1_days|default:'0.25' }}{% else %}0.25{% endif %}">
+            </div>
+          </div>
+
+          <!-- Tier 2 -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.78rem;">تأخير شريحة 2 (دقائق)</label>
+              <input type="number" min="1" name="late_deduction_tier2_minutes" class="form-control" value="{% if is_edit %}{{ employee.late_deduction_tier2_minutes|default:30 }}{% else %}30{% endif %}">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.78rem;">الخصم المطبق (أيام عمل)</label>
+              <input type="number" step="0.05" min="0" max="5" name="late_deduction_tier2_days" class="form-control" value="{% if is_edit %}{{ employee.late_deduction_tier2_days|default:'0.50' }}{% else %}0.50{% endif %}">
+            </div>
+          </div>
+
+          <!-- Tier 3 -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.78rem;">تأخير شريحة 3 (دقائق / مثلاً 120 دقيقة = ساعتين)</label>
+              <input type="number" min="1" name="late_deduction_tier3_minutes" class="form-control" value="{% if is_edit %}{{ employee.late_deduction_tier3_minutes|default:120 }}{% else %}120{% endif %}">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 0.78rem;">الخصم المطبق (أيام عمل / 1.00 = يوم كامل)</label>
+              <input type="number" step="0.05" min="0" max="5" name="late_deduction_tier3_days" class="form-control" value="{% if is_edit %}{{ employee.late_deduction_tier3_days|default:'1.00' }}{% else %}1.00{% endif %}">
+            </div>
+          </div>
+        </div>
+
+        {% if is_edit %}
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label">حالة العمل</label>
+          <select name="status" class="form-control">
+            <option value="ACTIVE" {% if employee.status == 'ACTIVE' %}selected{% endif %}>نشط بالعمل</option>
+            <option value="INACTIVE" {% if employee.status == 'INACTIVE' %}selected{% endif %}>متوقف / إجازة</option>
           </select>
         </div>
+        {% endif %}
 
-        <div class="form-group">
-          <label class="form-label">الراتب الأساسي الشهري (ج.م)</label>
-          <input type="number" step="0.01" name="fixed_salary" class="form-control" value="{% if is_edit %}{{ employee.fixed_salary }}{% else %}0.00{% endif %}" min="0">
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label class="form-label">ملاحظات سرية</label>
+          <textarea name="notes" class="form-control" rows="2" placeholder="ملاحظات العقد والتعيين...">{% if is_edit %}{{ employee.notes }}{% endif %}</textarea>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" style="color: #A8F14B;">نسبة عمولة البرايفت الطبيعية (%)</label>
-          <input type="number" step="0.5" min="0" max="100" name="commission_percentage" class="form-control" value="{% if is_edit %}{{ employee.commission_percentage|default:'50.00' }}{% else %}50.00{% endif %}" style="color: #A8F14B; font-weight: 800;">
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary">إلغاء</a>
+          <button type="submit" class="btn btn-primary" style="font-size: 1.05rem; padding: 10px 24px; font-weight: 800;">
+            {% if is_edit %}حفظ التعديلات 💾{% else %}تسجيل الموظف 🚀{% endif %}
+          </button>
         </div>
-      </div>
-
-      {% if is_edit %}
-      <div class="form-group">
-        <label class="form-label">حالة العمل</label>
-        <select name="status" class="form-control">
-          <option value="ACTIVE" {% if employee.status == 'ACTIVE' %}selected{% endif %}>نشط بالعمل</option>
-          <option value="INACTIVE" {% if employee.status == 'INACTIVE' %}selected{% endif %}>متوقف / إجازة</option>
-        </select>
-      </div>
-      {% endif %}
-
-      <div class="form-group">
-        <label class="form-label">ملاحظات سرية</label>
-        <textarea name="notes" class="form-control" rows="3" placeholder="ملاحظات العقد والتعيين...">{% if is_edit %}{{ employee.notes }}{% endif %}</textarea>
-      </div>
-
-      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; font-size: 1.1rem; padding: 12px;">
-        {% if is_edit %}حفظ التعديلات 💾{% else %}تسجيل الموظف 🚀{% endif %}
-      </button>
-    </form>
+      </form>
+    </div>
   </div>
 </div>
 {% endblock %}

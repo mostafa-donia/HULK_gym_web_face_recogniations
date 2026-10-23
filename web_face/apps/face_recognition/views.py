@@ -569,6 +569,96 @@ def api_delete_manager_face(request):
 
 
 @csrf_exempt
+@login_required
+def api_enroll_employee_face(request, employee_id):
+    """
+    Enrolls an employee's face embedding from webcam frame or photo upload.
+    Stores multi-angle vectors and crops face thumbnail into Employee model.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "طريقة الطلب غير صالحة."}, status=405)
+
+    from apps.payroll.models import Employee
+    employee = get_object_or_404(Employee, id=employee_id)
+
+    raw_img = None
+    if "image" in request.FILES:
+        raw_img = request.FILES["image"].read()
+    elif "image" in request.POST:
+        raw_img = request.POST.get("image", "").strip()
+
+    if not raw_img:
+        return JsonResponse({"success": False, "message": "لم يتم إرسال أي صورة لتسجيل البصمة."}, status=400)
+
+    engine = get_face_engine()
+    if not engine.ensure_models_loaded(timeout=5.0):
+        return JsonResponse({"success": False, "message": "نماذج الذكاء الاصطناعي قيد التحميل، يرجى الانتظار ثوانٍ."}, status=503)
+
+    success, embs, crop_bytes, err_msg = engine.extract_face_and_embedding(raw_img)
+    if not success or not embs:
+        return JsonResponse({"success": False, "message": err_msg or "فشل في رصد الوجه. تأكد من إضاءة الغرفة ومواجهة الكاميرا مباشرة."}, status=422)
+
+    step = int(request.POST.get("step", "1"))
+    current_embs = employee.face_embeddings or []
+    if step == 1 and not request.POST.get("append", ""):
+        current_embs = []
+
+    for vec in embs:
+        if len(vec) == 128:
+            current_embs.append(vec)
+
+    employee.face_embeddings = current_embs[-5:]
+    employee.face_enrolled = True
+    employee.face_enrolled_at = timezone.now()
+
+    if crop_bytes and (step == 1 or not employee.face_photo):
+        filename = f"emp_{employee.id}_{int(time.time())}.jpg"
+        employee.face_photo.save(filename, ContentFile(crop_bytes), save=False)
+
+    employee.save()
+    engine.refresh_cache(force=True)
+
+    return JsonResponse({
+        "success": True,
+        "step": step,
+        "total_steps": 5,
+        "embeddings_count": len(employee.face_embeddings),
+        "message": f"✓ تم التقاط وحفظ بصمة وجه {employee.name} بنجاح!",
+        "photo_url": employee.face_photo.url if employee.face_photo else None,
+        "enrolled_at": employee.face_enrolled_at.strftime("%Y-%m-%d %H:%M"),
+    })
+
+
+@csrf_exempt
+@login_required
+def api_delete_employee_face(request, employee_id):
+    """Deletes face biometric records for an employee."""
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "طريقة الطلب غير صالحة."}, status=405)
+
+    from apps.payroll.models import Employee
+    employee = get_object_or_404(Employee, id=employee_id)
+    employee.face_enrolled = False
+    employee.face_embeddings = []
+    employee.face_enrolled_at = None
+    if employee.face_photo:
+        try:
+            employee.face_photo.delete(save=False)
+        except Exception:
+            pass
+        employee.face_photo = None
+    employee.save()
+
+    engine = get_face_engine()
+    engine.refresh_cache(force=True)
+
+    return JsonResponse({
+        "success": True,
+        "message": f"✓ تم حذف بصمة وجه {employee.name} بنجاح.",
+    })
+
+
+@csrf_exempt
 def api_verify_manager_face_unlock(request):
     """
     Verifies live webcam frame against enrolled manager face embeddings.

@@ -7,8 +7,13 @@ from apps.payments.models import Payment
 
 class EmployeeRole(models.TextChoices):
     TRAINER = "TRAINER", "مدرب (كابتن)"
-    ASSISTANT = "ASSISTANT", "موظف استقبال"
+    ASSISTANT = "ASSISTANT", "موظف استقبال / إداري"
     MANAGER = "MANAGER", "مدير صالة"
+    RECEPTION = "RECEPTION", "موظف استقبال"
+    ADMIN = "ADMIN", "إداري / محاسب"
+    CLEANING = "CLEANING", "خدمات ومعاونة"
+    SECURITY = "SECURITY", "أمن وحراسة"
+    OTHER = "OTHER", "موظف عام"
 
 
 class EmployeeStatus(models.TextChoices):
@@ -45,6 +50,28 @@ class Employee(models.Model):
     )
     hire_date = models.DateField(null=True, blank=True, verbose_name="تاريخ التعيين")
     notes = models.TextField(blank=True, verbose_name="ملاحظات سرية")
+
+    # Shift settings & Overtime rates
+    shift_start_time = models.TimeField(null=True, blank=True, default="09:00", verbose_name="موعد بداية الوردية")
+    shift_end_time = models.TimeField(null=True, blank=True, default="17:00", verbose_name="موعد نهاية الوردية")
+    daily_working_hours = models.DecimalField(max_digits=4, decimal_places=1, default=Decimal("8.0"), verbose_name="ساعات العمل اليومية")
+    hourly_overtime_rate = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal("0.00"), verbose_name="سعر ساعة الإضافي / البونص (ج.م)")
+    half_hourly_overtime_rate = models.DecimalField(max_digits=8, decimal_places=2, default=Decimal("0.00"), verbose_name="سعر نصف ساعة الإضافي (ج.م)")
+
+    # Late deduction tiers
+    late_deduction_tier1_minutes = models.PositiveIntegerField(default=15, verbose_name="حد التأخير 1 (دقائق)")
+    late_deduction_tier1_days = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal("0.25"), verbose_name="خصم حد 1 (أيام)")
+    late_deduction_tier2_minutes = models.PositiveIntegerField(default=30, verbose_name="حد التأخير 2 (دقائق)")
+    late_deduction_tier2_days = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal("0.50"), verbose_name="خصم حد 2 (أيام)")
+    late_deduction_tier3_minutes = models.PositiveIntegerField(default=120, verbose_name="حد التأخير 3 (دقائق)")
+    late_deduction_tier3_days = models.DecimalField(max_digits=4, decimal_places=2, default=Decimal("1.00"), verbose_name="خصم حد 3 (أيام)")
+
+    # Biometric Face Recognition
+    face_photo = models.ImageField(upload_to="employees/faces/", null=True, blank=True, verbose_name="صورة بصمة الوجه")
+    face_embeddings = models.JSONField(default=list, blank=True, verbose_name="بصمة الوجه الرقمية")
+    face_enrolled = models.BooleanField(default=False, db_index=True, verbose_name="تم تسجيل بصمة الوجه")
+    face_enrolled_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ تسجيل بصمة الوجه")
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإضافة")
 
     class Meta:
@@ -235,6 +262,14 @@ class PayrollRun(models.Model):
     )
     approved_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ ووقت الاعتماد النهائي")
     notes = models.TextField(blank=True, verbose_name="ملاحظات عامة على المسير")
+    expense = models.ForeignKey(
+        "expenses.Expense",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payroll_runs",
+        verbose_name="سجل المصروف الإجمالي بالخزينة",
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ آخر تحديث")
 
@@ -274,8 +309,26 @@ class PayrollItem(models.Model):
         blank=True,
         verbose_name="تفاصيل البنود والعمولات والمكافآت بالتفصيل",
     )
-    is_paid = models.BooleanField(default=False, verbose_name="تم الصرف")
+    is_paid = models.BooleanField(default=False, verbose_name="تم الصرف والتسليم")
     paid_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ الصرف الفعلي")
+    paid_method = models.CharField(max_length=50, default="كاش", blank=True, verbose_name="طريقة الصرف (كاش، تحويل، فودافون كاش، إنستاباي)")
+    paid_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="handed_salaries",
+        verbose_name="المسلّم",
+    )
+    payout_notes = models.TextField(blank=True, verbose_name="ملاحظات تسليم الراتب")
+    expense = models.ForeignKey(
+        "expenses.Expense",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payroll_items",
+        verbose_name="سجل المصروف المرتبط بالخزينة",
+    )
     whatsapp_sent_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ إرسال كشف الراتب عبر الواتساب")
 
     class Meta:
@@ -286,3 +339,55 @@ class PayrollItem(models.Model):
 
     def __str__(self) -> str:
         return f"{self.employee_name_snapshot} ({self.payroll_run.period}): صافي {self.net_payable} ج.م"
+
+
+class EmployeeAttendance(models.Model):
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="attendances",
+        verbose_name="الموظف",
+    )
+    date = models.DateField(db_index=True, verbose_name="التاريخ")
+    check_in = models.TimeField(null=True, blank=True, verbose_name="وقت الحضور")
+    check_out = models.TimeField(null=True, blank=True, verbose_name="وقت الانصراف")
+    check_in_method = models.CharField(
+        max_length=20,
+        default="face",
+        choices=[("face", "بصمة الوجه"), ("manual", "تسجيل يدوي")],
+        verbose_name="طريقة الحضور",
+    )
+    check_out_method = models.CharField(
+        max_length=20,
+        default="face",
+        choices=[("face", "بصمة الوجه"), ("manual", "تسجيل يدوي")],
+        verbose_name="طريقة الانصراف",
+    )
+    late_minutes = models.PositiveIntegerField(default=0, verbose_name="دقائق التأخير")
+    overtime_minutes = models.PositiveIntegerField(default=0, verbose_name="دقائق الإضافي")
+    calculated_late_deduction = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name="قيمة خصم التأخير المحسوبة",
+    )
+    calculated_overtime_bonus = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name="قيمة بونص الإضافي المحسوبة",
+    )
+    deduction_approved = models.BooleanField(default=True, verbose_name="اعتماد خصم التأخير")
+    overtime_approved = models.BooleanField(default=False, verbose_name="اعتماد بونص الإضافي")
+    notes = models.TextField(blank=True, verbose_name="ملاحظات الحضور")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "سجل حضور موظف"
+        verbose_name_plural = "سجلات حضور الموظفين"
+        unique_together = ("employee", "date")
+        ordering = ["-date", "-check_in"]
+
+    def __str__(self) -> str:
+        return f"{self.employee.name} | {self.date} (حضور: {self.check_in or '-'} | انصراف: {self.check_out or '-'})"

@@ -371,7 +371,7 @@ DefaultDirName=C:\\Systemize
 DefaultGroupName={{#MyAppName}}
 AllowNoIcons=yes
 OutputDir={os.path.join(BASE_DIR, "dist")}
-OutputBaseFilename=Systemize_Setup_v2.3
+OutputBaseFilename=Systemize_Setup_v2.4
 SetupIconFile={{#SourceDir}}\\gym_icon.ico
 Compression=lzma2/normal
 SolidCompression=yes
@@ -516,17 +516,15 @@ if os.path.exists(iscc_path):
     compile_res = subprocess.run([iscc_path, iss_path], capture_output=True, text=True)
     if compile_res.returncode == 0:
         print("  [V] INNO SETUP INSTALLER BUILT SUCCESSFULLY!")
+        v24_path = os.path.join(BASE_DIR, 'dist', 'Systemize_Setup_v2.4.exe')
         v23_path = os.path.join(BASE_DIR, 'dist', 'Systemize_Setup_v2.3.exe')
-        v22_path = os.path.join(BASE_DIR, 'dist', 'Systemize_Setup_v2.2.exe')
-        v21_path = os.path.join(BASE_DIR, 'dist', 'Systemize_Setup_v2.1.exe')
         v20_path = os.path.join(BASE_DIR, 'dist', 'Systemize_Setup_v2.0.exe')
-        if os.path.exists(v23_path):
-            shutil.copy2(v23_path, v22_path)
-            shutil.copy2(v23_path, v21_path)
-            shutil.copy2(v23_path, v20_path)
-            print(f"  [V] Output Files: {v23_path}, {v22_path}, {v21_path} & {v20_path}")
+        if os.path.exists(v24_path):
+            shutil.copy2(v24_path, v23_path)
+            shutil.copy2(v24_path, v20_path)
+            print(f"  [V] Output Files: {v24_path}, {v23_path} & {v20_path}")
         else:
-            print(f"  Output File: {v23_path}")
+            print(f"  Output File: {v24_path}")
     else:
         print("[!] Inno Setup compilation error:")
         print(compile_res.stderr or compile_res.stdout)

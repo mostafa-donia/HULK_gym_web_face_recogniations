@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}كشف تسليم وصرف الرواتب — شهر {{ selected_period }} — {{ profile.gym_name|default:"Systemize Gym" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <!-- Header -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 20px 24px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <h1 style="color: var(--text-main); font-size: 1.45rem; font-weight: 900; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>📋 كشف تسليم وصرف الرواتب (Handover Checklist)</span>
+        </h1>
+        <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 4px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 800;">
+          شهر: {{ selected_period }}
+        </span>
+      </div>
+      <p style="color: var(--text-muted); margin: 6px 0 0 0; font-size: 0.88rem;">
+        متابعة تسليم الرواتب يداً بيد للموظفين والكباتن، وتوثيق طريقة الصرف، والخصم التلقائي الفوري من الخزينة والمصروفات
+      </p>
+    </div>
+
+    <!-- Quick Actions & Period Selector -->
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <form method="get" style="margin: 0; display: inline-flex; align-items: center; gap: 6px;">
+        <label style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">اختر الشهر:</label>
+        <select name="period" class="form-control" style="width: auto; padding: 6px 12px; height: 36px; font-weight: 700;" onchange="this.form.submit()">
+          {% for p in all_periods %}
+          <option value="{{ p }}" {% if p == selected_period %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </form>
+
+      {% if payroll_run and pending_items_count > 0 %}
+      <form method="post" action="{% url 'payroll:mark_all_payout' selected_period %}" style="margin: 0;" onsubmit="return confirm('هل أنت متأكد من تسليم وصرف رواتب كافة الموظفين المعلقين كاش وخصمها من الخزينة؟');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm" style="background: rgba(34, 197, 94, 0.18); border: 1px solid rgba(34, 197, 94, 0.45); color: #22c55e; font-weight: 800; height: 36px; padding: 0 14px;">
+          ✓ تسليم الكل كاش وصرفها من الخزينة
+        </button>
+      </form>
+      {% endif %}
+
+      <a href="{% url 'payroll:payroll_archive' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center;">
+        <span>📚 أرشيف الشهور</span>
+      </a>
+      {% if payroll_run %}
+      <a href="{% url 'payroll:payroll_run_detail' selected_period %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center;">
+        <span>👁️ تفاصيل المسير</span>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 3 Summary KPI Cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+    
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">إجمالي فاتورة الرواتب المعتمدة</span>
+      <div style="color: #ffffff; font-size: 1.8rem; font-weight: 900; margin-top: 6px;">
+        {{ total_net }} <small style="font-size: 0.88rem; color: var(--text-muted);">{{ profile.currency }}</small>
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
+        عدد المستحقين: <strong>{{ items|length }} موظف ومدرب</strong>
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">تم تسليمه وصرفه من الخزينة</span>
+      <div style="color: #22c55e; font-size: 1.8rem; font-weight: 900; margin-top: 6px;">
+        {{ total_paid }} <small style="font-size: 0.88rem;">{{ profile.currency }}</small>
+      </div>
+      <div style="font-size: 0.8rem; color: #22c55e; margin-top: 6px; font-weight: 700;">
+        ✓ {{ paid_items_count }} من أصل {{ items|length }} استلموا رواتبهم
+      </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow-sm);">
+      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">معلق بانتظار التسليم والصرف</span>
+      <div style="color: #f59e0b; font-size: 1.8rem; font-weight: 900; margin-top: 6px;">
+        {{ total_pending }} <small style="font-size: 0.88rem;">{{ profile.currency }}</small>
+      </div>
+      <div style="font-size: 0.8rem; color: #f59e0b; margin-top: 6px; font-weight: 700;">
+        ⏳ {{ pending_items_count }} موظف معلق
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Handover Table Card -->
+  <div class="card" style="border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-sm);">
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main);">
+        👥 قائمة تسليم رواتب موظفي وكباتن شهر {{ selected_period }}
+      </h3>
+      <div style="font-size: 0.82rem; color: var(--text-muted);">
+        💡 التحديد بـ "تسليم الراتب" يقوم بتسجيل مصروف مباشر يخصم القيمة من الخزينة فورياً.
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" style="margin: 0; width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color);">
+            <th style="padding: 14px 18px; text-align: right; color: var(--text-muted); font-size: 0.84rem;">الموظف / الكابتن</th>
+            <th style="padding: 14px 18px; text-align: center; color: var(--text-muted); font-size: 0.84rem;">الوظيفة</th>
+            <th style="padding: 14px 18px; text-align: center; color: var(--text-muted); font-size: 0.84rem;">الأساسي</th>
+            <th style="padding: 14px 18px; text-align: center; color: var(--text-muted); font-size: 0.84rem;">العمولات</th>
+            <th style="padding: 14px 18px; text-align: center; color: var(--text-muted); font-size: 0.84rem;">المكافآت</th>
+            <th style="padding: 14px 18px; text-align: center; color: var(--text-muted); font-size: 0.84rem;">الخصومات والسلف</th>
+            <th style="padding: 14px 18px; text-align: center; color: var(--text-muted); font-size: 0.84rem;">الصافي المستحق</th>
+            <th style="padding: 14px 18px; text-align: center; color: var(--text-muted); font-size: 0.84rem;">حالة التسليم</th>
+            <th style="padding: 14px 18px; text-align: center; color: var(--text-muted); font-size: 0.84rem;">طريقة الدفع وملاحظات</th>
+            <th style="padding: 14px 18px; text-align: center; color: var(--text-muted); font-size: 0.84rem;">إجراءات وتعديل</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr style="border-bottom: 1px solid var(--border-color); background: {% if item.is_paid %}rgba(34, 197, 94, 0.03){% else %}transparent{% endif %};">
+            <td style="padding: 14px 18px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                {% if item.employee.face_photo %}
+                <img src="{{ item.employee.face_photo.url }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color);">
+                {% else %}
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+                  👤
+                </div>
+                {% endif %}
+                <div>
+                  <strong style="color: var(--text-main); font-size: 0.95rem; display: block;">{{ item.employee_name_snapshot }}</strong>
+                  <small style="color: var(--text-muted); font-size: 0.76rem;">{{ item.employee.phone|default:"-" }}</small>
+                </div>
+              </div>
+            </td>
+
+            <td style="padding: 14px 18px; text-align: center;">
+              <span class="badge" style="background: rgba(255,255,255,0.08); color: var(--text-main); font-size: 0.76rem;">
+                {{ item.role_snapshot }}
+              </span>
+            </td>
+
+            <td style="padding: 14px 18px; text-align: center; color: var(--text-main);">
+              {{ item.fixed_salary }} {{ profile.currency }}
+            </td>
+
+            <td style="padding: 14px 18px; text-align: center; color: #38bdf8; font-weight: 700;">
+              {% if item.commissions > 0 %}+{{ item.commissions }} {{ profile.currency }}{% else %}-{% endif %}
+            </td>
+
+            <td style="padding: 14px 18px; text-align: center; color: #22c55e;">
+              {% if item.bonuses > 0 %}+{{ item.bonuses }} {{ profile.currency }}{% else %}-{% endif %}
+            </td>
+
+            <td style="padding: 14px 18px; text-align: center; color: #ef4444;">
+              {% if item.deductions > 0 or item.advances > 0 %}
+                -{{ item.deductions|add:item.advances }} {{ profile.currency }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td style="padding: 14px 18px; text-align: center; font-weight: 900; color: #ffffff; font-size: 1.15rem;">
+              {{ item.net_payable }} {{ profile.currency }}
+            </td>
+
+            <!-- Payout Status Toggle -->
+            <td style="padding: 14px 18px; text-align: center;">
+              {% if item.is_paid %}
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <span style="background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.4); padding: 4px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+                  <span>✓ تم التسليم</span>
+                </span>
+                <form method="post" action="{% url 'payroll:toggle_payout' item.id %}" style="margin: 0;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm" style="background: none; border: none; color: #ef4444; font-size: 0.72rem; text-decoration: underline; cursor: pointer; padding: 0;">
+                    إلغاء التسليم
+                  </button>
+                </form>
+              </div>
+              {% else %}
+              <button type="button" class="btn btn-sm" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.45); color: #38bdf8; font-weight: 800; font-size: 0.8rem; padding: 4px 14px; border-radius: 8px;" onclick="openPayoutModal({{ item.id }}, '{{ item.employee_name_snapshot }}', '{{ item.net_payable }}')">
+                تسليم الراتب 💵
+              </button>
+              {% endif %}
+            </td>
+
+            <!-- Method & Details -->
+            <td style="padding: 14px 18px; text-align: center; font-size: 0.8rem;">
+              {% if item.is_paid %}
+                <span style="color: var(--text-main); font-weight: 700;">{{ item.paid_method|default:"كاش" }}</span>
+                {% if item.paid_at %}
+                <div style="color: var(--text-muted); font-size: 0.72rem;">{{ item.paid_at|date:"Y-m-d H:i" }}</div>
+                {% endif %}
+                {% if item.payout_notes %}
+                <div style="color: var(--text-muted); font-size: 0.72rem;">{{ item.payout_notes }}</div>
+                {% endif %}
+              {% else %}
+                <span style="color: var(--text-muted);">بانتظار الصرف</span>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td style="padding: 14px 18px; text-align: center;">
+              <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                <a href="{% url 'payroll:payroll_item_edit' item.id %}?next=checklist" class="btn btn-sm btn-secondary" style="font-size: 0.76rem; padding: 4px 8px;" title="تعديل الراتب والمكافآت وتحديث الخزينة">
+                  ✏️ تعديل
+                </a>
+                <a href="{% url 'payroll:payroll_statement' item.id %}" target="_blank" class="btn btn-sm btn-secondary" style="font-size: 0.76rem; padding: 4px 8px;" title="طباعة كشف الراتب">
+                  🖨️
+                </a>
+                <a href="{% url 'payroll:payroll_send_whatsapp' item.id %}" class="btn btn-sm" style="background: rgba(34, 197, 94, 0.14); border: 1px solid rgba(34, 197, 94, 0.4); color: #22c55e; font-size: 0.76rem; padding: 4px 8px;" title="إرسال عبر الواتساب">
+                  💬
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10" style="padding: 36px; text-align: center; color: var(--text-muted);">
+              {% if payroll_run %}
+                لا توجد بنود رواتب مسجلة في هذا المسير.
+              {% else %}
+                مسير رواتب شهر {{ selected_period }} لم يتم اعتماده بعد. <a href="{% url 'payroll:payroll_run_detail' selected_period %}">اضغط هنا لمعاينة واعتماد المسير</a>.
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal: Handover Confirmation Modal -->
+<div id="payoutModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; width: 440px; max-width: 95%; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+    <h3 style="margin: 0 0 12px 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main);">
+      💵 تأكيد تسليم وصرف الراتب
+    </h3>
+    <form id="payoutForm" method="post" action="">
+      {% csrf_token %}
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 0.82rem; color: var(--text-muted); display: block; margin-bottom: 4px;">الموظف:</label>
+        <div id="modalEmpName" style="color: var(--text-main); font-weight: 800; font-size: 1rem;">-</div>
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 0.82rem; color: var(--text-muted); display: block; margin-bottom: 4px;">صافي المبلغ المنصرف:</label>
+        <div id="modalNetPayable" style="color: #22c55e; font-weight: 900; font-size: 1.4rem;">0.00 {{ profile.currency }}</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label">طريقة التسليم / الصرف *</label>
+        <select name="paid_method" class="form-control" style="font-weight: 700;">
+          <option value="كاش">كاش (نقدي من الخزينة)</option>
+          <option value="تحويل بنكي">تحويل بنكي</option>
+          <option value="فودافون كاش">فودافون كاش / محفظة إلكترونية</option>
+          <option value="إنستاباي">إنستاباي (InstaPay)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label">ملاحظات التسليم (اختياري)</label>
+        <input type="text" name="payout_notes" class="form-control" placeholder="مثال: تم التسليم يداً بيد / إشعار رقم...">
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" onclick="closePayoutModal()">إلغاء</button>
+        <button type="submit" class="btn btn-primary" style="font-weight: 800;">تأكيد وصرف من الخزينة 🚀</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openPayoutModal(itemId, name, amount) {
+  document.getElementById('modalEmpName').textContent = name;
+  document.getElementById('modalNetPayable').textContent = amount + ' {{ profile.currency }}';
+  document.getElementById('payoutForm').action = '/payroll/payout-checklist/item/' + itemId + '/toggle/';
+  document.getElementById('payoutModal').style.display = 'flex';
+}
+function closePayoutModal() {
+  document.getElementById('payoutModal').style.display = 'none';
+}
+</script>
+{% endblock %}

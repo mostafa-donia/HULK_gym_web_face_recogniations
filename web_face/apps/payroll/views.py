@@ -85,17 +85,33 @@ def trainers_index_view(request):
     if not unlocked or resp:
         return resp
 
-    # When unlocked, fetch trainers data
+    # When unlocked, fetch staff & trainers data
     today = timezone.localdate()
     month_start = today.replace(day=1)
 
-    trainers_qs = list(Employee.objects.filter(role=EmployeeRole.TRAINER).order_by("name"))
+    from apps.payroll.models import EmployeeAttendance
+    all_employees = list(Employee.objects.all().order_by("role", "name"))
+    total_staff = len(all_employees)
+    active_staff = sum(1 for e in all_employees if e.status == EmployeeStatus.ACTIVE)
+
+    # Pre-fetch today's attendance for all staff
+    today_attendances_qs = list(EmployeeAttendance.objects.filter(date=today).select_related("employee").order_by("-check_in"))
+    today_att_map = {att.employee_id: att for att in today_attendances_qs}
+    present_staff_count = len(today_attendances_qs)
+
+    for emp in all_employees:
+        emp.today_att = today_att_map.get(emp.id)
+
+    trainers_qs = [e for e in all_employees if e.role == EmployeeRole.TRAINER]
+    reception_staff = [e for e in all_employees if e.role in [EmployeeRole.ASSISTANT, EmployeeRole.RECEPTION]]
+    admin_services_staff = [e for e in all_employees if e.role in [EmployeeRole.MANAGER, EmployeeRole.ADMIN, EmployeeRole.CLEANING, EmployeeRole.SECURITY, EmployeeRole.OTHER]]
+
     total_trainers = len(trainers_qs)
     active_trainers = sum(1 for t in trainers_qs if t.status == EmployeeStatus.ACTIVE)
 
     total_private_members = 0
     total_pt_commissions = Decimal("0.00")
-    total_fixed_salaries = Decimal("0.00")
+    total_fixed_salaries = sum((e.fixed_salary for e in all_employees if e.status == EmployeeStatus.ACTIVE), Decimal("0.00"))
 
     # Preload custom commission rate assignments
     active_assignments = TrainerClientAssignment.objects.filter(is_active=True)
@@ -139,7 +155,6 @@ def trainers_index_view(request):
         if t.status == EmployeeStatus.ACTIVE:
             total_private_members += t.active_pt_count
             total_pt_commissions += t.pt_commission
-            total_fixed_salaries += t.fixed_salary
 
     assignments_count = total_private_members
     month_pt_sessions = PrivateTrainingRecord.objects.filter(
@@ -154,8 +169,18 @@ def trainers_index_view(request):
     ).select_related("trainer", "client").order_by("-created_at")[:20]
     private_members_list = Member.objects.filter(has_private=True, assigned_coach__isnull=False).select_related("assigned_coach").order_by("-id")[:25]
 
+    current_period = today.strftime("%Y-%m")
+    active_tab = request.GET.get("tab", "all")
+
     context = {
+        "all_employees": all_employees,
+        "total_staff": total_staff,
+        "active_staff": active_staff,
+        "present_staff_count": present_staff_count,
         "trainers": trainers_qs,
+        "reception_staff": reception_staff,
+        "admin_services_staff": admin_services_staff,
+        "today_attendances": today_attendances_qs,
         "total_trainers": total_trainers,
         "active_trainers": active_trainers,
         "assignments_count": assignments_count,
@@ -166,6 +191,9 @@ def trainers_index_view(request):
         "assignments": assignments,
         "recent_sessions": recent_sessions,
         "private_members_list": private_members_list,
+        "current_period": current_period,
+        "active_tab": active_tab,
+        "today": today,
     }
     return render(request, "payroll/trainers_index.html", context)
 
@@ -187,6 +215,7 @@ def employee_list_view(request):
 
 
 @login_required
+@login_required
 @manager_required
 def employee_create_view(request):
     if request.method == "POST":
@@ -196,6 +225,19 @@ def employee_create_view(request):
         fixed_salary = Decimal(request.POST.get("fixed_salary", "0.00") or "0.00")
         commission_percentage = Decimal(request.POST.get("commission_percentage", "50.00") or "50.00")
         notes = request.POST.get("notes", "").strip()
+
+        hourly_overtime_rate = Decimal(request.POST.get("hourly_overtime_rate", "0.00") or "0.00")
+        half_hourly_overtime_rate = Decimal(request.POST.get("half_hourly_overtime_rate", "0.00") or "0.00")
+        shift_start_time = request.POST.get("shift_start_time") or "09:00"
+        shift_end_time = request.POST.get("shift_end_time") or "17:00"
+        daily_working_hours = Decimal(request.POST.get("daily_working_hours", "8.0") or "8.0")
+
+        tier1_mins = int(request.POST.get("late_deduction_tier1_minutes", 15) or 15)
+        tier1_days = Decimal(request.POST.get("late_deduction_tier1_days", "0.25") or "0.25")
+        tier2_mins = int(request.POST.get("late_deduction_tier2_minutes", 30) or 30)
+        tier2_days = Decimal(request.POST.get("late_deduction_tier2_days", "0.50") or "0.50")
+        tier3_mins = int(request.POST.get("late_deduction_tier3_minutes", 120) or 120)
+        tier3_days = Decimal(request.POST.get("late_deduction_tier3_days", "1.00") or "1.00")
 
         if not name:
             messages.error(request, "اسم الموظف مطلوب.")
@@ -208,9 +250,20 @@ def employee_create_view(request):
             fixed_salary=fixed_salary,
             commission_percentage=commission_percentage,
             notes=notes,
+            hourly_overtime_rate=hourly_overtime_rate,
+            half_hourly_overtime_rate=half_hourly_overtime_rate,
+            shift_start_time=shift_start_time,
+            shift_end_time=shift_end_time,
+            daily_working_hours=daily_working_hours,
+            late_deduction_tier1_minutes=tier1_mins,
+            late_deduction_tier1_days=tier1_days,
+            late_deduction_tier2_minutes=tier2_mins,
+            late_deduction_tier2_days=tier2_days,
+            late_deduction_tier3_minutes=tier3_mins,
+            late_deduction_tier3_days=tier3_days,
         )
         messages.success(request, f"تمت إضافة {emp.name} ({emp.get_role_display()}) بنجاح.")
-        return redirect("payroll:employee_list")
+        return redirect("payroll:trainers_index")
 
     return render(request, "payroll/employee_form.html")
 
@@ -227,10 +280,26 @@ def employee_edit_view(request, employee_id):
         employee.fixed_salary = Decimal(request.POST.get("fixed_salary", str(employee.fixed_salary)) or "0.00")
         if "commission_percentage" in request.POST:
             employee.commission_percentage = Decimal(request.POST.get("commission_percentage", str(employee.commission_percentage or "50.00")) or "50.00")
+        
+        employee.hourly_overtime_rate = Decimal(request.POST.get("hourly_overtime_rate", str(employee.hourly_overtime_rate or "0.00")) or "0.00")
+        employee.half_hourly_overtime_rate = Decimal(request.POST.get("half_hourly_overtime_rate", str(employee.half_hourly_overtime_rate or "0.00")) or "0.00")
+        if request.POST.get("shift_start_time"):
+            employee.shift_start_time = request.POST.get("shift_start_time")
+        if request.POST.get("shift_end_time"):
+            employee.shift_end_time = request.POST.get("shift_end_time")
+        employee.daily_working_hours = Decimal(request.POST.get("daily_working_hours", str(employee.daily_working_hours or "8.0")) or "8.0")
+
+        employee.late_deduction_tier1_minutes = int(request.POST.get("late_deduction_tier1_minutes", employee.late_deduction_tier1_minutes or 15) or 15)
+        employee.late_deduction_tier1_days = Decimal(request.POST.get("late_deduction_tier1_days", str(employee.late_deduction_tier1_days or "0.25")) or "0.25")
+        employee.late_deduction_tier2_minutes = int(request.POST.get("late_deduction_tier2_minutes", employee.late_deduction_tier2_minutes or 30) or 30)
+        employee.late_deduction_tier2_days = Decimal(request.POST.get("late_deduction_tier2_days", str(employee.late_deduction_tier2_days or "0.50")) or "0.50")
+        employee.late_deduction_tier3_minutes = int(request.POST.get("late_deduction_tier3_minutes", employee.late_deduction_tier3_minutes or 120) or 120)
+        employee.late_deduction_tier3_days = Decimal(request.POST.get("late_deduction_tier3_days", str(employee.late_deduction_tier3_days or "1.00")) or "1.00")
+
         employee.notes = request.POST.get("notes", employee.notes).strip()
         employee.save()
         messages.success(request, f"تم تحديث بيانات {employee.name} بنجاح.")
-        return redirect("payroll:employee_list")
+        return redirect("payroll:trainers_index")
 
     return render(request, "payroll/employee_form.html", {"employee": employee, "is_edit": True})
 
@@ -694,7 +763,32 @@ def payroll_run_detail_view(request, period):
         advance_sum = approved_advances_qs.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
         advance_records = [{"category": a.category, "reason": a.reason, "amount": str(a.amount), "date": a.created_at.strftime("%d/%m/%Y")} for a in approved_advances_qs]
 
-        # 5. Net Salary Formula (الأساسي + عمولات + مكافآت - جزاءات - سلف مسحوبة)
+        # 5. Biometric Face Attendance Overtime & Late Penalties
+        from apps.payroll.models import EmployeeAttendance
+        att_qs = EmployeeAttendance.objects.filter(employee=emp, date__gte=start_date, date__lte=end_date)
+        att_late_sum = att_qs.filter(deduction_approved=True).aggregate(s=Sum("calculated_late_deduction"))["s"] or Decimal("0.00")
+        att_ot_sum = att_qs.filter(overtime_approved=True).aggregate(s=Sum("calculated_overtime_bonus"))["s"] or Decimal("0.00")
+        att_days = att_qs.filter(check_in__isnull=False).count()
+        att_late_mins = sum(a.late_minutes for a in att_qs)
+        att_ot_mins = sum(a.overtime_minutes for a in att_qs)
+
+        if att_ot_sum > 0:
+            bonus_sum += att_ot_sum
+            bonus_records.append({
+                "category": "بونص إضافي الحضور والوردية",
+                "reason": f"ساعات عمل إضافية معتمدة ({att_ot_mins} دقيقة)",
+                "amount": str(att_ot_sum),
+            })
+
+        if att_late_sum > 0:
+            deduction_sum += att_late_sum
+            deduction_records.append({
+                "category": "خصم تأخيرات الحضور",
+                "reason": f"تأخيرات ورادي غير معفاة ({att_late_mins} دقيقة)",
+                "amount": str(att_late_sum),
+            })
+
+        # 6. Net Salary Formula (الأساسي + عمولات + مكافآت - جزاءات - سلف مسحوبة)
         gross_earnings = fixed + comm_sum + bonus_sum - deduction_sum
         net_salary = max(Decimal("0.00"), gross_earnings - advance_sum)
 
@@ -714,6 +808,11 @@ def payroll_run_detail_view(request, period):
             "advances": advance_sum,
             "gross_earnings": gross_earnings,
             "net_payable": net_salary,
+            "att_days": att_days,
+            "att_late_mins": att_late_mins,
+            "att_late_sum": att_late_sum,
+            "att_ot_mins": att_ot_mins,
+            "att_ot_sum": att_ot_sum,
             "details": {
                 "commissions": comm_records,
                 "bonuses": bonus_records,
@@ -825,6 +924,31 @@ def payroll_approve_view(request, period):
             advance_sum = advance_qs.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
             advance_records = [{"category": a.category, "reason": a.reason, "amount": str(a.amount), "date": a.created_at.strftime("%d/%m/%Y")} for a in advance_qs]
 
+            # Attendance late deductions & overtime bonuses
+            from apps.payroll.models import EmployeeAttendance
+            att_qs = EmployeeAttendance.objects.filter(employee=emp, date__gte=start_date, date__lte=end_date)
+            att_late_sum = att_qs.filter(deduction_approved=True).aggregate(s=Sum("calculated_late_deduction"))["s"] or Decimal("0.00")
+            att_ot_sum = att_qs.filter(overtime_approved=True).aggregate(s=Sum("calculated_overtime_bonus"))["s"] or Decimal("0.00")
+            att_days = att_qs.filter(check_in__isnull=False).count()
+            att_late_mins = sum(a.late_minutes for a in att_qs)
+            att_ot_mins = sum(a.overtime_minutes for a in att_qs)
+
+            if att_ot_sum > 0:
+                bonus_sum += att_ot_sum
+                bonus_records.append({
+                    "category": "بونص إضافي الحضور والوردية",
+                    "reason": f"ساعات عمل إضافية معتمدة ({att_ot_mins} دقيقة)",
+                    "amount": str(att_ot_sum),
+                })
+
+            if att_late_sum > 0:
+                deduction_sum += att_late_sum
+                deduction_records.append({
+                    "category": "خصم تأخيرات الحضور",
+                    "reason": f"تأخيرات ورادي غير معفاة ({att_late_mins} دقيقة)",
+                    "amount": str(att_late_sum),
+                })
+
             gross_earnings = fixed + comm_sum + bonus_sum - deduction_sum
             net = max(Decimal("0.00"), gross_earnings - advance_sum)
 
@@ -840,6 +964,13 @@ def payroll_approve_view(request, period):
                 "bonuses": bonus_records,
                 "deductions": deduction_records,
                 "advances": advance_records,
+                "attendance": {
+                    "days": att_days,
+                    "late_mins": att_late_mins,
+                    "late_deduction": str(att_late_sum),
+                    "ot_mins": att_ot_mins,
+                    "ot_bonus": str(att_ot_sum),
+                }
             }
 
             PayrollItem.objects.create(
@@ -1291,5 +1422,344 @@ def coach_salary_report_view(request, employee_id):
         "net_payable": net_payable,
     }
     return render(request, "payroll/coach_salary_report.html", context)
+
+
+@login_required
+@manager_required
+def payroll_archive_view(request):
+    """
+    Dedicated historical archive of monthly payroll runs:
+    Shows all past months, breakdown, totals, handover completion rate, and print action.
+    """
+    runs = PayrollRun.objects.all().order_by("-period")
+    current_period = timezone.localdate().strftime("%Y-%m")
+
+    for r in runs:
+        items = r.items.all()
+        r.total_staff_count = items.count()
+        r.paid_staff_count = items.filter(is_paid=True).count()
+        r.paid_amount_sum = items.filter(is_paid=True).aggregate(s=Sum("net_payable"))["s"] or Decimal("0.00")
+        r.is_fully_paid = (r.total_staff_count > 0 and r.paid_staff_count == r.total_staff_count)
+
+    profile = GymProfile.get_solo()
+    context = {
+        "runs": runs,
+        "current_period": current_period,
+        "profile": profile,
+    }
+    return render(request, "payroll/payroll_archive.html", context)
+
+
+@login_required
+@manager_required
+def payroll_payout_checklist_view(request, period=None):
+    """
+    Manager Handover Checklist (صفحة تسليم الرواتب):
+    Allows tracking who received their salary and who hasn't (تم التسليم / معلق),
+    recording payout method (كاش / تحويل / فودافون كاش / إنستاباي), and syncing directly
+    with Expense records and safe/treasury cash flow.
+    """
+    current_period = timezone.localdate().strftime("%Y-%m")
+    selected_period = period or request.GET.get("period", current_period)
+
+    payroll_run = PayrollRun.objects.filter(period=selected_period).first()
+    items = []
+    if payroll_run:
+        items = list(payroll_run.items.select_related("employee", "paid_by", "expense").order_by("employee__role", "employee__name"))
+
+    total_net = sum(item.net_payable for item in items)
+    paid_items = [it for it in items if it.is_paid]
+    pending_items = [it for it in items if not it.is_paid]
+    total_paid = sum(it.net_payable for it in paid_items)
+    total_pending = sum(it.net_payable for it in pending_items)
+
+    all_periods = PayrollRun.objects.values_list("period", flat=True).order_by("-period")
+
+    profile = GymProfile.get_solo()
+    context = {
+        "selected_period": selected_period,
+        "current_period": current_period,
+        "payroll_run": payroll_run,
+        "items": items,
+        "paid_items_count": len(paid_items),
+        "pending_items_count": len(pending_items),
+        "total_net": total_net,
+        "total_paid": total_paid,
+        "total_pending": total_pending,
+        "all_periods": all_periods,
+        "profile": profile,
+    }
+    return render(request, "payroll/payout_checklist.html", context)
+
+
+@login_required
+@manager_required
+def payroll_toggle_payout_view(request, item_id):
+    """
+    Toggles an individual employee's salary handover status:
+    When handed over (تم التسليم): creates an Expense record deducting from treasury safe.
+    When reverted to pending (معلق): deletes the Expense record restoring treasury safe.
+    """
+    item = get_object_or_404(PayrollItem.objects.select_related("payroll_run", "employee"), id=item_id)
+    period = item.payroll_run.period
+
+    if item.is_paid:
+        if item.expense:
+            try:
+                item.expense.delete()
+            except Exception:
+                pass
+            item.expense = None
+        item.is_paid = False
+        item.paid_at = None
+        item.paid_by = None
+        item.save()
+        if item.payroll_run.status == PayrollStatus.PAID:
+            item.payroll_run.status = PayrollStatus.APPROVED
+            item.payroll_run.save(update_fields=["status"])
+        messages.info(request, f"تم إلغاء تسليم راتب {item.employee_name_snapshot} وإعادة المبلغ إلى رصيد الخزينة.")
+    else:
+        paid_method = request.POST.get("paid_method", "كاش").strip()
+        payout_notes = request.POST.get("payout_notes", "").strip()
+
+        from apps.expenses.models import ExpenseCategory
+        cat, _ = ExpenseCategory.objects.get_or_create(name="رواتب وأجور موظفين ومدربين")
+        desc = f"صرف راتب {item.employee_name_snapshot} ({item.role_snapshot}) - شهر {period} [{paid_method}] {payout_notes}".strip()
+        exp = Expense.objects.create(
+            category=cat,
+            amount=item.net_payable,
+            description=desc,
+            expense_date=timezone.localdate(),
+            created_by=request.user,
+        )
+        item.is_paid = True
+        item.paid_at = timezone.now()
+        item.paid_by = request.user
+        item.paid_method = paid_method
+        item.payout_notes = payout_notes
+        item.expense = exp
+        item.save()
+
+        # Check if all items in this run are paid
+        if not item.payroll_run.items.filter(is_paid=False).exists():
+            item.payroll_run.status = PayrollStatus.PAID
+            item.payroll_run.save(update_fields=["status"])
+
+        messages.success(request, f"✓ تم تأكيد تسليم راتب {item.employee_name_snapshot} ({item.net_payable} ج.م) وخصمه كمصروف من الخزينة بنجاح.")
+
+    return redirect("payroll:payout_checklist", period=period)
+
+
+@login_required
+@manager_required
+def payroll_mark_all_payout_view(request, period):
+    """Bulk marks all unpaid employees in a period as handed over (Cash) and creates expenses."""
+    payroll_run = get_object_or_404(PayrollRun, period=period)
+    unpaid_items = payroll_run.items.filter(is_paid=False)
+    from apps.expenses.models import ExpenseCategory
+    cat, _ = ExpenseCategory.objects.get_or_create(name="رواتب وأجور موظفين ومدربين")
+    today = timezone.localdate()
+
+    count = 0
+    with transaction.atomic():
+        for it in unpaid_items:
+            exp = Expense.objects.create(
+                category=cat,
+                amount=it.net_payable,
+                description=f"صرف راتب {it.employee_name_snapshot} ({it.role_snapshot}) - شهر {period} [كاش]",
+                expense_date=today,
+                created_by=request.user,
+            )
+            it.is_paid = True
+            it.paid_at = timezone.now()
+            it.paid_by = request.user
+            it.paid_method = "كاش"
+            it.expense = exp
+            it.save()
+            count += 1
+
+        payroll_run.status = PayrollStatus.PAID
+        payroll_run.save(update_fields=["status"])
+
+    messages.success(request, f"تم تسليم وصرف رواتب {count} موظف دفعة واحدة وخصمها من الخزينة بنجاح.")
+    return redirect("payroll:payout_checklist", period=period)
+
+
+@login_required
+@manager_required
+def payroll_item_edit_view(request, item_id):
+    """
+    Enables manager to edit individual employee salary before or after approval:
+    Adjusts bonuses, deductions, or direct net payable.
+    Recalculates payroll run totals and automatically syncs the associated Expense record in the safe!
+    """
+    item = get_object_or_404(PayrollItem.objects.select_related("payroll_run", "employee"), id=item_id)
+    run = item.payroll_run
+
+    if request.method == "POST":
+        new_fixed = Decimal(request.POST.get("fixed_salary", str(item.fixed_salary)) or "0.00")
+        new_comm = Decimal(request.POST.get("commissions", str(item.commissions)) or "0.00")
+        new_bonus = Decimal(request.POST.get("bonuses", str(item.bonuses)) or "0.00")
+        new_ded = Decimal(request.POST.get("deductions", str(item.deductions)) or "0.00")
+        new_adv = Decimal(request.POST.get("advances", str(item.advances)) or "0.00")
+        edit_reason = request.POST.get("edit_reason", "").strip()
+
+        new_net = max(Decimal("0.00"), new_fixed + new_comm + new_bonus - new_ded - new_adv)
+
+        item.fixed_salary = new_fixed
+        item.commissions = new_comm
+        item.bonuses = new_bonus
+        item.deductions = new_ded
+        item.advances = new_adv
+        item.net_payable = new_net
+
+        details = item.details_json or {}
+        audit_trail = details.get("manager_edits", [])
+        audit_trail.append({
+            "edited_at": timezone.now().strftime("%Y-%m-%d %H:%M"),
+            "edited_by": request.user.username,
+            "reason": edit_reason or "تعديل إداري معتمد",
+            "net_payable": str(new_net),
+        })
+        details["manager_edits"] = audit_trail
+        item.details_json = details
+        item.save()
+
+        # Update associated Expense if already exists (keeps treasury safe 100% accurate!)
+        if item.expense:
+            item.expense.amount = new_net
+            item.expense.description = f"صرف راتب {item.employee_name_snapshot} ({item.role_snapshot}) - شهر {run.period} [{item.paid_method}] (معدل)"
+            item.expense.save()
+
+        # Re-sum PayrollRun
+        allItems = run.items.all()
+        run.total_fixed_salary = allItems.aggregate(s=Sum("fixed_salary"))["s"] or Decimal("0.00")
+        run.total_commissions = allItems.aggregate(s=Sum("commissions"))["s"] or Decimal("0.00")
+        run.total_bonuses = allItems.aggregate(s=Sum("bonuses"))["s"] or Decimal("0.00")
+        run.total_deductions = allItems.aggregate(s=Sum("deductions"))["s"] or Decimal("0.00")
+        run.total_advances = allItems.aggregate(s=Sum("advances"))["s"] or Decimal("0.00")
+        run.net_payable = allItems.aggregate(s=Sum("net_payable"))["s"] or Decimal("0.00")
+        run.save()
+
+        messages.success(request, f"✓ تم تعديل راتب {item.employee_name_snapshot} وتحديث الخزينة والمصروفات فورياً.")
+        if request.POST.get("next") == "checklist":
+            return redirect("payroll:payout_checklist", period=run.period)
+        return redirect("payroll:payroll_run_detail", period=run.period)
+
+    context = {
+        "item": item,
+        "run": run,
+        "next_url": request.GET.get("next", "detail"),
+    }
+    return render(request, "payroll/payroll_item_edit.html", context)
+
+
+@login_required
+@manager_required
+def employee_account_statement_view(request, employee_id):
+    """
+    Comprehensive Account Statement for any Employee or Trainer:
+    - Contract & Salary details
+    - Face biometric enrollment status & photo
+    - Monthly payroll payout history
+    - Attendance log for the current month (check-ins, late, overtime)
+    - Printable official slip
+    """
+    employee = get_object_or_404(Employee, id=employee_id)
+    profile = GymProfile.get_solo()
+    today = timezone.localdate()
+    month_start = today.replace(day=1)
+
+    # 1. Historical Payroll Items
+    payroll_items = list(PayrollItem.objects.filter(employee=employee).select_related("payroll_run", "expense").order_by("-payroll_run__period"))
+
+    total_earned = sum((it.net_payable for it in payroll_items), Decimal("0.00"))
+    total_paid = sum((it.net_payable for it in payroll_items if it.is_paid), Decimal("0.00"))
+    total_pending = total_earned - total_paid
+
+    # 2. Advances Taken
+    advances_qs = SalaryAdjustment.objects.filter(
+        employee=employee, adjustment_type=AdjustmentType.ADVANCE, status=AdjustmentStatus.APPROVED
+    ).order_by("-created_at")
+    total_advances = advances_qs.aggregate(s=Sum("amount"))["s"] or Decimal("0.00")
+
+    # 3. Monthly Attendance Records
+    from apps.payroll.models import EmployeeAttendance
+    attendances = list(EmployeeAttendance.objects.filter(employee=employee, date__gte=month_start, date__lte=today).order_by("-date"))
+    attended_days_count = sum(1 for a in attendances if a.check_in)
+    total_late_minutes = sum(a.late_minutes for a in attendances)
+    total_overtime_minutes = sum(a.overtime_minutes for a in attendances)
+    total_late_deductions = sum((a.calculated_late_deduction for a in attendances if a.deduction_approved), Decimal("0.00"))
+    total_ot_bonuses = sum((a.calculated_overtime_bonus for a in attendances if a.overtime_approved), Decimal("0.00"))
+
+    context = {
+        "employee": employee,
+        "profile": profile,
+        "payroll_items": payroll_items,
+        "total_earned": total_earned,
+        "total_paid": total_paid,
+        "total_pending": total_pending,
+        "total_advances": total_advances,
+        "advances": advances_qs[:10],
+        "attendances": attendances,
+        "attended_days_count": attended_days_count,
+        "total_late_minutes": total_late_minutes,
+        "total_overtime_minutes": total_overtime_minutes,
+        "total_late_deductions": total_late_deductions,
+        "total_ot_bonuses": total_ot_bonuses,
+        "today": today,
+    }
+    return render(request, "payroll/employee_account_statement.html", context)
+
+
+@login_required
+@manager_required
+def employee_attendance_list_view(request):
+    """Daily attendance and late arrival log for all staff & trainers."""
+    from apps.payroll.models import EmployeeAttendance
+    selected_date_str = request.GET.get("date")
+    today = timezone.localdate()
+    if selected_date_str:
+        try:
+            target_date = timezone.datetime.strptime(selected_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            target_date = today
+    else:
+        target_date = today
+
+    attendances = EmployeeAttendance.objects.filter(date=target_date).select_related("employee").order_by("-check_in")
+    attended_ids = attendances.values_list("employee_id", flat=True)
+    absent_employees = Employee.objects.filter(status=EmployeeStatus.ACTIVE).exclude(id__in=attended_ids)
+
+    profile = GymProfile.get_solo()
+    context = {
+        "target_date": target_date,
+        "today": today,
+        "attendances": attendances,
+        "absent_employees": absent_employees,
+        "profile": profile,
+    }
+    return render(request, "payroll/employee_attendance_list.html", context)
+
+
+@login_required
+@manager_required
+def employee_attendance_toggle_view(request, attendance_id):
+    """Manager toggles approval of late penalty or overtime bonus for a specific day."""
+    from apps.payroll.models import EmployeeAttendance
+    att = get_object_or_404(EmployeeAttendance, id=attendance_id)
+    field = request.POST.get("field")
+    if field == "deduction":
+        att.deduction_approved = not att.deduction_approved
+        att.save(update_fields=["deduction_approved"])
+        status_txt = "معتمد" if att.deduction_approved else "معفي / ملغي"
+        messages.success(request, f"تم تعديل حالة خصم التأخير لـ {att.employee.name} ({status_txt}).")
+    elif field == "overtime":
+        att.overtime_approved = not att.overtime_approved
+        att.save(update_fields=["overtime_approved"])
+        status_txt = "معتمد" if att.overtime_approved else "ملغي"
+        messages.success(request, f"تم تعديل حالة بونص الإضافي لـ {att.employee.name} ({status_txt}).")
+    return redirect(request.META.get("HTTP_REFERER", "payroll:employee_attendance"))
+
 
 

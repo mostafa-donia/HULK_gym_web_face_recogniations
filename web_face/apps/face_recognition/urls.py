@@ -35,4 +35,7 @@ urlpatterns = [
     path("manager/enroll/", views.api_enroll_manager_face, name="enroll_manager_face"),
     path("manager/delete/", views.api_delete_manager_face, name="delete_manager_face"),
     path("manager/verify-unlock/", views.api_verify_manager_face_unlock, name="verify_manager_face_unlock"),
+    # Employee / Trainer Biometric routes
+    path("employee/enroll/<int:employee_id>/", views.api_enroll_employee_face, name="enroll_employee_face"),
+    path("employee/delete/<int:employee_id>/", views.api_delete_employee_face, name="delete_employee_face"),
 ]

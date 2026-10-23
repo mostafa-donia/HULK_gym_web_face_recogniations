@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}سجل حضور وانصراف الموظفين والمدربين بالوجه — {{ profile.gym_name|default:"Systemize Gym" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 20px;">
+
+  <!-- Header -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 20px 24px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <h1 style="color: var(--text-main); font-size: 1.45rem; font-weight: 900; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>⏱️ سجل حضور وانصراف الموظفين والمدربين</span>
+        </h1>
+        <span class="badge badge-active" style="font-size: 0.8rem;">رصد تلقائي ببصمة الوجه</span>
+      </div>
+      <p style="color: var(--text-muted); margin: 4px 0 0 0; font-size: 0.88rem;">
+        تسجيل الحضور والانصراف آلياً عبر كاميرا الصالة، حساب دقائق التأخير وخصوماتها، واعتماد ساعات العمل الإضافي
+      </p>
+    </div>
+
+    <!-- Date selector & actions -->
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <form method="get" style="margin: 0; display: inline-flex; align-items: center; gap: 8px;">
+        <label style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">اختر التاريخ:</label>
+        <input type="date" name="date" class="form-control" value="{{ target_date|date:'Y-m-d' }}" style="height: 36px; width: auto; font-weight: 700;" onchange="this.form.submit()">
+      </form>
+      <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center;">
+        👥 الموظفون والمدربون
+      </a>
+      <a href="{% url 'payroll:payout_checklist_current' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center;">
+        📋 تسليم الرواتب
+      </a>
+    </div>
+  </div>
+
+  <!-- Attendances Table Card -->
+  <div class="card" style="border-radius: 14px; overflow: hidden; box-shadow: var(--shadow-sm);">
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main);">
+        📅 سجل حركات يوم {{ target_date }} (حضر {{ attendances|length }} موظف)
+      </h3>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table" style="margin: 0; width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color);">
+            <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.82rem;">الموظف / المدرب</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">الوظيفة</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">وقت الحضور</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">وقت الانصراف</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">دقائق التأخير</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">خصم التأخير</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">ساعات الإضافي</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">بونص الإضافي</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">طريقة الرصد</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem;">كشف الحساب</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for att in attendances %}
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 12px 16px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                {% if att.employee.face_photo %}
+                <img src="{{ att.employee.face_photo.url }}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover;">
+                {% else %}
+                <div style="width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center;">👤</div>
+                {% endif %}
+                <strong style="color: var(--text-main);">{{ att.employee.name }}</strong>
+              </div>
+            </td>
+
+            <td style="padding: 12px 16px; text-align: center;">
+              <span class="badge" style="background: rgba(255,255,255,0.08); color: var(--text-main); font-size: 0.74rem;">
+                {{ att.employee.get_role_display }}
+              </span>
+            </td>
+
+            <td style="padding: 12px 16px; text-align: center; color: #22c55e; font-weight: 800;">
+              {{ att.check_in|default:"-" }}
+            </td>
+
+            <td style="padding: 12px 16px; text-align: center; color: #38bdf8; font-weight: 800;">
+              {{ att.check_out|default:"-" }}
+            </td>
+
+            <td style="padding: 12px 16px; text-align: center; color: {% if att.late_minutes > 0 %}#ef4444{% else %}var(--text-muted){% endif %}; font-weight: 700;">
+              {% if att.late_minutes > 0 %}{{ att.late_minutes }} دقيقة{% else %}-{% endif %}
+            </td>
+
+            <td style="padding: 12px 16px; text-align: center;">
+              {% if att.calculated_late_deduction > 0 %}
+              <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                <span style="color: #ef4444; font-weight: 800;">-{{ att.calculated_late_deduction }} {{ profile.currency }}</span>
+                <form method="post" action="{% url 'payroll:attendance_toggle' att.id %}" style="margin: 0;">
+                  {% csrf_token %}
+                  <input type="hidden" name="field" value="deduction">
+                  <button type="submit" class="btn btn-sm" style="background: none; border: none; font-size: 0.7rem; cursor: pointer; color: {% if att.deduction_approved %}#22c55e{% else %}#ef4444{% endif %}; text-decoration: underline; padding: 0;">
+                    {% if att.deduction_approved %}[إلغاء الخصم]{% else %}[إقرار الخصم]{% endif %}
+                  </button>
+                </form>
+              </div>
+              {% else %}
+              <span style="color: var(--text-muted);">-</span>
+              {% endif %}
+            </td>
+
+            <td style="padding: 12px 16px; text-align: center; color: {% if att.overtime_minutes > 0 %}#22c55e{% else %}var(--text-muted){% endif %}; font-weight: 700;">
+              {% if att.overtime_minutes > 0 %}{{ att.overtime_minutes }} دقيقة{% else %}-{% endif %}
+            </td>
+
+            <td style="padding: 12px 16px; text-align: center;">
+              {% if att.calculated_overtime_bonus > 0 %}
+              <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                <span style="color: #22c55e; font-weight: 800;">+{{ att.calculated_overtime_bonus }} {{ profile.currency }}</span>
+                <form method="post" action="{% url 'payroll:attendance_toggle' att.id %}" style="margin: 0;">
+                  {% csrf_token %}
+                  <input type="hidden" name="field" value="overtime">
+                  <button type="submit" class="btn btn-sm" style="background: none; border: none; font-size: 0.7rem; cursor: pointer; color: {% if att.overtime_approved %}#ef4444{% else %}#22c55e{% endif %}; text-decoration: underline; padding: 0;">
+                    {% if att.overtime_approved %}[إلغاء البونص]{% else %}[اعتماد البونص]{% endif %}
+                  </button>
+                </form>
+              </div>
+              {% else %}
+              <span style="color: var(--text-muted);">-</span>
+              {% endif %}
+            </td>
+
+            <td style="padding: 12px 16px; text-align: center;">
+              <span class="badge" style="background: rgba(132, 204, 22, 0.12); color: #84cc16; font-size: 0.74rem;">
+                {{ att.get_check_in_method_display }}
+              </span>
+            </td>
+
+            <td style="padding: 12px 16px; text-align: center;">
+              <a href="{% url 'payroll:employee_statement' att.employee.id %}" class="btn btn-sm btn-secondary" style="font-size: 0.74rem; padding: 3px 8px;">
+                كشف الحساب 📄
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10" style="padding: 28px; text-align: center; color: var(--text-muted);">
+              لم يسجل أي موظف حضور في تاريخ {{ target_date }} حتى الآن.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

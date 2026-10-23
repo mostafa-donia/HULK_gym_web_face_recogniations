@@ -372,8 +372,8 @@
         {% endif %}
 
         {% if license_features.payroll %}
-        <a href="{% url 'payroll:trainers_index' %}" class="top-nav-item {% if 'trainers' in request.path %}active{% endif %}">
-          <span>المدربين</span>
+        <a href="{% url 'payroll:trainers_index' %}" class="top-nav-item {% if 'trainers' in request.path or 'payroll' in request.path %}active{% endif %}" title="إدارة الموظفين والمدربين وكشوف الرواتب والحضور">
+          <span>الموظفين والمدربين</span>
         </a>
         {% endif %}
 
@@ -398,6 +398,10 @@
         {% endif %}
 
         {% if user.is_manager %}
+        <a href="{% url 'reports:ai_strategy' %}" class="top-nav-item {% if 'ai-strategy' in request.path %}active{% endif %}" title="مركز استراتيجيات وتوقعات الذكاء الاصطناعي">
+          <span>🧠 ذكاء الجيم</span>
+        </a>
+
         <a href="{% url 'reports:member_retention' %}" class="top-nav-item {% if 'retention' in request.path %}active{% endif %}" title="تقرير حركة واحتفاظ الأعضاء وميزان الأرباح والخسائر">
           <span>حركة الأعضاء</span>
         </a>
