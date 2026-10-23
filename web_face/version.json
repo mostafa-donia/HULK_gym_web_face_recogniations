@@ -1,7 +1,7 @@
 {
-  "version": "v2.2",
-  "commit": "face-5positions-killswitch-fix",
+  "version": "v2.3",
+  "commit": "whatsapp-zoom-relocate",
   "date": "2026-10-23",
-  "message": "5-position manager face enrollment, green bounding box on face recognition, WhatsApp Ctrl+K kill switch auto-reset and safe resume",
-  "updated_at": "2026-10-23 11:10:00"
+  "message": "Enforce WhatsApp Desktop zoom 100% (Ctrl+0) on maximize, add 5-second automatic Relocate X/Y tool with audio countdown and return to system",
+  "updated_at": "2026-10-23 12:07:00"
 }

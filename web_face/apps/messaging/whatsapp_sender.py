@@ -637,10 +637,58 @@ def find_whatsapp_window():
     return None
 
 
+def force_whatsapp_zoom_100():
+    """
+    Forces WhatsApp Desktop zoom to exactly 100% by sending Ctrl+0.
+    Ensures search bar coordinates never drift due to accidental zoom level changes.
+    """
+    try:
+        hotkey("ctrl", "0")
+        sleep(0.15)
+    except Exception as e:
+        print(f"[force_whatsapp_zoom_100] Warning: {e}")
+
+
+def relocate_whatsapp_search_coords(countdown_seconds: int = 5) -> tuple:
+    """
+    1. Brings WhatsApp Desktop to front, maximizes it, and forces zoom 100%.
+    2. Gives the user countdown_seconds (default 5s) to hover the mouse cursor over WhatsApp's search bar.
+    3. Emits audio countdown beeps for each second.
+    4. Captures the exact cursor position (x, y) via pyautogui.position().
+    5. Returns focus back to the system browser window.
+    6. Returns (x, y).
+    """
+    import winsound
+
+    if not whatsupp_ready():
+        raise RuntimeError("تعذر فتح أو تكبير تطبيق واتساب للكمبيوتر.")
+
+    # WhatsApp is now maximized and zoom 100% in foreground
+    for s in range(countdown_seconds, 0, -1):
+        try:
+            winsound.Beep(900, 120)
+        except Exception:
+            pass
+        sleep(0.88)
+
+    # Capture mouse position
+    pos_x, pos_y = pyautogui.position()
+    try:
+        winsound.Beep(1400, 300)
+    except Exception:
+        pass
+
+    # Return focus back to system
+    sleep(0.2)
+    return_to_system_window()
+
+    return int(pos_x), int(pos_y)
+
+
 def whatsupp_ready() -> bool:
     """
     Ensures WhatsApp Desktop (native Windows application) is installed, running,
-    MAXIMIZED to full screen, and active in the foreground.
+    MAXIMIZED to full screen, and active in the foreground with zoom forced to 100%.
     """
     ensure_desktop_attached()
     installed, msg, _ = is_whatsapp_desktop_installed()
@@ -671,7 +719,11 @@ def whatsupp_ready() -> bool:
     force_activate_window(hwnd, maximize=True)
     user32.ShowWindow(hwnd, 3)
 
-    sleep(0.8)
+    sleep(0.5)
+    # Force WhatsApp Desktop Zoom to exactly 100%
+    force_whatsapp_zoom_100()
+    sleep(0.3)
+
     # Ensure our overlay counter window stays Always On Top of WhatsApp Desktop!
     ensure_overlay_window_open()
     pin_overlay_window_topmost()

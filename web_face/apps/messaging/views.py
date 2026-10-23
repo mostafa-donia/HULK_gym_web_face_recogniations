@@ -604,6 +604,43 @@ def whatsapp_test_search_coords_api(request):
         return JsonResponse({"success": False, "error": str(exc)}, status=500)
 
 
+@login_required
+def whatsapp_relocate_search_coords_api(request):
+    """
+    AJAX endpoint to automatically relocate search coordinates:
+    Brings WhatsApp to front (maximized, zoom 100%), waits 5 seconds with countdown beeps
+    while the user places mouse cursor over the search bar, takes reading, saves to GymProfile,
+    and returns focus back to the system.
+    """
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "POST method required"}, status=405)
+
+    try:
+        from apps.messaging import whatsapp_sender
+        from apps.core.models import GymProfile
+
+        x, y = whatsapp_sender.relocate_whatsapp_search_coords(countdown_seconds=5)
+
+        profile = GymProfile.get_solo()
+        profile.whatsapp_search_x = x
+        profile.whatsapp_search_y = y
+        profile.save()
+
+        return JsonResponse({
+            "success": True,
+            "x": x,
+            "y": y,
+            "message": f"✓ تم التقاط الإحداثيات بنجاح: X = {x} ، Y = {y} وحفظها في إعدادات النظام."
+        })
+    except Exception as exc:
+        try:
+            from apps.messaging import whatsapp_sender
+            whatsapp_sender.return_to_system_window()
+        except Exception:
+            pass
+        return JsonResponse({"success": False, "error": str(exc)}, status=500)
+
+
 from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt

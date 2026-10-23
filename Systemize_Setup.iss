@@ -1,5 +1,5 @@
 #define MyAppName "Systemize Gym OS"
-#define MyAppVersion "2.2"
+#define MyAppVersion "2.3"
 #define MyAppPublisher "Systemize Tech"
 #define MyAppURL "http://127.0.0.1:8000"
 #define SourceDir "d:\move\career\gym system\dist\Systemize_Client_Release"
@@ -16,7 +16,7 @@ DefaultDirName=C:\Systemize
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=d:\move\career\gym system\dist
-OutputBaseFilename=Systemize_Setup_v2.2
+OutputBaseFilename=Systemize_Setup_v2.3
 SetupIconFile={#SourceDir}\gym_icon.ico
 Compression=lzma2/normal
 SolidCompression=yes

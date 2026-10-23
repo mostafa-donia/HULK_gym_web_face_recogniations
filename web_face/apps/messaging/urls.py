@@ -17,6 +17,7 @@ urlpatterns = [
     path("api/pin-overlay/", views.whatsapp_pin_overlay_api, name="whatsapp_pin_overlay"),
     path("overlay-window/", views.whatsapp_overlay_window_view, name="whatsapp_overlay_window"),
     path("api/test-search-coords/", views.whatsapp_test_search_coords_api, name="whatsapp_test_search_coords"),
+    path("api/relocate-search-coords/", views.whatsapp_relocate_search_coords_api, name="whatsapp_relocate_search_coords"),
     path("prepare-reminders/", views.whatsapp_prepare_reminders_view, name="whatsapp_prepare_reminders"),
     path("manager-report/", views.whatsapp_manager_report_view, name="whatsapp_manager_report"),
     path("batch-action/", views.whatsapp_batch_action_view, name="whatsapp_batch_action"),
