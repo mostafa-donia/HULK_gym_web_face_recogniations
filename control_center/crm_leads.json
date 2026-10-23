@@ -35,6 +35,24 @@
       "whatsapp_history": [],
       "created_at": "2026-10-22T09:42:45.473447",
       "last_contacted_at": "2026-10-22T09:42:45.473447"
+    },
+    "LEAD-885968": {
+      "product_id": "systemize_gym",
+      "gym_name": "me",
+      "business_name": "me",
+      "contact_name": "me",
+      "phone": "01080922432",
+      "city": "",
+      "source": "مباشر / إعلان",
+      "status": "new",
+      "budget": "",
+      "interested_package": "باقة مدى الحياة + بصمة وجه",
+      "next_followup_date": "2026-10-25 14:00",
+      "followup_note": "متابعة الديمو ومعرفة رأيه",
+      "notes": [],
+      "whatsapp_history": [],
+      "created_at": "2026-10-23T16:58:05.968831",
+      "last_contacted_at": "2026-10-23T16:58:05.968831"
     }
   },
   "templates": [
@@ -69,5 +87,5 @@
       "text": "كابتن {name}، بنقدم لحضرتك نسخة ديمو تجريبية مجانية لنظام Systemize لصالة {gym_name} لتجربة كل الميزات على أرض الواقع.\nنقدر نحدد موعد لتجهيز النسخة في الوقت المناسب لحضرتك."
     }
   ],
-  "last_updated": "2026-10-22T06:42:45.473447+00:00"
+  "last_updated": "2026-10-23T13:58:05.969419+00:00"
 }

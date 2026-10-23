@@ -2581,8 +2581,8 @@ async function captureCurrentStep() {
         if (loadingSpinner) loadingSpinner.style.display = 'none';
         setTimeout(() => {
           closeMgrFaceModal();
-          alert('✓ تم تسجيل بصمة وجه المدير بنجاح من كافة الزوايا الـ 5!
-يمكنك الآن فتح القفل بالوجه فوراً من أي زاوية.');
+          alert(`✓ تم تسجيل بصمة وجه المدير بنجاح من كافة الزوايا الـ 5!
+يمكنك الآن فتح القفل بالوجه فوراً من أي زاوية.`);
           window.location.reload();
         }, 1200);
         return true;
