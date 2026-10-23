@@ -398,10 +398,6 @@
         {% endif %}
 
         {% if user.is_manager %}
-        <a href="{% url 'reports:ai_strategy' %}" class="top-nav-item {% if 'ai-strategy' in request.path %}active{% endif %}" title="مركز استراتيجيات وتوقعات الذكاء الاصطناعي">
-          <span>🧠 ذكاء الجيم</span>
-        </a>
-
         <a href="{% url 'reports:member_retention' %}" class="top-nav-item {% if 'retention' in request.path %}active{% endif %}" title="تقرير حركة واحتفاظ الأعضاء وميزان الأرباح والخسائر">
           <span>حركة الأعضاء</span>
         </a>

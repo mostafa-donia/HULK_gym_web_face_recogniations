@@ -1203,6 +1203,18 @@ def manager_dashboard_view(request):
         "recent_audit_logs": recent_audit_logs,
         "all_branches": Branch.objects.filter(is_active=True),
     }
+
+    active_tab = request.GET.get("tab", "overview")
+    if active_tab == "ai":
+        try:
+            from apps.reports.views import build_ai_strategy_context
+            ai_context = build_ai_strategy_context(request)
+            context.update(ai_context)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).exception("Failed to build AI strategy context for Manager Dashboard: %s", e)
+    context["active_tab"] = active_tab
+
     return render(request, "core/manager_dashboard.html", context)
 
 

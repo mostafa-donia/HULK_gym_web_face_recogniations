@@ -92,9 +92,36 @@
         <a href="{% url 'reports:financial_report' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
           📑 التقارير المالية
         </a>
+
+        <a href="?tab=ai" class="btn btn-sm" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 7px; {% if active_tab == 'ai' %}background: #84cc16; color: #000; font-weight: 900; box-shadow: 0 0 15px rgba(132, 204, 22, 0.4); border: none;{% else %}background: rgba(132, 204, 22, 0.16); border: 1px solid rgba(132, 204, 22, 0.45); color: #84cc16; font-weight: 800;{% endif %} border-radius: 8px;">
+          <span>🧠 ذكاء الجيم والتوقعات</span>
+        </a>
       </div>
     </div>
 
+    <!-- Master Executive Tabs: Overview vs Gym AI Strategy -->
+    <div class="no-print" style="display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-top: 4px; flex-wrap: wrap;">
+      <a href="?tab=overview{% if period %}&period={{ period }}{% endif %}" 
+         class="btn btn-sm {% if active_tab != 'ai' %}btn-primary{% else %}btn-secondary{% endif %}"
+         style="padding: 8px 18px; font-weight: 900; font-size: 0.9rem; border-radius: 9px; display: inline-flex; align-items: center; gap: 7px;">
+        <span>📊 المؤشرات والعمليات التنفيذية</span>
+      </a>
+
+      <a href="?tab=ai" 
+         class="btn btn-sm {% if active_tab == 'ai' %}btn-primary{% else %}btn-secondary{% endif %}"
+         style="padding: 8px 20px; font-weight: 900; font-size: 0.9rem; border-radius: 9px; display: inline-flex; align-items: center; gap: 8px; {% if active_tab != 'ai' %}background: rgba(132, 204, 22, 0.12); border: 1px solid rgba(132, 204, 22, 0.4); color: #84cc16;{% else %}background: #84cc16; color: #000; border: 1px solid #84cc16; box-shadow: 0 0 16px rgba(132, 204, 22, 0.35);{% endif %}">
+        <span>🧠 ذكاء الجيم والتوقعات الاستراتيجية</span>
+        <span style="font-size: 0.7rem; padding: 2px 7px; border-radius: 999px; background: {% if active_tab == 'ai' %}#000; color: #84cc16;{% else %}rgba(132, 204, 22, 0.25); color: #84cc16;{% endif %} font-weight: 900;">AI Engine</span>
+      </a>
+
+      <a href="?period=compare" 
+         class="btn btn-sm {% if period == 'compare' and active_tab != 'ai' %}btn-primary{% else %}btn-secondary{% endif %}"
+         style="padding: 8px 16px; font-weight: 800; font-size: 0.86rem; border-radius: 9px; display: inline-flex; align-items: center; gap: 6px;">
+        <span>⚖️ مقارنة الفترات</span>
+      </a>
+    </div>
+
+    {% if active_tab != 'ai' %}
     <!-- Bottom Row: Period Filter Buttons & Quick Summary Strip -->
     <div class="no-print" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--border-color);">
       <!-- Filter Segmented Buttons -->
@@ -141,8 +168,34 @@
         </span>
       </div>
     </div>
+    {% else %}
+    <!-- Gym AI Quick Strip -->
+    <div class="no-print" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--border-color);">
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.84rem;">
+        <span style="background: rgba(132, 204, 22, 0.14); border: 1px solid rgba(132, 204, 22, 0.35); color: #84cc16; padding: 4px 12px; border-radius: 8px; font-weight: 800;">
+          🔮 مسار شهر {{ cur_month }}/{{ cur_year }}: انقضى {{ days_passed }} من {{ total_days_in_month }} يوماً ({{ month_progress_pct }}%)
+        </span>
+        <span style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; color: var(--text-muted);">
+          الإيراد المتوقع بنهاية الشهر: <strong style="color: #84cc16;">{{ projected_revenue }} {{ profile.currency|default:'ج' }}</strong>
+        </span>
+        <span style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; color: var(--text-muted);">
+          الصافي التقديري المتوقع: <strong style="color: {% if projected_net >= 0 %}#4ade80{% else %}#f87171{% endif %};">{{ projected_net }} {{ profile.currency|default:'ج' }}</strong>
+        </span>
+      </div>
+      <div>
+        <a href="?tab=overview" class="btn btn-secondary btn-sm" style="font-weight: 800; font-size: 0.82rem; padding: 5px 14px;">
+          ← العودة للعمليات والمؤشرات
+        </a>
+      </div>
+    </div>
+    {% endif %}
 
   </div>
+
+  {% if active_tab == 'ai' %}
+    <!-- ==================== GYM AI STRATEGY CENTER (INSIDE MANAGER DASHBOARD) ==================== -->
+    {% include "reports/ai_strategy_content.html" %}
+  {% else %}
 
   <!-- ==================== 2. THE 4 EXECUTIVE HERO KPI CARDS ==================== -->
   <div>
@@ -317,8 +370,8 @@
       <div>
         <h3 style="margin: 0; color: var(--text-main); font-size: 1.2rem; font-weight: 900; display: flex; align-items: center; gap: 8px;">
           <span>🧠 توجيهات الذكاء الاصطناعي وحركة وتدفق الأعضاء</span>
-          <a href="{% url 'reports:ai_strategy' %}" class="btn btn-sm" style="background: rgba(132, 204, 22, 0.18); border: 1px solid rgba(132, 204, 22, 0.45); color: #84cc16; font-size: 0.8rem; font-weight: 800; padding: 3px 12px; border-radius: 999px;">
-            فتح المركز المستقل للتوقعات والإعلانات ←
+          <a href="?tab=ai" class="btn btn-sm" style="background: rgba(132, 204, 22, 0.22); border: 1px solid rgba(132, 204, 22, 0.55); color: #84cc16; font-size: 0.82rem; font-weight: 800; padding: 4px 14px; border-radius: 999px;">
+            فتح مركز ذكاء الجيم والتوقعات بالكامل ←
           </a>
         </h3>
         <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem;">
@@ -967,6 +1020,8 @@
       {% endif %}
     </div>
   </div>
+
+  {% endif %}
 
 </div>
 

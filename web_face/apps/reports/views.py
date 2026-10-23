@@ -453,8 +453,7 @@ def member_retention_report_view(request):
 
 
 @login_required
-@manager_required
-def ai_strategy_dashboard_view(request):
+def build_ai_strategy_context(request):
     """
     Dedicated AI Executive Strategy, Forecasting, and Analytics Center:
     - End-of-Month predictive run-rate revenue, expenses, and net treasury forecast
@@ -821,4 +820,18 @@ def ai_strategy_dashboard_view(request):
         "hour_buckets": hour_buckets,
         "executive_directives": executive_directives,
     }
-    return render(request, "reports/ai_strategy_dashboard.html", context)
+    return context
+
+
+@manager_required
+def ai_strategy_dashboard_view(request):
+    """
+    Gym AI Strategy View.
+    Redirects to Manager Dashboard with tab=ai (inside لوحة المدير) or renders standalone if requested.
+    """
+    if request.GET.get("standalone") == "1":
+        context = build_ai_strategy_context(request)
+        return render(request, "reports/ai_strategy_dashboard.html", context)
+    from django.urls import reverse
+    from django.shortcuts import redirect
+    return redirect(reverse("core:manager_dashboard") + "?tab=ai")
