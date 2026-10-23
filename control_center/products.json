@@ -181,6 +181,80 @@
           "default": true
         }
       ]
+    },
+    "systemize_restaurant": {
+      "id": "systemize_restaurant",
+      "name": "Systemize Restaurant OS",
+      "arabic_name": "نظام إدارة وتشغيل المطاعم والكافيهات وذكاء الأرباح",
+      "icon": "fa-utensils",
+      "badge_color": "amber",
+      "repo_url": "https://github.com/mostafa-donia/systemize-restaurant",
+      "branch": "main",
+      "current_version": "v1.0",
+      "updates_allowed": true,
+      "default_demo_days": 7,
+      "features": [
+        {
+          "key": "floor_plan_2d",
+          "name": "مخطط الصالة التفاعلي 2D ورسم الجدران والطاولات",
+          "default": true
+        },
+        {
+          "key": "table_session_timing",
+          "name": "محرك تتبع توقيت الجلسات وإشغال الطاولات",
+          "default": true
+        },
+        {
+          "key": "pos_cashier",
+          "name": "نظام الكاشير السريع والفواتير وطرق الدفع المقسمة",
+          "default": true
+        },
+        {
+          "key": "waiter_tablet",
+          "name": "تابلت الويتر وإرسال الطلبات المباشرة والمزامنة الحية",
+          "default": true
+        },
+        {
+          "key": "kitchen_display",
+          "name": "شاشات المطبخ KDS وتوقيت زمن التحضير والانتظار",
+          "default": true
+        },
+        {
+          "key": "inventory_recipes",
+          "name": "المخزون والوصفات وحساب استهلاك الخامات",
+          "default": true
+        },
+        {
+          "key": "purchasing_suppliers",
+          "name": "المشتريات وفواتير الموردين ومقارنة الأسعار",
+          "default": true
+        },
+        {
+          "key": "cash_finance",
+          "name": "إدارة الشيفتات وحركة الخزينة والتقارير المالية",
+          "default": true
+        },
+        {
+          "key": "profit_leak_detector",
+          "name": "كاشف تسريب الأرباح (Profit Leak Detector)",
+          "default": true
+        },
+        {
+          "key": "demand_forecasting",
+          "name": "التنبؤ الذكي بالطلب واحتياجات المواد الخام",
+          "default": true
+        },
+        {
+          "key": "hybrid_sync",
+          "name": "التشغيل دون إنترنت والمزامنة السحابية الهجينة",
+          "default": true
+        },
+        {
+          "key": "automation_copilot",
+          "name": "محرك الأتمتة والمساعد الذكي للمالك (AI Copilot)",
+          "default": true
+        }
+      ]
     }
   }
 }

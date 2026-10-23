@@ -992,6 +992,64 @@ def delete_crm_lead_api():
     return jsonify({"success": success})
 
 
+@app.route("/api/crm/leads/import/", methods=["POST"])
+def import_crm_leads_api():
+    """
+    Imports potential customers (leads) from uploaded file (.xlsx, .csv, .json, .txt)
+    or from JSON payload rows.
+    """
+    product_id = request.form.get("product_id") or "systemize_restaurant"
+    default_status = request.form.get("default_status") or "new"
+    records = []
+
+    # Check if file uploaded
+    if "file" in request.files and request.files["file"].filename:
+        f = request.files["file"]
+        filename = f.filename.lower()
+        try:
+            if filename.endswith(".xlsx") or filename.endswith(".xls"):
+                import pandas as pd
+                df = pd.read_excel(f)
+                records = df.fillna("").to_dict(orient="records")
+            elif filename.endswith(".csv"):
+                import pandas as pd
+                try:
+                    df = pd.read_csv(f, encoding="utf-8")
+                except Exception:
+                    f.seek(0)
+                    df = pd.read_csv(f, encoding="cp1256")
+                records = df.fillna("").to_dict(orient="records")
+            elif filename.endswith(".json"):
+                records = json.loads(f.read().decode("utf-8"))
+                if isinstance(records, dict):
+                    records = records.get("leads") or records.get("customers") or [records]
+            elif filename.endswith(".txt"):
+                content = f.read().decode("utf-8", errors="replace")
+                for line in content.splitlines():
+                    parts = [p.strip() for p in line.replace(",", "\t").split("\t") if p.strip()]
+                    if len(parts) >= 2:
+                        records.append({"business_name": parts[0], "phone": parts[1]})
+                    elif len(parts) == 1:
+                        records.append({"business_name": parts[0], "phone": ""})
+        except Exception as e:
+            return jsonify({"success": False, "message": f"فشل قراءة الملف: {str(e)}"}), 400
+    elif request.is_json:
+        data = request.get_json(silent=True) or {}
+        records = data.get("records") or data.get("leads") or []
+        product_id = data.get("product_id") or product_id
+        default_status = data.get("default_status") or default_status
+
+    if not records:
+        return jsonify({"success": False, "message": "لم يتم العثور على أي سجلات عملاء صالحة في الملف أو الطلب."}), 400
+
+    result = crm_service.import_leads_bulk(
+        records,
+        product_id=product_id,
+        default_status=default_status
+    )
+    return jsonify(result)
+
+
 @app.route("/api/crm/whatsapp/send/", methods=["POST"])
 def send_crm_whatsapp_api():
     """Sends WhatsApp message to lead via Desktop Automation or web link."""

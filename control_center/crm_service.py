@@ -485,3 +485,108 @@ def get_bulk_queue_status() -> dict:
     """Returns status of ongoing WhatsApp bulk queue."""
     with _bulk_queue_lock:
         return dict(_bulk_queue_status)
+
+
+def import_leads_bulk(
+    records: list,
+    product_id: str = "systemize_restaurant",
+    default_status: str = "new",
+    update_existing: bool = True
+) -> dict:
+    """
+    Imports a list of potential customer leads (from Excel, CSV, JSON, or text) into crm_leads.json.
+    Deduplicates by normalized phone number or business name.
+    """
+    data = load_crm_data()
+    leads = data["leads"]
+
+    phone_to_id = {}
+    for lid, l in leads.items():
+        p = normalize_phone(l.get("phone", ""))
+        if p:
+            phone_to_id[p] = lid
+
+    added_count = 0
+    updated_count = 0
+    skipped_count = 0
+    errors = []
+
+    now_iso = datetime.now().isoformat()
+    now_ts = int(time.time() * 1000)
+
+    for idx, row in enumerate(records):
+        try:
+            raw_phone = str(row.get("phone") or row.get("mobile") or row.get("tel") or row.get("هاتف") or row.get("موبايل") or "").strip()
+            norm_phone = normalize_phone(raw_phone)
+
+            business_name = str(row.get("business_name") or row.get("name") or row.get("restaurant_name") or row.get("gym_name") or row.get("اسم_النشاط") or row.get("المطعم") or row.get("الصالة") or "").strip()
+            contact_name = str(row.get("contact_name") or row.get("owner_name") or row.get("manager_name") or row.get("المسؤول") or row.get("المدير") or "").strip()
+            city = str(row.get("city") or row.get("governorate") or row.get("المدينة") or row.get("المحافظة") or "").strip()
+            source = str(row.get("source") or row.get("المصدر") or "استيراد ملف / حملة تسويقية").strip()
+            notes_text = str(row.get("notes") or row.get("note") or row.get("ملاحظات") or "").strip()
+            budget = str(row.get("budget") or row.get("الميزانية") or "").strip()
+            interested_pkg = str(row.get("interested_package") or row.get("package") or row.get("الباقة") or "").strip()
+
+            if not business_name and not contact_name:
+                skipped_count += 1
+                continue
+
+            existing_id = phone_to_id.get(norm_phone) if norm_phone else None
+
+            if existing_id and not update_existing:
+                skipped_count += 1
+                continue
+
+            if existing_id and update_existing:
+                lead = leads[existing_id]
+                if business_name and not lead.get("business_name"):
+                    lead["business_name"] = business_name
+                if contact_name and not lead.get("contact_name"):
+                    lead["contact_name"] = contact_name
+                if city and not lead.get("city"):
+                    lead["city"] = city
+                if notes_text:
+                    lead.setdefault("notes", []).append({
+                        "timestamp": now_iso,
+                        "text": f"ملاحظة مستوردة: {notes_text}"
+                    })
+                lead["product_id"] = product_id or lead.get("product_id") or "systemize_restaurant"
+                updated_count += 1
+            else:
+                seq_id = (now_ts + idx) % 1000000
+                new_id = f"LEAD-{seq_id:06d}"
+                lead = {
+                    "product_id": product_id or "systemize_restaurant",
+                    "business_name": business_name or contact_name,
+                    "gym_name": business_name or contact_name,
+                    "contact_name": contact_name or business_name,
+                    "phone": norm_phone or raw_phone,
+                    "city": city,
+                    "source": source,
+                    "status": default_status or "new",
+                    "budget": budget,
+                    "interested_package": interested_pkg or "ترشيح ذكي حسب احتياج النشاط",
+                    "next_followup_date": (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d 14:00"),
+                    "followup_note": "اتصال تعريفي وتحديد موعد عرض ديمو مباشر",
+                    "notes": [{"timestamp": now_iso, "text": f"تم استيراد العميل للمنظومة. {notes_text}".strip()}] if notes_text else [],
+                    "whatsapp_history": [],
+                    "created_at": now_iso,
+                    "last_contacted_at": now_iso
+                }
+                leads[new_id] = lead
+                if norm_phone:
+                    phone_to_id[norm_phone] = new_id
+                added_count += 1
+
+        except Exception as e:
+            errors.append(f"السطر {idx + 1}: {str(e)}")
+
+    save_crm_data(data)
+    return {
+        "success": True,
+        "added_count": added_count,
+        "updated_count": updated_count,
+        "skipped_count": skipped_count,
+        "total_processed": len(records),
+        "errors": errors
+    }

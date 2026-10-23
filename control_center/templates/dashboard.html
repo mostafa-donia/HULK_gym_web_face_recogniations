@@ -52,6 +52,7 @@
                 <select id="activeProductSelect" onchange="onProductChange(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs font-black rounded-lg px-2.5 py-1 focus:ring-1 focus:ring-lime-500 focus:outline-none">
                     <option value="all">🌐 كافة المنتجات (All Products)</option>
                     <option value="systemize_gym">🏋️ Systemize Gym OS</option>
+                    <option value="systemize_restaurant">🍽️ Systemize Restaurant OS</option>
                     <option value="systemize_pos">🛒 Systemize POS & Inventory</option>
                     <option value="systemize_clinic">🏥 Systemize Clinic OS</option>
                 </select>
@@ -63,6 +64,11 @@
             </div>
 
             <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <button onclick="openImportLeadsModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs sm:text-sm px-3.5 sm:px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 transition flex items-center gap-1.5" title="استيراد عملاء محتملين من ملف Excel أو CSV أو نص">
+                    <i class="fa fa-file-import"></i>
+                    <span>استيراد ملف عملاء (Excel/CSV)</span>
+                </button>
+
                 <button onclick="openAddLeadModal()" id="topAddLeadBtn" class="bg-lime-500 hover:bg-lime-400 text-slate-950 font-black text-xs sm:text-sm px-3.5 sm:px-4 py-2.5 rounded-xl shadow-lg shadow-lime-500/20 transition flex items-center gap-1.5">
                     <i class="fa fa-user-plus"></i>
                     <span>+ عميل محتمل جديد</span>
@@ -1027,6 +1033,90 @@
             <div id="productCatalogCardsContainer" class="space-y-4">
                 <!-- Dynamically rendered via renderProductCatalog() -->
             </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: BULK IMPORT CRM LEADS (EXCEL / CSV / TEXT) -->
+    <!-- ========================================== -->
+    <div id="importLeadsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden overflow-y-auto">
+        <div class="glass-card bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-5 shadow-2xl my-8">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-lg font-black border border-indigo-500/30">
+                        <i class="fa fa-file-import"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-white">استيراد عملاء محتملين (Bulk Import Leads)</h3>
+                        <p class="text-xs text-slate-400">استيراد جماعي من ملف Excel (.xlsx), CSV, JSON أو لصق مباشر</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('importLeadsModal')" class="text-slate-400 hover:text-white"><i class="fa fa-times text-lg"></i></button>
+            </div>
+
+            <form id="importLeadsForm" onsubmit="submitImportLeads(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">المنتج المستهدف (Product) *</label>
+                        <select id="importProduct" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-indigo-300 font-bold focus:outline-none focus:border-indigo-500">
+                            <option value="systemize_restaurant">🍽️ Systemize Restaurant OS (المطاعم والكافيهات)</option>
+                            <option value="systemize_gym">🏋️ Systemize Gym OS (الصالات الرياضية)</option>
+                            <option value="systemize_pos">🛒 Systemize POS & Inventory (المخازن والمحلات)</option>
+                            <option value="systemize_clinic">🏥 Systemize Clinic OS (العيادات الطبية)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">المرحلة الافتراضية للعملاء المستوردين</label>
+                        <select id="importDefaultStatus" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                            <option value="new">عميل جديد (New)</option>
+                            <option value="interested">مهتم (Interested)</option>
+                            <option value="demo_scheduled">موعد ديمو (Demo Scheduled)</option>
+                            <option value="followup">متابعة (Follow-up)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Input Method Tabs -->
+                <div class="flex items-center gap-2 border-b border-slate-800 pb-2">
+                    <button type="button" onclick="switchImportMethod('file')" id="importTabFileBtn" class="text-xs font-bold px-3 py-1.5 rounded-lg border border-indigo-500/40 bg-indigo-500/10 text-indigo-400">
+                        📁 رفع ملف (Excel / CSV / TXT / JSON)
+                    </button>
+                    <button type="button" onclick="switchImportMethod('paste')" id="importTabPasteBtn" class="text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-slate-200">
+                        📋 لصق بيانات مباشرة (Text Paste)
+                    </button>
+                </div>
+
+                <!-- Method 1: File Upload -->
+                <div id="importFileSection" class="space-y-2">
+                    <div class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-950/60" onclick="document.getElementById('importFileInput').click()">
+                        <i class="fa fa-cloud-arrow-up text-3xl text-indigo-400 mb-2 block"></i>
+                        <span class="text-xs text-slate-200 font-bold block" id="importFileNameDisplay">انقر لاختيار ملف Excel (.xlsx / .xls) أو CSV أو JSON أو TXT</span>
+                        <span class="text-[11px] text-slate-500 block mt-1">يتعرف النظام تلقائياً على الأعمدة (الاسم، الهاتف، المحافظة، الملاحظات)</span>
+                    </div>
+                    <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv,.json,.txt" class="hidden" onchange="onImportFileSelected(event)">
+                </div>
+
+                <!-- Method 2: Direct Paste -->
+                <div id="importPasteSection" class="space-y-2 hidden">
+                    <label class="block text-xs font-bold text-slate-300">الصق البيانات سطر بسطر (الاسم &lt;فاصلة أو Tab&gt; رقم الهاتف):</label>
+                    <textarea id="importPasteText" rows="6" placeholder="مثال:&#10;مطعم البرنس, 01012345678, القاهرة&#10;كافيه أروما&#9;01123456789&#9;الإسكندرية&#10;شاورما الريم, 01234567890"
+                              class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono"></textarea>
+                </div>
+
+                <!-- Import Status / Results Feedback -->
+                <div id="importResultBox" class="hidden rounded-xl p-3.5 text-xs font-bold border"></div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                    <button type="button" onclick="closeModal('importLeadsModal')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2.5 rounded-xl text-xs transition">
+                        إلغاء
+                    </button>
+                    <button type="submit" id="importSubmitBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-black px-5 py-2.5 rounded-xl text-xs transition flex items-center gap-2 shadow-lg shadow-indigo-600/20">
+                        <i class="fa fa-file-import"></i>
+                        <span>بدء الاستيراد للـ CRM</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -2869,6 +2959,141 @@
                 navigator.clipboard.writeText(tpl.text).then(() => {
                     alert('تم نسخ نص الرسالة إلى الحافظة بنجاح ✓');
                 });
+            }
+        }
+
+        // ========================================================
+        // BULK IMPORT LEADS HANDLERS
+        // ========================================================
+        let currentImportMethod = 'file';
+
+        function openImportLeadsModal() {
+            currentImportMethod = 'file';
+            switchImportMethod('file');
+            const fInp = document.getElementById('importFileInput');
+            if (fInp) fInp.value = '';
+            const fDisp = document.getElementById('importFileNameDisplay');
+            if (fDisp) fDisp.textContent = 'انقر لاختيار ملف Excel (.xlsx / .xls) أو CSV أو JSON أو TXT';
+            const pText = document.getElementById('importPasteText');
+            if (pText) pText.value = '';
+            const resBox = document.getElementById('importResultBox');
+            if (resBox) { resBox.classList.add('hidden'); resBox.innerHTML = ''; }
+
+            const prodSel = document.getElementById('importProduct');
+            if (prodSel) {
+                prodSel.value = (currentSelectedProduct && currentSelectedProduct !== 'all') ? currentSelectedProduct : 'systemize_restaurant';
+            }
+            openModal('importLeadsModal');
+        }
+
+        function switchImportMethod(mode) {
+            currentImportMethod = mode;
+            const fileSec = document.getElementById('importFileSection');
+            const pasteSec = document.getElementById('importPasteSection');
+            const tabFile = document.getElementById('importTabFileBtn');
+            const tabPaste = document.getElementById('importTabPasteBtn');
+            if (mode === 'file') {
+                if (fileSec) fileSec.classList.remove('hidden');
+                if (pasteSec) pasteSec.classList.add('hidden');
+                if (tabFile) { tabFile.className = 'text-xs font-bold px-3 py-1.5 rounded-lg border border-indigo-500/40 bg-indigo-500/10 text-indigo-400'; }
+                if (tabPaste) { tabPaste.className = 'text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-slate-200'; }
+            } else {
+                if (fileSec) fileSec.classList.add('hidden');
+                if (pasteSec) pasteSec.classList.remove('hidden');
+                if (tabFile) { tabFile.className = 'text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-800 text-slate-400 hover:text-slate-200'; }
+                if (tabPaste) { tabPaste.className = 'text-xs font-bold px-3 py-1.5 rounded-lg border border-indigo-500/40 bg-indigo-500/10 text-indigo-400'; }
+            }
+        }
+
+        function onImportFileSelected(e) {
+            const file = e.target.files[0];
+            const disp = document.getElementById('importFileNameDisplay');
+            if (file && disp) {
+                disp.textContent = `✓ الملف المحدد: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            }
+        }
+
+        async function submitImportLeads(e) {
+            e.preventDefault();
+            const btn = document.getElementById('importSubmitBtn');
+            const resBox = document.getElementById('importResultBox');
+            const prodId = document.getElementById('importProduct').value;
+            const defStatus = document.getElementById('importDefaultStatus').value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> جاري استيراد ومعالجة البيانات...';
+
+            try {
+                let resp;
+                if (currentImportMethod === 'file') {
+                    const fileInput = document.getElementById('importFileInput');
+                    if (!fileInput.files || !fileInput.files[0]) {
+                        alert('يرجى اختيار ملف أولاً.');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa fa-file-import"></i> بدء الاستيراد للـ CRM';
+                        return;
+                    }
+                    const fd = new FormData();
+                    fd.append('file', fileInput.files[0]);
+                    fd.append('product_id', prodId);
+                    fd.append('default_status', defStatus);
+
+                    resp = await fetch('/api/crm/leads/import/', {
+                        method: 'POST',
+                        body: fd
+                    });
+                } else {
+                    const textVal = (document.getElementById('importPasteText').value || '').trim();
+                    if (!textVal) {
+                        alert('يرجى لصق بيانات العملاء أولاً.');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa fa-file-import"></i> بدء الاستيراد للـ CRM';
+                        return;
+                    }
+                    const lines = textVal.split('\n');
+                    const records = [];
+                    lines.forEach(l => {
+                        const parts = l.replace(/\t/g, ',').split(',').map(s => s.trim()).filter(Boolean);
+                        if (parts.length >= 2) {
+                            records.push({
+                                business_name: parts[0],
+                                phone: parts[1],
+                                city: parts[2] || ''
+                            });
+                        } else if (parts.length === 1) {
+                            records.push({ business_name: parts[0], phone: '' });
+                        }
+                    });
+
+                    resp = await fetch('/api/crm/leads/import/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            records: records,
+                            product_id: prodId,
+                            default_status: defStatus
+                        })
+                    });
+                }
+
+                const data = await resp.json();
+                if (data.success) {
+                    resBox.className = 'rounded-xl p-3.5 text-xs font-bold border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 block';
+                    resBox.innerHTML = `✓ تم الاستيراد بنجاح! مضاف جديد: ${data.added_count} | محدث: ${data.updated_count} | تم تخطي: ${data.skipped_count}`;
+                    fetchCrmLeads();
+                    setTimeout(() => {
+                        closeModal('importLeadsModal');
+                    }, 1800);
+                } else {
+                    resBox.className = 'rounded-xl p-3.5 text-xs font-bold border border-rose-500/40 bg-rose-500/10 text-rose-400 block';
+                    resBox.innerHTML = `❌ خطأ في الاستيراد: ${data.message || 'تعذر استيراد البيانات'}`;
+                }
+            } catch (err) {
+                resBox.className = 'rounded-xl p-3.5 text-xs font-bold border border-rose-500/40 bg-rose-500/10 text-rose-400 block';
+                resBox.innerHTML = `❌ خطأ في الاتصال بالخادم: ${err.message}`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa fa-file-import"></i> بدء الاستيراد للـ CRM';
             }
         }
 
