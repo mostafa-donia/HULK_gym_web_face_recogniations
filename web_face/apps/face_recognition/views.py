@@ -484,21 +484,34 @@ def api_enroll_manager_face(request):
         except Exception:
             pass
 
-    if not raw_img:
-        return JsonResponse({"success": False, "message": "لم يتم إرسال أي صورة لوجه المدير."}, status=400)
-
     engine = get_face_engine()
     if not engine.ensure_models_loaded(timeout=6.0):
         return JsonResponse({"success": False, "message": "محرك الذكاء الاصطناعي قيد التهيئة، يرجى المحاولة بعد لحظات."}, status=503)
 
-    det_thresh = float(profile.face_min_confidence or 0.55)
+    source = request.POST.get("source") or ""
+    if not raw_img or source == "same":
+        with engine.frame_lock:
+            if engine.current_raw_frame is not None:
+                raw_img = engine.current_raw_frame.copy()
+            elif engine.latest_jpeg_bytes is not None:
+                raw_img = engine.latest_jpeg_bytes
+
+    if not raw_img:
+        return JsonResponse({"success": False, "message": "لم يتم التقاط صورة من الكاميرا، يرجى التأكد من تشغيل الكاميرا."}, status=400)
+
+    det_thresh = max(0.40, float(profile.face_min_confidence or 0.55) - 0.10)
     success, emb, crop_bytes, err = engine.extract_embedding_and_crop(raw_img, score_threshold=det_thresh)
 
     if not success or emb is None:
-        return JsonResponse({"success": False, "message": err or "تعذر التعرف على وجه واضح في الصورة. يرجى النظر مباشرة إلى الكاميرا."}, status=400)
+        return JsonResponse({"success": False, "message": err or "تعذر التعرف على وجه واضح في الصورة. يرجى النظر للكاميرا مع إضاءة جيدة."}, status=400)
 
-    append_mode = str(request.POST.get("append", "false")).lower() in ["true", "1"]
-    current_embs = profile.manager_face_embeddings or [] if append_mode else []
+    try:
+        step = int(request.POST.get("step", 1) or 1)
+    except (ValueError, TypeError):
+        step = 1
+
+    append_mode = str(request.POST.get("append", "false")).lower() in ["true", "1"] or (step > 1)
+    current_embs = list(profile.manager_face_embeddings or []) if append_mode else []
     current_embs.append(emb.tolist() if hasattr(emb, "tolist") else emb)
 
     profile.manager_face_embeddings = current_embs
@@ -506,7 +519,7 @@ def api_enroll_manager_face(request):
     profile.manager_face_unlock_enabled = True
     profile.manager_face_enrolled_at = timezone.now()
 
-    if crop_bytes:
+    if crop_bytes and (step == 1 or not profile.manager_face_photo or not append_mode):
         filename = f"manager_face_{int(time.time())}.jpg"
         if profile.manager_face_photo:
             try:
@@ -519,10 +532,12 @@ def api_enroll_manager_face(request):
 
     return JsonResponse({
         "success": True,
-        "message": "✓ تم تسجيل بصمة وجه المدير بنجاح!",
+        "step": step,
+        "total_steps": 5,
+        "embeddings_count": len(current_embs),
+        "message": f"✓ تم التقاط وحفظ الموضع ({step} من 5) بنجاح!",
         "photo_url": profile.manager_face_photo.url if profile.manager_face_photo else None,
         "enrolled_at": profile.manager_face_enrolled_at.strftime("%Y-%m-%d %H:%M"),
-        "embeddings_count": len(current_embs),
     })
 
 
@@ -598,6 +613,27 @@ def api_verify_manager_face_unlock(request):
         return JsonResponse({"success": False, "message": "محرك الذكاء الاصطناعي قيد التحضير."}, status=503)
 
     source = request.POST.get("source") or request.GET.get("source") or ""
+
+    # 1. Quick pickup from live background engine detection within last 1.8 seconds
+    if source == "same" and getattr(engine, "last_detected_manager", None):
+        last_m = engine.last_detected_manager
+        if (time.time() - last_m.get("timestamp", 0)) <= 1.8 and last_m.get("matched"):
+            pct_score = round(last_m["score"] * 100)
+            request.session["manager_page_unlocked"] = True
+            request.session["trainers_page_unlocked"] = True
+            request.session["retention_page_unlocked"] = True
+            request.session["reports_page_unlocked"] = True
+            request.session["developer_options_unlocked"] = False
+            request.session.modified = True
+            return JsonResponse({
+                "success": True,
+                "matched": True,
+                "score": pct_score,
+                "box": last_m.get("box"),
+                "message": f"✓ تم التحقق بنجاح! مرحباً بالمدير (نسبة التطابق {pct_score}%).",
+                "redirect_url": target_url,
+            })
+
     if not raw_img or source == "same":
         # Shared system camera: grab current live frame directly from OpenCV engine
         with engine.frame_lock:
@@ -607,16 +643,18 @@ def api_verify_manager_face_unlock(request):
                 raw_img = engine.latest_jpeg_bytes
 
     if raw_img is None:
-        return JsonResponse({"success": False, "message": "لم يتم التقاط صورة من الكاميرا، وكاميرا النظام غير متصلة."}, status=400)
+        return JsonResponse({"success": False, "score": 0, "message": "لم يتم التقاط صورة من الكاميرا، وكاميرا النظام غير متصلة."}, status=200)
 
-    det_thresh = float(profile.face_min_confidence or 0.55)
+    det_thresh = max(0.40, float(profile.face_min_confidence or 0.55) - 0.10)
     success, query_emb, _, err = engine.extract_embedding_and_crop(raw_img, score_threshold=det_thresh)
 
     if not success or query_emb is None:
         return JsonResponse({
             "success": False,
+            "matched": False,
+            "score": 0,
             "message": "لم يتم اكتشاف وجه واضح أمام الكاميرا. يرجى النظر مباشرة إلى الكاميرا.",
-        }, status=400)
+        }, status=200)
 
     q_vec = np.array(query_emb, dtype=np.float32)
     q_norm = np.linalg.norm(q_vec)
@@ -633,7 +671,8 @@ def api_verify_manager_face_unlock(request):
         if score > best_score:
             best_score = score
 
-    thresh = profile.face_match_threshold_ratio
+    # Threshold for manager unlock (with multi-angle embeddings)
+    thresh = min(0.58, max(0.50, profile.face_match_threshold_ratio - 0.06))
     pct_score = round(max(0.0, best_score) * 100)
 
     if best_score >= thresh:
@@ -657,8 +696,8 @@ def api_verify_manager_face_unlock(request):
             "success": False,
             "matched": False,
             "score": pct_score,
-            "message": f"❌ الوجه غير مطابق لبصمة وجه المدير (نسبة التطابق {pct_score}% أقل من المعيار {profile.face_match_threshold_percent}%).",
-        }, status=403)
+            "message": f"الوجه قيد الفحص (نسبة التطابق {pct_score}%). يرجى النظر مباشرة للكاميرا.",
+        }, status=200)
 
 
 

@@ -241,8 +241,12 @@ def dispatch_message_record(msg_obj: WhatsAppMessage, return_to_system: bool = F
 
             return True
         else:
-            msg_obj.status = MessageStatus.FAILED
-            msg_obj.error_detail = "WhatsApp Desktop sender returned unsuccessful (window not active or chat not found)."
+            if getattr(whatsapp_sender, "KILL_SWITCH_REQUESTED", False):
+                msg_obj.status = MessageStatus.PENDING
+                msg_obj.error_detail = "تم إيقاف الإرسال بواسطة زر الطوارئ (Ctrl+K). الرسالة معلقة وجاهزة للاستئناف في أي وقت."
+            else:
+                msg_obj.status = MessageStatus.FAILED
+                msg_obj.error_detail = "WhatsApp Desktop sender returned unsuccessful (window not active or chat not found)."
             msg_obj.save()
             return False
     except Exception as exc:
@@ -331,6 +335,8 @@ def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: s
     sent_count = 0
     failed_count = 0
 
+    whatsapp_sender.reset_kill_switch()
+
     if pending:
         try:
             whatsapp_sender.whatsupp_ready()
@@ -338,9 +344,15 @@ def dispatch_all_pending(limit: int = 25, selected_ids: list = None, msg_type: s
             logger.warning("whatsupp_ready batch init error: %s", e)
 
     for msg in pending:
+        if getattr(whatsapp_sender, "KILL_SWITCH_REQUESTED", False):
+            logger.info("Batch dispatch aborted by emergency kill switch.")
+            break
         if dispatch_message_record(msg, return_to_system=False):
             sent_count += 1
         else:
+            if getattr(whatsapp_sender, "KILL_SWITCH_REQUESTED", False):
+                logger.info("Message %s aborted by kill switch, halting queue.", msg.id)
+                break
             failed_count += 1
         time.sleep(0.5)
 

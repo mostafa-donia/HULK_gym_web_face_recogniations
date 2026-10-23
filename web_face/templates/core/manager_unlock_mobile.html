@@ -510,11 +510,11 @@
         stopSeparateWebcam();
 
         if (statusText) {
-          statusText.textContent = '✓ مرحباً يا كابتن! تم التحقق بنجاح';
-          statusText.style.background = 'rgba(34, 197, 94, 0.9)';
+          statusText.textContent = `✓ مرحباً يا كابتن! تم التحقق بنجاح (${data.score}%)`;
+          statusText.style.background = 'rgba(34, 197, 94, 0.95)';
         }
         if (msgBox) {
-          msgBox.textContent = '✅ تم التعرف على وجه المدير بنجاح! جاري الدخول...';
+          msgBox.textContent = `✅ تم التعرف على وجه المدير بنجاح (${data.score}%)! جاري الدخول...`;
           msgBox.style.background = 'rgba(34, 197, 94, 0.2)';
           msgBox.style.border = '1px solid #22c55e';
           msgBox.style.color = '#4ade80';
@@ -524,15 +524,24 @@
         setTimeout(() => {
           window.location.href = data.redirect_url || '{{ target_url|default:request.get_full_path }}';
         }, 450);
-      } else if (scanAttempts >= maxAttempts) {
-        if (autoScanTimer) { clearInterval(autoScanTimer); autoScanTimer = null; }
-        if (statusText) statusText.textContent = 'تم إيقاف المسح مؤقتاً';
-        if (msgBox) {
-          msgBox.innerHTML = `لم يتم التعرف على وجه مطابق للمدير حتى الآن.<br><button type="button" onclick="initAutoFaceUnlock()" style="margin-top: 8px; background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 8px; font-weight: 800; cursor: pointer;">🔄 إعادة المسح التلقائي</button>`;
-          msgBox.style.background = 'rgba(239, 68, 68, 0.15)';
-          msgBox.style.border = '1px solid #ef4444';
-          msgBox.style.color = '#f87171';
-          msgBox.style.display = 'block';
+      } else {
+        if (data && data.score !== undefined && statusText) {
+          if (data.score > 0) {
+            statusText.textContent = `👁️ جاري فحص الوجه... (${data.score}%)`;
+          } else {
+            statusText.textContent = '👁️ انظر مباشرة إلى منتصف الكاميرا...';
+          }
+        }
+        if (scanAttempts >= maxAttempts) {
+          if (autoScanTimer) { clearInterval(autoScanTimer); autoScanTimer = null; }
+          if (statusText) statusText.textContent = 'تم إيقاف المسح مؤقتاً';
+          if (msgBox) {
+            msgBox.innerHTML = `لم يتم التعرف على وجه مطابق للمدير حتى الآن.<br><button type="button" onclick="initAutoFaceUnlock()" style="margin-top: 8px; background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 8px; font-weight: 800; cursor: pointer;">🔄 إعادة المسح التلقائي</button>`;
+            msgBox.style.background = 'rgba(239, 68, 68, 0.15)';
+            msgBox.style.border = '1px solid #ef4444';
+            msgBox.style.color = '#f87171';
+            msgBox.style.display = 'block';
+          }
         }
       }
     }

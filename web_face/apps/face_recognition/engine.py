@@ -69,6 +69,7 @@ class FaceEngine:
         self.latest_event = None
         self.last_event_time = 0
         self.member_last_overlay_time: Dict[int, float] = {}
+        self.last_detected_manager: Optional[dict] = None
         self.camera_starting = False
         self._placeholder_jpeg = None
         self._create_placeholder_jpeg()
@@ -668,6 +669,43 @@ class FaceEngine:
 
                 emb = self.extract_embedding_for_face(frame, face)
                 if not emb:
+                    continue
+
+                # 1. Check if face belongs to the Gym Manager
+                is_manager = False
+                best_mgr_score = -1.0
+                if profile.manager_face_enrolled and profile.manager_face_embeddings:
+                    emb_arr = np.array(emb, dtype=np.float32)
+                    emb_norm = np.linalg.norm(emb_arr)
+                    if emb_norm > 0:
+                        emb_arr = emb_arr / emb_norm
+                    for m_emb in profile.manager_face_embeddings:
+                        m_vec = np.array(m_emb, dtype=np.float32)
+                        m_n = np.linalg.norm(m_vec)
+                        if m_n > 0:
+                            m_vec = m_vec / m_n
+                        sc = float(np.dot(emb_arr, m_vec))
+                        if sc > best_mgr_score:
+                            best_mgr_score = sc
+
+                    mgr_target_thresh = min(0.58, max(0.50, thresh - 0.06))
+                    if best_mgr_score >= mgr_target_thresh:
+                        is_manager = True
+
+                if is_manager:
+                    # Draw vibrant green box for Manager with crown label
+                    mgr_color = (34, 197, 94)
+                    cv2.rectangle(annotated, (x, y), (x + w, y + h), mgr_color, 3)
+                    mgr_label = f"👑 المدير ({round(best_mgr_score * 100)}%)"
+                    cv2.putText(annotated, mgr_label, (x, max(28, y - 10)),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.75, mgr_color, 2, cv2.LINE_AA)
+                    with self.frame_lock:
+                        self.last_detected_manager = {
+                            "matched": True,
+                            "score": best_mgr_score,
+                            "box": [x, y, w, h],
+                            "timestamp": time.time(),
+                        }
                     continue
 
                 member_id, match_score = self.match_face_vector(emb, cosine_threshold=thresh)

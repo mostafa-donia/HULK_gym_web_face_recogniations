@@ -1034,7 +1034,7 @@
             {% if profile.manager_face_enrolled %}
               <span id="mgrFaceStatusBadge" style="background: rgba(34, 197, 94, 0.15); border: 1px solid #22c55e; color: #4ade80; font-weight: 800; font-size: 0.82rem; padding: 5px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">
                 <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%;"></span>
-                بصمة وجه المدير مسجلة ونشطة ✓
+                بصمة وجه المدير مسجلة ونشطة ({{ profile.manager_face_embeddings|length|default:1 }} مواضع) ✓
               </span>
             {% else %}
               <span id="mgrFaceStatusBadge" style="background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #fbbf24; font-weight: 800; font-size: 0.82rem; padding: 5px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;">
@@ -1771,40 +1771,79 @@
 
 </div>
 
-<!-- Manager Face Enrollment Webcam Modal (Root Level) -->
-<div id="mgrFaceModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
-  <div style="background: var(--bg-card, #0f172a); border: 1px solid var(--border-color, #1e293b); border-radius: 16px; width: 100%; max-width: 520px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); overflow: hidden; animation: popIn 0.25s ease-out;">
-    <div style="padding: 18px 22px; border-bottom: 1px solid var(--border-color, #1e293b); display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main, #f8fafc); display: flex; align-items: center; gap: 8px;">
-        📸 تسجيل بصمة وجه المدير
-      </h3>
-      <button type="button" onclick="closeMgrFaceModal()" style="background: none; border: none; color: var(--text-muted, #94a3b8); font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+<!-- Manager Face Enrollment 5-Position Wizard Modal -->
+<div id="mgrFaceModal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: var(--bg-card, #0f172a); border: 2px solid rgba(132, 204, 22, 0.4); border-radius: 20px; width: 100%; max-width: 580px; box-shadow: 0 25px 60px -10px rgba(0,0,0,0.8); overflow: hidden; animation: popIn 0.25s ease-out;">
+    <div style="padding: 16px 22px; border-bottom: 1px solid var(--border-color, #1e293b); display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.7);">
+      <div>
+        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #84cc16; display: flex; align-items: center; gap: 8px;">
+          📸 تسجيل بصمة وجه المدير (5 مواضع للرأس)
+        </h3>
+        <span style="color: var(--text-muted, #94a3b8); font-size: 0.78rem;">
+          التقاط الوجه من 5 زوايا لضمان الفتح التلقائي الموثوق من أي زاوية
+        </span>
+      </div>
+      <button type="button" onclick="closeMgrFaceModal()" style="background: none; border: none; color: var(--text-muted, #94a3b8); font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</button>
     </div>
 
-    <div style="padding: 22px; text-align: center;">
-      <p style="font-size: 0.88rem; color: var(--text-muted, #94a3b8); margin-bottom: 16px;">
-        يرجى النظر مباشرة إلى الكاميرا مع إضاءة جيدة لتسجيل بصمة الوجه عالية الدقة.
-      </p>
+    <div style="padding: 20px; text-align: center;">
+      <div id="mgrFaceStepsRow" style="display: flex; justify-content: space-between; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;">
+        <div id="mgrStepPill_1" class="mgr-step-pill" style="flex: 1; min-width: 90px; padding: 8px 4px; border-radius: 8px; font-size: 0.76rem; font-weight: 800; background: #84cc16; color: #000; border: 1px solid #84cc16; transition: all 0.3s;">
+          1️⃣ للأمام (مستقيم)
+        </div>
+        <div id="mgrStepPill_2" class="mgr-step-pill" style="flex: 1; min-width: 90px; padding: 8px 4px; border-radius: 8px; font-size: 0.76rem; font-weight: 800; background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.12); transition: all 0.3s;">
+          2️⃣ يمين 15°
+        </div>
+        <div id="mgrStepPill_3" class="mgr-step-pill" style="flex: 1; min-width: 90px; padding: 8px 4px; border-radius: 8px; font-size: 0.76rem; font-weight: 800; background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.12); transition: all 0.3s;">
+          3️⃣ يسار 15°
+        </div>
+        <div id="mgrStepPill_4" class="mgr-step-pill" style="flex: 1; min-width: 90px; padding: 8px 4px; border-radius: 8px; font-size: 0.76rem; font-weight: 800; background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.12); transition: all 0.3s;">
+          4️⃣ لأعلى 10°
+        </div>
+        <div id="mgrStepPill_5" class="mgr-step-pill" style="flex: 1; min-width: 90px; padding: 8px 4px; border-radius: 8px; font-size: 0.76rem; font-weight: 800; background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.12); transition: all 0.3s;">
+          5️⃣ لأسفل / ابتسامة
+        </div>
+      </div>
 
-      <div style="position: relative; width: 100%; max-width: 420px; aspect-ratio: 4/3; margin: 0 auto; background: #020617; border-radius: 12px; overflow: hidden; border: 2px dashed #84cc16; display: flex; align-items: center; justify-content: center;">
-        <!-- Backend Live Camera Feed (Continuous OpenCV Stream) -->
-        <img id="mgrFaceBackendImg" src="" style="width: 100%; height: 100%; object-fit: cover;" alt="بث الكاميرا المباشر">
-        <div id="mgrFaceScanGuide" style="position: absolute; inset: 15%; border: 2px solid rgba(132, 204, 22, 0.6); border-radius: 50%; pointer-events: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);"></div>
-        <div id="mgrFaceLoadingOverlay" style="display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.75); flex-direction: column; align-items: center; justify-content: center; color: #fff; font-weight: 700; gap: 10px;">
-          <div style="width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #84cc16; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      <div id="mgrFaceInstructionBanner" style="background: rgba(132, 204, 22, 0.12); border: 1px solid rgba(132, 204, 22, 0.35); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; color: #f8fafc; font-size: 0.88rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <span id="mgrFaceInstructionIcon" style="font-size: 1.2rem;">🎯</span>
+        <span id="mgrFaceInstructionText">الموضع 1 من 5: انظر مباشرة للأمام إلى منتصف الكاميرا</span>
+      </div>
+
+      <div style="position: relative; width: 100%; max-width: 440px; aspect-ratio: 4/3; margin: 0 auto; background: #000; border-radius: 14px; overflow: hidden; border: 2px solid #84cc16; box-shadow: 0 0 25px rgba(132, 204, 22, 0.2);">
+        <img id="mgrFaceBackendImg" src="" style="width: 100%; height: 100%; object-fit: cover;" alt="بث الكاميرا">
+
+        <div id="mgrFaceScanGuide" style="position: absolute; inset: 12%; border: 2px dashed rgba(132, 204, 22, 0.8); border-radius: 50%; pointer-events: none; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35); transition: all 0.3s;">
+          <div id="mgrFaceArrowIndicator" style="display: none; position: absolute; font-size: 2.2rem; filter: drop-shadow(0 0 8px #84cc16);"></div>
+        </div>
+
+        <div id="mgrFaceFlashOverlay" style="display: none; position: absolute; inset: 0; background: #fff; pointer-events: none; opacity: 0; transition: opacity 0.2s;"></div>
+
+        <div id="mgrFaceLoadingOverlay" style="display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.75); flex-direction: column; align-items: center; justify-content: center; color: #fff; font-weight: 800; gap: 10px;">
+          <div id="mgrFaceCountdownNum" style="font-size: 3.5rem; color: #84cc16; font-weight: 900; display: none;">3</div>
+          <div id="mgrFaceLoadingSpinner" style="width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #84cc16; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
           <span id="mgrFaceLoadingText">جاري المعالجة واستخراج البصمة...</span>
         </div>
       </div>
       <canvas id="mgrFaceCanvas" style="display: none;"></canvas>
 
-      <div id="mgrFaceModalError" style="display: none; margin-top: 14px; padding: 10px 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #f87171; font-size: 0.85rem; font-weight: 700;"></div>
+      <div id="mgrFaceModalError" style="display: none; margin-top: 12px; padding: 10px 14px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #f87171; font-size: 0.85rem; font-weight: 700;"></div>
 
-      <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
-        <button type="button" id="btnCaptureMgrFace" onclick="captureAndEnrollMgrFace()" class="btn btn-primary" style="padding: 10px 24px; font-weight: 800; font-size: 0.95rem;">
-          📷 التقاط وحفظ بصمة الوجه
+      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 18px; flex-wrap: wrap;">
+        <button type="button" id="btnCaptureCurrentStep" onclick="captureCurrentStep()" class="btn btn-primary" style="padding: 10px 22px; font-weight: 800; font-size: 0.95rem;">
+          <span id="btnCaptureStepLabel">📷 التقاط هذا الموضع (1/5)</span>
         </button>
-        <button type="button" onclick="closeMgrFaceModal()" class="btn btn-secondary" style="padding: 10px 18px; font-weight: 700;">
-          إلغاء
+
+        <button type="button" id="btnAuto5Sequence" onclick="startAuto5Sequence()" class="btn btn-secondary" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; padding: 10px 18px; font-weight: 800; font-size: 0.9rem;">
+          ⚡ التقاط آلي متتابع (Auto 5)
+        </button>
+
+        <button type="button" onclick="resetToStep1()" class="btn btn-secondary" style="padding: 10px 14px; font-weight: 700; font-size: 0.85rem;">
+          🔄 إعادة البدء
+        </button>
+
+        <button type="button" onclick="closeMgrFaceModal()" class="btn btn-secondary" style="padding: 10px 14px; font-weight: 700;">
+          إغلاق
         </button>
       </div>
     </div>
@@ -2280,10 +2319,18 @@ async function testGateTriggerSignal() {
 })();
 
 // ==========================================
-// Manager Face ID Enrollment & Management
+// Manager Face ID 5-Position Guided Enrollment
 // ==========================================
-let mgrFaceStream = null;
-let isUsingBackendStream = false;
+const MGR_FACE_STEPS = [
+  { step: 1, name: "1️⃣ للأمام (مستقيم)", icon: "🎯", hint: "الموضع 1 من 5: انظر مباشرة للأمام إلى منتصف الكاميرا", arrow: "" },
+  { step: 2, name: "2️⃣ يمين 15°", icon: "➡️", hint: "الموضع 2 من 5: التفت برأسك يميناً قليلاً (حوالي 15 درجة)", arrow: "right" },
+  { step: 3, name: "3️⃣ يسار 15°", icon: "⬅️", hint: "الموضع 3 من 5: التفت برأسك يساراً قليلاً (حوالي 15 درجة)", arrow: "left" },
+  { step: 4, name: "4️⃣ لأعلى 10°", icon: "⬆️", hint: "الموضع 4 من 5: ارفع ذقنك لأعلى قليلاً (حوالي 10 درجات)", arrow: "up" },
+  { step: 5, name: "5️⃣ لأسفل / ابتسامة", icon: "⬇️", hint: "الموضع 5 من 5: أمِل رأسك لأسفل قليلاً أو ابتسم للكاميرا", arrow: "down" },
+];
+
+let currentEnrollStep = 1;
+let isAutoSequenceActive = false;
 
 function openMgrFaceModal() {
   const modal = document.getElementById('mgrFaceModal');
@@ -2295,6 +2342,8 @@ function openMgrFaceModal() {
   if (modal) modal.style.display = 'flex';
   if (loading) loading.style.display = 'none';
 
+  resetToStep1();
+
   if (backendImg) {
     backendImg.style.display = 'block';
     backendImg.src = "{% url 'face_recognition:video_feed' %}?t=" + Date.now();
@@ -2302,6 +2351,7 @@ function openMgrFaceModal() {
 }
 
 function closeMgrFaceModal() {
+  isAutoSequenceActive = false;
   const modal = document.getElementById('mgrFaceModal');
   const backendImg = document.getElementById('mgrFaceBackendImg');
   if (modal) modal.style.display = 'none';
@@ -2310,25 +2360,93 @@ function closeMgrFaceModal() {
   }
 }
 
-async function captureAndEnrollMgrFace() {
+function resetToStep1() {
+  currentEnrollStep = 1;
+  isAutoSequenceActive = false;
+  updateStepUI();
+  const errorBox = document.getElementById('mgrFaceModalError');
+  if (errorBox) { errorBox.style.display = 'none'; }
+}
+
+function updateStepUI() {
+  const stepInfo = MGR_FACE_STEPS[currentEnrollStep - 1] || MGR_FACE_STEPS[0];
+  const iconEl = document.getElementById('mgrFaceInstructionIcon');
+  const textEl = document.getElementById('mgrFaceInstructionText');
+  const btnLabel = document.getElementById('btnCaptureStepLabel');
+  const arrowEl = document.getElementById('mgrFaceArrowIndicator');
+
+  if (iconEl) iconEl.textContent = stepInfo.icon;
+  if (textEl) textEl.textContent = stepInfo.hint;
+  if (btnLabel) btnLabel.textContent = `📷 التقاط الموضع (${currentEnrollStep}/5)`;
+
+  if (arrowEl) {
+    if (stepInfo.arrow === 'right') {
+      arrowEl.textContent = '👉';
+      arrowEl.style.display = 'block';
+      arrowEl.style.left = 'auto'; arrowEl.style.right = '10px'; arrowEl.style.top = '40%';
+    } else if (stepInfo.arrow === 'left') {
+      arrowEl.textContent = '👈';
+      arrowEl.style.display = 'block';
+      arrowEl.style.left = '10px'; arrowEl.style.right = 'auto'; arrowEl.style.top = '40%';
+    } else if (stepInfo.arrow === 'up') {
+      arrowEl.textContent = '👆';
+      arrowEl.style.display = 'block';
+      arrowEl.style.left = '45%'; arrowEl.style.right = 'auto'; arrowEl.style.top = '10px';
+    } else if (stepInfo.arrow === 'down') {
+      arrowEl.textContent = '👇';
+      arrowEl.style.display = 'block';
+      arrowEl.style.left = '45%'; arrowEl.style.right = 'auto'; arrowEl.style.top = 'auto'; arrowEl.style.bottom = '10px';
+    } else {
+      arrowEl.style.display = 'none';
+    }
+  }
+
+  for (let i = 1; i <= 5; i++) {
+    const pill = document.getElementById(`mgrStepPill_${i}`);
+    if (!pill) continue;
+    if (i < currentEnrollStep) {
+      pill.style.background = '#22c55e';
+      pill.style.color = '#fff';
+      pill.style.borderColor = '#22c55e';
+      pill.innerHTML = `✓ ${MGR_FACE_STEPS[i-1].name.replace(/^[0-9]️⃣\s*/, '')}`;
+    } else if (i === currentEnrollStep) {
+      pill.style.background = '#84cc16';
+      pill.style.color = '#000';
+      pill.style.borderColor = '#84cc16';
+      pill.innerHTML = MGR_FACE_STEPS[i-1].name;
+    } else {
+      pill.style.background = 'rgba(255,255,255,0.06)';
+      pill.style.color = '#94a3b8';
+      pill.style.borderColor = 'rgba(255,255,255,0.12)';
+      pill.innerHTML = MGR_FACE_STEPS[i-1].name;
+    }
+  }
+}
+
+async function captureCurrentStep() {
   const backendImg = document.getElementById('mgrFaceBackendImg');
   const canvas = document.getElementById('mgrFaceCanvas');
   const loading = document.getElementById('mgrFaceLoadingOverlay');
+  const loadingSpinner = document.getElementById('mgrFaceLoadingSpinner');
   const loadingText = document.getElementById('mgrFaceLoadingText');
-  const btnCapture = document.getElementById('btnCaptureMgrFace');
+  const countdownNum = document.getElementById('mgrFaceCountdownNum');
+  const btnCapture = document.getElementById('btnCaptureCurrentStep');
   const errorBox = document.getElementById('mgrFaceModalError');
+  const flash = document.getElementById('mgrFaceFlashOverlay');
+
   if (errorBox) { errorBox.style.display = 'none'; errorBox.innerHTML = ''; }
+  if (btnCapture) btnCapture.disabled = true;
+
+  if (loading) {
+    if (countdownNum) countdownNum.style.display = 'none';
+    if (loadingSpinner) loadingSpinner.style.display = 'block';
+    if (loadingText) loadingText.textContent = `جاري التقاط الموضع (${currentEnrollStep}/5)...`;
+    loading.style.display = 'flex';
+  }
 
   let dataUrl = null;
 
-  if (loading) {
-    if (loadingText) loadingText.textContent = 'جاري التقاط الإطار واستخراج البصمة...';
-    loading.style.display = 'flex';
-  }
-  if (btnCapture) btnCapture.disabled = true;
-
   try {
-    // 1. Grab raw frame directly from OpenCV face engine
     try {
       const frameRes = await fetch("{% url 'face_recognition:api_capture_frame' %}");
       if (frameRes.ok) {
@@ -2338,59 +2456,118 @@ async function captureAndEnrollMgrFace() {
         }
       }
     } catch (e) {
-      console.warn("Backend capture API error, falling back to canvas:", e);
+      console.warn('Backend capture API error, falling back to canvas:', e);
     }
 
-    // 2. Fallback to drawing visible backendImg onto canvas
-    if (!dataUrl) {
-      if (backendImg && canvas && (backendImg.naturalWidth > 0 || backendImg.width > 0)) {
-        canvas.width = backendImg.naturalWidth || backendImg.width || 640;
-        canvas.height = backendImg.naturalHeight || backendImg.height || 480;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(backendImg, 0, 0, canvas.width, canvas.height);
-        dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-      }
-    }
-
-    if (!dataUrl) {
-      if (errorBox) {
-        errorBox.innerHTML = 'الكاميرا غير جاهزة بعد. يرجى الانتظار ثانية ثم الضغط مجدداً، أو اختيار صورة لوجهك مباشرة من جهازك:<br><button type="button" onclick="document.getElementById(\'mgrFaceFileInput\').click()" class="btn btn-sm btn-secondary" style="margin-top: 8px; font-weight: 800;">📁 اختيار صورة من الجهاز</button>';
-        errorBox.style.display = 'block';
-      }
-      return;
+    if (!dataUrl && backendImg && canvas) {
+      canvas.width = backendImg.naturalWidth || backendImg.width || 640;
+      canvas.height = backendImg.naturalHeight || backendImg.height || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(backendImg, 0, 0, canvas.width, canvas.height);
+      dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     }
 
     const formData = new FormData();
-    formData.append('image', dataUrl);
+    if (dataUrl) {
+      formData.append('image', dataUrl);
+    } else {
+      formData.append('source', 'same');
+    }
+    formData.append('step', currentEnrollStep);
+    formData.append('append', (currentEnrollStep > 1) ? 'true' : 'false');
     formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
     const res = await fetch("{% url 'face_recognition:enroll_manager_face' %}", {
       method: 'POST',
       body: formData,
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-      }
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
     });
     const result = await res.json();
+
     if (result.success) {
-      closeMgrFaceModal();
-      alert('✓ تم حفظ وتنشيط بصمة وجه المدير بنجاح!');
-      window.location.reload();
+      if (flash) {
+        flash.style.display = 'block';
+        flash.style.opacity = '0.7';
+        setTimeout(() => { flash.style.opacity = '0'; setTimeout(() => { flash.style.display = 'none'; }, 200); }, 80);
+      }
+
+      if (currentEnrollStep < 5) {
+        currentEnrollStep++;
+        updateStepUI();
+        if (loading) loading.style.display = 'none';
+        if (btnCapture) btnCapture.disabled = false;
+        return true;
+      } else {
+        for (let i = 1; i <= 5; i++) {
+          const pill = document.getElementById(`mgrStepPill_${i}`);
+          if (pill) { pill.style.background = '#22c55e'; pill.style.color = '#fff'; pill.style.borderColor = '#22c55e'; pill.innerHTML = `✓ ${MGR_FACE_STEPS[i-1].name.replace(/^[0-9]️⃣\s*/, '')}`; }
+        }
+        if (loadingText) loadingText.innerHTML = '🎉 تم حفظ بصمة وجه المدير من كافة الزوايا الـ 5 بنجاح!';
+        if (loadingSpinner) loadingSpinner.style.display = 'none';
+        setTimeout(() => {
+          closeMgrFaceModal();
+          alert('✓ تم تسجيل بصمة وجه المدير بنجاح من كافة الزوايا الـ 5!
+يمكنك الآن فتح القفل بالوجه فوراً من أي زاوية.');
+          window.location.reload();
+        }, 1200);
+        return true;
+      }
     } else {
       if (errorBox) {
-        errorBox.textContent = result.message || 'فشل التعرف على الوجه. يرجى النظر للكاميرا جيداً والتأكد من وضوح الإضاءة.';
+        errorBox.textContent = result.message || 'تعذر التعرف على الوجه بوضوح في هذا الموضع. يرجى النظر للكاميرا جيداً والتأكد من وضوح الإضاءة.';
         errorBox.style.display = 'block';
       }
+      if (loading) loading.style.display = 'none';
+      if (btnCapture) btnCapture.disabled = false;
+      return false;
     }
   } catch (err) {
     if (errorBox) {
       errorBox.textContent = 'حدث خطأ أثناء حفظ البصمة: ' + (err.message || err);
       errorBox.style.display = 'block';
     }
-  } finally {
     if (loading) loading.style.display = 'none';
     if (btnCapture) btnCapture.disabled = false;
+    return false;
   }
+}
+
+async function startAuto5Sequence() {
+  if (isAutoSequenceActive) return;
+  isAutoSequenceActive = true;
+
+  resetToStep1();
+
+  const loading = document.getElementById('mgrFaceLoadingOverlay');
+  const loadingSpinner = document.getElementById('mgrFaceLoadingSpinner');
+  const loadingText = document.getElementById('mgrFaceLoadingText');
+  const countdownNum = document.getElementById('mgrFaceCountdownNum');
+
+  for (let s = 1; s <= 5; s++) {
+    if (!isAutoSequenceActive) break;
+    currentEnrollStep = s;
+    updateStepUI();
+
+    if (loading) loading.style.display = 'flex';
+    if (loadingSpinner) loadingSpinner.style.display = 'none';
+    if (countdownNum) countdownNum.style.display = 'block';
+
+    for (let c = 3; c >= 1; c--) {
+      if (!isAutoSequenceActive) break;
+      if (countdownNum) countdownNum.textContent = c;
+      if (loadingText) loadingText.textContent = `ثبّت وضع وجهك (${s}/5): ${MGR_FACE_STEPS[s-1].name}`;
+      await new Promise(r => setTimeout(r, 800));
+    }
+
+    if (!isAutoSequenceActive) break;
+    const ok = await captureCurrentStep();
+    if (!ok) {
+      isAutoSequenceActive = false;
+      break;
+    }
+    await new Promise(r => setTimeout(r, 600));
+  }
+  isAutoSequenceActive = false;
 }
 
 async function handleMgrFaceFileUpload(e) {
@@ -2442,6 +2619,7 @@ async function deleteMgrFace() {
     alert('حدث خطأ في الاتصال بالخادم.');
   }
 }
+
 
 function handleLicenseTypeChange(val) {
   const statusSel = document.getElementById('licStatusSelect');

@@ -43,21 +43,15 @@ def reset_kill_switch():
     KILL_SWITCH_REQUESTED = False
 
 
-def check_kill_switch():
-    """
-    Checks if the user-configured emergency kill switch (default: Ctrl+K) has been physically pressed.
-    Uses GetAsyncKeyState for zero-latency cross-process detection across all Windows desktops.
-    """
-    global KILL_SWITCH_REQUESTED
-    if KILL_SWITCH_REQUESTED:
-        raise WhatsAppKillSwitchTriggered("تم إيقاف الإرسال بواسطة زر الطوارئ (Kill Switch)")
-
-    try:
-        from apps.core.models import GymProfile
-        prof = GymProfile.get_solo()
-        hotkey_str = getattr(prof, "whatsapp_kill_switch", "ctrl+k") or "ctrl+k"
-    except Exception:
-        hotkey_str = "ctrl+k"
+def is_hotkey_physically_pressed(hotkey_str=None) -> bool:
+    """Checks if the user-configured emergency hotkey combination is currently physically held down right now."""
+    if not hotkey_str:
+        try:
+            from apps.core.models import GymProfile
+            prof = GymProfile.get_solo()
+            hotkey_str = getattr(prof, "whatsapp_kill_switch", "ctrl+k") or "ctrl+k"
+        except Exception:
+            hotkey_str = "ctrl+k"
 
     user32 = ctypes.windll.user32
     hotkey_str = hotkey_str.lower().strip()
@@ -84,15 +78,46 @@ def check_kill_switch():
             all_pressed = False
             break
 
-        # Check MSB of GetAsyncKeyState (key is physically pressed)
         if not (user32.GetAsyncKeyState(vk) & 0x8000):
             all_pressed = False
             break
 
-    if all_pressed:
+    return all_pressed
+
+
+def cleanup_after_kill_switch():
+    """Releases any stuck modifier keys/mouse and resets WhatsApp UI state safely."""
+    try:
+        pyautogui.mouseUp()
+    except Exception:
+        pass
+    for k in ['ctrl', 'shift', 'alt']:
+        try:
+            pyautogui.keyUp(k)
+        except Exception:
+            pass
+    try:
+        pyautogui.press('esc')
+        sleep(0.05)
+        pyautogui.press('esc')
+    except Exception:
+        pass
+
+
+def check_kill_switch():
+    """
+    Checks if the user-configured emergency kill switch (default: Ctrl+K) has been physically pressed.
+    Uses GetAsyncKeyState for zero-latency cross-process detection across all Windows desktops.
+    """
+    global KILL_SWITCH_REQUESTED
+    if KILL_SWITCH_REQUESTED:
+        raise WhatsAppKillSwitchTriggered("تم إيقاف الإرسال بواسطة زر الطوارئ (Kill Switch)")
+
+    if is_hotkey_physically_pressed():
         KILL_SWITCH_REQUESTED = True
-        print(f"[KillSwitch] Physical hotkey '{hotkey_str}' detected! ABORTING WhatsApp Sending immediately.")
-        raise WhatsAppKillSwitchTriggered(f"تم إيقاف الإرسال فوراً بواسطة زر الطوارئ ({hotkey_str})")
+        print("[KillSwitch] Physical hotkey detected! ABORTING WhatsApp Sending immediately.")
+        cleanup_after_kill_switch()
+        raise WhatsAppKillSwitchTriggered("تم إيقاف الإرسال فوراً بواسطة زر الطوارئ")
 
 
 def ensure_desktop_attached():
@@ -737,6 +762,10 @@ def send_message(
     Safeguarded with emergency kill switch (default: Ctrl+K) and active sending state.
     """
     global IS_WHATSAPP_SENDING
+    # If starting a new message send, and kill switch keys are not physically pressed right now, reset flag
+    if not is_hotkey_physically_pressed():
+        reset_kill_switch()
+
     IS_WHATSAPP_SENDING = True
     try:
         check_kill_switch()
@@ -753,6 +782,7 @@ def send_message(
         )
     except WhatsAppKillSwitchTriggered as exc:
         print(f"[send_message] Aborted by kill switch: {exc}")
+        cleanup_after_kill_switch()
         return False
     finally:
         IS_WHATSAPP_SENDING = False

@@ -534,11 +534,17 @@ def whatsapp_dispatch_single_api(request):
     if not msg_obj:
         return JsonResponse({"success": False, "error": "لا توجد رسالة معلقة بهذا المعرف."}, status=404)
 
+    from apps.messaging import whatsapp_sender
+    if data.get("reset_kill_switch") or data.get("is_first"):
+        whatsapp_sender.reset_kill_switch()
+
     success = dispatch_message_record(msg_obj, return_to_system=is_last)
     remaining_count = WhatsAppMessage.objects.filter(status=MessageStatus.PENDING).count()
+    aborted_by_kill_switch = getattr(whatsapp_sender, "KILL_SWITCH_REQUESTED", False)
 
     return JsonResponse({
         "success": success,
+        "aborted_by_kill_switch": aborted_by_kill_switch,
         "message_id": msg_obj.id,
         "recipient_name": msg_obj.recipient_name or "عضو",
         "mobile": msg_obj.mobile,

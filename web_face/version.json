@@ -1,7 +1,7 @@
 {
-  "version": "v2.1",
-  "commit": "auto-scan-face-id",
-  "date": "2026-10-22",
-  "message": "Auto face unlock without button click, shared system camera conflict prevention, camera switcher option",
-  "updated_at": "2026-10-22 13:45:00"
+  "version": "v2.2",
+  "commit": "face-5positions-killswitch-fix",
+  "date": "2026-10-23",
+  "message": "5-position manager face enrollment, green bounding box on face recognition, WhatsApp Ctrl+K kill switch auto-reset and safe resume",
+  "updated_at": "2026-10-23 11:10:00"
 }

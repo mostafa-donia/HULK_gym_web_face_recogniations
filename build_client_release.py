@@ -354,7 +354,7 @@ else:
 # 14. Create Inno Setup Script
 print("[*] Generating Inno Setup Script (Systemize_Setup.iss)...")
 iss_content = f"""#define MyAppName "Systemize Gym OS"
-#define MyAppVersion "2.1"
+#define MyAppVersion "2.2"
 #define MyAppPublisher "Systemize Tech"
 #define MyAppURL "http://127.0.0.1:8000"
 #define SourceDir "{CLIENT_DIR}"
@@ -371,7 +371,7 @@ DefaultDirName=C:\\Systemize
 DefaultGroupName={{#MyAppName}}
 AllowNoIcons=yes
 OutputDir={os.path.join(BASE_DIR, "dist")}
-OutputBaseFilename=Systemize_Setup_v2.1
+OutputBaseFilename=Systemize_Setup_v2.2
 SetupIconFile={{#SourceDir}}\\gym_icon.ico
 Compression=lzma2/normal
 SolidCompression=yes
@@ -516,13 +516,15 @@ if os.path.exists(iscc_path):
     compile_res = subprocess.run([iscc_path, iss_path], capture_output=True, text=True)
     if compile_res.returncode == 0:
         print("  [V] INNO SETUP INSTALLER BUILT SUCCESSFULLY!")
+        v22_path = os.path.join(BASE_DIR, 'dist', 'Systemize_Setup_v2.2.exe')
         v21_path = os.path.join(BASE_DIR, 'dist', 'Systemize_Setup_v2.1.exe')
         v20_path = os.path.join(BASE_DIR, 'dist', 'Systemize_Setup_v2.0.exe')
-        if os.path.exists(v21_path):
-            shutil.copy2(v21_path, v20_path)
-            print(f"  [V] Output Files: {v21_path} & {v20_path}")
+        if os.path.exists(v22_path):
+            shutil.copy2(v22_path, v21_path)
+            shutil.copy2(v22_path, v20_path)
+            print(f"  [V] Output Files: {v22_path}, {v21_path} & {v20_path}")
         else:
-            print(f"  Output File: {v21_path}")
+            print(f"  Output File: {v22_path}")
     else:
         print("[!] Inno Setup compilation error:")
         print(compile_res.stderr or compile_res.stdout)
