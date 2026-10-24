@@ -208,21 +208,18 @@ body {
 
 .top-brand img,
 .top-brand .top-brand-logo {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1.5px solid var(--hulk-primary, #84CC16);
-  background: var(--bg-surface-elevated, #161D2C);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  background: transparent;
   flex-shrink: 0;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, filter 0.2s ease;
 }
 
 .top-brand:hover img,
 .top-brand:hover .top-brand-logo {
-  transform: scale(1.05);
-  box-shadow: 0 2px 10px rgba(132, 204, 22, 0.3);
+  transform: scale(1.08);
+  filter: drop-shadow(0 0 6px rgba(132, 204, 22, 0.4));
 }
 
 .top-brand span {

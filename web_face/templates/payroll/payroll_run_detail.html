@@ -138,9 +138,9 @@
                     <a href="{% url 'payroll:payroll_statement' item.id %}" target="_blank" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.76rem;">
                       طباعة
                     </a>
-                    <a href="{% url 'payroll:payroll_send_whatsapp' item.id %}" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 0.76rem;" onclick="return confirm('إرسال كشف الراتب للكابتن عبر الواتساب؟')">
-                      واتساب
-                    </a>
+                    <button type="button" onclick="openSalaryWhatsAppModal({{ item.id }})" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 0.76rem; cursor: pointer;" title="معاينة وتعديل وإرسال كشف الراتب">
+                      واتساب 💬
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -203,4 +203,90 @@
   </div>
 
 </div>
+
+<!-- Modal: Preview & Edit WhatsApp Salary Message -->
+<div id="salaryWhatsAppModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10000; justify-content: center; align-items: center; padding: 18px;">
+  <div style="background: #0d1b2a; border: 1px solid #1e3a52; border-radius: 18px; width: 100%; max-width: 620px; max-height: 90vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); position: relative;" onclick="event.stopPropagation();">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #1e3a52; padding-bottom: 12px;">
+      <h3 style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+        <span>💬</span> مراجعة وتعديل رسالة كشف الراتب قبل الإرسال
+      </h3>
+      <button type="button" onclick="closeSalaryWhatsAppModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+
+    <form id="salaryWhatsAppForm" method="post" action="">
+      {% csrf_token %}
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">الموظف / الكابتن</label>
+            <input type="text" id="sw_employee_name" readonly style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 8px 12px; color: #fff; font-weight: 700; font-size: 0.9rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">رقم هاتف الواتساب</label>
+            <input type="text" name="phone" id="sw_employee_phone" required style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 8px 12px; color: #22c55e; font-family: monospace; font-weight: 800; font-size: 0.95rem;">
+          </div>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">
+            نص الرسالة التشجيعية (قابل للتعديل والإضافة بحرية):
+          </label>
+          <textarea name="message" id="sw_message_text" rows="7" required style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 12px; color: var(--text-main); font-size: 0.88rem; line-height: 1.5; resize: vertical; font-family: inherit;"></textarea>
+        </div>
+
+        <!-- Visual Slip Preview -->
+        <div>
+          <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">
+            📄 صورة كشف الراتب الرسمية المرفقة تلقائياً:
+          </label>
+          <div style="background: #050d15; border: 1px solid #1e3a52; border-radius: 10px; padding: 10px; text-align: center;">
+            <img id="sw_slip_img" src="" alt="كشف الراتب" style="max-height: 200px; width: auto; max-width: 100%; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button type="submit" style="flex: 1; background: #22c55e; color: #041407; font-weight: 800; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.95rem; box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);">
+            🚀 تأكيد وإضافة لطابور الواتساب
+          </button>
+          <button type="button" onclick="closeSalaryWhatsAppModal()" style="padding: 12px 20px; background: #1e293b; color: var(--text-secondary); border: 1px solid #334155; border-radius: 8px; font-weight: 700; cursor: pointer;">
+            إلغاء
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openSalaryWhatsAppModal(itemId) {
+  fetch('/payroll/statement/' + itemId + '/preview-api/')
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success) {
+        alert(data.message || 'تعذر تحميل بيانات الراتب');
+        return;
+      }
+      document.getElementById('sw_employee_name').value = data.employee_name;
+      document.getElementById('sw_employee_phone').value = data.phone || '';
+      document.getElementById('sw_message_text').value = data.message;
+      const img = document.getElementById('sw_slip_img');
+      if (data.image_url) {
+        img.src = data.image_url + '?t=' + Date.now();
+        img.style.display = 'inline-block';
+      } else {
+        img.style.display = 'none';
+      }
+      document.getElementById('salaryWhatsAppForm').action = '/payroll/statement/' + itemId + '/send-whatsapp/';
+      document.getElementById('salaryWhatsAppModal').style.display = 'flex';
+    })
+    .catch(err => {
+      alert('خطأ في الاتصال: ' + err.message);
+    });
+}
+
+function closeSalaryWhatsAppModal() {
+  document.getElementById('salaryWhatsAppModal').style.display = 'none';
+}
+</script>
 {% endblock %}

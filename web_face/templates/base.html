@@ -340,11 +340,11 @@
       <div style="display: flex; align-items: center; gap: 8px;">
         <a href="{% url 'core:dashboard' %}" class="top-brand">
           {% if gym_profile.logo %}
-            <img src="{{ gym_profile.logo.url }}" alt="Logo" class="top-brand-logo">
+            <img src="{{ gym_profile.logo.url }}" alt="Logo" class="top-brand-logo" onerror="this.src='{% static 'images/systemize_logo.png' %}'">
           {% else %}
-            <img src="{% static 'images/logo.png' %}" alt="Logo" class="top-brand-logo" onerror="this.style.display='none'">
+            <img src="{% static 'images/systemize_logo.png' %}" alt="Logo" class="top-brand-logo">
           {% endif %}
-          <span>{{ gym_profile.gym_name|default:"الصالة الرياضية" }}</span>
+          <span>{{ gym_profile.gym_name|default:"Systemize Gym" }}</span>
         </a>
 
         <!-- Universal Navigation Back Button (shown on inner pages) -->
@@ -561,30 +561,26 @@
     {% block content %}{% endblock %}
 
     <!-- Global Systemize Bottom Footer -->
-    <footer class="systemize-global-footer" style="margin-top: auto; padding: 8px 0 4px 0; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 12px; font-size: 0.74rem; color: #94a3b8;">
-      <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
-        <span style="font-weight: 800; color: #cbd5e1; display: flex; align-items: center; gap: 5px;">
-          <span style="width: 6px; height: 6px; border-radius: 50%; background: var(--hulk-primary, #E11D48); display: inline-block; box-shadow: 0 0 5px var(--hulk-primary, #E11D48);"></span>
-          Systemize OS
+    <footer class="systemize-global-footer" style="margin-top: auto; padding: 10px 16px 8px 16px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 0.76rem; color: #94a3b8;">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <img src="{% static 'images/systemize_logo.png' %}" alt="Systemize" style="height: 22px; width: auto; object-fit: contain;">
+        <span style="font-weight: 800; color: #e2e8f0; display: flex; align-items: center; gap: 5px;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: #84cc16; display: inline-block; box-shadow: 0 0 6px #84cc16;"></span>
+          Systemize Gym OS
         </span>
-        <span style="color: #64748b;">|</span>
-        <span>نظام إدارة الصالات الرياضية الذكي</span>
+        <span style="color: #475569;">|</span>
+        <span>المنظومة السحابية المتكاملة لإدارة الصالات والنوادي الرياضية</span>
         {% if license_info.machine_id %}
-        <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 0.70rem; color: #94a3b8;" title="كود ترخيص هذا الجهاز (HWID)">
+        <span style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 1px 7px; border-radius: 4px; font-family: monospace; font-size: 0.70rem; color: #64748b;" title="كود ترخيص هذا الجهاز (HWID)">
           HWID: {{ license_info.machine_id }}
         </span>
         {% endif %}
       </div>
 
-      <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
-        <button type="button" onclick="openTechSupportModal()" style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.35); color: #4ade80; padding: 3px 10px; border-radius: 14px; font-weight: 800; font-size: 0.72rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
-          <span>🛠️ الدعم الفني</span>
-          <span style="font-family: monospace; font-weight: 900; color: #fff;">01080922432</span>
-        </button>
-        <a href="https://wa.me/201080922432?text=مرحباً، أود التواصل المباشر مع الدعم الفني ومطور نظام Systemize" target="_blank" style="background: #25D366; color: #000; padding: 3px 10px; border-radius: 14px; font-weight: 900; font-size: 0.72rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-          <span>واتساب المطور</span>
-          <span>💬</span>
-        </a>
+      <div style="display: flex; align-items: center; gap: 10px; font-size: 0.74rem; color: #64748b;">
+        <span>جميع الحقوق محفوظة © {% now "Y" %} Systemize Tech</span>
+        <span>•</span>
+        <span style="color: #84cc16; font-weight: 700;">v2.4</span>
       </div>
     </footer>
   </main>

@@ -246,6 +246,20 @@ MASTER_MESSAGE_BANK: Dict[str, List[str]] = {
     ],
 
     # -------------------------------------------------------------------------
+    # 4.5. WELCOME NEW MEMBER (25 distinct Egyptian Arabic variations for first-time members)
+    # -------------------------------------------------------------------------
+    "welcome": [
+        "أهلاً وسهلاً بك كابتن {name} في عائلة {gym_name}! 🎉\nنورتنا وشرفتنا بانضمامك لينا.. كود عضويتك الرسمي هو: {member_id} 🪪\nالباقة المسجلة: {plan_name}\nالمدفوع: {amount} {currency}\n{remaining_text}\nكل كباتن وإدارة الصالة في خدمتك وخطوة بخطوة معاك لحد ما توصل لأقوى فورمة وهدفك الرياضي! 💪🏋️‍♂️\nمرفق لسيادتكم الفاتورة الإلكترونية الرسمية 📄",
+        "مبروك انضمامك يا بطل {name} لأسرة {gym_name}! 🥇\nدي أول وأهم خطوة في مشوار لياقتك وصحتك البدنية.. كود عضويتك: {member_id}\nنوع الباقة: {plan_name}\nقيمة الاشتراك: {amount} {currency}\n{remaining_text}\nتمرينتك الأولى في انتظارك والكباتن في ضهرك دايماً.. عاش مقدماً يا وحش! 🔥🚀\nمرفق الفاتورة الرسمية 📄",
+        "يا كابتن {name} نورت {gym_name} من أول يوم! 🌟\nسعداء جداً بتسجيل عضويتك الجديدة معانا.. رقم عضويتك: {member_id}\nالباقة: {plan_name}\nسداد دفعة: {amount} {currency}\n{remaining_text}\nبوابتك جاهزة تفتحلك بالوجه أو الكود.. نتمنى لك تجربة رياضية ممتازة ومليانة طاقة إيجابية! ⚡💪",
+        "أهلاً بيك يا {name} في عالم الفورمة والقوة في {gym_name}! 🏋️‍♂️\nتم تفعيل اشتراكك بنجاح.. كود العضوية: {member_id}\nتفاصيل الباقة: {plan_name}\nالمبلغ: {amount} {currency}\n{remaining_text}\nجاهز تبدأ تكسر أرقامك؟ الاستقبال والمدربين جاهزين لمساعدتك في أي وقت! 🎯💥",
+        "منورنا ومشرفنا يا كابتن {name}! أسرة {gym_name} بترحب بيك كعضو جديد في أبطالنا 🏆\nكودك الخاص لدخول الصالة: {member_id}\nالباقة المشترك بها: {plan_name}\nالمدفوع: {amount} {currency}\n{remaining_text}\nخلي العزيمة حديد ومن أول تمرينة هتحس بالفرق.. مرحباً بك دائماً! 💪✨",
+        "تحياتنا يا بطل {name} ومرحباً بك في {gym_name}! 👋\nيسعدنا انضمامك إلى مجتمعنا الرياضي.. كود العضوية: {member_id}\nالباقة: {plan_name} | المدفوع: {amount} {currency}\n{remaining_text}\nنعدك ببيئة تدريبية احترافية وأجهزة حديثة تدعم كل أهدافك الرياضية 🚀🏋️",
+        "عاش يا كابتن {name}! البداية هي سر كل نجاح ويسعدنا إن بدايتك تكون في {gym_name} 🦾\nتم قيد عضويتك بكود: {member_id}\nالباقة: {plan_name}\nسداد: {amount} {currency}\n{remaining_text}\nشرفنا في أقرب وقت وخد أول تمرينة بروح الأبطال.. مستنيينك! 🔥🤝",
+        "أهلاً وسهلاً كابتن {name}، خطوتك الأولى تمت بنجاح في {gym_name}! 🎉\nكود العضوية الخاص بك: {member_id}\nالاشتراك: {plan_name} ({amount} {currency})\n{remaining_text}\nفريق عمل ومدربي الصالة فخورين بوجودك وجاهزين لدعمك في كل تمرين 💯💪"
+    ],
+
+    # -------------------------------------------------------------------------
     # 5. GENERAL / WELCOME / MOTIVATION (50 distinct Egyptian Arabic variations)
     # -------------------------------------------------------------------------
     "general": [
@@ -397,6 +411,7 @@ def format_template_safely(template_str: str, context: dict) -> str:
         "{invoice_no}": str(context.get("invoice_no") or ""),
         "{plan}": str(context.get("plan") or context.get("plan_name") or "الاشتراك"),
         "{plan_name}": str(context.get("plan_name") or context.get("plan") or "الاشتراك"),
+        "{member_id}": str(context.get("member_id") or ""),
         "{days_left}": str(context.get("days_left") or "0"),
         "{phone}": str(context.get("phone") or ""),
     }

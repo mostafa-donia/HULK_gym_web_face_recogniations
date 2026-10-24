@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.db import transaction
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1020,19 +1021,58 @@ def payroll_statement_view(request, item_id):
 @login_required
 @manager_required
 def payroll_send_whatsapp_view(request, item_id):
-    """Queues approved individual salary statement to WhatsApp with image slip."""
+    """Queues approved individual salary statement to WhatsApp with image slip, supporting custom message."""
     item = get_object_or_404(PayrollItem.objects.select_related("payroll_run", "employee"), id=item_id)
     if not item.employee or not item.employee.phone:
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "message": f"لا يوجد رقم هاتف مسجل للموظف {item.employee_name_snapshot}."})
         messages.error(request, f"لا يوجد رقم هاتف مسجل للموظف {item.employee_name_snapshot}.")
         return redirect("payroll:payroll_run_detail", period=item.payroll_run.period)
 
     from apps.payroll.services import queue_payroll_item_whatsapp
-    msg_obj = queue_payroll_item_whatsapp(item)
+
+    custom_msg = None
+    if request.method == "POST":
+        custom_msg = request.POST.get("message", "").strip() or None
+        phone_override = request.POST.get("phone", "").strip()
+        if phone_override and phone_override != item.employee.phone:
+            item.employee.phone = phone_override
+            item.employee.save(update_fields=["phone"])
+
+    msg_obj = queue_payroll_item_whatsapp(item, custom_message=custom_msg)
     if msg_obj:
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": True, "message": f"تمت إضافة كشف الراتب للموظف {item.employee_name_snapshot} لطابور رسائل الواتساب بنجاح!"})
         messages.success(request, f"تمت إضافة كشف الراتب المصور للموظف/الكابتن {item.employee_name_snapshot} لطابور رسائل الواتساب المعلقة بنجاح!")
     else:
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "message": f"تعذر إنشاء رسالة كشف الراتب للموظف {item.employee_name_snapshot}."})
         messages.error(request, f"تعذر إنشاء رسالة كشف الراتب للموظف {item.employee_name_snapshot}.")
-    return redirect("payroll:payroll_run_detail", period=item.payroll_run.period)
+
+    return redirect(request.META.get("HTTP_REFERER", f"/payroll/runs/{item.payroll_run.period}/"))
+
+
+@login_required
+@manager_required
+def payroll_preview_salary_api(request, item_id):
+    """Returns JSON payload with default cheerful message and rendered slip image path for live modal preview."""
+    item = get_object_or_404(PayrollItem.objects.select_related("payroll_run", "employee"), id=item_id)
+    from apps.payroll.services import get_default_salary_message, generate_salary_slip_image
+    
+    img_rel = generate_salary_slip_image(item)
+    img_url = f"/media/{img_rel}" if img_rel else ""
+    default_text = get_default_salary_message(item)
+
+    return JsonResponse({
+        "success": True,
+        "item_id": item.id,
+        "employee_name": item.employee_name_snapshot,
+        "phone": item.employee.phone if item.employee else "",
+        "net_payable": str(item.net_payable),
+        "period": item.payroll_run.period if item.payroll_run else "",
+        "message": default_text,
+        "image_url": img_url,
+    })
 
 
 @login_required

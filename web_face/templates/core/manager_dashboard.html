@@ -404,24 +404,49 @@
       </div>
     </div>
 
-    <!-- AI Advice Cards Grid -->
+    <!-- Quick Advice Cards Grid -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
       {% for insight in smart_insights %}
-      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; transition: transform 0.2s, border-color 0.2s;">
-        <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span style="background: rgba(255, 255, 255, 0.06); color: {{ insight.color|default:'#84cc16' }}; border: 1px solid rgba(255, 255, 255, 0.12); padding: 3px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+      <div class="smart-advice-card" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-right: 4px solid {{ insight.color|default:'#84cc16' }}; border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); transition: all 0.2s ease;">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- Top Tag & Impact Pill -->
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span style="background: rgba(255, 255, 255, 0.06); color: {{ insight.color|default:'#84cc16' }}; border: 1px solid rgba(255, 255, 255, 0.12); padding: 4px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
               <span>{{ insight.icon|default:'💡' }}</span>
               <span>{{ insight.badge|default:insight.title }}</span>
             </span>
-            <span style="font-size: 0.74rem; color: var(--text-muted); font-weight: 700;">توجيه تنفيذي</span>
+            {% if insight.impact_pill %}
+            <span style="background: rgba(132, 204, 22, 0.1); color: {{ insight.color|default:'#84cc16' }}; border: 1px solid rgba(255, 255, 255, 0.08); padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800;">
+              {{ insight.impact_pill }}
+            </span>
+            {% endif %}
           </div>
-          <h4 style="margin: 0 0 6px 0; color: var(--text-main); font-size: 0.98rem; font-weight: 800; line-height: 1.45;">
+
+          <!-- Headline -->
+          <h4 style="margin: 0; color: var(--text-main); font-size: 0.98rem; font-weight: 800; line-height: 1.45;">
             {{ insight.title }}
           </h4>
-          <p style="margin: 0; color: var(--text-muted); font-size: 0.86rem; line-height: 1.6;">
-            {{ insight.text }}
-          </p>
+
+          <!-- Concise Quick Advice (No long talking) -->
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 10px; padding: 10px 14px; display: flex; align-items: flex-start; gap: 8px;">
+            <span style="font-size: 1.05rem; line-height: 1;">⚡</span>
+            <div style="font-size: 0.86rem; color: var(--text-main); line-height: 1.55; font-weight: 600;">
+              <strong style="color: {{ insight.color|default:'#84cc16' }};">توجيه ذكي:</strong> {{ insight.quick_advice|default:insight.text }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Actions: Open Calculation Window & Quick Action -->
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--border-color); flex-wrap: wrap; margin-top: 4px; padding-top: 10px;">
+          <button type="button" class="btn btn-sm" onclick="openSmartCalcModal('{{ insight.id }}')" style="background: rgba(132, 204, 22, 0.12); color: #84cc16; border: 1px solid rgba(132, 204, 22, 0.35); font-weight: 800; font-size: 0.8rem; padding: 5px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+            <span>🔍 كيف تم الاحتساب؟ (المعادلة والأرقام)</span>
+          </button>
+
+          {% if insight.action_url %}
+          <a href="{{ insight.action_url }}" class="btn btn-sm btn-outline-secondary" style="font-size: 0.78rem; padding: 4px 10px; border-radius: 8px;">
+            {{ insight.action_label|default:"تنفيذ" }} ←
+          </a>
+          {% endif %}
         </div>
       </div>
       {% endfor %}
@@ -1058,9 +1083,196 @@
   </div>
 </div>
 
+<!-- ==================== SMART CALCULATION & DATA DETAILS MODAL ==================== -->
+<div id="smartCalcDetailModal" class="no-print" onclick="if(event.target === this) closeSmartCalcModal()" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(8px); z-index: 10500; align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: var(--bg-card, #111827); border: 1px solid var(--border-color, rgba(255,255,255,0.15)); border-radius: 18px; max-width: 760px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.6); animation: modalFadeIn 0.25s ease;">
+    
+    <!-- Modal Header -->
+    <div style="padding: 18px 24px; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.1)); display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02);">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span id="modalCalcIcon" style="font-size: 1.6rem; line-height: 1;">💡</span>
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="modalCalcBadge" style="background: rgba(132, 204, 22, 0.15); color: #84cc16; border: 1px solid rgba(132, 204, 22, 0.35); padding: 2px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 800;">
+              تحليل ذكاء الجيم
+            </span>
+            <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700;">شفافية الحساب والأرقام</span>
+          </div>
+          <h3 id="modalCalcTitle" style="margin: 4px 0 0 0; color: var(--text-main, #ffffff); font-size: 1.15rem; font-weight: 900;">
+            تفاصيل المعادلة الحسابية
+          </h3>
+        </div>
+      </div>
+      <button type="button" onclick="closeSmartCalcModal()" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: var(--text-muted); font-size: 1.2rem; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s;">
+        ✕
+      </button>
+    </div>
+
+    <!-- Modal Body (Scrollable) -->
+    <div style="padding: 22px 26px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;">
+      
+      <!-- Card 1: The Formula & Rule -->
+      <div style="background: var(--bg-surface-subtle, rgba(255,255,255,0.03)); border: 1px solid var(--border-color, rgba(255,255,255,0.1)); border-radius: 14px; padding: 18px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+          <span style="font-size: 1.2rem;">📐</span>
+          <h4 id="modalFormulaTitle" style="margin: 0; color: var(--text-main); font-size: 0.98rem; font-weight: 800;">
+            المعادلة الرياضية المعتمدة
+          </h4>
+        </div>
+        <div id="modalFormulaText" style="background: rgba(132, 204, 22, 0.08); border: 1px solid rgba(132, 204, 22, 0.28); color: #84cc16; padding: 14px 18px; border-radius: 10px; font-weight: 800; font-size: 1.02rem; direction: rtl; text-align: center; letter-spacing: 0.3px;">
+          المعادلة
+        </div>
+        <p id="modalFormulaDesc" style="margin: 10px 0 0 0; color: var(--text-muted); font-size: 0.84rem; line-height: 1.6;">
+          شرح المعادلة
+        </p>
+      </div>
+
+      <!-- Card 2: Live Database Inputs (Telemetry Table) -->
+      <div style="background: var(--bg-surface-subtle, rgba(255,255,255,0.03)); border: 1px solid var(--border-color, rgba(255,255,255,0.1)); border-radius: 14px; padding: 18px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span style="font-size: 1.2rem;">📊</span>
+          <h4 style="margin: 0; color: var(--text-main); font-size: 0.98rem; font-weight: 800;">
+            الأرقام والمدخلات الحية المستخرجة من السيستم الآن
+          </h4>
+        </div>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.86rem;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); text-align: right;">
+                <th style="padding: 8px 10px; font-weight: 800;">المعيار / المتغير</th>
+                <th style="padding: 8px 10px; font-weight: 800; text-align: center;">القيمة الفعلية</th>
+                <th style="padding: 8px 10px; font-weight: 800;">التفسير والشرط</th>
+              </tr>
+            </thead>
+            <tbody id="modalDataRowsBody">
+              <!-- populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Card 3: Step-by-Step Arithmetic Calculation -->
+      <div style="background: var(--bg-surface-subtle, rgba(255,255,255,0.03)); border: 1px solid var(--border-color, rgba(255,255,255,0.1)); border-radius: 14px; padding: 18px 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <span style="font-size: 1.2rem;">🔢</span>
+          <h4 style="margin: 0; color: var(--text-main); font-size: 0.98rem; font-weight: 800;">
+            خطوات الحساب الرياضية خطوة بخطوة
+          </h4>
+        </div>
+        <div id="modalCalcStepsContainer" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Card 4: Quick Action & Recommended Impact -->
+      <div id="modalAdviceBox" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.28); border-radius: 14px; padding: 16px 20px; display: flex; align-items: flex-start; gap: 12px;">
+        <span style="font-size: 1.5rem; line-height: 1;">💡</span>
+        <div>
+          <strong style="color: #38bdf8; font-size: 0.92rem; display: block; margin-bottom: 4px;">التوجيه التنفيذي المباشر:</strong>
+          <p id="modalAdviceText" style="margin: 0; color: var(--text-main); font-size: 0.88rem; line-height: 1.6; font-weight: 600;">
+            توصية
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="padding: 14px 26px; border-top: 1px solid var(--border-color, rgba(255,255,255,0.1)); display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); flex-wrap: wrap; gap: 10px;">
+      <button type="button" onclick="closeSmartCalcModal()" class="btn btn-secondary btn-sm" style="padding: 6px 16px;">
+        إغلاق النافذة
+      </button>
+      <a id="modalActionLink" href="#" class="btn btn-primary btn-sm" style="padding: 6px 20px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+        <span id="modalActionText">تنفيذ الإجراء الآن</span> ←
+      </a>
+    </div>
+
+  </div>
+</div>
+
 {% load static %}
 <script src="{% static 'js/chart.min.js' %}"></script>
 <script>
+  // Smart Insights Calculation Telemetry
+  const smartInsightsData = {{ smart_insights_json|safe }};
+
+  function openSmartCalcModal(insightId) {
+    if (!smartInsightsData || !Array.isArray(smartInsightsData)) return;
+    const item = smartInsightsData.find(x => x.id === insightId);
+    if (!item) return;
+
+    document.getElementById('modalCalcIcon').innerText = item.icon || '💡';
+    const badgeEl = document.getElementById('modalCalcBadge');
+    badgeEl.innerText = item.badge || item.title;
+    badgeEl.style.color = item.color || '#84cc16';
+    badgeEl.style.borderColor = (item.color || '#84cc16') + '55';
+    badgeEl.style.background = (item.color || '#84cc16') + '22';
+
+    document.getElementById('modalCalcTitle').innerText = item.title;
+    document.getElementById('modalFormulaTitle').innerText = item.formula_title || 'المعادلة الرياضية المعتمدة';
+    document.getElementById('modalFormulaText').innerText = item.formula_text || '—';
+    document.getElementById('modalFormulaDesc').innerText = item.formula_desc || '';
+
+    // Telemetry Data Rows
+    const tbody = document.getElementById('modalDataRowsBody');
+    tbody.innerHTML = '';
+    if (item.data_rows && item.data_rows.length > 0) {
+      item.data_rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid rgba(255,255,255,0.06)';
+        tr.innerHTML = `
+          <td style="padding: 8px 10px; font-weight: 700; color: var(--text-main);">${r.name}</td>
+          <td style="padding: 8px 10px; text-align: center;"><span style="background: rgba(255,255,255,0.08); padding: 3px 10px; border-radius: 999px; font-weight: 800; color: ${item.color || '#84cc16'};">${r.value}</span></td>
+          <td style="padding: 8px 10px; color: var(--text-muted); font-size: 0.82rem;">${r.desc || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Step-by-Step Calculation
+    const stepsCont = document.getElementById('modalCalcStepsContainer');
+    stepsCont.innerHTML = '';
+    if (item.calc_steps && item.calc_steps.length > 0) {
+      item.calc_steps.forEach(step => {
+        const div = document.createElement('div');
+        div.style.background = 'rgba(255,255,255,0.02)';
+        div.style.border = '1px solid rgba(255,255,255,0.06)';
+        div.style.borderRadius = '8px';
+        div.style.padding = '8px 14px';
+        div.style.fontSize = '0.86rem';
+        div.style.color = 'var(--text-main)';
+        div.style.lineHeight = '1.5';
+        div.innerText = step;
+        stepsCont.appendChild(div);
+      });
+    }
+
+    // Advice text
+    document.getElementById('modalAdviceText').innerText = item.quick_advice || item.text;
+
+    // Action link
+    const actionLink = document.getElementById('modalActionLink');
+    if (item.action_url) {
+      actionLink.href = item.action_url;
+      actionLink.style.display = 'inline-flex';
+      document.getElementById('modalActionText').innerText = item.action_label || 'تنفيذ الإجراء الآن';
+    } else {
+      actionLink.style.display = 'none';
+    }
+
+    document.getElementById('smartCalcDetailModal').style.display = 'flex';
+  }
+
+  function closeSmartCalcModal() {
+    const modal = document.getElementById('smartCalcDetailModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeSmartCalcModal();
+    }
+  });
   function switchMgrTab(tabKey, btnEl) {
     document.querySelectorAll('.mgr-tab-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.mgr-tab-btn').forEach(b => b.classList.remove('active'));

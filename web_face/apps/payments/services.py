@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from apps.core.models import GymProfile
 from apps.core.text_utils import reshape_arabic, get_arabic_font
 from apps.messaging.models import WhatsAppMessage, MessageType, MessageStatus
-from apps.payments.models import Payment
+from apps.payments.models import Payment, PaymentOperationType
 
 logger = logging.getLogger(__name__)
 
@@ -275,11 +275,17 @@ def queue_payment_receipt_whatsapp(payment: Payment, subscription=None) -> Optio
 
     remaining_info = f"المتبقي دين: {member.current_remaining} {profile.currency}" if member.current_remaining > 0 else "الحساب: خالص السداد بالكامل ✓"
 
+    is_new_member = (payment.operation_type == PaymentOperationType.NEW_SUBSCRIPTION) or (
+        member.subscriptions.count() <= 1 and payment.operation_type not in [PaymentOperationType.RENEWAL, PaymentOperationType.BAR_SALE, PaymentOperationType.REFUND]
+    )
+    target_msg_type = MessageType.WELCOME if is_new_member else MessageType.RECEIPT
+
     if getattr(profile, "whatsapp_randomize_templates", True):
         from apps.messaging.message_bank import get_random_message
         ctx = {
             "name": member.name,
-            "gym_name": profile.gym_name or "سينا سبا | CINA SPA",
+            "gym_name": profile.gym_name or "Systemize Gym",
+            "member_id": member.member_id,
             "amount": f"{payment.amount}",
             "amount_paid": f"{payment.amount}",
             "currency": profile.currency or "جنيه",
@@ -293,25 +299,40 @@ def queue_payment_receipt_whatsapp(payment: Payment, subscription=None) -> Optio
             "plan_name": subscription.plan_name if subscription else op_name,
             "phone": member.mobile,
         }
-        receipt_text = get_random_message("receipt", ctx)
-        if sub_info:
+        category_key = "welcome" if is_new_member else "receipt"
+        receipt_text = get_random_message(category_key, ctx)
+        if sub_info and not is_new_member:
             receipt_text += f"\n{sub_info}"
-        receipt_text += "\nمرفق الفاتورة الإلكترونية الرسمية 📄"
+        if "مرفق" not in receipt_text:
+            receipt_text += "\nمرفق الفاتورة الإلكترونية الرسمية 📄"
     else:
-        receipt_text = (
-            f"إيصال مالي رسمي من {profile.gym_name}\n"
-            f"أهلاً كابتن {member.name} 👋\n"
-            f"نوع العملية: {op_name}\n"
-            f"رقم الفاتورة: {payment.invoice_no}\n"
-            f"المبلغ المدفوع: {payment.amount} {profile.currency}\n"
-            f"{remaining_info}"
-            f"{sub_info}\n"
-            f"مرفق الفاتورة الإلكترونية الرسمية 📄\n"
-            f"شكراً لاختيارك {profile.gym_name} 💪"
-        )
+        if is_new_member:
+            receipt_text = (
+                f"🎉 مرحباً بك كابتن {member.name} في عائلة {profile.gym_name}!\n"
+                f"نورتنا وشرفتنا بانضمامك كعضو جديد معنا 💪\n"
+                f"كود العضوية الخاص بك: {member.member_id} 🪪\n"
+                f"الباقة المسجلة: {subscription.plan_name if subscription else op_name}\n"
+                f"المبلغ المسدد: {payment.amount} {profile.currency}\n"
+                f"{remaining_info}\n"
+                f"{sub_info}\n"
+                f"مرفق الفاتورة الإلكترونية الرسمية 📄\n"
+                f"كل كباتن وإدارة الجيم في خدمتك ومتحمسين لرحلتك الرياضية معنا! 🚀"
+            )
+        else:
+            receipt_text = (
+                f"إيصال مالي رسمي من {profile.gym_name}\n"
+                f"أهلاً كابتن {member.name} 👋\n"
+                f"نوع العملية: {op_name}\n"
+                f"رقم الفاتورة: {payment.invoice_no}\n"
+                f"المبلغ المدفوع: {payment.amount} {profile.currency}\n"
+                f"{remaining_info}"
+                f"{sub_info}\n"
+                f"مرفق الفاتورة الإلكترونية الرسمية 📄\n"
+                f"شكراً لاختيارك {profile.gym_name} 💪"
+            )
 
     clean_invoice_no = payment.invoice_no.replace("/", "_").replace("\\", "_")
-    dedup_key = f"receipt:{member.mobile}:{clean_invoice_no}"
+    dedup_key = f"{'welcome' if is_new_member else 'receipt'}:{member.mobile}:{clean_invoice_no}"
 
     from django.utils import timezone
     from apps.messaging.services import get_first_time_send_after
@@ -324,7 +345,7 @@ def queue_payment_receipt_whatsapp(payment: Payment, subscription=None) -> Optio
         defaults={
             "mobile": member.mobile,
             "message": receipt_text,
-            "msg_type": MessageType.RECEIPT,
+            "msg_type": target_msg_type,
             "recipient_name": member.name,
             "recipient_type": "member",
             "attachment": rel_invoice_path or "",

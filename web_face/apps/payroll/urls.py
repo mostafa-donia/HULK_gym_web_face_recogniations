@@ -32,5 +32,6 @@ urlpatterns = [
     path("attendance/", views.employee_attendance_list_view, name="employee_attendance"),
     path("attendance/<int:attendance_id>/toggle/", views.employee_attendance_toggle_view, name="attendance_toggle"),
     path("statement/<int:item_id>/", views.payroll_statement_view, name="payroll_statement"),
+    path("statement/<int:item_id>/preview-api/", views.payroll_preview_salary_api, name="payroll_preview_salary_api"),
     path("statement/<int:item_id>/send-whatsapp/", views.payroll_send_whatsapp_view, name="payroll_send_whatsapp"),
 ]

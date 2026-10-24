@@ -154,39 +154,49 @@ def generate_salary_slip_image(item: PayrollItem) -> Optional[str]:
         return None
 
 
-def queue_payroll_item_whatsapp(item: PayrollItem) -> Optional[WhatsAppMessage]:
-    """
-    Builds friendly salary message text, renders PNG salary statement slip image,
-    and queues a WhatsAppMessage in PENDING status.
-    """
-    if not item.employee or not item.employee.phone:
-        return None
-
+def get_default_salary_message(item: PayrollItem) -> str:
+    """Returns a warm, appreciative, transparent, and cheerful salary WhatsApp message."""
     profile = GymProfile.get_solo()
     period = item.payroll_run.period if item.payroll_run else "N/A"
     curr = profile.currency or "ج.م"
     raw_gym_name = profile.gym_name or "Systemize Gym"
 
-    rel_slip_image = generate_salary_slip_image(item)
-
     advances_line = f"• السلف المسحوبة مقدماً: -{item.advances} {curr}\n" if (item.advances and item.advances > 0) else ""
+    comm_line = f"• عمولات التدريب الخاص (Private): +{item.commissions} {curr}\n" if (item.commissions and item.commissions > 0) else ""
+    bonus_line = f"• المكافآت والحوافز المعتمدة: +{item.bonuses} {curr}\n" if (item.bonuses and item.bonuses > 0) else ""
+    ded_line = f"• الخصومات والجزاءات: -{item.deductions} {curr}\n" if (item.deductions and item.deductions > 0) else ""
 
-    msg_text = (
-        f"السلام عليكم ورحمة الله وبركاته كابتن/أستاذ {item.employee_name_snapshot} 🌟\n\n"
-        f"تقديراً لجهودكم المتميزة وعطائكم المستمر في {raw_gym_name}،\n"
-        f"يسعدنا إبلاغكم بأنه تم اعتماد وإصدار مسير رواتب شهر {period} 💼\n\n"
-        f"📊 تفاصيل ومفردات الراتب:\n"
+    return (
+        f"ألف مبروك وبالتوفيق والبركة كابتن {item.employee_name_snapshot} 🌟👏\n\n"
+        f"خالص شكر وتقدير إدارة {raw_gym_name} على مجهودك وتفانيك الرائع طوال الشهر! 💪\n"
+        f"يسعدنا إبلاغك بصدور واعتماد كشف راتبك لشهر {period} 💼✨\n\n"
+        f"📋 مفردات الراتب المعتمد:\n"
         f"• الراتب الأساسي الثابت: {item.fixed_salary} {curr}\n"
-        f"• عمولات التدريب الخاص (Private): +{item.commissions} {curr}\n"
-        f"• المكافآت والحوافز المعتمدة: +{item.bonuses} {curr}\n"
-        f"• الخصومات والجزاءات: -{item.deductions} {curr}\n"
+        f"{comm_line}"
+        f"{bonus_line}"
+        f"{ded_line}"
         f"{advances_line}"
         f"━━━━━━━━━━━━━━━━━━\n"
-        f"💰 صافي الراتب المستحق للصرف: {item.net_payable} {curr}\n"
+        f"💵 صافي المستحق للاستلام: {item.net_payable} {curr}\n"
         f"━━━━━━━━━━━━━━━━━━\n\n"
         f"📄 مرفق لسيادتكم صورة كشف الراتب الرسمي المعتمد.\n"
-        f"نتمنى لك دوام التوفيق والتميز، وشكراً لكونك جزءاً أساسياً من عائلة {raw_gym_name}! 💪✨"
+        f"عاش يا بطل، فخورين بوجودك معانا في الفريق ومكملين لنجاحات أكبر سوا إن شاء الله! 🔥🚀"
     )
+
+
+def queue_payroll_item_whatsapp(item: PayrollItem, custom_message: Optional[str] = None) -> Optional[WhatsAppMessage]:
+    """
+    Builds friendly salary message text (or uses custom edited text), renders PNG salary statement slip image,
+    and queues a WhatsAppMessage in PENDING status.
+    """
+    if not item.employee or not item.employee.phone:
+        return None
+
+    period = item.payroll_run.period if item.payroll_run else "N/A"
+
+    rel_slip_image = generate_salary_slip_image(item)
+
+    msg_text = custom_message.strip() if custom_message else get_default_salary_message(item)
 
     dedup_key = f"salary:{item.employee.phone}:{period}"
     defaults = {

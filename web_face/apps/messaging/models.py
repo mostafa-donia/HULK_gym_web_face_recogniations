@@ -10,6 +10,7 @@ class MessageStatus(models.TextChoices):
 
 class MessageType(models.TextChoices):
     RECEIPT = "receipt", "إيصال سداد"
+    WELCOME = "welcome", "ترحيب بعضو جديد"
     REMINDER_3 = "reminder_3", "تنبيه قبل 3 أيام"
     REMINDER_1 = "reminder_1", "تنبيه قبل يوم واحد"
     EXPIRED = "expired", "تنبيه انتهاء الاشتراك"

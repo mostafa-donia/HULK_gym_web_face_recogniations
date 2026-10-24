@@ -467,13 +467,13 @@ class ComprehensivePayrollAndSystemTests(TestCase):
         # Unlock with valid password
         resp_unlocked = self.client.post(reverse("core:manager_dashboard"), {"manager_unlock_password": "1234"}, follow=True)
         self.assertEqual(resp_unlocked.status_code, 200)
-        self.assertContains(resp_unlocked, "إيرادات الشهر")
+        self.assertContains(resp_unlocked, "صافي الخزينة")
 
         # Now test Trainers Page Password Challenge
         # 1. Unlocked is False initially -> shows unlock template
         resp_trainers = self.client.get(reverse("payroll:trainers_index"))
         self.assertEqual(resp_trainers.status_code, 200)
-        self.assertContains(resp_trainers, "صفحة إدارة المدربين محمية")
+        self.assertContains(resp_trainers, "صفحة إدارة وعمولات المدربين محمية")
 
         # 2. Submit wrong password -> stays locked
         resp_wrong = self.client.post(reverse("payroll:trainers_index"), {"password": "wrongpassword"})
@@ -483,7 +483,7 @@ class ComprehensivePayrollAndSystemTests(TestCase):
         # 3. Submit correct password -> unlocks and redirects to trainers_index
         resp_correct = self.client.post(reverse("payroll:trainers_index"), {"password": "1234"}, follow=True)
         self.assertEqual(resp_correct.status_code, 200)
-        self.assertContains(resp_correct, "إدارة المدربين وعمولات الكباتن")
+        self.assertContains(resp_correct, "إدارة الموظفين والمدربين")
         self.assertContains(resp_correct, "كابتن سامح")
 
         # 4. Lock page -> session cleared
@@ -493,7 +493,7 @@ class ComprehensivePayrollAndSystemTests(TestCase):
         # 5. Accessing trainers_index again requires password
         resp_locked_again = self.client.get(reverse("payroll:trainers_index"))
         self.assertEqual(resp_locked_again.status_code, 200)
-        self.assertContains(resp_locked_again, "صفحة إدارة المدربين محمية")
+        self.assertContains(resp_locked_again, "صفحة إدارة وعمولات المدربين محمية")
 
     def test_smart_operations_suite(self):
         """
@@ -768,7 +768,7 @@ class ComprehensivePayrollAndSystemTests(TestCase):
         # --- 2. Coach Detail View & Trainers Auto-Lock ---
         resp_coach = self.client.get(reverse("payroll:coach_detail", kwargs={"employee_id": self.trainer_1.id}))
         self.assertEqual(resp_coach.status_code, 200)
-        self.assertContains(resp_coach, "صفحة إدارة المدربين محمية")
+        self.assertContains(resp_coach, "صفحة إدارة وعمولات المدربين محمية")
 
         # Unlock Trainers
         resp_coach_unlock = self.client.post(
@@ -791,7 +791,7 @@ class ComprehensivePayrollAndSystemTests(TestCase):
         # Accessing coach detail again requires password
         resp_coach_relocked = self.client.get(reverse("payroll:coach_detail", kwargs={"employee_id": self.trainer_1.id}))
         self.assertEqual(resp_coach_relocked.status_code, 200)
-        self.assertContains(resp_coach_relocked, "صفحة إدارة المدربين محمية")
+        self.assertContains(resp_coach_relocked, "صفحة إدارة وعمولات المدربين محمية")
 
         # --- 3. Mandatory Trainer Selection for Private Training ---
         # A) Member Create with private enabled but NO trainer -> should fail

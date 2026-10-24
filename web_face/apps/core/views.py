@@ -795,107 +795,316 @@ def manager_dashboard_view(request):
     # Advice 1: Member Movement & Inactivity Drop-off (حركة وغياب الأعضاء)
     if inactive_7d_count > 0:
         smart_insights.append({
+            "id": "inactivity",
             "type": "movement",
             "badge": "تنبيه انقطاع وغياب الأعضاء",
             "icon": "🏃‍♂️",
             "color": "#f59e0b",
             "title": f"رصد {inactive_7d_count} مشترك نشط لم يحضروا للتمرين منذ 7 أيام ({inactive_7d_pct}%)",
-            "text": (
-                f"يوجد {inactive_7d_count} مشترك عضويتهم سارية لكنهم لم يسجلوا أي دخول للصالة خلال آخر أسبوع. "
-                f"إحصائياً، انقطاع اللاعب عن الصالة لأكثر من 7 أيام هو المؤشر الأكبر لعدم التجديد مستقبلاً (خطر التسرب Churn). "
-                f"التوصية الذكية: توجيه كابتن الصالة أو الاستقبال لمراسلتهم برسالة تشجيعية عبر الواتساب للاطمئنان عليهم وتحفيزهم للعودة."
-            ),
+            "quick_advice": "أرسل رسالة تحفيزية للاطمئنان عليهم عبر الواتساب لمنع تسربهم وتثبيت تجديدهم.",
+            "impact_pill": f"⚡ خطر تسرب: {inactive_7d_pct}% من الأعضاء",
+            "formula_title": "معادلة رصد مؤشر خطر الانقطاع والتسرب (Churn Inactivity Rate)",
+            "formula_text": "معدل الانقطاع = (الأعضاء النشطون المنقطعون 7+ أيام ÷ إجمالي المشتركين النشطين) × 100",
+            "formula_desc": "يقيس نسبة المشتركين الذين يمتلكون عضويات سارية ولكنهم انقطعوا عن الحضور تماماً لأكثر من 7 أيام متتالية، وهو أكبر مؤشر لفقدان التجديد.",
+            "data_rows": [
+                {"name": "إجمالي المشتركين النشطين (Active Members)", "value": f"{active_count_total} مشترك", "desc": "عضوياتهم سارية حتى اليوم أو بعده"},
+                {"name": "مشتركون حضروا خلال آخر 7 أيام", "value": f"{len(recent_checkin_member_ids)} متدرب", "desc": "سجلوا حركة دخول بصمة واحدة على الأقل"},
+                {"name": "مشتركون منقطعون (لم يحضروا 7+ أيام)", "value": f"{inactive_7d_count} مشترك", "desc": "أعضاء نشطون لم يسجلوا أي دخول"},
+            ],
+            "calc_steps": [
+                f"1. استخراج إجمالي الأعضاء ساريي الاشتراك: {active_count_total} مشترك.",
+                f"2. استعلام حركات الدخول المسجلة خلال الـ 7 أيام الأخيرة (من {seven_days_ago} حتى {today}).",
+                f"3. استبعاد الحاضرين ({len(recent_checkin_member_ids)}) لينتج {inactive_7d_count} مشترك منقطع.",
+                f"4. حساب النسبة المئوية: ({inactive_7d_count} ÷ {max(1, active_count_total)}) × 100 = {inactive_7d_pct}%.",
+                f"5. التقييم الذكي: نسبة الغياب الحالية {'حرجة وتتطلب تدخلاً عاجلاً' if inactive_7d_pct > 15 else 'ضمن الحدود المتوسطة وتستوجب المتابعة'}.",
+            ],
+            "action_url": "/whatsapp/",
+            "action_label": "مراسلة الأعضاء المنقطعين عبر واتساب",
+            "text": "أرسل رسالة تحفيزية للاطمئنان عليهم عبر الواتساب لمنع تسربهم وتثبيت تجديدهم.",
         })
     else:
         smart_insights.append({
+            "id": "inactivity",
             "type": "movement",
             "badge": "حركة أعضاء ممتازة",
             "icon": "🔥",
             "color": "#84cc16",
             "title": "معدل الحضور والتزام الأعضاء مرتفع جداً",
+            "quick_advice": "كافة الأعضاء النشطين يترددون بانتظام على الصالة هذا الأسبوع، ومؤشر الالتزام مثالي.",
+            "impact_pill": "⚡ نسبة الالتزام: 100%",
+            "formula_title": "معادلة رصد مؤشر الالتزام بالحضور (Attendance Adherence)",
+            "formula_text": "نسبة الالتزام = (المشتركون الحاضرون ÷ إجمالي المشتركين النشطين) × 100",
+            "formula_desc": "يقيس مدى تردد الأعضاء ساريي الاشتراك على التمارين خلال الأسبوع الجاري.",
+            "data_rows": [
+                {"name": "إجمالي المشتركين النشطين", "value": f"{active_count_total} مشترك", "desc": "عضويات سارية"},
+                {"name": "المنقطعون عن التمرين", "value": "0 مشترك", "desc": "لا يوجد أي عضو غائب أكثر من 7 أيام"},
+            ],
+            "calc_steps": [
+                f"1. إجمالي الأعضاء النشطين = {active_count_total} مشترك.",
+                "2. لم يُرصد أي انقطاع يفوق 7 أيام.",
+                "3. مؤشر الالتزام = 100%.",
+            ],
+            "action_url": "/members/checkins/",
+            "action_label": "سجل الحضور اليومي",
             "text": "كافة الأعضاء المشتركين يترددون بانتظام على الصالة هذا الأسبوع، ومؤشر الالتزام بالحضور مثالي.",
         })
 
     # Advice 2: Net Member Flow & Growth Dynamics (صافي حركة وتدفق الأعضاء)
     if net_member_flow > 0:
         smart_insights.append({
+            "id": "flow",
             "type": "flow",
             "badge": "صافي نمو وتدفق إيجابي",
             "icon": "📈",
             "color": "#22c55e",
             "title": f"صافي تدفق الأعضاء بالفترة إيجابي (+{net_member_flow} مشترك)",
-            "text": (
-                f"حققت الصالة توسعاً صافياً في قاعدة المشتركين: تم تسجيل {period_new_members} عضو جديد و{period_renewals} تجديد، "
-                f"في مقابل انتهاء {period_ended_count} اشتراك. الجيم يكتسب أعضاء بوتيرة أسرع من خروجهم."
-            ),
+            "quick_advice": "الجيم يكتسب أعضاء بوتيرة أسرع من خروجهم؛ واصل خطة الاستقطاب والتجديد.",
+            "impact_pill": f"⚡ صافي نمو: +{net_member_flow} مشترك",
+            "formula_title": "معادلة صافي تدفق قاعدة الأعضاء (Net Member Growth Flow)",
+            "formula_text": "صافي التدفق = (المشتركون الجدد + التجديدات) - الاشتراكات المنتهية",
+            "formula_desc": "يقيس المحصلة الصافية لتوسع أو انكماش قاعدة الأعضاء خلال الفترة المحددة.",
+            "data_rows": [
+                {"name": "المشتركون الجدد بالفترة (New Members)", "value": f"{period_new_members} عضو جديد", "desc": "انضموا وسجلوا لأول مرة"},
+                {"name": "التجديدات بالفترة (Renewals)", "value": f"{period_renewals} تجديد", "desc": "أعضاء قاموا بتجديد اشتراكاتهم"},
+                {"name": "الاشتراكات المنتهية (Ended Subs)", "value": f"{period_ended_count} اشتراك", "desc": "انتهت عضويتهم بالفترة ولم تجدد بعد"},
+            ],
+            "calc_steps": [
+                f"1. إجمالي الإضافات = {period_new_members} (جديد) + {period_renewals} (تجديد) = {period_new_members + period_renewals} مشترك.",
+                f"2. إجمالي الخروج (الانتهاء) = {period_ended_count} اشتراك.",
+                f"3. صافي التدفق = {period_new_members + period_renewals} - {period_ended_count} = +{net_member_flow} مشترك.",
+                "4. التقييم الذكي: مسار توسعي ممتاز؛ معدل الاستقطاب يغطي معدل التسرب بفائض إيجابي.",
+            ],
+            "action_url": "/members/",
+            "action_label": "إدارة قائمة الأعضاء",
+            "text": f"حققت الصالة توسعاً صافياً في قاعدة المشتركين: تم تسجيل {period_new_members} عضو جديد و{period_renewals} تجديد في مقابل انتهاء {period_ended_count}.",
         })
     elif net_member_flow < 0:
         smart_insights.append({
+            "id": "flow",
             "type": "flow",
             "badge": "تنبيه تراجع صافي التدفق",
             "icon": "📉",
             "color": "#ef4444",
             "title": f"تراجع صافي حركة الأعضاء ({net_member_flow} مشترك)",
-            "text": (
-                f"خلال هذه الفترة انتهت عضويات {period_ended_count} لاعباً بينما بلغ مجموع المشتركين الجدد والتجديدات {period_new_members + period_renewals} فقط. "
-                f"يُنصح بسرعة التواصل مع المنتهية عضوياتهم وطرح عروض تجديد فورية لسد هذا العجز."
-            ),
+            "quick_advice": "تواصل فوراً مع المنتهية اشتراكاتهم واطرح عروض تجديد سريعة لسد هذا العجز.",
+            "impact_pill": f"⚠️ عجز تدفق: {net_member_flow} مشترك",
+            "formula_title": "معادلة صافي تدفق قاعدة الأعضاء (Net Member Growth Flow)",
+            "formula_text": "صافي التدفق = (المشتركون الجدد + التجديدات) - الاشتراكات المنتهية",
+            "formula_desc": "يقيس المحصلة الصافية لتوسع أو انكماش قاعدة الأعضاء خلال الفترة المحددة.",
+            "data_rows": [
+                {"name": "المشتركون الجدد بالفترة (New Members)", "value": f"{period_new_members} عضو جديد", "desc": "انضموا وسجلوا لأول مرة"},
+                {"name": "التجديدات بالفترة (Renewals)", "value": f"{period_renewals} تجديد", "desc": "أعضاء قاموا بتجديد اشتراكاتهم"},
+                {"name": "الاشتراكات المنتهية (Ended Subs)", "value": f"{period_ended_count} اشتراك", "desc": "انتهت عضويتهم بالفترة ولم تجدد بعد"},
+            ],
+            "calc_steps": [
+                f"1. إجمالي الإضافات = {period_new_members} (جديد) + {period_renewals} (تجديد) = {period_new_members + period_renewals} مشترك.",
+                f"2. إجمالي الخروج (الانتهاء) = {period_ended_count} اشتراك.",
+                f"3. صافي التدفق = {period_new_members + period_renewals} - {period_ended_count} = {net_member_flow} مشترك.",
+                "4. التقييم الذكي: وتيرة انتهاء الاشتراكات تفوق وتيرة التجديد والاشتراكات الجديدة؛ يلزم استعادة المتسربين.",
+            ],
+            "action_url": "/members/?filter=ended",
+            "action_label": "عرض المنتهية عضوياتهم",
+            "text": f"خلال هذه الفترة انتهت عضويات {period_ended_count} لاعباً بينما بلغ مجموع الجدد والتجديدات {period_new_members + period_renewals}.",
+        })
+    else:
+        smart_insights.append({
+            "id": "flow",
+            "type": "flow",
+            "badge": "توازن حركة الأعضاء",
+            "icon": "⚖️",
+            "color": "#38bdf8",
+            "title": "توازن تام بين الإضافات والانتهاء (0 مشترك)",
+            "quick_advice": "قاعدة المشتركين مستقرة تماماً؛ ركّز على زيادة المشتركين الجدد لتحقيق نمو صافٍ.",
+            "impact_pill": "⚡ ثبات التدفق: 0 صافي",
+            "formula_title": "معادلة صافي تدفق قاعدة الأعضاء (Net Member Growth Flow)",
+            "formula_text": "صافي التدفق = (المشتركون الجدد + التجديدات) - الاشتراكات المنتهية",
+            "formula_desc": "يقيس المحصلة الصافية لتوسع أو انكماش قاعدة الأعضاء خلال الفترة المحددة.",
+            "data_rows": [
+                {"name": "المشتركون الجدد بالفترة", "value": f"{period_new_members} عضو", "desc": "تسجيل جديد"},
+                {"name": "التجديدات بالفترة", "value": f"{period_renewals} تجديد", "desc": "تجديد اشتراك"},
+                {"name": "الاشتراكات المنتهية", "value": f"{period_ended_count} اشتراك", "desc": "انتهت ولم تجدد"},
+            ],
+            "calc_steps": [
+                f"1. الإضافات ({period_new_members + period_renewals}) تساوت بدقة مع الانتهاء ({period_ended_count}).",
+                "2. صافي التغيير = 0 مشترك.",
+            ],
+            "action_url": "/members/",
+            "action_label": "إدارة الأعضاء",
+            "text": "توازن تام بين المنضمين والمنتهية عضوياتهم بالفترة.",
         })
 
     # Advice 3: Daily Floor Traffic & Attendance Rate (معدل النشاط اليومي بالصالة)
     smart_insights.append({
+        "id": "traffic",
         "type": "traffic",
         "badge": "حركة وتدفق الصالة اليومي",
         "icon": "⚡",
         "color": "#38bdf8",
-        "title": f"متوسط الحضور اليومي: {avg_daily_attendance} متدرب/يوم (معدل النشاط {attendance_rate}%)",
-        "text": (
-            f"تم تسجيل إجمالي {period_checkins} حركة دخول خلال الفترة بمعدل {avg_daily_attendance} لاعب يومياً. "
-            f"نسبة الإشغال اليومي تعادل {attendance_rate}% من الأعضاء النشطين."
-        ),
+        "title": f"متوسط الحضور: {avg_daily_attendance} لاعب/يوم (معدل النشاط {attendance_rate}%)",
+        "quick_advice": "وزّع حصص التدريب لتفادي التكدس واستثمر ساعات الهدوء الصباحية بعروض خاصة.",
+        "impact_pill": f"⚡ إجمالي الحضور: {period_checkins} تمرينة",
+        "formula_title": "معادلة معدل النشاط اليومي بالصالة (Daily Floor Utilization)",
+        "formula_text": "معدل النشاط = (متوسط الحضور اليومي ÷ إجمالي الأعضاء النشطين) × 100",
+        "formula_desc": "يقيس نسبة الأعضاء الذين يترددون على الصالة يومياً مقارنة بالقاعدة الكلية للمشتركين النشطين.",
+        "data_rows": [
+            {"name": "إجمالي حركات الدخول بالفترة (Check-ins)", "value": f"{period_checkins} حركة دخول", "desc": "سجلات البصمة خلال الفترة"},
+            {"name": "عدد أيام الفترة المحسوبة", "value": f"{period_days_count} يوم", "desc": "من تاريخ البداية حتى النهاية"},
+            {"name": "متوسط الحضور اليومي", "value": f"{avg_daily_attendance} لاعب/يوم", "desc": "إجمالي الحضور ÷ عدد الأيام"},
+            {"name": "إجمالي الأعضاء ساريي العضوية", "value": f"{active_count_total} مشترك", "desc": "قاعدة المشتركين الفعالة"},
+        ],
+        "calc_steps": [
+            f"1. متوسط الحضور اليومي = {period_checkins} حركة دخول ÷ {period_days_count} يوم = {avg_daily_attendance} لاعب/يوم.",
+            f"2. نسبة النشاط = ({avg_daily_attendance} ÷ {max(1, active_count_total)}) × 100 = {attendance_rate}%.",
+            "3. التقييم الذكي: نسبة النشاط الطبيعية للصالات تتراوح بين 25% و 40% من إجمالي المشتركين النشطين.",
+        ],
+        "action_url": "/members/checkins/",
+        "action_label": "عرض سجلات الدخول اليومي",
+        "text": f"تم تسجيل إجمالي {period_checkins} حركة دخول خلال الفترة بمعدل {avg_daily_attendance} لاعب يومياً (نشاط {attendance_rate}%).",
     })
 
-    # Advice 1: Retention & Anti-Churn
+    # Advice 4: Retention & Anti-Churn (حماية الاشتراكات ومكافحة التسرب)
     if expiring_3_days_count > 0 or expired_last_7_days > 0:
         smart_insights.append({
+            "id": "retention",
             "type": "retention",
-            "title": "حماية الاشتراكات ومكافحة تسرب الأعضاء (Retention)",
-            "text": (
-                f"يوجد {expiring_3_days_count} لاعب تنتهي عضويتهم خلال 72 ساعة، و{expired_last_7_days} لاعب انتهى اشتراكهم هذا الأسبوع ولم يجددوا بعد. "
-                f"يُنصح بإرسال تذكيرات التجديد الفورية عبر الواتساب مع عرض خصم 5% للتجديد قبل مرور 48 ساعة."
-            ),
+            "badge": "مكافحة تسرب الأعضاء (Retention)",
+            "icon": "🛡️",
+            "color": "#a855f7",
+            "title": f"حماية الاشتراكات: {expiring_3_days_count} ينتهي قريباً و{expired_last_7_days} انتهوا هذا الأسبوع",
+            "quick_advice": "أرسل تذكيرات تجديد فورية عبر الواتساب مع حافز تجديد مبكر قبل مرور 48 ساعة.",
+            "impact_pill": f"⚡ مستهدف متابعة: {expiring_3_days_count + expired_last_7_days} اشتراك",
+            "formula_title": "معادلة نافذة خطر فقدان العضويات (Renewal Risk Window)",
+            "formula_text": "إجمالي نافذة الخطر = المنتهية عضوياتهم خلال 72 ساعة + المنتهية آخر 7 أيام دون تجديد",
+            "formula_desc": "تحديد الشريحة الحرجة الأكثر قابلية للتسرب والتي تحقق أعلى عائد عند التواصل الفوري.",
+            "data_rows": [
+                {"name": "تنتهي خلال 72 ساعة (قادمة)", "value": f"{expiring_3_days_count} مشترك", "desc": "من تاريخ اليوم حتى بعد 3 أيام"},
+                {"name": "انتهت خلال آخر 7 أيام (سابقة)", "value": f"{expired_last_7_days} مشترك", "desc": "انتهت ولم يسجلوا تجديداً بعد"},
+                {"name": "إجمالي المستهدفين بحملة التجديد", "value": f"{expiring_3_days_count + expired_last_7_days} مشترك", "desc": "إجمالي الجمهور المستهدف"},
+            ],
+            "calc_steps": [
+                f"1. حصر الأعضاء الذين ينتهي اشتراكهم بين {today} و {today + timedelta(days=3)}: {expiring_3_days_count} مشترك.",
+                f"2. حصر الأعضاء الذين انتهى اشتراكهم بين {today - timedelta(days=7)} و {today} دون تجديد: {expired_last_7_days} مشترك.",
+                f"3. إجمالي نافذة المتابعة الفورية = {expiring_3_days_count + expired_last_7_days} لاعب.",
+                "4. التقييم الذكي: التواصل الاستباقي قبل انتهاء الاشتراك بيومين يرفع معدل التجديد بأكثر من 40%.",
+            ],
+            "action_url": "/whatsapp/",
+            "action_label": "إرسال تذكيرات التجديد عبر واتساب",
+            "text": f"يوجد {expiring_3_days_count} لاعب تنتهي عضويتهم خلال 72 ساعة، و{expired_last_7_days} لاعب انتهى اشتراكهم هذا الأسبوع ولم يجددوا بعد.",
         })
     else:
         smart_insights.append({
+            "id": "retention",
             "type": "retention",
-            "title": "استقرار مؤشر تجديد العضويات",
+            "badge": "استقرار العضويات",
+            "icon": "🛡️",
+            "color": "#84cc16",
+            "title": "معدل تجديد العضويات في حالة استقرار ممتازة",
+            "quick_advice": "لا توجد عضويات مهددة بالانتهاء الفوري حالياً؛ استمر في تعزيز تجربة الأعضاء.",
+            "impact_pill": "⚡ استقرار العضويات: 100%",
+            "formula_title": "معادلة نافذة خطر فقدان العضويات (Renewal Risk Window)",
+            "formula_text": "إجمالي نافذة الخطر = المنتهية عضوياتهم خلال 72 ساعة + المنتهية آخر 7 أيام",
+            "formula_desc": "تحديد الشريحة الحرجة الأكثر قابلية للتسرب.",
+            "data_rows": [
+                {"name": "تنتهي قريباً", "value": "0 مشترك", "desc": "لا توجد نهايات وشيكة"},
+                {"name": "انتهت دون تجديد", "value": "0 مشترك", "desc": "كافة المنتهين جددوا بالفعل"},
+            ],
+            "calc_steps": [
+                "1. تم فحص جميع العضويات في نافذة الـ 72 ساعة القادمة والـ 7 أيام السابقة.",
+                "2. النتيجة = 0 عضو في دائرة الخطر.",
+            ],
+            "action_url": "/members/",
+            "action_label": "عرض الأعضاء",
             "text": "لا توجد عضويات منتهية بدون تجديد حالياً، ومعدل الاحتفاظ بالأعضاء في حالة ممتازة.",
         })
 
-    # Advice 2: Debts Recovery & Liquidity
+    # Advice 5: Debts Recovery & Liquidity (تحصيل المتبقيات وتعزيز السيولة)
     if total_remaining > 0:
         smart_insights.append({
+            "id": "debt",
             "type": "debt",
-            "title": "تحصيل المتبقيات وتعزيز السيولة النقدية للخزينة",
-            "text": (
-                f"إجمالي المتبقي غير المحصل يبلغ {total_remaining} {gym_profile.currency} موزع على {debtors_count} مشترك (بمتوسط {avg_debt} {gym_profile.currency} لكل لاعب). "
-                f"يُرجى تفعيل التنبيه المالي عند دخول اللاعب عبر بصمة الوجه ومطالبة اللاعبين بسداد المتبقي لضمان استقرار التدفق النقدي."
-            ),
+            "badge": "تحصيل المتبقيات والسيولة",
+            "icon": "💰",
+            "color": "#ef4444",
+            "title": f"متبقيات مستحقة: {total_remaining} {gym_profile.currency} على {debtors_count} مشترك",
+            "quick_advice": "طالب بالسداد عند تسجيل الدخول بالبصمة لتأمين سيولة الخزينة فوراً.",
+            "impact_pill": f"⚡ متوسط الدين: {avg_debt} {gym_profile.currency}/لاعب",
+            "formula_title": "معادلة رصد المديونيات ومتوسط الدين (Debt Exposure & Average Debt)",
+            "formula_text": "متوسط متبقي العضو = إجمالي المبالغ المتبقية غير المحصلة ÷ عدد الأعضاء المدينين",
+            "formula_desc": "يقيس حجم الأموال المعلقة خارج الخزينة ومتوسط ما يدين به كل مشترك لتحديد أولوية التحصيل.",
+            "data_rows": [
+                {"name": "إجمالي المتبقي المستحق (Total Debt)", "value": f"{total_remaining} {gym_profile.currency}", "desc": "مجموع current_remaining لكافة الأعضاء"},
+                {"name": "عدد الأعضاء المدينين (Debtors Count)", "value": f"{debtors_count} مشترك", "desc": "أعضاء بذمتهم متبقي أكبر من صفر"},
+                {"name": "متوسط المديونية لكل لاعب (Avg Debt)", "value": f"{avg_debt} {gym_profile.currency}", "desc": "إجمالي المتبقي ÷ عدد المدينين"},
+            ],
+            "calc_steps": [
+                f"1. استعلام مجموع حقل current_remaining لكافة الأعضاء = {total_remaining} {gym_profile.currency}.",
+                f"2. حصر الأعضاء المدينين = {debtors_count} مشترك.",
+                f"3. متوسط المديونية = {total_remaining} ÷ {max(1, debtors_count)} = {avg_debt} {gym_profile.currency} لكل لاعب.",
+                "4. التقييم الذكي: تحصيل هذه المبالغ يضخ سيولة نقدية مباشرة دون أي تكاليف تشغيلية إضافية.",
+            ],
+            "action_url": "/members/?filter=debtors",
+            "action_label": "سجل المديونيات وتحصيل المتبقي",
+            "text": f"إجمالي المتبقي غير المحصل يبلغ {total_remaining} {gym_profile.currency} موزع على {debtors_count} مشترك.",
+        })
+    else:
+        smart_insights.append({
+            "id": "debt",
+            "type": "debt",
+            "badge": "السيولة مكتملة",
+            "icon": "💰",
+            "color": "#22c55e",
+            "title": "خزينة مثالية: لا توجد مديونيات أو متبقيات معلقة",
+            "quick_advice": "كافة الاشتراكات مسددة بالكامل بنسبة 100%، استمر في إلزام السداد الكامل.",
+            "impact_pill": "⚡ نسبة التحصيل: 100%",
+            "formula_title": "معادلة رصد المديونيات (Debt Exposure)",
+            "formula_text": "نسبة التحصيل = (المسدد ÷ الإجمالي المستحق) × 100",
+            "formula_desc": "يقيس نسبة تحصيل المبالغ المستحقة من الأعضاء.",
+            "data_rows": [
+                {"name": "إجمالي المتبقيات القائمة", "value": f"0 {gym_profile.currency}", "desc": "لا توجد أي متبقيات"},
+                {"name": "عدد الأعضاء المدينين", "value": "0 مشترك", "desc": "كافة الأعضاء سددوا بالكامل"},
+            ],
+            "calc_steps": [
+                "1. تم فحص حقل المتبقي لجميع الأعضاء.",
+                "2. المجموع = 0.00 ج.",
+                "3. نسبة التحصيل = 100%.",
+            ],
+            "action_url": "/payments/",
+            "action_label": "سجل المدفوعات",
+            "text": "تم تحصيل كافة الاشتراكات بالكامل، السيولة النقدية ممتازة.",
         })
 
-    # Advice 3: Peak Hours & Floor Capacity
+    # Advice 6: Peak Hours & Floor Capacity (أوقات الذروة واستغلال طاقة الصالة)
     if peak_hour is not None and peak_count > 0:
         peak_str = f"{peak_hour if peak_hour <= 12 else peak_hour - 12} {'صباحاً' if peak_hour < 12 else 'مساءً'}"
         smart_insights.append({
+            "id": "capacity",
             "type": "capacity",
-            "title": "توزيع أوقات الذروة واستغلال طاقة الصالة (Floor Capacity)",
-            "text": (
-                f"ذروة الإقبال المسجلة تتركز حول الساعة {peak_str} بإجمالي {peak_count} عملية دخول. "
-                f"لتخفيف الازدحام المسائي وزيادة الدخل، يُنصح بطرح اشتراك 'الفترة الصباحية المخفضة' لجذب متدربي الفترات الهادئة."
-            ),
+            "badge": "أوقات الذروة وطاقة الصالة",
+            "icon": "⏰",
+            "color": "#eab308",
+            "title": f"ذروة الإقبال: الساعة {peak_str} ({peak_count} متدرب)",
+            "quick_advice": "اطرح اشتراك 'الفترة الصباحية المخفضة' لتخفيف الازدحام المسائي وزيادة الدخل.",
+            "impact_pill": f"⚡ أعلى كثافة: {peak_count} حضور/ساعة",
+            "formula_title": "معادلة توزيع كثافة الحضور الزمني (Peak Hour Capacity)",
+            "formula_text": "ساعة الذروة = الساعة التي سجلت الحد الأقصى Max(حركات الدخول) عبر فترات اليوم",
+            "formula_desc": "تحليل أوقات تدفق المتدربين على مدار ساعات اليوم لاكتشاف فترات الاختناق والضغط على الأجهزة.",
+            "data_rows": [
+                {"name": "ساعة الذروة القصوى", "value": f"الساعة {peak_str}", "desc": "أعلى ساعة إقبال مسجلة"},
+                {"name": "حركات الدخول بساعة الذروة", "value": f"{peak_count} حركة دخول", "desc": "سجلات البصمة في هذه الساعة"},
+                {"name": "إجمالي حركات الدخول بالفترة", "value": f"{period_checkins} حركة", "desc": "مجموع الدخول على مدار الفترة"},
+            ],
+            "calc_steps": [
+                f"1. تجميع كل حركات الدخول بالفترة حسب ساعة اليوم (Hour of Day).",
+                f"2. العثور على الساعة الأكثر كثافة = الساعة {peak_str} بإجمالي {peak_count} متدرب.",
+                f"3. تمثل هذه الساعة قرابة {round((peak_count / max(1, period_checkins)) * 100, 1)}% من إجمالي حركة الصالة بالفترة.",
+                "4. التقييم الذكي: توجيه المشتركين لساعات الهدوء الصباحية يخفف الضغط على الأجهزة ويزيد الرضا العام.",
+            ],
+            "action_url": "/members/checkins/",
+            "action_label": "سجل الدخول وتحليل الكثافة",
+            "text": f"ذروة الإقبال المسجلة تتركز حول الساعة {peak_str} بإجمالي {peak_count} عملية دخول.",
         })
 
-    # Advice 4: Profitability & Expense Efficiency
+    # Advice 7: Profitability & Expense Efficiency (كفاءة التدفق النقدي ونسبة المصروفات)
     if period_total_revenue > 0:
         expense_ratio = round((period_expenses / period_total_revenue) * 100)
     else:
@@ -903,21 +1112,63 @@ def manager_dashboard_view(request):
 
     if period_net >= 0:
         smart_insights.append({
+            "id": "cashflow",
             "type": "cashflow",
-            "title": f"كفاءة التدفق النقدي (نسبة المصروفات {expense_ratio}%)",
-            "text": (
-                f"صافي الدخل للفترة يحقق فائضاً قدره {period_net} {gym_profile.currency} (إيرادات {period_total_revenue} مقابل مصروفات {period_expenses}). "
-                f"نسبة المصروفات ضمن النطاق الصحي والمربح للمشروع."
-            ),
+            "badge": "كفاءة التدفق والربحية",
+            "icon": "💵",
+            "color": "#22c55e",
+            "title": f"صافي دخل إيجابي: +{period_net} {gym_profile.currency} (نسبة المصروفات {expense_ratio}%)",
+            "quick_advice": "نسبة المصروفات ضمن النطاق الصحي؛ استمر في ضبط التكاليف التشغيلية.",
+            "impact_pill": f"⚡ فائض نقدي: +{period_net} {gym_profile.currency}",
+            "formula_title": "معادلة كفاءة التدفق النقدي وهامش المصروفات (Cashflow & Expense Ratio)",
+            "formula_text": "نسبة المصروفات = (إجمالي المصروفات التشغيلية ÷ إجمالي الإيرادات المحصلة) × 100",
+            "formula_desc": "تقيس النسبة المئوية التي تلتهمها التكاليف التشغيلية من إجمالي ما تحققه الصالة من دخل.",
+            "data_rows": [
+                {"name": "إجمالي الإيرادات المحصلة بالفترة", "value": f"{period_total_revenue} {gym_profile.currency}", "desc": "اشتراكات + متبقيات + مبيعات البار"},
+                {"name": "إجمالي المصروفات التشغيلية بالفترة", "value": f"{period_expenses} {gym_profile.currency}", "desc": "كافة بنود المصروفات المعتمدة"},
+                {"name": "صافي الفائض النقدي المحقق", "value": f"+{period_net} {gym_profile.currency}", "desc": "الإيرادات - المصروفات"},
+                {"name": "نسبة استهلاك المصروفات من الدخل", "value": f"{expense_ratio}%", "desc": "(المصروفات ÷ الإيرادات) × 100"},
+            ],
+            "calc_steps": [
+                f"1. إجمالي الإيرادات المحصلة = {period_total_revenue} {gym_profile.currency}.",
+                f"2. إجمالي المصروفات التشغيلية = {period_expenses} {gym_profile.currency}.",
+                f"3. صافي الفائض النقدي = {period_total_revenue} - {period_expenses} = +{period_net} {gym_profile.currency}.",
+                f"4. نسبة الإنفاق = ({period_expenses} ÷ {max(1, period_total_revenue)}) × 100 = {expense_ratio}%.",
+                "5. التقييم الذكي: النسبة النموذجية للصالات الصحية أقل من 60%؛ الصالة في وضع مالي صحي ومربح.",
+            ],
+            "action_url": "/finance/",
+            "action_label": "إدارة الخزينة والتقارير المالية",
+            "text": f"صافي الدخل للفترة يحقق فائضاً قدره {period_net} {gym_profile.currency} (إيرادات {period_total_revenue} مقابل مصروفات {period_expenses}).",
         })
     else:
         smart_insights.append({
+            "id": "cashflow",
             "type": "cashflow",
-            "title": "تحذير: عجز تشغيلي في الفترة المحددة",
-            "text": (
-                f"تجاوزت المصروفات التشغيلية إجمالي الإيرادات بعجز قدره {abs(period_net)} {gym_profile.currency}. "
-                f"يُرجى مراجعة بنود المصروفات غير الأساسية وتركيز العمليات على تحصيل الاشتراكات والمديونيات."
-            ),
+            "badge": "تحذير عجز تشغيلي",
+            "icon": "⚠️",
+            "color": "#ef4444",
+            "title": f"عجز تشغيلي بالفترة: {period_net} {gym_profile.currency} (نسبة المصروفات {expense_ratio}%)",
+            "quick_advice": "راجع بنود الصرف غير الأساسية وسرّع تحصيل المتبقيات لتدارك العجز فوراً.",
+            "impact_pill": f"⚠️ عجز نقدي: {abs(period_net)} {gym_profile.currency}",
+            "formula_title": "معادلة كفاءة التدفق النقدي وهامش المصروفات (Cashflow & Expense Ratio)",
+            "formula_text": "نسبة المصروفات = (إجمالي المصروفات التشغيلية ÷ إجمالي الإيرادات المحصلة) × 100",
+            "formula_desc": "تقيس النسبة المئوية التي تلتهمها التكاليف التشغيلية من إجمالي ما تحققه الصالة من دخل.",
+            "data_rows": [
+                {"name": "إجمالي الإيرادات بالفترة", "value": f"{period_total_revenue} {gym_profile.currency}", "desc": "إجمالي المتحصلات"},
+                {"name": "إجمالي المصروفات بالفترة", "value": f"{period_expenses} {gym_profile.currency}", "desc": "إجمالي المنصرفات"},
+                {"name": "صافي العجز النقدي المسجل", "value": f"{period_net} {gym_profile.currency}", "desc": "المصروفات تجاوزت الإيرادات"},
+                {"name": "نسبة المصروفات من الإيراد", "value": f"{expense_ratio}%", "desc": "تجاوزت حاجز الـ 100%"},
+            ],
+            "calc_steps": [
+                f"1. إجمالي الإيرادات = {period_total_revenue} {gym_profile.currency}.",
+                f"2. إجمالي المصروفات = {period_expenses} {gym_profile.currency}.",
+                f"3. صافي التدفق = {period_total_revenue} - {period_expenses} = {period_net} {gym_profile.currency} (عجز).",
+                f"4. نسبة الإنفاق = ({period_expenses} ÷ {max(1, period_total_revenue)}) × 100 = {expense_ratio}%.",
+                "5. التقييم الذكي: الإنفاق يفوق الإيرادات؛ يلزم تقليص المصروفات التشغيلية وتنشيط مبيعات الاشتراكات والبار.",
+            ],
+            "action_url": "/expenses/",
+            "action_label": "مراجعة بنود المصروفات",
+            "text": f"تجاوزت المصروفات التشغيلية إجمالي الإيرادات بعجز قدره {abs(period_net)} {gym_profile.currency}.",
         })
 
     # 6. Advanced Managerial Analytics: Debts, Discounts, Private Add-on, and Payroll (strictly branch-filtered)
@@ -1180,6 +1431,7 @@ def manager_dashboard_view(request):
         "top_plans": top_plans,
         "plans_source_label": plans_source_label,
         "smart_insights": smart_insights,
+        "smart_insights_json": json.dumps(smart_insights, default=str),
         "inactive_7d_count": inactive_7d_count,
         "inactive_7d_pct": inactive_7d_pct,
         "avg_daily_attendance": avg_daily_attendance,
