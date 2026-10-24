@@ -522,8 +522,18 @@
         }
 
         setTimeout(() => {
-          window.location.href = data.redirect_url || '{{ target_url|default:request.get_full_path }}';
-        }, 450);
+          let dest = data.redirect_url || '{{ target_url|default:request.get_full_path }}' || window.location.href;
+          try {
+            const destUrl = new URL(dest, window.location.origin);
+            destUrl.searchParams.set('_unlocked', Date.now());
+            window.location.replace(destUrl.href);
+          } catch (e) {
+            window.location.reload();
+          }
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        }, 250);
       } else {
         if (data && data.score !== undefined && statusText) {
           if (data.score > 0) {

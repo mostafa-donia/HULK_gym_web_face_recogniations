@@ -6,12 +6,18 @@ from apps.accounts.models import UserRole
 
 
 def manager_required(view_func):
-    """Restricts access to Managers, Owners, and Superusers."""
+    """Restricts access to Managers, Owners, Superusers, or sessions temporarily unlocked by Manager face/password."""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect("accounts:login")
-        if not getattr(request.user, "is_manager", False):
+        is_user_manager = getattr(request.user, "is_manager", False)
+        is_session_unlocked = bool(
+            request.session.get("manager_page_unlocked")
+            or request.session.get("settings_page_unlocked")
+            or request.session.get("trainers_page_unlocked")
+        )
+        if not is_user_manager and not is_session_unlocked:
             messages.error(request, "عذراً، هذه الصفحة مخصصة للمدير والمالك فقط.")
             raise PermissionDenied("Manager role required.")
         return view_func(request, *args, **kwargs)

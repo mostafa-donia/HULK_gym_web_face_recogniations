@@ -242,7 +242,7 @@ def check_settings_page_access(request, target_url=None):
     Isolated from Manager zone so entering or leaving settings does not affect or stay unlocked elsewhere.
     Returns (is_unlocked, response).
     """
-    if request.session.get("settings_page_unlocked"):
+    if request.session.get("settings_page_unlocked") or request.session.get("manager_page_unlocked"):
         return True, None
 
     profile = GymProfile.get_solo()
