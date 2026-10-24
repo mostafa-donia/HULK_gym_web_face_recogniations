@@ -34,37 +34,49 @@
     </div>
   </div>
 
-  <!-- 4 KPI Cards Strip -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+  <!-- Financial Comparison & KPI Cards Strip -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+    
     <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px;">
       <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">المنتجات بالمخزون</span>
-      <div style="color: var(--text-main); font-size: 1.7rem; font-weight: 900; margin-top: 4px;">
-        {{ total_products_count }} <small style="font-size: 0.9rem; color: var(--text-muted);">منتج</small>
-        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-right: 6px;">({{ total_stock_units }} قطعة)</span>
+      <div style="color: var(--text-main); font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
+        {{ total_products_count }} <small style="font-size: 0.85rem; color: var(--text-muted);">منتج</small>
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-right: 4px;">({{ total_stock_units }} قطعة)</span>
       </div>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1.5px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 16px 20px;">
+      <span style="color: #34d399; font-size: 0.82rem; font-weight: 800; display: block;">💵 مبيعات البار المحصلة</span>
+      <div style="color: #10b981; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
+        {{ total_bar_revenue }} <small style="font-size: 0.85rem;">{{ profile.currency|default:"ج" }}</small>
+      </div>
+      <small style="color: var(--text-dim); font-size: 0.74rem;">اليوم: {{ today_bar_revenue }} {{ profile.currency|default:"ج" }}</small>
+    </div>
+
+    <div style="background: var(--bg-card); border: 1.5px solid rgba(239, 68, 68, 0.35); border-radius: 12px; padding: 16px 20px;">
+      <span style="color: #f87171; font-size: 0.82rem; font-weight: 800; display: block;">🛒 مصروفات ومشتريات البار</span>
+      <div style="color: #ef4444; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
+        {{ total_bar_expenses }} <small style="font-size: 0.85rem;">{{ profile.currency|default:"ج" }}</small>
+      </div>
+      <small style="color: var(--text-dim); font-size: 0.74rem;">فواتير الشراء المسجلة بالمصروفات</small>
+    </div>
+
+    <div style="background: rgba(168, 241, 75, 0.08); border: 1.5px solid rgba(168, 241, 75, 0.45); border-radius: 12px; padding: 16px 20px;">
+      <span style="color: #A8F14B; font-size: 0.82rem; font-weight: 900; display: block;">💎 المكسب الفعلي المحقق</span>
+      <div style="color: #A8F14B; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
+        {{ realized_sales_profit }} <small style="font-size: 0.85rem;">{{ profile.currency|default:"ج" }}</small>
+      </div>
+      <small style="color: var(--text-secondary); font-size: 0.74rem;">(المبيعات المحصلة - تكلفة القطع)</small>
     </div>
 
     <div style="background: var(--bg-card); border: 1px solid rgba(139, 92, 246, 0.35); border-radius: 12px; padding: 16px 20px;">
-      <span style="color: #a78bfa; font-size: 0.82rem; font-weight: 800; display: block;">⏳ آجل البار المعلق (لم يُدفع بعد)</span>
-      <div style="color: #c084fc; font-size: 1.7rem; font-weight: 900; margin-top: 4px;">
-        {{ total_unpaid_debt }} <small style="font-size: 0.88rem;">{{ profile.currency|default:"ج" }}</small>
-        <span style="font-size: 0.82rem; background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 2px 8px; border-radius: 10px; margin-right: 8px;">{{ unpaid_orders_count }} طلب</span>
+      <span style="color: #a78bfa; font-size: 0.82rem; font-weight: 800; display: block;">⏳ آجل البار المعلق</span>
+      <div style="color: #c084fc; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
+        {{ total_unpaid_debt }} <small style="font-size: 0.85rem;">{{ profile.currency|default:"ج" }}</small>
       </div>
+      <span style="font-size: 0.75rem; background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 2px 7px; border-radius: 8px;">{{ unpaid_orders_count }} طلب</span>
     </div>
 
-    <div style="background: var(--bg-card); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 16px 20px;">
-      <span style="color: #34d399; font-size: 0.82rem; font-weight: 800; display: block;">💵 مبيعات البار اليوم المحصلة</span>
-      <div style="color: #10b981; font-size: 1.7rem; font-weight: 900; margin-top: 4px;">
-        {{ today_bar_revenue }} <small style="font-size: 0.88rem;">{{ profile.currency|default:"ج" }}</small>
-      </div>
-    </div>
-
-    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 20px;">
-      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">إجمالي إيرادات البار التاريخية</span>
-      <div style="color: #A8F14B; font-size: 1.7rem; font-weight: 900; margin-top: 4px;">
-        {{ total_bar_revenue }} <small style="font-size: 0.88rem;">{{ profile.currency|default:"ج" }}</small>
-      </div>
-    </div>
   </div>
 
   <!-- Products Grid (Cards with Quick Restock) -->
@@ -98,6 +110,16 @@
             <strong style="color: #A8F14B; font-size: 1.15rem; font-weight: 900;">{{ p.price }} {{ profile.currency|default:"ج" }}</strong>
           </div>
 
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+            <span style="color: var(--text-muted); font-size: 0.82rem;">سعر التكلفة:</span>
+            <span style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 800;">{{ p.cost_price }} {{ profile.currency|default:"ج" }}</span>
+          </div>
+
+          <div style="background: rgba(168, 241, 75, 0.08); border: 1px dashed rgba(168, 241, 75, 0.35); border-radius: 8px; padding: 4px 10px; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">المكسب الفعلي:</span>
+            <strong style="color: #A8F14B; font-size: 0.95rem; font-weight: 900;">+{{ p.unit_profit }} {{ profile.currency|default:"ج" }}</strong>
+          </div>
+
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
             <span style="color: var(--text-muted); font-size: 0.85rem;">الرصيد المتاح:</span>
             <strong style="color: {% if p.stock_quantity <= 0 %}#ef4444{% elif p.is_low_stock %}#f59e0b{% else %}#38bdf8{% endif %}; font-size: 1.1rem; font-weight: 900;">
@@ -106,10 +128,10 @@
           </div>
         </div>
 
-        <!-- Quick Restock Actions -->
+        <!-- Quick Restock Actions & Delete -->
         <div style="border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; flex-direction: column; gap: 6px;">
           <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">تزويد فوري للرصيد:</span>
-          <div style="display: flex; gap: 6px;">
+          <div style="display: flex; gap: 6px; align-items: center;">
             <form method="post" action="{% url 'payments:bar_product_restock' p.id %}" style="display: inline;">
               {% csrf_token %}
               <input type="hidden" name="add_quantity" value="12">
@@ -118,16 +140,24 @@
             <form method="post" action="{% url 'payments:bar_product_restock' p.id %}" style="display: inline;">
               {% csrf_token %}
               <input type="hidden" name="add_quantity" value="24">
-              <button type="submit" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.78rem;">+24 (كرتونة)</button>
+              <button type="submit" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.78rem;">+24</button>
             </form>
             <form method="post" action="{% url 'payments:bar_product_restock' p.id %}" style="display: inline;">
               {% csrf_token %}
               <input type="hidden" name="add_quantity" value="50">
               <button type="submit" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.78rem;">+50</button>
             </form>
-            <button type="button" onclick="openEditProductModal('{{ p.id }}', '{{ p.name }}', '{{ p.category }}', '{{ p.price }}', '{{ p.cost_price }}', '{{ p.min_stock_alert }}')" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.78rem; margin-right: auto;" title="تعديل السعر">
+
+            <button type="button" onclick="openEditProductModal('{{ p.id }}', '{{ p.name }}', '{{ p.category }}', '{{ p.price }}', '{{ p.cost_price }}', '{{ p.min_stock_alert }}')" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.78rem; margin-right: auto;" title="تعديل المنتج والتكلفة">
               ✏️
             </button>
+
+            <form method="post" action="{% url 'payments:bar_product_delete' p.id %}" style="display: inline;" onsubmit="return confirm('تأكيد مسح المنتج نهائياً: {{ p.name }}؟');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-secondary btn-sm" style="padding: 3px 8px; font-size: 0.78rem; color: #ef4444;" title="مسح المنتج">
+                🗑️
+              </button>
+            </form>
           </div>
         </div>
 
@@ -263,7 +293,7 @@
         <input type="text" name="name" required class="form-control" placeholder="مثال: مياه معدنية 600 مل / سكوب بروتين...">
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
         <div>
           <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">التصنيف</label>
           <select name="category" class="form-control">
@@ -273,8 +303,12 @@
           </select>
         </div>
         <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">سعر التكلفة (ج.م)</label>
+          <input type="number" step="0.5" name="cost_price" value="0.00" class="form-control" placeholder="6.00">
+        </div>
+        <div>
           <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">سعر البيع (ج.م) *</label>
-          <input type="number" step="0.5" name="price" required class="form-control" placeholder="10">
+          <input type="number" step="0.5" name="price" required class="form-control" placeholder="10.00">
         </div>
       </div>
 
@@ -316,7 +350,7 @@
         <input type="text" id="editName" name="name" required class="form-control">
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
         <div>
           <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">التصنيف</label>
           <select id="editCategory" name="category" class="form-control">
@@ -324,6 +358,10 @@
               <option value="{{ code }}">{{ label }}</option>
             {% endfor %}
           </select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">سعر التكلفة (ج.م)</label>
+          <input type="number" step="0.5" id="editCostPrice" name="cost_price" class="form-control">
         </div>
         <div>
           <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">سعر البيع (ج.م)</label>
@@ -356,6 +394,8 @@ function openEditProductModal(id, name, cat, price, cost, minAlert) {
   document.getElementById('editName').value = name;
   document.getElementById('editCategory').value = cat;
   document.getElementById('editPrice').value = price;
+  const costEl = document.getElementById('editCostPrice');
+  if (costEl) costEl.value = cost || '0.00';
   document.getElementById('editProductModal').style.display = 'flex';
 }
 function closeEditProductModal() {

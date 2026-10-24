@@ -21,6 +21,7 @@ class PaymentOperationType(models.TextChoices):
     RENEWAL = "renewal", "تجديد اشتراك"
     REMAINING = "remaining", "سداد متبقي"
     BAR_SALE = "bar_sale", "مبيعات البار"
+    REFUND = "refund", "استرداد اشتراك ملغي"
 
 
 class Payment(models.Model):
@@ -134,6 +135,12 @@ class BarProduct(models.Model):
     @property
     def is_low_stock(self) -> bool:
         return self.stock_quantity <= self.min_stock_alert
+
+    @property
+    def unit_profit(self) -> Decimal:
+        """Actual net profit per item = selling price - cost price"""
+        cost = self.cost_price or Decimal("0.00")
+        return max(Decimal("0.00"), self.price - cost)
 
 
 class BarSale(models.Model):

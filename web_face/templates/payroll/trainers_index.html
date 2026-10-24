@@ -539,29 +539,46 @@
 </div>
 
 <!-- Staff Face Modal -->
-<div id="staffFaceEnrollModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
+<div id="staffFaceEnrollModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 16px;">
   <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; padding: 24px; width: 480px; max-width: 95%; box-shadow: 0 12px 45px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 14px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main);">📸 تسجيل بصمة وجه الموظف للكاميرا</h3>
-      <button type="button" onclick="closeStaffFaceModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer;">✕</button>
+      <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+        <span>📸</span> تسجيل بصمة وجه الموظف للكاميرا
+      </h3>
+      <button type="button" onclick="closeStaffFaceModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">✕</button>
     </div>
-    <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
-      الموظف: <strong id="staffEnrollName" style="color: var(--text-main);"></strong>
+
+    <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 8px; padding: 8px 12px; font-size: 0.82rem; color: #93c5fd; display: flex; align-items: center; gap: 6px;">
+      <span>💡</span> الكاميرا تستخدم نفس بث وفريمات السيستم المباشرة تلقائياً بدون تعارض الأجهزة.
+    </div>
+
+    <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">
+      الموظف / المدرب: <strong id="staffEnrollName" style="color: var(--text-main);"></strong>
     </p>
 
-    <div style="width: 100%; height: 260px; background: #000; border-radius: 12px; overflow: hidden; position: relative;">
-      <video id="staffEnrollVideo" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
+    <div style="position: relative; width: 100%; height: 280px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid var(--border-color); box-shadow: inset 0 0 25px rgba(0,0,0,0.85);">
+      <img id="staffEnrollStream" src="" alt="بث الكاميرا المباشر" style="width: 100%; height: 100%; object-fit: cover;">
       <canvas id="staffEnrollCanvas" style="display: none;"></canvas>
+
+      <!-- Face Guide Reticle Overlay -->
+      <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+        <div style="width: 180px; height: 230px; border: 2px dashed rgba(132, 204, 22, 0.65); border-radius: 50%; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.25);"></div>
+      </div>
+
+      <!-- Live Stream Pill -->
+      <div style="position: absolute; bottom: 8px; left: 10px; font-size: 0.72rem; color: #84cc16; background: rgba(0,0,0,0.75); padding: 3px 8px; border-radius: 4px; font-family: monospace; font-weight: 700;">
+        LIVE SYSTEM CAMERA ●
+      </div>
     </div>
 
-    <div id="staffEnrollStatus" style="font-size: 0.85rem; color: #84cc16; font-weight: 700; text-align: center;">
+    <div id="staffEnrollStatus" style="font-size: 0.85rem; color: #84cc16; font-weight: 700; text-align: center; min-height: 20px;">
       واجه الكاميرا واضغط "التقاط وحفظ البصمة"
     </div>
 
-    <div style="display: flex; gap: 8px; justify-content: flex-end;">
-      <button type="button" class="btn btn-secondary" onclick="closeStaffFaceModal()">إلغاء</button>
-      <button type="button" id="staffCaptureBtn" class="btn btn-primary" onclick="captureAndEnrollStaffFace()" style="font-weight: 800;">
-        التقاط وحفظ البصمة 🚀
+    <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px;">
+      <button type="button" class="btn btn-secondary" onclick="closeStaffFaceModal()" style="border-radius: 8px; padding: 8px 18px; font-weight: 700;">إلغاء</button>
+      <button type="button" id="staffCaptureBtn" class="btn btn-primary" onclick="captureAndEnrollStaffFace()" style="font-weight: 800; border-radius: 8px; padding: 8px 22px; background: #84cc16; color: #051403; border: none; cursor: pointer;">
+        📸 التقاط وحفظ البصمة
       </button>
     </div>
   </div>
@@ -585,43 +602,76 @@
   }
 
   let currentStaffId = null;
-  let staffStream = null;
 
   function openStaffFaceEnrollModal(empId, empName) {
     currentStaffId = empId;
     document.getElementById('staffEnrollName').textContent = empName;
+    const statusEl = document.getElementById('staffEnrollStatus');
+    statusEl.textContent = 'واجه الكاميرا مباشرة ثم اضغط "التقاط وحفظ البصمة"';
+    statusEl.style.color = '#84cc16';
+    const streamImg = document.getElementById('staffEnrollStream');
+    streamImg.src = "{% url 'face_recognition:video_feed' %}?t=" + Date.now();
     document.getElementById('staffFaceEnrollModal').style.display = 'flex';
-    const vid = document.getElementById('staffEnrollVideo');
-    navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } })
-      .then(stream => { staffStream = stream; vid.srcObject = stream; })
-      .catch(err => {
-        document.getElementById('staffEnrollStatus').textContent = 'تعذر فتح الكاميرا: ' + err.message;
-        document.getElementById('staffEnrollStatus').style.color = '#ef4444';
-      });
   }
 
   function closeStaffFaceModal() {
-    if (staffStream) { staffStream.getTracks().forEach(t => t.stop()); staffStream = null; }
+    const streamImg = document.getElementById('staffEnrollStream');
+    if (streamImg) streamImg.src = "";
     document.getElementById('staffFaceEnrollModal').style.display = 'none';
   }
 
-  function captureAndEnrollStaffFace() {
-    const vid = document.getElementById('staffEnrollVideo');
-    const canvas = document.getElementById('staffEnrollCanvas');
+  async function captureAndEnrollStaffFace() {
     const statusEl = document.getElementById('staffEnrollStatus');
     const btn = document.getElementById('staffCaptureBtn');
-    if (!vid.videoWidth) return;
-
-    canvas.width = vid.videoWidth;
-    canvas.height = vid.videoHeight;
-    canvas.getContext('2d').drawImage(vid, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-
-    statusEl.textContent = 'جاري استخراج وتحليل بصمة الوجه...';
     btn.disabled = true;
+    statusEl.textContent = 'جاري التقاط فريم الكاميرا وتحليل البصمة...';
+    statusEl.style.color = '#38bdf8';
+
+    let dataUrl = null;
+
+    // 1. Direct fetch from running camera engine
+    try {
+      const resp = await fetch('/face-recognition/api/capture-frame/');
+      if (resp.ok) {
+        const frameData = await resp.json();
+        if (frameData.success && frameData.image_base64) {
+          dataUrl = frameData.image_base64;
+          if (!dataUrl.startsWith('data:image')) {
+            dataUrl = 'data:image/jpeg;base64,' + dataUrl;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("capture-frame endpoint fallback:", e);
+    }
+
+    // 2. Fallback to image stream canvas
+    if (!dataUrl) {
+      const img = document.getElementById('staffEnrollStream');
+      const canvas = document.getElementById('staffEnrollCanvas');
+      if (img && canvas && (img.naturalWidth || img.width)) {
+        canvas.width = img.naturalWidth || img.width || 640;
+        canvas.height = img.naturalHeight || img.height || 480;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      }
+    }
+
+    if (!dataUrl) {
+      statusEl.textContent = 'الكاميرا غير جاهزة بعد أو غير متصلة، يرجى الانتظار ثوانٍ أو التأكد من تشغيل الكاميرا.';
+      statusEl.style.color = '#ef4444';
+      btn.disabled = false;
+      return;
+    }
+
+    statusEl.textContent = 'جاري استخراج وتحليل بصمة الوجه بالذكاء الاصطناعي...';
+    statusEl.style.color = '#fbbf24';
 
     const fd = new FormData();
     fd.append('image', dataUrl);
+    fd.append('step', '1');
+
     fetch('/face-recognition/employee/enroll/' + currentStaffId + '/', {
       method: 'POST',
       body: fd,
@@ -640,7 +690,7 @@
     })
     .catch(err => {
       btn.disabled = false;
-      statusEl.textContent = 'خطأ: ' + err.message;
+      statusEl.textContent = 'خطأ بالاتصال: ' + err.message;
       statusEl.style.color = '#ef4444';
     });
   }

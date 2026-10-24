@@ -391,6 +391,10 @@
         </a>
         {% endif %}
 
+        <a href="{% url 'expenses:expense_list' %}" class="top-nav-item {% if 'expenses' in request.path %}active{% endif %}" title="سجل المصروفات وسندات الصرف التشغيلية">
+          <span>المصروفات</span>
+        </a>
+
         {% if license_features.whatsapp %}
         <a href="{% url 'messaging:whatsapp_queue' %}" class="top-nav-item {% if 'messaging' in request.path %}active{% endif %}">
           <span>واتساب</span>

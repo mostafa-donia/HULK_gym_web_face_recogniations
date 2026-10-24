@@ -96,187 +96,209 @@
 
 </div>
 
-<!-- 1. Modal: شراء منتج من البار (Fast Bar Sale) -->
-<div id="bar-sale-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.82); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 18px; overflow-y: auto;">
-  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; padding: 24px; box-shadow: var(--shadow-lg);">
+<!-- 1. Modal: شراء منتج من البار (Fast Bar Sale - Wide Responsive Layout) -->
+<div id="bar-sale-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 9999; justify-content: center; align-items: center; padding: 20px; overflow-y: auto;">
+  <div style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 22px; width: 100%; max-width: 1080px; max-height: 92vh; overflow-y: auto; padding: 26px 30px; box-shadow: 0 25px 60px rgba(0,0,0,0.6);">
     
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 1.5rem;">🥤</span>
+    <!-- Modal Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--border-color); padding-bottom: 14px; margin-bottom: 20px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 2rem; background: rgba(56, 189, 248, 0.15); width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.3);">🥤</span>
         <div>
-          <h2 style="color: var(--text-main); font-size: 1.35rem; font-weight: 900; margin: 0;">شراء منتج من البار</h2>
-          <small style="color: var(--text-muted); font-size: 0.78rem;">تسجيل سريع لطلبات المشروبات والمكملات (نقدي أو آجل)</small>
+          <h2 style="color: var(--text-main); font-size: 1.45rem; font-weight: 900; margin: 0;">شراء منتج من البار والمشروبات</h2>
+          <small style="color: var(--text-muted); font-size: 0.85rem;">نقطة بيع سريعة للمشروبات والمكملات والوجبات الخفيفة (نقدي أو آجل بعد التمرين)</small>
         </div>
       </div>
-      <button type="button" onclick="closeBarSaleModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
+      <button type="button" onclick="closeBarSaleModal()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; width: 38px; height: 38px; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease;" onmouseover="this.style.color='#fff'; this.style.background='rgba(239,68,68,0.2)';" onmouseout="this.style.color='var(--text-muted)'; this.style.background='rgba(255,255,255,0.08)';">✕</button>
     </div>
 
-    <form method="post" action="{% url 'payments:bar_quick_sale' %}" id="quickBarSaleForm" style="display: flex; flex-direction: column; gap: 14px;">
+    <form method="post" action="{% url 'payments:bar_quick_sale' %}" id="quickBarSaleForm">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ request.path }}">
       <input type="hidden" name="member_id" id="barMemberIdInput" value="">
 
-      <!-- Product Section with Live Search & Chips -->
-      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 14px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <label style="font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin: 0;">
-            اختر المنتج من البار *
-          </label>
-          <span style="font-size: 0.75rem; color: #38bdf8;">⚡ بحث سريع بالاسم</span>
-        </div>
-
-        <!-- Quick Product Search Input -->
-        <div style="position: relative; margin-bottom: 8px;">
-          <input type="text" id="barProductSearchInput" oninput="filterBarProductsLive(this.value)" placeholder="🔍 اكتب اسم المنتج (مثلاً: ماء، بروتين، ريد بول)..." class="form-control" style="height: 38px; font-size: 0.88rem; padding-right: 32px;" autocomplete="off">
-          <span style="position: absolute; right: 10px; top: 9px; color: var(--text-muted); pointer-events: none;">🔍</span>
-        </div>
-
-        <!-- Interactive Product Chips for instant 1-click selection -->
-        <div id="barProductChipsContainer" style="display: flex; flex-wrap: wrap; gap: 6px; max-height: 110px; overflow-y: auto; margin-bottom: 8px; padding-bottom: 2px;">
-          {% for p in bar_products %}
-            <button type="button" class="bar-product-chip" data-id="{{ p.id }}" data-name="{{ p.name|lower }}" data-price="{{ p.price }}" data-stock="{{ p.stock_quantity }}" onclick="selectBarProductChip('{{ p.id }}')" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: var(--text-main); font-size: 0.82rem; font-weight: 700; padding: 5px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s ease;">
-              <span>{{ p.name }}</span>
-              <span style="color: #A8F14B; font-weight: 900;">{{ p.price }} {{ gym_profile.currency|default:"ج" }}</span>
-              <small style="color: {% if p.stock_quantity <= 0 %}#ef4444{% else %}#94a3b8{% endif %}; font-size: 0.72rem;">({{ p.stock_quantity }})</small>
-            </button>
-          {% endfor %}
-        </div>
-
-        <!-- Master Select Dropdown -->
-        <select name="product_id" id="barProductSelect" onchange="onBarProductSelectChanged()" required class="form-control" style="font-size: 0.95rem; font-weight: 800; height: 42px;">
-          {% for p in bar_products %}
-            <option value="{{ p.id }}" data-price="{{ p.price }}" data-stock="{{ p.stock_quantity }}" data-name="{{ p.name|lower }}">
-              {{ p.name }} — {{ p.price }} {{ gym_profile.currency|default:"ج" }} (متاح: {{ p.stock_quantity }})
-            </option>
-          {% empty %}
-            <option value="" disabled selected>لا توجد منتجات بالمخزون حالياً</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <!-- Quantity Stepper -->
-      <div>
-        <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
-          الكمية المطلوبة *
-        </label>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <button type="button" onclick="stepBarQty(-1)" class="btn btn-secondary" style="width: 44px; height: 44px; font-size: 1.4rem; font-weight: 900; padding: 0; justify-content: center;">-</button>
-          <input type="number" id="barQtyInput" name="quantity" value="1" min="1" max="999" oninput="updateBarSaleTotal()" class="form-control" style="text-align: center; font-size: 1.25rem; font-weight: 900; height: 44px;">
-          <button type="button" onclick="stepBarQty(1)" class="btn btn-secondary" style="width: 44px; height: 44px; font-size: 1.4rem; font-weight: 900; padding: 0; justify-content: center;">+</button>
-        </div>
-      </div>
-
-      <!-- Member Live Search & Selection Section -->
-      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 14px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <label style="font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin: 0;">
-            المشتري / اللاعب
-          </label>
-          <span style="font-size: 0.75rem; color: #38bdf8;">👤 بحث سريع في الأعضاء</span>
-        </div>
-
-        <!-- Quick Member Live Search -->
-        <div style="position: relative; margin-bottom: 8px;">
-          <input type="text" id="barMemberSearchInput" oninput="searchBarMembersLive(this.value)" placeholder="🔍 اكتب اسم المشترك، الكود (MEM)، أو رقم الهاتف..." class="form-control" style="height: 40px; font-size: 0.88rem;" autocomplete="off">
-          
-          <!-- Dropdown suggestions -->
-          <div id="barMemberSearchResults" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #0b1320; border: 1px solid #38bdf8; border-radius: 10px; max-height: 220px; overflow-y: auto; z-index: 10000; box-shadow: 0 12px 30px rgba(0,0,0,0.7);">
+      <!-- 2-Column Wide Layout -->
+      <div style="display: grid; grid-template-columns: 1.35fr 1fr; gap: 24px; align-items: start;">
+        
+        <!-- Right Column: Big Touch Product Cards & Instant Filter -->
+        <div style="background: var(--bg-surface-subtle); border: 1.5px solid var(--border-color); border-radius: 16px; padding: 18px 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <label style="font-size: 1rem; font-weight: 900; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+              <span>📦</span> اختر المنتج من البار
+            </label>
+            <span style="font-size: 0.82rem; color: #38bdf8; font-weight: 800; background: rgba(56, 189, 248, 0.12); padding: 3px 10px; border-radius: 8px;">⚡ اضغط على كرت المنتج مباشرة</span>
           </div>
+
+          <!-- Quick Product Search Input -->
+          <div style="position: relative; margin-bottom: 14px;">
+            <input type="text" id="barProductSearchInput" oninput="filterBarProductsLive(this.value)" placeholder="🔍 اكتب اسم المنتج للفلترة الفورية (ماء، بروتين، مشروب طاقة)..." class="form-control" style="height: 44px; font-size: 0.95rem; padding-right: 38px; border-radius: 10px;" autocomplete="off">
+            <span style="position: absolute; right: 12px; top: 12px; color: var(--text-muted); pointer-events: none; font-size: 1.1rem;">🔍</span>
+          </div>
+
+          <!-- Interactive Large Product Cards Grid -->
+          <div id="barProductChipsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 12px; max-height: 440px; overflow-y: auto; padding: 4px; border-radius: 10px;">
+            {% for p in bar_products %}
+              <button type="button" class="bar-product-chip" data-id="{{ p.id }}" data-name="{{ p.name|lower }}" data-price="{{ p.price }}" data-stock="{{ p.stock_quantity }}" onclick="selectBarProductChip('{{ p.id }}')" style="background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 14px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none;">
+                <div style="font-size: 1.8rem; line-height: 1;">
+                  {% if 'ماء' in p.name or 'مياه' in p.name %}💧
+                  {% elif 'بروتين' in p.name or 'protein' in p.name|lower %}🥤
+                  {% elif 'شوكو' in p.name or 'سناك' in p.name or 'بار' in p.name %}🍫
+                  {% elif 'ريد' in p.name or 'طاقة' in p.name or 'energy' in p.name|lower %}⚡
+                  {% elif 'عصير' in p.name %}🧃
+                  {% elif 'قهوة' in p.name or 'اسبريسو' in p.name %}☕
+                  {% else %}🥤{% endif %}
+                </div>
+                <div style="color: var(--text-main); font-weight: 800; font-size: 0.96rem; line-height: 1.3; min-height: 2.6em; display: flex; align-items: center;">{{ p.name }}</div>
+                <div style="color: #A8F14B; font-weight: 900; font-size: 1.25rem;">{{ p.price }} <small style="font-size: 0.72rem; color: #94a3b8;">{{ gym_profile.currency|default:"ج" }}</small></div>
+                <span style="font-size: 0.74rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: {% if p.stock_quantity <= 0 %}rgba(239, 68, 68, 0.2); color: #f87171;{% else %}rgba(56, 189, 248, 0.15); color: #38bdf8;{% endif %};">
+                  {% if p.stock_quantity <= 0 %}نفذت الكمية{% else %}متاح: {{ p.stock_quantity }}{% endif %}
+                </span>
+              </button>
+            {% empty %}
+              <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);">
+                لا توجد منتجات مسجلة بالمخزون حالياً
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- Hidden Synchronized Select for form submission safety -->
+          <select name="product_id" id="barProductSelect" onchange="onBarProductSelectChanged()" required style="display: none;">
+            {% for p in bar_products %}
+              <option value="{{ p.id }}" data-price="{{ p.price }}" data-stock="{{ p.stock_quantity }}" data-name="{{ p.name|lower }}">
+                {{ p.name }} — {{ p.price }}
+              </option>
+            {% endfor %}
+          </select>
         </div>
 
-        <!-- Selected Member Pill -->
-        <div id="barSelectedMemberPill" style="display: none; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; justify-content: space-between; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 1.1rem;">✓</span>
-            <div>
-              <strong id="barSelectedMemberName" style="color: #38bdf8; font-size: 0.92rem; display: block;"></strong>
-              <small id="barSelectedMemberMeta" style="color: var(--text-muted); font-size: 0.76rem;"></small>
+        <!-- Left Column: Checkout Details & Member Search -->
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          
+          <!-- Quantity Stepper -->
+          <div style="background: var(--bg-surface-subtle); border: 1.5px solid var(--border-color); border-radius: 14px; padding: 12px 16px;">
+            <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">
+              الكمية المطلوبة *
+            </label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button type="button" onclick="stepBarQty(-1)" class="btn btn-secondary" style="width: 46px; height: 46px; font-size: 1.5rem; font-weight: 900; padding: 0; justify-content: center; border-radius: 10px;">-</button>
+              <input type="number" id="barQtyInput" name="quantity" value="1" min="1" max="999" oninput="updateBarSaleTotal()" class="form-control" style="text-align: center; font-size: 1.35rem; font-weight: 900; height: 46px; border-radius: 10px;">
+              <button type="button" onclick="stepBarQty(1)" class="btn btn-secondary" style="width: 46px; height: 46px; font-size: 1.5rem; font-weight: 900; padding: 0; justify-content: center; border-radius: 10px;">+</button>
             </div>
           </div>
-          <button type="button" onclick="clearSelectedBarMember()" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 0.75rem; color: #ef4444;" title="إزالة واختيار عميل آخر">
-            ✕ إلغاء
-          </button>
+
+          <!-- Member Live Search & Selection Section -->
+          <div style="background: var(--bg-surface-subtle); border: 1.5px solid var(--border-color); border-radius: 14px; padding: 12px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label style="font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin: 0;">
+                المشتري / اللاعب
+              </label>
+              <span style="font-size: 0.75rem; color: #38bdf8;">👤 بحث سريع في الأعضاء</span>
+            </div>
+
+            <!-- Quick Member Live Search -->
+            <div style="position: relative; margin-bottom: 8px;">
+              <input type="text" id="barMemberSearchInput" oninput="searchBarMembersLive(this.value)" placeholder="🔍 اكتب اسم المشترك، الكود (MEM)، أو الهاتف..." class="form-control" style="height: 40px; font-size: 0.88rem;" autocomplete="off">
+              
+              <!-- Dropdown suggestions -->
+              <div id="barMemberSearchResults" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #0b1320; border: 1px solid #38bdf8; border-radius: 10px; max-height: 220px; overflow-y: auto; z-index: 10000; box-shadow: 0 12px 30px rgba(0,0,0,0.7);">
+              </div>
+            </div>
+
+            <!-- Selected Member Pill -->
+            <div id="barSelectedMemberPill" style="display: none; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.1rem; color: #38bdf8;">✓</span>
+                <div>
+                  <strong id="barSelectedMemberName" style="color: #38bdf8; font-size: 0.92rem; display: block;"></strong>
+                  <small id="barSelectedMemberMeta" style="color: var(--text-muted); font-size: 0.76rem;"></small>
+                </div>
+              </div>
+              <button type="button" onclick="clearSelectedBarMember()" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 0.75rem; color: #ef4444;" title="إزالة واختيار عميل آخر">
+                ✕ إلغاء
+              </button>
+            </div>
+
+            <!-- Buyer Name Input (Auto-filled or walk-in) -->
+            <div style="margin-bottom: 8px;">
+              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+                اسم المشتري
+              </label>
+              <input type="text" id="barBuyerNameInput" name="buyer_name" class="form-control" placeholder="اسم المتدرب أو اتركه كعميل نقدي..." style="height: 38px; font-size: 0.9rem;">
+            </div>
+
+            <!-- Phone Number Input (Required for Unpaid!) -->
+            <div id="barBuyerPhoneBox">
+              <label style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+                <span>
+                  رقم الهاتف 
+                  <span id="barPhoneRequiredBadge" style="color: #ef4444; font-weight: 900; display: none;">* (إجباري عند الشراء بالآجل)</span>
+                </span>
+                <span id="barPhoneHint" style="font-size: 0.72rem; color: #a78bfa;">11 رقم (متابعة وتحصيل)</span>
+              </label>
+              <input type="tel" id="barBuyerPhoneInput" name="buyer_phone" class="form-control" placeholder="مثال: 01012345678" style="height: 38px; font-size: 0.95rem; direction: ltr; text-align: right;" oninput="validateBarPhoneLive()">
+              <div id="barPhoneErrorMsg" style="display: none; color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 4px;"></div>
+            </div>
+          </div>
+
+          <!-- Payment Status Toggle: تم الدفع vs لم يدفع (آجل) -->
+          <div>
+            <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">
+              حالة الدفع *
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <label id="lbl-status-paid" style="border: 2px solid #10b981; background: rgba(16, 185, 129, 0.12); padding: 10px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.15s ease;">
+                <input type="radio" name="payment_status" value="paid" checked onchange="toggleBarPaymentStatus()" style="display: none;">
+                <span style="color: #10b981; font-weight: 900; font-size: 0.95rem; display: block;">✅ تم الدفع الآن</span>
+                <small style="color: var(--text-muted); font-size: 0.74rem;">تسجيل فوري بالخزينة</small>
+              </label>
+
+              <label id="lbl-status-unpaid" style="border: 2px solid rgba(255,255,255,0.15); background: var(--bg-surface-subtle); padding: 10px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.15s ease;">
+                <input type="radio" name="payment_status" value="unpaid" onchange="toggleBarPaymentStatus()" style="display: none;">
+                <span style="color: #c084fc; font-weight: 900; font-size: 0.95rem; display: block;">⏳ لم يدفع (آجل)</span>
+                <small style="color: var(--text-muted); font-size: 0.74rem;">هيدفع بعد التمرين</small>
+              </label>
+            </div>
+          </div>
+
+          <!-- Payment Method (shown if paid) -->
+          <div id="barPaymentMethodBox">
+            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">طريقة الدفع</label>
+            <select name="payment_method" class="form-control" style="height: 40px; font-weight: 700;">
+              <option value="نقدي" selected>نقدي (Cash)</option>
+              <option value="انستا باي">انستا باي (InstaPay)</option>
+              <option value="محفظة الكترونية">محفظة الكترونية (Vodafone/Orange/Etisalat Cash)</option>
+              <option value="فيزا">فيزا / بطاقة بنكية (Visa/Mastercard)</option>
+            </select>
+          </div>
+
+          <!-- Notes field -->
+          <div>
+            <input type="text" name="notes" class="form-control" placeholder="ملاحظة إضافية (اختياري)..." style="height: 38px; font-size: 0.85rem;">
+          </div>
+
+          <!-- Total Price Live Calculation Strip -->
+          <div style="background: rgba(168, 241, 75, 0.12); border: 2px solid rgba(168, 241, 75, 0.4); border-radius: 12px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 800; color: var(--text-main); font-size: 1rem;">الإجمالي المطلوب:</span>
+            <strong id="barSaleTotalText" style="color: #A8F14B; font-size: 1.45rem; font-weight: 900;">0.00 ج.م</strong>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div style="display: flex; gap: 10px; margin-top: 4px;">
+            <button type="submit" id="barSubmitSaleBtn" class="btn btn-primary" style="flex: 1; min-height: 48px; font-size: 1.05rem; font-weight: 900; justify-content: center; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-color: #0284c7; border-radius: 10px;">
+              ✓ تسجيل العملية فوراً
+            </button>
+            <button type="button" onclick="closeBarSaleModal()" class="btn btn-secondary" style="min-height: 48px; border-radius: 10px; padding: 0 18px;">
+              إلغاء
+            </button>
+          </div>
+
+          <div style="text-align: center; margin-top: 2px;">
+            <a href="{% url 'payments:bar_inventory' %}" style="color: #38bdf8; font-size: 0.84rem; text-decoration: none; font-weight: 800;">
+              📦 فتح صفحة إدارة مخزون وأسعار البار بالكامل ←
+            </a>
+          </div>
         </div>
 
-        <!-- Buyer Name Input (Auto-filled or walk-in) -->
-        <div style="margin-bottom: 8px;">
-          <label style="display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
-            اسم المشتري
-          </label>
-          <input type="text" id="barBuyerNameInput" name="buyer_name" class="form-control" placeholder="اسم المتدرب أو اتركه كعميل نقدي..." style="height: 38px; font-size: 0.9rem;">
-        </div>
-
-        <!-- Phone Number Input (Required for Unpaid!) -->
-        <div id="barBuyerPhoneBox">
-          <label style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
-            <span>
-              رقم الهاتف 
-              <span id="barPhoneRequiredBadge" style="color: #ef4444; font-weight: 900; display: none;">* (إجباري عند الشراء بالآجل)</span>
-            </span>
-            <span id="barPhoneHint" style="font-size: 0.72rem; color: #a78bfa;">11 رقم (متابعة وتحصيل)</span>
-          </label>
-          <input type="tel" id="barBuyerPhoneInput" name="buyer_phone" class="form-control" placeholder="مثال: 01012345678" style="height: 38px; font-size: 0.95rem; direction: ltr; text-align: right;" oninput="validateBarPhoneLive()">
-          <div id="barPhoneErrorMsg" style="display: none; color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 4px;"></div>
-        </div>
-      </div>
-
-      <!-- Payment Status Toggle: تم الدفع vs لم يدفع (آجل) -->
-      <div>
-        <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">
-          حالة الدفع *
-        </label>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <label id="lbl-status-paid" style="border: 2px solid #10b981; background: rgba(16, 185, 129, 0.12); padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.15s ease;">
-            <input type="radio" name="payment_status" value="paid" checked onchange="toggleBarPaymentStatus()" style="display: none;">
-            <span style="color: #10b981; font-weight: 900; font-size: 0.95rem; display: block;">✅ تم الدفع الآن</span>
-            <small style="color: var(--text-muted); font-size: 0.76rem;">تسجيل فوري بالخزينة</small>
-          </label>
-
-          <label id="lbl-status-unpaid" style="border: 2px solid rgba(255,255,255,0.15); background: var(--bg-surface-subtle); padding: 12px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.15s ease;">
-            <input type="radio" name="payment_status" value="unpaid" onchange="toggleBarPaymentStatus()" style="display: none;">
-            <span style="color: #c084fc; font-weight: 900; font-size: 0.95rem; display: block;">⏳ لم يدفع (آجل)</span>
-            <small style="color: var(--text-muted); font-size: 0.76rem;">هيدفع بعد ما يخلص التمرين (يتطلب رقم هاتف)</small>
-          </label>
-        </div>
-      </div>
-
-      <!-- Payment Method (shown if paid) -->
-      <div id="barPaymentMethodBox">
-        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">طريقة الدفع</label>
-        <select name="payment_method" class="form-control" style="height: 40px;">
-          {% for pm in payment_methods %}
-            <option value="{{ pm.name }}">{{ pm.name }}</option>
-          {% empty %}
-            <option value="نقدي">نقدي</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <!-- Notes field -->
-      <div>
-        <input type="text" name="notes" class="form-control" placeholder="ملاحظة إضافية (اختياري)..." style="height: 38px; font-size: 0.85rem;">
-      </div>
-
-      <!-- Total Price Live Calculation Strip -->
-      <div style="background: rgba(168, 241, 75, 0.1); border: 1.5px solid rgba(168, 241, 75, 0.35); border-radius: 10px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">المبلغ الإجمالي للطلب:</span>
-        <strong id="barSaleTotalText" style="color: #A8F14B; font-size: 1.35rem; font-weight: 900;">0.00 ج.م</strong>
-      </div>
-
-      <!-- Submit Button -->
-      <div style="display: flex; gap: 10px; margin-top: 6px;">
-        <button type="submit" id="barSubmitSaleBtn" class="btn btn-primary" style="flex: 1; min-height: 48px; font-size: 1.05rem; font-weight: 900; justify-content: center; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-color: #0284c7;">
-          ✓ تسجيل العملية فوراً
-        </button>
-        <button type="button" onclick="closeBarSaleModal()" class="btn btn-secondary" style="min-height: 48px;">
-          إلغاء
-        </button>
-      </div>
-
-      <div style="text-align: center; margin-top: 4px;">
-        <a href="{% url 'payments:bar_inventory' %}" style="color: #38bdf8; font-size: 0.84rem; text-decoration: none; font-weight: 800;">
-          📦 فتح صفحة إدارة مخزون وأسعار البار بالكامل ←
-        </a>
       </div>
     </form>
   </div>
@@ -481,10 +503,14 @@ function highlightActiveProductChip(productId) {
   chips.forEach(chip => {
     if (chip.getAttribute('data-id') === String(productId)) {
       chip.style.borderColor = '#38bdf8';
-      chip.style.background = 'rgba(56, 189, 248, 0.18)';
+      chip.style.background = 'rgba(56, 189, 248, 0.2)';
+      chip.style.boxShadow = '0 0 16px rgba(56, 189, 248, 0.35)';
+      chip.style.transform = 'scale(1.03)';
     } else {
       chip.style.borderColor = 'rgba(255,255,255,0.12)';
-      chip.style.background = 'rgba(255,255,255,0.05)';
+      chip.style.background = 'rgba(255,255,255,0.04)';
+      chip.style.boxShadow = 'none';
+      chip.style.transform = 'scale(1)';
     }
   });
 }

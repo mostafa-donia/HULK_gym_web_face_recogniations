@@ -1,6 +1,164 @@
 ﻿{% extends "base.html" %}
 
-{% block title %}ملف العضو: {{ member.name }} — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
+{% block title %}ملف العضو: {{ member.name }} — {{ gym_profile.gym_name|default:"Systemize Gym" }}
+<!-- Modal 1: تجميد الاشتراك -->
+<div id="freeze-subscription-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10000; justify-content: center; align-items: center; padding: 18px;">
+  <div style="background: var(--bg-card); border: 1.5px solid #38bdf8; border-radius: 18px; width: 100%; max-width: 520px; padding: 24px; box-shadow: var(--shadow-lg);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.6rem;">❄️</span>
+        <h3 style="color: var(--text-main); font-size: 1.25rem; font-weight: 800; margin: 0;">تجميد / إيقاف الاشتراك مؤقتاً</h3>
+      </div>
+      <button type="button" onclick="closeFreezeModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">✕</button>
+    </div>
+
+    <form method="post" action="{% url 'members:member_freeze' member.id %}">
+      {% csrf_token %}
+      <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+        <div style="font-size: 0.95rem; color: var(--text-main); font-weight: 700; margin-bottom: 4px;">
+          العضو: <strong style="color: #38bdf8;">{{ member.name }}</strong>
+        </div>
+        <div style="font-size: 0.9rem; color: var(--text-secondary);">
+          الأيام المتبقية في الاشتراك: <strong style="color: #A8F14B; font-size: 1.15rem;">{{ days_left }} يوم</strong>
+        </div>
+        <small style="color: var(--text-muted); display: block; margin-top: 6px; font-size: 0.8rem;">
+          ℹ️ سيتم إيقاف الاشتراك فوراً وتجميد العد التنازلي، وعند استئنافه سيتم إضافة هذه الأيام ({{ days_left }} يوم) بدءاً من تاريخ الاستئناف.
+        </small>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label" style="font-weight: 700; margin-bottom: 6px; display: block; color: var(--text-main);">سبب التجميد (اختياري)</label>
+        <input type="text" name="reason" class="form-control" placeholder="مثال: سفر، ظروف عمل، إصابة مرضية..." style="height: 42px;">
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1; background: #0284c7; border-color: #0284c7; font-weight: 800; min-height: 44px; font-size: 1rem;">
+          ❄️ تأكيد تجميد الاشتراك
+        </button>
+        <button type="button" onclick="closeFreezeModal()" class="btn btn-secondary" style="min-height: 44px;">
+          إلغاء
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal 2: إلغاء الاشتراك واسترداد الفلوس -->
+<div id="cancel-refund-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10000; justify-content: center; align-items: center; padding: 18px;">
+  <div style="background: var(--bg-card); border: 1.5px solid #f59e0b; border-radius: 18px; width: 100%; max-width: 540px; padding: 24px; box-shadow: var(--shadow-lg);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.6rem;">↩️</span>
+        <h3 style="color: var(--text-main); font-size: 1.25rem; font-weight: 800; margin: 0;">إلغاء الاشتراك واسترداد المبلغ</h3>
+      </div>
+      <button type="button" onclick="closeCancelRefundModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">✕</button>
+    </div>
+
+    <form method="post" action="{% url 'members:member_cancel_refund' member.id %}">
+      {% csrf_token %}
+      <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+        <div style="font-size: 0.95rem; color: var(--text-main); font-weight: 700; margin-bottom: 4px;">
+          العضو: <strong style="color: #f59e0b;">{{ member.name }}</strong>
+        </div>
+        <div style="font-size: 0.9rem; color: var(--text-secondary);">
+          المبلغ المسدد حالياً: <strong style="color: #A8F14B; font-size: 1.15rem;">{{ member.current_paid }} {{ gym_profile.currency|default:"ج" }}</strong>
+        </div>
+        <small style="color: #fca5a5; display: block; margin-top: 6px; font-size: 0.8rem; font-weight: 700;">
+          ⚠️ سيتم خصم هذا المبلغ من الخزينة اليومية كأن الاشتراك لم يُدفع، وسيتحول العضو فوراً إلى منتهي الصلاحية.
+        </small>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label" style="font-weight: 700; margin-bottom: 6px; display: block; color: var(--text-main);">المبلغ المسترد (ج.م) *</label>
+        <input type="number" step="0.01" name="refund_amount" value="{{ member.current_paid }}" max="{{ member.current_paid }}" min="0" required class="form-control" style="height: 44px; font-weight: 800; font-size: 1.15rem; color: #ef4444; text-align: center;">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label" style="font-weight: 700; margin-bottom: 6px; display: block; color: var(--text-main);">طريقة استرداد المبلغ</label>
+        <select name="payment_method" class="form-control" style="height: 42px; font-weight: 700;">
+          <option value="نقدي" selected>نقدي (من الخزينة النقدية)</option>
+          <option value="انستا باي">انستا باي</option>
+          <option value="محفظة الكترونية">محفظة الكترونية</option>
+          <option value="فيزا">فيزا</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label" style="font-weight: 700; margin-bottom: 6px; display: block; color: var(--text-main);">سبب الإلغاء والاسترداد</label>
+        <input type="text" name="reason" class="form-control" placeholder="مثال: اللاعب غير راضٍ / ظرف طارئ..." style="height: 42px;">
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1; background: #dc2626; border-color: #dc2626; font-weight: 800; min-height: 44px; font-size: 1rem;">
+          ↩️ تأكيد الإلغاء واسترداد الفلوس
+        </button>
+        <button type="button" onclick="closeCancelRefundModal()" class="btn btn-secondary" style="min-height: 44px;">
+          تراجع
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal 3: حذف العضو نهائياً -->
+<div id="delete-member-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10000; justify-content: center; align-items: center; padding: 18px;">
+  <div style="background: var(--bg-card); border: 2px solid #ef4444; border-radius: 18px; width: 100%; max-width: 500px; padding: 24px; box-shadow: var(--shadow-lg);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.6rem;">🗑️</span>
+        <h3 style="color: #ef4444; font-size: 1.25rem; font-weight: 900; margin: 0;">حذف العضو نهائياً</h3>
+      </div>
+      <button type="button" onclick="closeDeleteMemberModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">✕</button>
+    </div>
+
+    <form method="post" action="{% url 'members:member_delete' member.id %}">
+      {% csrf_token %}
+      <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 12px; padding: 16px; margin-bottom: 18px;">
+        <strong style="color: #f87171; font-size: 1rem; display: block; margin-bottom: 6px;">
+          هل أنت متأكد تماماً من حذف هذا العضو؟
+        </strong>
+        <p style="color: var(--text-main); font-size: 0.92rem; margin: 0 0 8px 0;">
+          العضو: <b>{{ member.name }}</b> (كود: {{ member.member_id }})
+        </p>
+        <small style="color: var(--text-muted); font-size: 0.8rem; display: block;">
+          سيتم مسح بيانات العضو وبصمته وسجلات حضوره بالكامل. هذا الإجراء لا يمكن التراجع عنه.
+        </small>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1; background: #b91c1c; border-color: #b91c1c; font-weight: 900; min-height: 44px; font-size: 1rem;">
+          🗑️ نعم، مسح العضو نهائياً
+        </button>
+        <button type="button" onclick="closeDeleteMemberModal()" class="btn btn-secondary" style="min-height: 44px;">
+          إلغاء
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openFreezeModal() {
+  document.getElementById('freeze-subscription-modal').style.display = 'flex';
+}
+function closeFreezeModal() {
+  document.getElementById('freeze-subscription-modal').style.display = 'none';
+}
+function openCancelRefundModal() {
+  document.getElementById('cancel-refund-modal').style.display = 'flex';
+}
+function closeCancelRefundModal() {
+  document.getElementById('cancel-refund-modal').style.display = 'none';
+}
+function openDeleteMemberModal() {
+  document.getElementById('delete-member-modal').style.display = 'flex';
+}
+function closeDeleteMemberModal() {
+  document.getElementById('delete-member-modal').style.display = 'none';
+}
+</script>
+
+{% endblock %}
 
 {% block content %}
 <div style="display: flex; flex-direction: column; gap: 24px;">
@@ -93,33 +251,82 @@
       </div>
 
       <!-- Right side: Fast Actions -->
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
         
         <!-- Fast Pay / Renew via Smart Operations -->
-        <a href="{% url 'members:smart_operations' %}?term={{ member.mobile|default:member.name }}" class="btn btn-primary btn-sm" style="padding: 8px 18px;">
-          تجديد / دفع فوري
+        <a href="{% url 'members:smart_operations' %}?term={{ member.mobile|default:member.name }}" class="btn btn-primary btn-sm" style="padding: 8px 16px; font-weight: 800;">
+          ⚡ تجديد / دفع فوري
         </a>
 
+        <!-- Freeze / Unfreeze Button -->
+        {% if member.is_frozen %}
+          <form method="post" action="{% url 'members:member_unfreeze' member.id %}" style="display: inline; margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm" style="background: rgba(56, 189, 248, 0.2); border: 1.5px solid #38bdf8; color: #38bdf8; font-weight: 800; padding: 8px 14px; border-radius: 8px; cursor: pointer;" onclick="return confirm('استئناف الاشتراك وإضافة الأيام المحفوظة ({{ member.frozen_days_remaining }} يوم) بدءاً من اليوم؟');">
+              ▶️ استئناف الاشتراك ({{ member.frozen_days_remaining }} يوم)
+            </button>
+          </form>
+        {% elif is_active %}
+          <button type="button" onclick="openFreezeModal()" class="btn btn-sm" style="background: rgba(56, 189, 248, 0.12); border: 1.5px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-weight: 800; padding: 8px 14px; border-radius: 8px; cursor: pointer;">
+            ❄️ إيقاف / تجميد
+          </button>
+        {% endif %}
+
+        <!-- Cancel & Refund Button -->
+        {% if is_active or member.current_paid > 0 %}
+          <button type="button" onclick="openCancelRefundModal()" class="btn btn-sm" style="background: rgba(245, 158, 11, 0.12); border: 1.5px solid rgba(245, 158, 11, 0.4); color: #f59e0b; font-weight: 800; padding: 8px 14px; border-radius: 8px; cursor: pointer;">
+            ↩️ إلغاء واسترداد
+          </button>
+        {% endif %}
+
         <!-- Face Enrollment Modal Button -->
-        <button type="button" onclick="openFaceModal()" class="btn btn-sm" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;">
-          {% if member.has_face_enrolled %}إدارة بصمة الوجه{% else %}تسجيل بصمة الوجه{% endif %}
+        <button type="button" onclick="openFaceModal()" class="btn btn-sm" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); color: #10b981; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px;">
+          {% if member.has_face_enrolled %}إدارة الوجه{% else %}تسجيل الوجه{% endif %}
         </button>
 
         <!-- Direct WhatsApp Chat -->
         {% if member.mobile %}
-          <a href="https://wa.me/2{{ member.mobile }}" target="_blank" class="btn btn-sm" style="background: rgba(37, 211, 102, 0.15); border: 1px solid rgba(37, 211, 102, 0.35); color: #25D366; text-decoration: none;">
+          <a href="https://wa.me/2{{ member.mobile }}" target="_blank" class="btn btn-sm" style="background: rgba(37, 211, 102, 0.15); border: 1px solid rgba(37, 211, 102, 0.35); color: #25D366; text-decoration: none; padding: 8px 14px; border-radius: 8px;">
             واتساب
           </a>
         {% endif %}
 
         <!-- Edit Profile -->
-        <a href="{% url 'members:member_edit' member.id %}" class="btn btn-secondary btn-sm">
-          تعديل البيانات
+        <a href="{% url 'members:member_edit' member.id %}" class="btn btn-secondary btn-sm" style="padding: 8px 14px; border-radius: 8px;">
+          تعديل
         </a>
+
+        <!-- Delete Member Button -->
+        <button type="button" onclick="openDeleteMemberModal()" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.12); border: 1.5px solid rgba(239, 68, 68, 0.35); color: #ef4444; font-weight: 800; padding: 8px 14px; border-radius: 8px; cursor: pointer;" title="مسح العضو نهائياً من النظام">
+          🗑️ مسح
+        </button>
 
       </div>
 
     </div>
+
+    <!-- Active Frozen Banner (If Subscription is Frozen) -->
+    {% if member.is_frozen %}
+    <div style="background: rgba(56, 189, 248, 0.14); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 14px 20px; margin-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 2rem;">❄️</span>
+        <div>
+          <strong style="color: #38bdf8; font-size: 1.1rem; display: block;">الاشتراك مجمّد وموقوف مؤقتاً</strong>
+          <span style="color: var(--text-secondary); font-size: 0.88rem;">
+            الأيام المتبقية المحفوظة: <b style="color: #A8F14B; font-size: 1rem;">{{ member.frozen_days_remaining }} يوم</b> 
+            {% if member.frozen_at %}• تجمّد بتاريخ {{ member.frozen_at|date:"Y-m-d H:i" }}{% endif %}
+            {% if member.frozen_reason %}• السبب: {{ member.frozen_reason }}{% endif %}
+          </span>
+        </div>
+      </div>
+      <form method="post" action="{% url 'members:member_unfreeze' member.id %}" style="margin: 0;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm" style="background: #0284c7; color: #fff; font-weight: 800; padding: 10px 22px; border-radius: 8px; border: none; cursor: pointer;" onclick="return confirm('استئناف اشتراك العضو وإضافة الأيام المحفوظة ({{ member.frozen_days_remaining }} يوم) بدءاً من اليوم؟');">
+          ▶️ استئناف الاشتراك الآن
+        </button>
+      </form>
+    </div>
+    {% endif %}
 
     {% if member.notes %}
     <div style="margin-top: 16px; padding: 12px 16px; background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.9rem;">

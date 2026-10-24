@@ -166,6 +166,29 @@
           <small style="color: #657786; font-size: 0.78rem;">المبلغ المحصل الآن بالخزينة</small>
         </div>
 
+        <!-- طريقة الدفع (4 خيارات معتمدة فقط) -->
+        <div>
+          <label style="display: block; color: var(--text-muted); font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">
+            طريقة الدفع *
+          </label>
+          <select 
+            id="field-payment-method" 
+            name="payment_method" 
+            class="form-control"
+            style="background: var(--bg-card); border: 1.5px solid #38bdf8; height: 50px; font-size: 1rem; font-weight: 800; color: #38bdf8;"
+          >
+            {% for pm in payment_methods %}
+              <option value="{{ pm.name }}">{{ pm.name }}</option>
+            {% empty %}
+              <option value="نقدي" selected>نقدي</option>
+              <option value="انستا باي">انستا باي</option>
+              <option value="محفظة الكترونية">محفظة الكترونية</option>
+              <option value="فيزا">فيزا</option>
+            {% endfor %}
+          </select>
+          <small style="color: #657786; font-size: 0.78rem;">توجيه الإيراد بحساب الخزينة</small>
+        </div>
+
         <!-- أيام السماح (Grace days when payment is not full) -->
         <div>
           <label style="display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 0.95rem; font-weight: 700; margin-bottom: 6px;">

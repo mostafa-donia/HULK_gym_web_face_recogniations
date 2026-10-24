@@ -26,6 +26,7 @@ class Plan(models.Model):
 class MemberStatus(models.TextChoices):
     ACTIVE = "active", "نشط"
     EXPIRED = "expired", "منتهي"
+    FROZEN = "frozen", "موقوف مؤقتاً (مجمّد)"
 
 
 class Member(models.Model):
@@ -88,6 +89,12 @@ class Member(models.Model):
     renewal_discount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), verbose_name="خصم التجديد المعتمد")
     discount_enabled = models.BooleanField(default=False, verbose_name="تفعيل خصم التجديد تلقائياً")
 
+    # Subscription Freeze / Pause Feature
+    is_frozen = models.BooleanField(default=False, db_index=True, verbose_name="مجمد مؤقتاً")
+    frozen_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ التجميد")
+    frozen_days_remaining = models.IntegerField(default=0, verbose_name="الأيام المتبقية المحفوظة")
+    frozen_reason = models.CharField(max_length=255, blank=True, default="", verbose_name="سبب إيقاف الاشتراك")
+
     # Multi-branch support
     branch = models.ForeignKey(
         "core.Branch",
@@ -111,10 +118,12 @@ class Member(models.Model):
 
     @property
     def phone(self) -> str:
-        return self.mobile
+        return self.mobile or ""
 
     @property
     def days_left(self) -> int:
+        if self.is_frozen:
+            return self.frozen_days_remaining
         if not self.last_subscription_end:
             return 0
         delta = (self.last_subscription_end - date.today()).days
@@ -122,6 +131,8 @@ class Member(models.Model):
 
     @property
     def is_active(self) -> bool:
+        if self.is_frozen:
+            return False
         if not self.last_subscription_end:
             return False
         return self.last_subscription_end >= date.today()
@@ -140,8 +151,11 @@ class Member(models.Model):
         return self.check_ins
 
     def refresh_status(self, save: bool = True) -> str:
-        """Dynamically reconciles active/expired state against today's date."""
-        new_status = MemberStatus.ACTIVE if self.is_active else MemberStatus.EXPIRED
+        """Dynamically reconciles active/expired/frozen state against today's date."""
+        if self.is_frozen:
+            new_status = MemberStatus.FROZEN
+        else:
+            new_status = MemberStatus.ACTIVE if self.is_active else MemberStatus.EXPIRED
         if self.current_status != new_status:
             self.current_status = new_status
             if save:
@@ -189,6 +203,17 @@ class Member(models.Model):
 
         if current_time is None:
             current_time = timezone.now()
+
+        # 0. Frozen check
+        if self.is_frozen:
+            return {
+                "allowed": False,
+                "reason_code": "frozen",
+                "reason": f"الاشتراك موقوف مؤقتاً (مجمّد). الأيام المتبقية المحفوظة: {self.frozen_days_remaining} يوم.",
+                "window_hours_left": None,
+                "first_entry_time": None,
+                "first_entry_time_str": None,
+            }
 
         # 1. Base active check
         if not self.is_active:
@@ -316,6 +341,10 @@ class Subscription(models.Model):
         verbose_name="نوع العملية",
     )
     payment_method = models.CharField(max_length=50, blank=True, verbose_name="طريقة الدفع")
+    is_frozen = models.BooleanField(default=False, verbose_name="مجمد")
+    is_cancelled = models.BooleanField(default=False, verbose_name="ملغي ومسترد")
+    cancelled_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ الإلغاء")
+    refund_amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), verbose_name="مبلغ الاسترداد")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

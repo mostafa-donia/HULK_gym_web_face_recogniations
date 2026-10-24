@@ -385,6 +385,10 @@ def prepare_due_reminders() -> dict:
     queued_count = 0
 
     for m in members:
+        # Skip frozen / paused subscriptions from receiving expiry reminders
+        if getattr(m, "is_frozen", False):
+            continue
+
         m.refresh_status()
         end_date = m.last_subscription_end
         if not end_date:
@@ -392,9 +396,18 @@ def prepare_due_reminders() -> dict:
 
         days_diff = (end_date - today).days
 
+        # Deduplication check: Ensure member never receives multiple reminder messages on the same day
+        already_reminded_today = WhatsAppMessage.objects.filter(
+            mobile=m.mobile,
+            created_at__date=today,
+            msg_type__in=[MessageType.REMINDER_3, MessageType.REMINDER_1, MessageType.EXPIRED],
+        ).exists()
+        if already_reminded_today:
+            continue
+
         from apps.messaging.message_bank import get_random_message, format_template_safely
 
-        # 1. Reminder 3 days before
+        # 1. Reminder exactly 3 days before
         if days_diff == 3:
             dedup = f"{m.mobile}_rem3_{end_date.isoformat()}"
             ctx = {
@@ -424,7 +437,7 @@ def prepare_due_reminders() -> dict:
             if created and created.status == MessageStatus.PENDING:
                 queued_count += 1
 
-        # 2. Reminder 1 day before
+        # 2. Reminder exactly 1 day before
         elif days_diff == 1:
             dedup = f"{m.mobile}_rem1_{end_date.isoformat()}"
             ctx = {
@@ -454,8 +467,8 @@ def prepare_due_reminders() -> dict:
             if created and created.status == MessageStatus.PENDING:
                 queued_count += 1
 
-        # 3. Already expired (50 diverse Egyptian Arabic variations)
-        elif days_diff <= 0:
+        # 3. Subscription Expired (Today or Yesterday only - avoids spamming members expired long ago)
+        elif days_diff in [0, -1]:
             dedup = f"{m.mobile}_exp_{end_date.isoformat()}"
             ctx = {
                 "name": m.name,
@@ -466,11 +479,9 @@ def prepare_due_reminders() -> dict:
                 "phone": m.mobile,
             }
             custom_tmpl = (profile.expired_message_template or "").strip()
-            # If randomizing is enabled (default True), pick from the 50 variations
             if getattr(profile, "whatsapp_randomize_templates", True):
                 msg_text = get_random_message("expired", ctx)
             elif custom_tmpl and "---" in custom_tmpl:
-                # Support multi-line variations separated by '---'
                 choices = [c.strip() for c in custom_tmpl.split("---") if c.strip()]
                 msg_text = format_template_safely(random.choice(choices), ctx)
             elif custom_tmpl:
@@ -499,7 +510,7 @@ from apps.core.text_utils import reshape_arabic
 def generate_manager_report_image_file(report_data: dict) -> str:
     """
     Renders an official executive graphical summary card (PNG) for the manager daily report.
-    Saved to media/reports/manager_report_{date}_{ts}.png and returns the relative path.
+    Comprehensive 1180px card containing Financial KPIs, Subscriptions, Gym AI Forecasts & Audit Log.
     """
     reports_dir = Path(settings.MEDIA_ROOT) / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
@@ -509,159 +520,172 @@ def generate_manager_report_image_file(report_data: dict) -> str:
     png_filename = f"manager_report_{date_str}_{ts}.png"
     png_file_path = reports_dir / png_filename
 
-    w, h = 820, 1060
-    # Rich dark background
-    img = Image.new("RGB", (w, h), color=(11, 15, 25))
+    w, h = 820, 1180
+    img = Image.new("RGB", (w, h), color=(10, 15, 26))
     draw = ImageDraw.Draw(img)
 
     # Outer border / card
-    draw.rounded_rectangle([20, 20, w - 20, h - 20], radius=18, fill=(15, 23, 42), outline=(30, 41, 59), width=2)
+    draw.rounded_rectangle([18, 18, w - 18, h - 18], radius=20, fill=(15, 23, 42), outline=(30, 41, 59), width=2)
 
     from apps.core.text_utils import get_arabic_font, reshape_arabic
-    font_badge = get_arabic_font(size=16, bold=True)
+    font_badge = get_arabic_font(size=15, bold=True)
     font_title = get_arabic_font(size=26, bold=True)
-    font_sub = get_arabic_font(size=16, bold=False)
-    font_card_val = get_arabic_font(size=22, bold=True)
-    font_card_lbl = get_arabic_font(size=16, bold=True)
-    font_card_sub = get_arabic_font(size=16, bold=False)
-    font_sec_title = get_arabic_font(size=18, bold=True)
-    font_normal = get_arabic_font(size=16, bold=False)
-    font_sm = get_arabic_font(size=16, bold=False)
+    font_sub = get_arabic_font(size=15, bold=False)
+    font_card_val = get_arabic_font(size=20, bold=True)
+    font_card_lbl = get_arabic_font(size=14, bold=True)
+    font_card_sub = get_arabic_font(size=13, bold=False)
+    font_sec_title = get_arabic_font(size=17, bold=True)
+    font_normal = get_arabic_font(size=14, bold=False)
+    font_sm = get_arabic_font(size=13, bold=False)
 
     profile = GymProfile.get_solo()
-    gym_name = profile.gym_name or report_data.get("gym_name", "سينا سبا | CINA SPA")
+    gym_name = profile.gym_name or report_data.get("gym_name", "Systemize Gym")
     curr = profile.currency or report_data.get("currency", "ج.م")
-    theme_rgb = profile.get_primary_color_rgb() if hasattr(profile, "get_primary_color_rgb") else (225, 29, 72)
-
-    # Paste Logo if available
-    logo_p = profile.get_logo_image_path() if hasattr(profile, "get_logo_image_path") else None
-    if logo_p and os.path.exists(logo_p):
-        try:
-            lim = Image.open(logo_p).convert("RGBA")
-            lim.thumbnail((70, 70), Image.Resampling.LANCZOS)
-            img.paste(lim, (50, 40), lim)
-        except Exception:
-            pass
+    theme_rgb = profile.get_primary_color_rgb() if hasattr(profile, "get_primary_color_rgb") else (56, 189, 248)
 
     # Header Top Badge
-    draw.rounded_rectangle([w // 2 - 130, 35, w // 2 + 130, 65], radius=8, fill=(30, 41, 59), outline=(71, 85, 105), width=1)
-    draw.text((w // 2, 50), reshape_arabic("تقرير الإدارة اليومي الرسمي"), fill=(251, 191, 36), font=font_badge, anchor="mm")
+    draw.rounded_rectangle([w // 2 - 140, 32, w // 2 + 140, 62], radius=8, fill=(30, 41, 59), outline=(71, 85, 105), width=1)
+    draw.text((w // 2, 47), reshape_arabic("تقرير الإدارة الشامل وتوجيهات الذكاء"), fill=(251, 191, 36), font=font_badge, anchor="mm")
 
-    # Gym Name with dynamic theme color
-    draw.text((w // 2, 95), reshape_arabic(gym_name), fill=theme_rgb, font=font_title, anchor="mm")
+    # Gym Name
+    draw.text((w // 2, 88), reshape_arabic(gym_name), fill=theme_rgb, font=font_title, anchor="mm")
 
-    # Date & Time
+    # Date & Time Meta
     time_str = report_data.get("time_str", "")
-    meta_str = reshape_arabic(f"تاريخ التقرير: {date_str}   |   وقت الإعداد: {time_str}")
-    draw.text((w // 2, 130), meta_str, fill=(148, 163, 184), font=font_sub, anchor="mm")
+    meta_str = reshape_arabic(f"تاريخ التقرير: {date_str}   |   توقيت الإعداد: {time_str}")
+    draw.text((w // 2, 120), meta_str, fill=(148, 163, 184), font=font_sub, anchor="mm")
 
-    draw.line([(40, 155), (w - 40, 155)], fill=(30, 41, 59), width=1)
+    draw.line([(35, 142), (w - 35, 142)], fill=(30, 41, 59), width=1)
 
     # 4 Key Financial Stats (2x2 grid)
-    card_w = (w - 100) // 2  # 360 px each
-    card_h = 100
+    card_w = (w - 90) // 2  # 365 px each
+    card_h = 88
 
     cards = [
         {
-            "x": 50,
-            "y": 175,
+            "x": 35,
+            "y": 156,
             "bg": (20, 83, 45),
             "border": (34, 197, 94),
             "lbl": "إجمالي الإيرادات اليوم",
             "val": f"{report_data.get('total_revenue', 0)} {curr}",
-            "sub": f"عدد عمليات التحصيل: {report_data.get('total_payments_count', 0)}",
+            "sub": f"العمليات: {report_data.get('total_payments_count', 0)} (نقدي {report_data.get('cash_collected', 0)} ج)",
             "val_color": (74, 222, 128),
         },
         {
-            "x": 50 + card_w + 20,
-            "y": 175,
+            "x": 35 + card_w + 20,
+            "y": 156,
             "bg": (127, 29, 29),
             "border": (239, 68, 68),
-            "lbl": "إجمالي المصروفات اليوم",
+            "lbl": "المصروفات اليومية",
             "val": f"{report_data.get('total_expenses', 0)} {curr}",
-            "sub": "مصروفات الصالة المسجلة",
+            "sub": "فواتير ومصاريف الصالة المسجلة",
             "val_color": (248, 113, 113),
         },
         {
-            "x": 50,
-            "y": 290,
+            "x": 35,
+            "y": 254,
             "bg": (6, 78, 59),
             "border": (16, 185, 129),
             "lbl": "صافي الخزينة النقدية",
             "val": f"{report_data.get('net_cash', 0)} {curr}",
-            "sub": "الإيراد بعد خصم المصروفات",
+            "sub": f"المحصل بالخزينة مطروحاً منه المصاريف",
             "val_color": (52, 211, 153),
         },
         {
-            "x": 50 + card_w + 20,
-            "y": 290,
+            "x": 35 + card_w + 20,
+            "y": 254,
             "bg": (120, 53, 15),
             "border": (245, 158, 11),
-            "lbl": "الخصومات الممنوحة اليوم",
-            "val": f"{report_data.get('total_discounts_today', 0)} {curr}",
-            "sub": "إجمالي الخصم على الاشتراكات",
+            "lbl": "مبيعات وأرباح البار اليوم",
+            "val": f"{report_data.get('bar_sales_today', 0)} {curr}",
+            "sub": f"المكسب الفعلي للبار: +{report_data.get('bar_profit_today', 0)} {curr}",
             "val_color": (251, 191, 36),
         },
     ]
 
     for c in cards:
         draw.rounded_rectangle([c["x"], c["y"], c["x"] + card_w, c["y"] + card_h], radius=12, fill=c["bg"], outline=c["border"], width=1)
-        draw.text((c["x"] + card_w // 2, c["y"] + 24), reshape_arabic(c["lbl"]), fill=(226, 232, 240), font=font_card_lbl, anchor="mm")
-        draw.text((c["x"] + card_w // 2, c["y"] + 54), reshape_arabic(c["val"]), fill=c["val_color"], font=font_card_val, anchor="mm")
-        draw.text((c["x"] + card_w // 2, c["y"] + 82), reshape_arabic(c["sub"]), fill=(203, 213, 225), font=font_card_sub, anchor="mm")
+        draw.text((c["x"] + card_w // 2, c["y"] + 20), reshape_arabic(c["lbl"]), fill=(226, 232, 240), font=font_card_lbl, anchor="mm")
+        draw.text((c["x"] + card_w // 2, c["y"] + 46), reshape_arabic(c["val"]), fill=c["val_color"], font=font_card_val, anchor="mm")
+        draw.text((c["x"] + card_w // 2, c["y"] + 70), reshape_arabic(c["sub"]), fill=(203, 213, 225), font=font_card_sub, anchor="mm")
 
-    # Section: Subscriptions & Private Sessions
-    sy = 415
-    draw.rounded_rectangle([40, sy, w - 40, sy + 250], radius=14, fill=(17, 24, 39), outline=(51, 65, 85), width=1)
-    draw.text((w - 60, sy + 22), reshape_arabic("🏋️‍♂️ إحصائيات الاشتراكات والتدريب الخاص:"), fill=(56, 189, 248), font=font_sec_title, anchor="ra")
-
-    draw.line([(55, sy + 48), (w - 55, sy + 48)], fill=(30, 41, 59), width=1)
+    # Section 1: Subscriptions, Private Coaching & Attendance
+    sy = 356
+    draw.rounded_rectangle([35, sy, w - 35, sy + 230], radius=14, fill=(17, 24, 39), outline=(51, 65, 85), width=1)
+    draw.text((w - 55, sy + 18), reshape_arabic("🏋️‍♂️ نشاط العضويات والتدريب الخاص والحضور اليوم:"), fill=(56, 189, 248), font=font_sec_title, anchor="ra")
+    draw.line([(50, sy + 40), (w - 50, sy + 40)], fill=(30, 41, 59), width=1)
 
     items = [
-        ("اشتراكات جديدة ومجددة اليوم:", f"{report_data.get('new_subs_count', 0)} اشتراك"),
-        ("حالات الدخول ببصمة الوجه اليوم:", f"{report_data.get('checkins_today_count', 0)} دخول"),
-        ("اشتراكات التدريب الخاص (Private):", f"{report_data.get('private_count', 0)} اشتراك"),
-        ("إجمالي دخل اشتراكات البرايفت:", f"{report_data.get('private_rev', 0)} {curr}"),
-        ("عمولة الكباتن المستحقة عن اليوم:", f"{report_data.get('coaches_comm', 0)} {curr}"),
-        ("صافي دخل الصالة من البرايفت:", f"{report_data.get('gym_private_profit', 0)} {curr}"),
+        ("اشتراكات جديدة ومجددة مسجلة اليوم:", f"{report_data.get('new_subs_count', 0)} اشتراك"),
+        ("حالات الدخول ببصمة الوجه المعتمدة اليوم:", f"{report_data.get('checkins_today_count', 0)} حضور"),
+        ("اشتراكات التدريب الخاص (Private VIP):", f"{report_data.get('private_count', 0)} مشترك (دخل: {report_data.get('private_rev', 0)} {curr})"),
+        ("عمولة الكباتن المستحقة عن البرايفت:", f"{report_data.get('coaches_comm', 0)} {curr}"),
+        ("صافي دخل الصالة من التدريب الخاص:", f"{report_data.get('gym_private_profit', 0)} {curr}"),
+        ("إجمالي الخصومات الممنوحة اليوم:", f"{report_data.get('total_discounts_today', 0)} {curr}"),
     ]
-
-    iy = sy + 62
+    iy = sy + 52
     for label, val in items:
-        draw.text((w - 65, iy), reshape_arabic(label), fill=(203, 213, 225), font=font_normal, anchor="ra")
-        draw.text((65, iy), reshape_arabic(val), fill=(255, 255, 255), font=font_card_lbl)
-        iy += 30
+        draw.text((w - 55, iy), reshape_arabic(label), fill=(203, 213, 225), font=font_normal, anchor="ra")
+        draw.text((55, iy), reshape_arabic(val), fill=(255, 255, 255), font=font_card_lbl)
+        iy += 28
 
-    # Section: Sensitive Operations & Audit
-    ay = 685
-    draw.rounded_rectangle([40, ay, w - 40, ay + 260], radius=14, fill=(17, 24, 39), outline=(51, 65, 85), width=1)
-    draw.text((w - 60, ay + 22), reshape_arabic("🚨 رقابة العمليات الحساسة والتعديلات اليوم:"), fill=(251, 146, 60), font=font_sec_title, anchor="ra")
+    # Section 2: Gym AI Strategic Recommendations & End-of-Month Forecast
+    gy = 600
+    draw.rounded_rectangle([35, gy, w - 35, gy + 270], radius=14, fill=(15, 23, 42), outline=(14, 165, 233), width=2)
+    draw.text((w - 55, gy + 20), reshape_arabic("🤖 مختصر توصيات وتوقعات ذكاء الجيم (Gym AI Insights):"), fill=(56, 189, 248), font=font_sec_title, anchor="ra")
+    draw.line([(50, gy + 44), (w - 50, gy + 44)], fill=(30, 41, 59), width=1)
 
-    draw.line([(55, ay + 48), (w - 55, ay + 48)], fill=(30, 41, 59), width=1)
+    ai_lines = report_data.get("ai_lines", [])
+    if not ai_lines:
+        ai_lines = [
+            f"توقعات إغلاق الشهر: {report_data.get('projected_month_rev', '0')} {curr} بمعدل نمو متوازن.",
+            f"متابعة التجديد: {report_data.get('expiring_soon_count', 0)} لاعب تنتهي اشتراكاتهم خلال الأسبوع.",
+            "إدارة الإعلانات: أفضل أوقات النشر بين 5:00 م و 9:00 م لاستهداف ذروة الموظفين.",
+            "إعادة جذب المتوقفين: فرصة إطلاق حملة واتساب مخصصة لأعضاء الشهر الماضي.",
+        ]
+    line_y = gy + 58
+    for line in ai_lines[:5]:
+        draw.text((w - 55, line_y), reshape_arabic(f"⚡ {line}"), fill=(226, 232, 240), font=font_sm, anchor="ra")
+        line_y += 38
+
+    # Section 3: Audit & Sensitive Operations
+    ay = 884
+    draw.rounded_rectangle([35, ay, w - 35, ay + 230], radius=14, fill=(17, 24, 39), outline=(51, 65, 85), width=1)
+    draw.text((w - 55, ay + 18), reshape_arabic("🚨 رقابة العمليات والتعديلات الإدارية اليوم:"), fill=(251, 146, 60), font=font_sec_title, anchor="ra")
+    draw.line([(50, ay + 40), (w - 50, ay + 40)], fill=(30, 41, 59), width=1)
 
     audit_lines = report_data.get("audit_lines", [])
     if not audit_lines:
-        draw.text((w // 2, ay + 140), reshape_arabic("لا توجد عمليات حساسة أو استثنائية مسجلة اليوم ✓"), fill=(148, 163, 184), font=font_normal, anchor="mm")
+        draw.text((w // 2, ay + 110), reshape_arabic("لا توجد عمليات استثنائية أو تعديلات حساسة مسجلة اليوم ✓"), fill=(148, 163, 184), font=font_normal, anchor="mm")
     else:
-        line_y = ay + 65
-        for line in audit_lines[:5]:
-            draw.text((w - 65, line_y), reshape_arabic(f"• {line}"), fill=(226, 232, 240), font=font_sm, anchor="ra")
-            line_y += 36
+        line_y = ay + 52
+        for line in audit_lines[:4]:
+            draw.text((w - 55, line_y), reshape_arabic(f"• {line}"), fill=(226, 232, 240), font=font_sm, anchor="ra")
+            line_y += 32
 
     # Footer
-    footer_text = reshape_arabic(f"تم إعداد وتوثيق التقرير آلياً بواسطة نظام {gym_name} الذكي")
-    draw.text((w // 2, h - 35), footer_text, fill=(100, 116, 139), font=font_sm, anchor="mm")
+    footer_text = reshape_arabic(f"نظام {gym_name} الذكي — إصدار الرقابة والإدارة التنفيذية المتطورة")
+    draw.text((w // 2, h - 30), footer_text, fill=(100, 116, 139), font=font_sm, anchor="mm")
 
     img.save(str(png_file_path), "PNG")
-    logger.info("Generated manager report PNG at: %s", png_file_path)
+    logger.info("Generated comprehensive manager report PNG at: %s", png_file_path)
     return f"reports/{png_filename}"
 
 
 def prepare_manager_daily_report():
     """
     Compiles today's complete managerial report, renders executive graphics summary image,
-    and enqueues to the manager mobile number with the report image attached.
+    includes Gym AI forecasting and recommendations, and enqueues to the manager mobile number.
     """
+    import calendar
+    from datetime import date, timedelta
+    from decimal import Decimal
+    from apps.core.models import GymProfile, AuditLog
+    from apps.payments.models import Payment, PaymentOperationType, BarSale
+    from apps.expenses.models import Expense
+    from apps.members.models import Member, Subscription, CheckInEvent
+
     profile = GymProfile.get_solo()
     manager_phone = profile.manager_mobile
     if not manager_phone:
@@ -669,85 +693,131 @@ def prepare_manager_daily_report():
 
     today = timezone.localdate()
     gym_name = profile.gym_name or "Systemize Gym"
+    curr = profile.currency or "ج.م"
 
-    # Daily financials
+    # Daily Financials
     payments_today = Payment.objects.filter(created_at__date=today)
-    total_revenue = payments_today.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+    pos_revenue = payments_today.filter(amount__gt=0).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+    neg_refunds = payments_today.filter(amount__lt=0).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+    total_revenue = pos_revenue + neg_refunds
     total_payments_count = payments_today.count()
+
+    # Breakdown by Payment Method
+    cash_collected = payments_today.filter(payment_method__icontains="نقدي").aggregate(s=Sum("amount"))["s"] or Decimal("0.00")
+    instapay_collected = payments_today.filter(payment_method__icontains="انستا").aggregate(s=Sum("amount"))["s"] or Decimal("0.00")
+    wallet_collected = payments_today.filter(payment_method__icontains="محفظ").aggregate(s=Sum("amount"))["s"] or Decimal("0.00")
+    visa_collected = payments_today.filter(payment_method__icontains="فيزا").aggregate(s=Sum("amount"))["s"] or Decimal("0.00")
 
     # Expenses
     expenses_today = Expense.objects.filter(expense_date=today)
     total_expenses = expenses_today.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
-
-    # Net Cash
     net_cash = total_revenue - total_expenses
 
-    # Subscriptions today
+    # Bar Sales & Realized Profit Today
+    bar_sales_today_qs = BarSale.objects.filter(paid_at__date=today, is_paid=True).select_related("product")
+    bar_sales_today = bar_sales_today_qs.aggregate(s=Sum("total_price"))["s"] or Decimal("0.00")
+    bar_profit_today = Decimal("0.00")
+    for s in bar_sales_today_qs:
+        if s.product:
+            cost = s.product.cost_price or Decimal("0.00")
+            bar_profit_today += (s.unit_price - cost) * s.quantity
+
+    # Subscriptions & Discounts
     subs_today = Subscription.objects.filter(created_at__date=today)
     new_subs_count = subs_today.count()
-
-    # Discounts given today
     total_discounts_today = subs_today.aggregate(total=Sum("discount"))["total"] or Decimal("0.00")
 
-    # Private Add-on details today
+    # Private Coaching
     private_subs_today = subs_today.filter(has_private=True)
     private_count = private_subs_today.count()
     private_rev = private_subs_today.aggregate(total=Sum("private_price"))["total"] or Decimal("0.00")
     coaches_comm = private_subs_today.aggregate(total=Sum("coach_commission_amount"))["total"] or Decimal("0.00")
     gym_private_profit = private_rev - coaches_comm
 
-    # Audit Events today (Discounts, private toggling, price changes)
-    from apps.core.models import AuditLog
-    audit_today = AuditLog.objects.filter(created_at__date=today).order_by("-created_at")[:10]
-    audit_count = audit_today.count()
-    audit_section = ""
-    audit_lines = []
-    if audit_count > 0:
-        for a in audit_today:
-            time_str = timezone.localtime(a.created_at).strftime("%H:%M")
-            user_str = a.user.username if a.user else "النظام"
-            audit_lines.append(f"• [{time_str}] {a.details} (بواسطة: {user_str})")
-        audit_section = (
-            f"━━━━━━━━━━━━━━━━━━━\n"
-            f"🚨 *رقابة العمليات والتعديلات الحساسة ({audit_count})*:\n"
-            + "\n".join(audit_lines) + "\n"
-        )
-
     # Checkins today
-    from apps.members.models import CheckInEvent
     checkins_today_count = CheckInEvent.objects.filter(checked_in_at__date=today).count()
 
+    # Gym AI Intelligence & Run-Rate Forecasting
+    cur_year = today.year
+    cur_month = today.month
+    _, total_days_in_month = calendar.monthrange(cur_year, cur_month)
+    days_passed = max(1, today.day)
+    mtd_rev = Payment.objects.filter(
+        created_at__year=cur_year, created_at__month=cur_month, amount__gt=0
+    ).aggregate(s=Sum("amount"))["s"] or Decimal("0.00")
+    daily_velocity = mtd_rev / Decimal(str(days_passed))
+    projected_month_rev = (daily_velocity * Decimal(str(total_days_in_month))).quantize(Decimal("0.00"))
+
+    expiring_soon_count = Member.objects.filter(
+        last_subscription_end__gte=today,
+        last_subscription_end__lte=today + timedelta(days=7),
+    ).count()
+
+    active_members_count = Member.objects.filter(last_subscription_end__gte=today).count()
+    expired_members_count = Member.objects.filter(Q(last_subscription_end__lt=today) | Q(last_subscription_end__isnull=True)).count()
+
+    ai_lines = [
+        f"توقعات إغلاق الشهر: {projected_month_rev} {curr} (بمعدل سرعة {daily_velocity:.0f} {curr}/يوم)",
+        f"متابعة التجديد: {expiring_soon_count} لاعب تنتهي باقاتهم خلال 7 أيام (فرصة تحصيل مبكر)",
+        f"مؤشر النشاط: {active_members_count} عضو نشط مقابل {expired_members_count} غير مجدد (يوصى بحملة استعادة)",
+        f"توجيه الإعلانات: تكثيف الترويج بين 5:00 م - 9:00 م لتحقيق أعلى عائد تحويلي",
+    ]
+
+    # Audit Events today
+    audit_today = AuditLog.objects.filter(created_at__date=today).order_by("-created_at")[:8]
+    audit_count = audit_today.count()
+    audit_section = ""
+    if audit_count > 0:
+        alines = [f"• [{timezone.localtime(a.created_at).strftime('%H:%M')}] {a.details}" for a in audit_today[:5]]
+        audit_section = (
+            f"━━━━━━━━━━━━━━━━━━━\n"
+            f"🚨 *رقابة العمليات والتعديلات ({audit_count})*:\n"
+            + "\n".join(alines) + "\n"
+        )
+
+    refund_str = f" (تتضمن مستردات ملغاة: {neg_refunds} {curr})" if neg_refunds < 0 else ""
+
     report_text = (
-        f"📊 *تقرير الإدارة اليومي - {gym_name}*\n"
+        f"📊 *تقرير الإدارة اليومي الشامل - {gym_name}*\n"
         f"📅 التاريخ: {today.strftime('%Y-%m-%d')}\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
-        f"💰 إجمالي الإيرادات اليوم: {total_revenue} ج.م ({total_payments_count} عملية دفع)\n"
-        f"📉 إجمالي المصروفات اليوم: {total_expenses} ج.م\n"
-        f"💵 صافي الخزينة: {net_cash} ج.م\n"
+        f"💰 *إجمالي الإيرادات اليوم*: {total_revenue} {curr}{refund_str}\n"
+        f"   └ 💵 نقدي (Cash): {cash_collected} {curr}\n"
+        f"   └ ⚡ انستا باي (InstaPay): {instapay_collected} {curr}\n"
+        f"   └ 📱 محافظ إلكترونية: {wallet_collected} {curr}\n"
+        f"   └ 💳 فيزا / بنكي: {visa_collected} {curr}\n"
+        f"📉 *إجمالي المصروفات اليوم*: {total_expenses} {curr}\n"
+        f"💵 *صافي الخزينة الفعلي*: {net_cash} {curr}\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
-        f"🎁 إجمالي الخصومات الممنوحة اليوم: {total_discounts_today} ج.م\n"
-        f"🏋️‍♂️ اشتراكات التدريب الخاص (Private): {private_count}\n"
-        f"   └ إيراد البرايفت: {private_rev} ج.م\n"
-        f"   └ عمولة الكباتن المستحقة: {coaches_comm} ج.م\n"
-        f"   └ صافي دخل الصالة من البرايفت: {gym_private_profit} ج.م\n"
+        f"🥤 *مبيعات البار اليوم*: {bar_sales_today} {curr} (صافي ربح: +{bar_profit_today} {curr})\n"
+        f"🏋️‍♂️ *اشتراكات التدريب الخاص (Private)*: {private_count} مشترك (دخل: {private_rev} {curr})\n"
+        f"   └ عمولة الكباتن: {coaches_comm} {curr} | صافي دخل الصالة: {gym_private_profit} {curr}\n"
+        f"🎁 *الخصومات الممنوحة اليوم*: {total_discounts_today} {curr}\n"
+        f"📝 *عضويات جديدة ومجددة*: {new_subs_count} | 👤 *دخول بصمة الوجه*: {checkins_today_count}\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
-        f"📝 اشتراكات جديدة / مجددة اليوم: {new_subs_count}\n"
-        f"👤 حالات الدخول ببصمة الوجه اليوم: {checkins_today_count}\n"
+        f"🤖 *مختصر توصيات وتوقعات ذكاء الجيم (AI Insights)*:\n"
+        f"• 🎯 توقعات إغلاق الشهر الجاري: *{projected_month_rev} {curr}*\n"
+        f"• ⚠️ أعضاء أوشكت اشتراكاتهم على الانتهاء: *{expiring_soon_count} لاعب* (تواصل مبكر)\n"
+        f"• 👥 قوام الصالة: *{active_members_count} نشط* مقابل *{expired_members_count} منتهي*\n"
+        f"• 📢 توجيه الحملات: أنسب توقيت لترويج العروض بين 5:00 م - 9:00 م\n"
         f"{audit_section}"
         f"━━━━━━━━━━━━━━━━━━━\n"
-        f"مرفق بطاقة التقرير والإحصائيات الرسمية 📊\n"
+        f"مرفق بطاقة التقرير التنفيذية الشاملة 📊\n"
         f"تم إعداد التقرير تلقائياً بواسطة نظام {gym_name} الذكي."
     )
 
     report_data = {
         "gym_name": gym_name,
-        "currency": profile.currency or "ج.م",
+        "currency": curr,
         "date_str": today.strftime("%Y-%m-%d"),
         "time_str": timezone.localtime().strftime("%I:%M %p"),
         "total_revenue": total_revenue,
         "total_payments_count": total_payments_count,
         "total_expenses": total_expenses,
         "net_cash": net_cash,
+        "cash_collected": cash_collected,
+        "bar_sales_today": bar_sales_today,
+        "bar_profit_today": bar_profit_today,
         "total_discounts_today": total_discounts_today,
         "new_subs_count": new_subs_count,
         "private_count": private_count,
@@ -755,6 +825,9 @@ def prepare_manager_daily_report():
         "coaches_comm": coaches_comm,
         "gym_private_profit": gym_private_profit,
         "checkins_today_count": checkins_today_count,
+        "projected_month_rev": projected_month_rev,
+        "expiring_soon_count": expiring_soon_count,
+        "ai_lines": ai_lines,
         "audit_lines": [f"[{timezone.localtime(a.created_at).strftime('%H:%M')}] {a.details} ({a.user.username if a.user else 'النظام'})" for a in audit_today[:5]],
     }
 

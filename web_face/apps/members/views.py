@@ -1221,3 +1221,233 @@ def member_search_api(request):
 
     return JsonResponse({"results": results})
 
+
+@login_required
+def member_freeze_view(request, member_id):
+    """Freeze/pause an active subscription, saving remaining days for later resumption."""
+    if request.method != "POST":
+        return redirect("members:member_detail", member_id=member_id)
+
+    member = get_object_or_404(Member, id=member_id)
+    if not member.is_active or not member.last_subscription_end:
+        messages.error(request, "لا يمكن تجميد اشتراك منتهي أو مجمد مسبقاً.")
+        return redirect("members:member_detail", member_id=member.id)
+
+    today = date.today()
+    remaining_days = (member.last_subscription_end - today).days
+    if remaining_days <= 0:
+        messages.error(request, "لا توجد أيام متبقية في الاشتراك الحالي لتجميدها.")
+        return redirect("members:member_detail", member_id=member.id)
+
+    reason = request.POST.get("reason", "").strip() or "طلب من العضو"
+    with transaction.atomic():
+        member.is_frozen = True
+        member.frozen_at = timezone.now()
+        member.frozen_days_remaining = remaining_days
+        member.frozen_reason = reason
+        member.current_status = MemberStatus.FROZEN
+        member.save()
+
+        # Update latest active subscription
+        latest_sub = member.subscriptions.order_by("-id").first()
+        if latest_sub:
+            latest_sub.is_frozen = True
+            latest_sub.save(update_fields=["is_frozen"])
+
+        log_audit_event(
+            user=request.user,
+            action="subscription_frozen",
+            target_model="Member",
+            target_id=str(member.id),
+            details=f"تجميد اشتراك العضو {member.name} مع حفظ {remaining_days} يوم متبقية. السبب: {reason}",
+        )
+
+    messages.success(request, f"تم تجميد اشتراك العضو {member.name} بنجاح! تم حفظ {remaining_days} يوماً متبقية للاستئناف لاحقاً.")
+    return redirect("members:member_detail", member_id=member.id)
+
+
+@login_required
+def member_unfreeze_view(request, member_id):
+    """Resume a frozen subscription, adding back saved remaining days starting today."""
+    if request.method != "POST":
+        return redirect("members:member_detail", member_id=member_id)
+
+    member = get_object_or_404(Member, id=member_id)
+    if not member.is_frozen:
+        messages.error(request, "هذا الاشتراك غير مجمّد.")
+        return redirect("members:member_detail", member_id=member.id)
+
+    saved_days = member.frozen_days_remaining
+    if saved_days <= 0:
+        saved_days = 1
+
+    new_end_date = date.today() + timedelta(days=saved_days)
+
+    with transaction.atomic():
+        member.is_frozen = False
+        member.frozen_at = None
+        member.last_subscription_end = new_end_date
+        member.frozen_days_remaining = 0
+        member.frozen_reason = ""
+        member.current_status = MemberStatus.ACTIVE
+        member.save()
+
+        latest_sub = member.subscriptions.order_by("-id").first()
+        if latest_sub:
+            latest_sub.is_frozen = False
+            latest_sub.end_date = new_end_date
+            latest_sub.save(update_fields=["is_frozen", "end_date"])
+
+        log_audit_event(
+            user=request.user,
+            action="subscription_unfrozen",
+            target_model="Member",
+            target_id=str(member.id),
+            details=f"استئناف اشتراك العضو {member.name}. تم مد الصلاحية حتى {new_end_date} بإضافة {saved_days} يوم.",
+        )
+
+    messages.success(request, f"تم استئناف اشتراك العضو {member.name} بنجاح! تاريخ النهاية الجديد: {new_end_date} (بإضافة {saved_days} يوم).")
+    return redirect("members:member_detail", member_id=member.id)
+
+
+@login_required
+def member_cancel_refund_view(request, member_id):
+    """Cancel subscription and refund paid amount from treasury as if it was never paid."""
+    if request.method != "POST":
+        return redirect("members:member_detail", member_id=member_id)
+
+    member = get_object_or_404(Member, id=member_id)
+    latest_sub = member.subscriptions.filter(is_cancelled=False).order_by("-id").first()
+    if not latest_sub:
+        messages.error(request, "لا يوجد اشتراك نشط أو قابل للإلغاء لهذا العضو.")
+        return redirect("members:member_detail", member_id=member.id)
+
+    try:
+        refund_amount = Decimal(request.POST.get("refund_amount", str(latest_sub.paid_amount)))
+    except Exception:
+        refund_amount = latest_sub.paid_amount
+
+    if refund_amount <= Decimal("0.00"):
+        refund_amount = latest_sub.paid_amount
+
+    reason = request.POST.get("reason", "").strip() or "إلغاء واسترداد كامل الاشتراك بناء على طلب العضو"
+    payment_method = request.POST.get("payment_method", latest_sub.payment_method or "نقدي")
+
+    with transaction.atomic():
+        # 1. Create a negative refund payment record in Payments so daily treasury and cash registers are decremented
+        pay_id, inv_no = generate_next_payment_id()
+        Payment.objects.create(
+            payment_id=pay_id,
+            invoice_no=inv_no,
+            operation_type=PaymentOperationType.REFUND,
+            member=member,
+            subscription=latest_sub,
+            amount=-refund_amount,
+            payment_method=payment_method,
+            notes=f"استرداد نقدي لإلغاء اشتراك ({latest_sub.plan_name}). السبب: {reason}",
+            created_by=request.user,
+            branch=member.branch,
+        )
+
+        # 2. Mark subscription as cancelled
+        latest_sub.is_cancelled = True
+        latest_sub.cancelled_at = timezone.now()
+        latest_sub.refund_amount = refund_amount
+        latest_sub.save(update_fields=["is_cancelled", "cancelled_at", "refund_amount"])
+
+        # 3. Revert member financial and status state
+        member.current_paid = max(Decimal("0.00"), member.current_paid - refund_amount)
+        member.total_paid = max(Decimal("0.00"), member.total_paid - refund_amount)
+        member.current_remaining = Decimal("0.00")
+        member.last_subscription_end = date.today() - timedelta(days=1)
+        member.current_status = MemberStatus.EXPIRED
+        member.is_frozen = False
+        member.frozen_days_remaining = 0
+        member.save()
+
+        log_audit_event(
+            user=request.user,
+            action="subscription_cancelled_refunded",
+            target_model="Member",
+            target_id=str(member.id),
+            details=f"إلغاء اشتراك {latest_sub.plan_name} واسترداد {refund_amount} ج.م من الخزينة. السبب: {reason}",
+            amount=refund_amount,
+        )
+
+    messages.success(request, f"تم إلغاء الاشتراك واسترداد مبلغ {refund_amount} ج.م من الخزينة بنجاح، وأصبح العضو منتهي الاشتراك وكأنه لم يدفع.")
+    return redirect("members:member_detail", member_id=member.id)
+
+
+@login_required
+def member_delete_view(request, member_id):
+    """Safely delete member and clean up related records with security logging."""
+    if request.method != "POST":
+        return redirect("members:member_detail", member_id=member_id)
+
+    member = get_object_or_404(Member, id=member_id)
+    member_name = member.name
+    mid = member.member_id
+
+    with transaction.atomic():
+        log_audit_event(
+            user=request.user,
+            action="member_deleted",
+            target_model="Member",
+            target_id=str(mid),
+            details=f"حذف العضو نهائياً من النظام: {member_name} ({mid}) بواسطة {request.user.username}",
+        )
+        # Delete face photo file if exists
+        if member.face_photo:
+            try:
+                member.face_photo.delete(save=False)
+            except Exception:
+                pass
+        member.delete()
+
+    messages.success(request, f"تم مسح العضو {member_name} ({mid}) وكافة سجلاته نهائياً من النظام.")
+    return redirect("members:member_list")
+
+
+@login_required
+def plan_edit_view(request, plan_id):
+    """Edit an existing subscription plan."""
+    plan = get_object_or_404(Plan, id=plan_id)
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        price = Decimal(request.POST.get("price", "0.00") or "0.00")
+        duration_days = int(request.POST.get("duration_days", "30") or "30")
+        months = int(request.POST.get("months", "1") or "1")
+        frequency = request.POST.get("frequency", "كل يوم").strip()
+        is_active = request.POST.get("is_active") in ["1", "on", "true"]
+
+        if name:
+            plan.name = name
+            plan.price = price
+            plan.duration_days = duration_days
+            plan.months = months
+            plan.frequency = frequency
+            plan.is_active = is_active
+            plan.save()
+            messages.success(request, f"تم تحديث باقة '{plan.name}' بنجاح.")
+        else:
+            messages.error(request, "اسم الباقة مطلوب.")
+    return redirect("core:settings")
+
+
+@login_required
+def plan_delete_view(request, plan_id):
+    """Delete a plan if not referenced, or deactivate it safely."""
+    if request.method != "POST":
+        return redirect("core:settings")
+    plan = get_object_or_404(Plan, id=plan_id)
+    plan_name = plan.name
+    if Subscription.objects.filter(plan=plan).exists():
+        plan.is_active = False
+        plan.save()
+        messages.warning(request, f"تم تعطيل باقة '{plan_name}' بدلاً من مسحها لوجود اشتراكات مسجلة سابقة عليها.")
+    else:
+        plan.delete()
+        messages.success(request, f"تم مسح باقة '{plan_name}' نهائياً بنجاح.")
+    return redirect("core:settings")
+
+

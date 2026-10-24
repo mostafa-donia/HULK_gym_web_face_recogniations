@@ -52,27 +52,92 @@ def generate_next_payment_id() -> tuple[str, str]:
 @login_required
 def payment_list_view(request):
     from apps.core.branch_context import filter_by_branch
+    import datetime
 
     query = request.GET.get("q", "").strip()
-    payments = Payment.objects.select_related("member").all().order_by("-created_at")
+    operation_type = request.GET.get("operation_type", "").strip()
+    payment_method = request.GET.get("payment_method", "").strip()
+    period = request.GET.get("period", "").strip()
+    date_from_str = request.GET.get("date_from", "").strip()
+    date_to_str = request.GET.get("date_to", "").strip()
+
+    payments = Payment.objects.select_related("member", "created_by").all().order_by("-created_at")
     payments = filter_by_branch(payments, request)
 
+    # 1. Search Query Filter
     if query:
         payments = payments.filter(
             Q(invoice_no__icontains=query)
             | Q(payment_id__icontains=query)
             | Q(member__name__icontains=query)
             | Q(member__mobile__icontains=query)
+            | Q(notes__icontains=query)
         )
+
+    # 2. Operation Type Filter
+    if operation_type and operation_type != "all":
+        payments = payments.filter(operation_type=operation_type)
+
+    # 3. Payment Method Filter
+    if payment_method and payment_method != "all":
+        payments = payments.filter(payment_method=payment_method)
+
+    # 4. Time / Period Filter
+    today = timezone.localdate()
+    if period == "today":
+        payments = payments.filter(created_at__date=today)
+    elif period == "yesterday":
+        payments = payments.filter(created_at__date=today - datetime.timedelta(days=1))
+    elif period == "this_week":
+        start_week = today - datetime.timedelta(days=today.weekday())
+        payments = payments.filter(created_at__date__gte=start_week)
+    elif period == "this_month":
+        payments = payments.filter(created_at__year=today.year, created_at__month=today.month)
+    else:
+        # Custom dates if provided
+        if date_from_str:
+            try:
+                df = datetime.datetime.strptime(date_from_str, "%Y-%m-%d").date()
+                payments = payments.filter(created_at__date__gte=df)
+            except ValueError:
+                pass
+        if date_to_str:
+            try:
+                dt = datetime.datetime.strptime(date_to_str, "%Y-%m-%d").date()
+                payments = payments.filter(created_at__date__lte=dt)
+            except ValueError:
+                pass
+
+    # Aggregates for filtered result
+    total_count = payments.count()
+    pos_sum = payments.filter(amount__gt=0).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+    neg_sum = payments.filter(amount__lt=0).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+    net_total = pos_sum + neg_sum
+
+    # Active payment methods for dropdown
+    active_methods = PaymentMethod.objects.filter(is_active=True).values_list("name", flat=True)
 
     paginator = Paginator(payments, 25)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
+    profile = GymProfile.get_solo()
+
     context = {
         "page_obj": page_obj,
         "query": query,
-        "total_count": payments.count(),
+        "operation_type": operation_type,
+        "payment_method": payment_method,
+        "period": period,
+        "date_from": date_from_str,
+        "date_to": date_to_str,
+        "total_count": total_count,
+        "pos_sum": pos_sum,
+        "neg_sum": abs(neg_sum),
+        "net_total": net_total,
+        "operation_choices": PaymentOperationType.choices,
+        "active_methods": list(active_methods) or ["نقدي", "انستا باي", "محفظة الكترونية", "فيزا"],
+        "gym_profile": profile,
     }
     return render(request, "payments/payment_list.html", context)
 
@@ -536,6 +601,24 @@ def bar_inventory_view(request):
         or Decimal("0.00")
     )
 
+    # 1. Bar Expenses in Expenses Ledger
+    from apps.expenses.models import Expense, ExpenseCategory
+    bar_cat = ExpenseCategory.objects.filter(name__icontains="بار").first()
+    if not bar_cat:
+        bar_cat = ExpenseCategory.objects.create(name="مشتريات ومصاريف البار", is_active=True)
+
+    bar_exp_qs = Expense.objects.filter(category=bar_cat)
+    if active_branch:
+        bar_exp_qs = bar_exp_qs.filter(branch=active_branch)
+    total_bar_expenses = bar_exp_qs.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+
+    # 2. Realized Actual Net Profit on Sold Products
+    realized_sales_profit = Decimal("0.00")
+    for s in base_paid.select_related("product"):
+        if s.product:
+            cost = s.product.cost_price or Decimal("0.00")
+            realized_sales_profit += (s.unit_price - cost) * s.quantity
+
     context = {
         "products": products,
         "page_obj": page_obj,
@@ -546,6 +629,8 @@ def bar_inventory_view(request):
         "unpaid_orders_count": unpaid_orders_count,
         "total_bar_revenue": total_bar_revenue,
         "today_bar_revenue": today_bar_revenue,
+        "total_bar_expenses": total_bar_expenses,
+        "realized_sales_profit": realized_sales_profit,
         "categories": BarProductCategory.choices,
         "payment_methods": PaymentMethod.objects.filter(is_active=True),
         "profile": GymProfile.get_solo(),
@@ -633,6 +718,38 @@ def bar_product_restock_view(request, product_id):
             messages.error(request, "الكمية المضافة يجب أن تكون أكبر من الصفر.")
 
     return redirect(request.META.get("HTTP_REFERER") or "payments:bar_inventory")
+
+
+@login_required
+def bar_product_delete_view(request, product_id):
+    """Delete or safely deactivate product from Bar inventory with audit logging."""
+    if request.method != "POST":
+        return redirect("payments:bar_inventory")
+
+    product = get_object_or_404(BarProduct, id=product_id)
+    name = product.name
+
+    if product.sales.exists():
+        product.is_active = False
+        product.stock_quantity = 0
+        product.save(update_fields=["is_active", "stock_quantity", "updated_at"])
+        AuditLog.log(
+            action_type="BAR_PRODUCT_DEACTIVATED",
+            description=f"تعطيل منتج بار لوجود مبيعات سابقة له: {name}",
+            user=request.user,
+        )
+        messages.warning(request, f"تم تعطيل المنتج '{name}' وإخفاؤه من البار لوجود فواتير مبيعات سابقة له حفاظاً على سلامة الحسابات.")
+    else:
+        product.delete()
+        AuditLog.log(
+            action_type="BAR_PRODUCT_DELETED",
+            description=f"حذف منتج بار نهائياً: {name}",
+            user=request.user,
+        )
+        messages.success(request, f"✓ تم حذف المنتج '{name}' نهائياً من مخزون البار بنجاح.")
+
+    return redirect("payments:bar_inventory")
+
 
 
 

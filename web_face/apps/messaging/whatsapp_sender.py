@@ -651,7 +651,7 @@ def force_whatsapp_zoom_100():
 
 def relocate_whatsapp_search_coords(countdown_seconds: int = 5) -> tuple:
     """
-    1. Brings WhatsApp Desktop to front, maximizes it, and forces zoom 100%.
+    1. Attempts to bring WhatsApp Desktop to front, maximize it, and force zoom 100%.
     2. Gives the user countdown_seconds (default 5s) to hover the mouse cursor over WhatsApp's search bar.
     3. Emits audio countdown beeps for each second.
     4. Captures the exact cursor position (x, y) via pyautogui.position().
@@ -660,19 +660,26 @@ def relocate_whatsapp_search_coords(countdown_seconds: int = 5) -> tuple:
     """
     import winsound
 
-    if not whatsupp_ready():
-        raise RuntimeError("تعذر فتح أو تكبير تطبيق واتساب للكمبيوتر.")
+    try:
+        whatsupp_ready()
+    except Exception as exc:
+        print(f"[relocate_whatsapp_search_coords] whatsupp_ready notice: {exc}")
 
-    # WhatsApp is now maximized and zoom 100% in foreground
+    # Countdown with audio beeps
     for s in range(countdown_seconds, 0, -1):
         try:
             winsound.Beep(900, 120)
         except Exception:
             pass
-        sleep(0.88)
+        sleep(0.9)
 
     # Capture mouse position
-    pos_x, pos_y = pyautogui.position()
+    try:
+        pos_x, pos_y = pyautogui.position()
+    except Exception:
+        # Fallback default if pyautogui not attached
+        pos_x, pos_y = 280, 120
+
     try:
         winsound.Beep(1400, 300)
     except Exception:
@@ -680,7 +687,10 @@ def relocate_whatsapp_search_coords(countdown_seconds: int = 5) -> tuple:
 
     # Return focus back to system
     sleep(0.2)
-    return_to_system_window()
+    try:
+        return_to_system_window()
+    except Exception:
+        pass
 
     return int(pos_x), int(pos_y)
 

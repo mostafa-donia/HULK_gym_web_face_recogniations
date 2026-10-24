@@ -18,6 +18,7 @@ urlpatterns = [
     path("bar/cancel/<int:sale_id>/", views.bar_cancel_sale_view, name="bar_cancel_sale"),
     path("bar/product/create/", views.bar_product_create_view, name="bar_product_create"),
     path("bar/product/<int:product_id>/edit/", views.bar_product_edit_view, name="bar_product_edit"),
+    path("bar/product/<int:product_id>/delete/", views.bar_product_delete_view, name="bar_product_delete"),
     path("bar/product/<int:product_id>/restock/", views.bar_product_restock_view, name="bar_product_restock"),
 ]
 

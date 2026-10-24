@@ -1,39 +1,125 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
-{% block title %}سجل المصروفات — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
+{% block title %}سجل المصروفات وسندات الصرف — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
 {% block content %}
 <div style="display: flex; flex-direction: column; gap: 20px;">
 
   <!-- Header -->
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(15, 23, 42, 0) 100%); padding: 18px 24px; border-radius: 16px; border: 1px solid rgba(239, 68, 68, 0.18);">
     <div>
-      <h1 style="color: var(--text-main); font-size: 1.6rem; font-weight: 900; margin: 0 0 4px 0; letter-spacing: -0.3px;">
-        سجل مصروفات الصالة
-      </h1>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">
-        إدارة وتتبع المصروفات التشغيلية، الإيجار، الفواتير، الصيانة، والمستلزمات
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.8rem;">💸</span>
+        <h1 style="color: var(--text-main); font-size: 1.6rem; font-weight: 900; margin: 0; letter-spacing: -0.3px;">
+          سجل المصروفات وسندات الصرف
+        </h1>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin: 6px 0 0 0;">
+        إدارة ومتابعة خروج النقدية من الخزينة، مشتريات البار، الرواتب والأجور، الإيجار، والفواتير التشغيلية
       </p>
     </div>
-    <a href="{% url 'expenses:expense_create' %}" class="btn btn-primary btn-sm">
-      + تسجيل مصروف جديد
-    </a>
+    
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <button type="button" onclick="openNewExpenseModal()" class="btn btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; font-weight: 800; border: none; padding: 10px 22px; border-radius: 10px; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35); cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <span>+</span> تسجيل مصروف جديد
+      </button>
+    </div>
   </div>
 
-  <!-- Total Summary Card -->
-  <div class="card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0; padding: 18px 24px; flex-wrap: wrap; gap: 12px;">
-    <span style="font-size: 1.05rem; font-weight: 700; color: var(--text-secondary);">إجمالي المصروفات في الفترة المحددة:</span>
-    <span style="font-size: 1.6rem; font-weight: 900; color: var(--accent-red); font-variant-numeric: tabular-nums;">
-      {{ total_amount }} <small style="font-size: 0.85rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج.م" }}</small>
-    </span>
+  <!-- 5 Segmented Breakdown KPI Cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px;">
+    <!-- 1. Total Expenses -->
+    <div class="card" style="margin-bottom: 0; padding: 16px 20px; background: rgba(239, 68, 68, 0.07); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 0.85rem; font-weight: 700; color: #f87171;">إجمالي المصروفات</span>
+        <span style="font-size: 1.1rem;">🧾</span>
+      </div>
+      <div style="font-size: 1.65rem; font-weight: 900; color: #ef4444; font-variant-numeric: tabular-nums;">
+        {{ total_amount|floatformat:2 }} <small style="font-size: 0.8rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+        {{ total_count }} سند صرف بالفترة
+      </div>
+    </div>
+
+    <!-- 2. Bar Supplies & Expenses -->
+    <div class="card" style="margin-bottom: 0; padding: 16px 20px; background: rgba(56, 189, 248, 0.07); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 0.85rem; font-weight: 700; color: #38bdf8;">مشتريات ومصاريف البار</span>
+        <span style="font-size: 1.1rem;">🥤</span>
+      </div>
+      <div style="font-size: 1.65rem; font-weight: 900; color: #38bdf8; font-variant-numeric: tabular-nums;">
+        {{ bar_expenses_total|floatformat:2 }} <small style="font-size: 0.8rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+        تكلفة بضاعة ومستلزمات البار
+      </div>
+    </div>
+
+    <!-- 3. Salaries & Coaching Commissions -->
+    <div class="card" style="margin-bottom: 0; padding: 16px 20px; background: rgba(245, 158, 11, 0.07); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 0.85rem; font-weight: 700; color: #fbbf24;">رواتب وأجور وعمولات</span>
+        <span style="font-size: 1.1rem;">👥</span>
+      </div>
+      <div style="font-size: 1.65rem; font-weight: 900; color: #f59e0b; font-variant-numeric: tabular-nums;">
+        {{ salaries_expenses_total|floatformat:2 }} <small style="font-size: 0.8rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+        مستحقات المدربين والموظفين
+      </div>
+    </div>
+
+    <!-- 4. Rent & Utilities -->
+    <div class="card" style="margin-bottom: 0; padding: 16px 20px; background: rgba(168, 85, 247, 0.07); border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 0.85rem; font-weight: 700; color: #c084fc;">إيجار وفواتير ومرافق</span>
+        <span style="font-size: 1.1rem;">🏢</span>
+      </div>
+      <div style="font-size: 1.65rem; font-weight: 900; color: #a855f7; font-variant-numeric: tabular-nums;">
+        {{ rent_utilities_total|floatformat:2 }} <small style="font-size: 0.8rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+        كهرباء، مياه، انترنت، وإيجار
+      </div>
+    </div>
+
+    <!-- 5. Maintenance & General Operations -->
+    <div class="card" style="margin-bottom: 0; padding: 16px 20px; background: rgba(34, 197, 94, 0.07); border: 1px solid rgba(34, 197, 94, 0.25); border-radius: 14px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 0.85rem; font-weight: 700; color: #4ade80;">صيانة ونظافة ومستلزمات</span>
+        <span style="font-size: 1.1rem;">🛠️</span>
+      </div>
+      <div style="font-size: 1.65rem; font-weight: 900; color: #22c55e; font-variant-numeric: tabular-nums;">
+        {{ maintenance_total|floatformat:2 }} <small style="font-size: 0.8rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+        إصلاحات، أدوات، ومشتريات صالة
+      </div>
+    </div>
   </div>
 
-  <!-- Filter Card -->
-  <div class="card" style="margin-bottom: 0; padding: 16px 20px;">
+  <!-- Filter & Segmentation Control Panel -->
+  <div class="card" style="margin-bottom: 0; padding: 18px 22px; border-radius: 14px;">
+    <!-- Quick Time Period Pills -->
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center;">
+      <span style="font-size: 0.85rem; font-weight: 800; color: var(--text-secondary); margin-left: 8px;">الفترة الزمنية:</span>
+      <a href="?period=today{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-sm {% if period == 'today' %}btn-primary{% else %}btn-secondary{% endif %}" style="border-radius: 20px; padding: 4px 14px; font-weight: 700; font-size: 0.82rem;">اليوم</a>
+      <a href="?period=yesterday{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-sm {% if period == 'yesterday' %}btn-primary{% else %}btn-secondary{% endif %}" style="border-radius: 20px; padding: 4px 14px; font-weight: 700; font-size: 0.82rem;">أمس</a>
+      <a href="?period=this_week{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-sm {% if period == 'this_week' %}btn-primary{% else %}btn-secondary{% endif %}" style="border-radius: 20px; padding: 4px 14px; font-weight: 700; font-size: 0.82rem;">هذا الأسبوع</a>
+      <a href="?period=this_month{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-sm {% if period == 'this_month' %}btn-primary{% else %}btn-secondary{% endif %}" style="border-radius: 20px; padding: 4px 14px; font-weight: 700; font-size: 0.82rem;">هذا الشهر</a>
+      <a href="?period=last_month{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-sm {% if period == 'last_month' %}btn-primary{% else %}btn-secondary{% endif %}" style="border-radius: 20px; padding: 4px 14px; font-weight: 700; font-size: 0.82rem;">الشهر الماضي</a>
+      <a href="?period=all{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-sm {% if period == 'all' %}btn-primary{% else %}btn-secondary{% endif %}" style="border-radius: 20px; padding: 4px 14px; font-weight: 700; font-size: 0.82rem;">الكل (كل السجلات)</a>
+    </div>
+
+    <!-- Filter Form -->
     <form method="get" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
-      <div style="flex: 1; min-width: 160px;">
-        <label class="form-label" style="font-size: 0.82rem;">التصنيف</label>
-        <select name="category" class="form-control" onchange="this.form.submit()">
+      <input type="hidden" name="period" value="{{ period }}">
+
+      <!-- Category Filter -->
+      <div style="flex: 1; min-width: 180px;">
+        <label class="form-label" style="font-size: 0.82rem; font-weight: 700;">نوع / تصنيف المصروف</label>
+        <select name="category" class="form-control" onchange="this.form.submit()" style="background: var(--bg-input); border-radius: 8px;">
           <option value="">جميع التصنيفات</option>
           {% for cat in categories %}
             <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
@@ -41,71 +127,207 @@
         </select>
       </div>
 
-      <div style="flex: 1; min-width: 140px;">
-        <label class="form-label" style="font-size: 0.82rem;">من تاريخ</label>
-        <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+      <!-- Search Query -->
+      <div style="flex: 1.2; min-width: 180px;">
+        <label class="form-label" style="font-size: 0.82rem; font-weight: 700;">بحث في البيان والوصف</label>
+        <input type="text" name="q" value="{{ search_q }}" placeholder="مثال: فاتورة، كابتن، قهوة، سباكة..." class="form-control" style="background: var(--bg-input); border-radius: 8px;">
       </div>
 
-      <div style="flex: 1; min-width: 140px;">
-        <label class="form-label" style="font-size: 0.82rem;">إلى تاريخ</label>
-        <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+      <!-- Date Range -->
+      <div style="flex: 1; min-width: 130px;">
+        <label class="form-label" style="font-size: 0.82rem; font-weight: 700;">من تاريخ</label>
+        <input type="date" name="start_date" value="{{ start_date }}" class="form-control" style="background: var(--bg-input); border-radius: 8px;">
       </div>
 
+      <div style="flex: 1; min-width: 130px;">
+        <label class="form-label" style="font-size: 0.82rem; font-weight: 700;">إلى تاريخ</label>
+        <input type="date" name="end_date" value="{{ end_date }}" class="form-control" style="background: var(--bg-input); border-radius: 8px;">
+      </div>
+
+      <!-- Filter Buttons -->
       <div style="display: flex; gap: 8px;">
-        <button type="submit" class="btn btn-secondary" style="height: 44px;">تطبيق الفلتر</button>
-        {% if selected_category or start_date or end_date %}
-          <a href="{% url 'expenses:expense_list' %}" class="btn btn-secondary" style="height: 44px; line-height: 42px; color: var(--accent-red);">إعادة ضبط</a>
+        <button type="submit" class="btn btn-secondary" style="height: 42px; border-radius: 8px; font-weight: 700; padding: 0 18px;">
+          🔍 تطبيق
+        </button>
+        {% if selected_category or start_date or end_date or search_q or period != 'this_month' %}
+          <a href="{% url 'expenses:expense_list' %}" class="btn btn-secondary" style="height: 42px; line-height: 40px; border-radius: 8px; color: #ef4444; font-weight: 700; padding: 0 14px;" title="إعادة ضبط الفلاتر">
+            ✕ إلغاء
+          </a>
         {% endif %}
       </div>
     </form>
   </div>
 
-  <!-- Full-Width Expenses Table -->
-  <div class="table-responsive">
-    
-    <div class="table-header-bar">
-      <span style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">قائمة سندات الصرف</span>
-      <span style="color: var(--text-muted); font-size: 0.82rem;">سندات الخروج النقدي من الخزينة المعتمدة</span>
+  <!-- Expenses Table -->
+  <div class="table-responsive" style="border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); background: var(--bg-card);">
+    <div style="padding: 14px 20px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <span style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;">
+        سندات الصرف المعتمدة ({{ total_count }} سند)
+      </span>
+      <span style="color: var(--text-muted); font-size: 0.82rem;">
+        تخصم هذه المبالغ مباشرة من صافي الخزينة التشغيلية
+      </span>
     </div>
 
-    <table class="dark-table">
+    <table class="dark-table" style="width: 100%; border-collapse: collapse;">
       <thead>
-        <tr>
-          <th>التصنيف</th>
-          <th style="text-align: left;">المبلغ</th>
-          <th>التاريخ</th>
-          <th>الوصف / التفاصيل</th>
-          <th>المسجل</th>
+        <tr style="background: var(--bg-input); border-bottom: 2px solid var(--border-color);">
+          <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">التاريخ والسند</th>
+          <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">التصنيف</th>
+          <th style="padding: 12px 16px; text-align: left; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">المبلغ المنصرف</th>
+          <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">البيان والتفاصيل</th>
+          <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">المسجل</th>
+          <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-weight: 700;">الإجراءات</th>
         </tr>
       </thead>
       <tbody>
         {% for exp in expenses %}
-          <tr>
-            <td>
-              <span class="badge badge-neutral" style="font-weight: 700;">
-                {{ exp.category.name }}
-              </span>
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+            <td style="padding: 12px 16px; font-variant-numeric: tabular-nums; color: var(--text-secondary); font-size: 0.88rem;">
+              <span style="font-weight: 700; color: var(--text-main);">{{ exp.expense_date|date:"Y-m-d" }}</span>
+              <div style="font-size: 0.74rem; color: var(--text-muted);">{{ exp.created_at|date:"h:i A" }}</div>
             </td>
-            <td style="text-align: left; color: var(--accent-red); font-weight: 800; font-size: 1.05rem; font-variant-numeric: tabular-nums;">
-              {{ exp.amount }} <small style="font-size: 0.76rem; color: var(--text-muted);">{{ gym_profile.currency }}</small>
+
+            <td style="padding: 12px 16px;">
+              {% if "بار" in exp.category.name %}
+                <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.8rem;">
+                  🥤 {{ exp.category.name }}
+                </span>
+              {% elif "رواتب" in exp.category.name or "أجور" in exp.category.name %}
+                <span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.8rem;">
+                  👥 {{ exp.category.name }}
+                </span>
+              {% elif "إيجار" in exp.category.name or "كهرباء" in exp.category.name or "فواتير" in exp.category.name %}
+                <span style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.35); padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.8rem;">
+                  🏢 {{ exp.category.name }}
+                </span>
+              {% elif "صيانة" in exp.category.name or "معدات" in exp.category.name %}
+                <span style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.35); padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.8rem;">
+                  🛠️ {{ exp.category.name }}
+                </span>
+              {% else %}
+                <span style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.8rem;">
+                  📌 {{ exp.category.name }}
+                </span>
+              {% endif %}
             </td>
-            <td style="color: var(--text-secondary); font-size: 0.86rem; font-variant-numeric: tabular-nums;">
-              {{ exp.expense_date|date:"Y-m-d" }}
+
+            <td style="padding: 12px 16px; text-align: left; color: #ef4444; font-weight: 900; font-size: 1.15rem; font-variant-numeric: tabular-nums;">
+              -{{ exp.amount|floatformat:2 }} <small style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">{{ gym_profile.currency|default:"ج" }}</small>
             </td>
-            <td style="color: var(--text-muted); font-size: 0.88rem;">{{ exp.description|default:"-" }}</td>
-            <td style="color: var(--text-secondary); font-size: 0.84rem;">
+
+            <td style="padding: 12px 16px; color: var(--text-secondary); font-size: 0.88rem; max-width: 320px; line-height: 1.4;">
+              {{ exp.description|default:"بدون تفاصيل إضافية" }}
+            </td>
+
+            <td style="padding: 12px 16px; color: var(--text-muted); font-size: 0.82rem;">
               {{ exp.created_by.first_name|default:exp.created_by.username|default:"النظام" }}
+            </td>
+
+            <td style="padding: 12px 16px; text-align: center;">
+              <form method="post" action="{% url 'expenses:expense_delete' exp.id %}" onsubmit="return confirm('هل أنت متأكد من رغبتك في حذف سند المصروف بمبلغ {{ exp.amount }} ج.م؟ سيتم إلغاؤه من سجل المصروفات.');" style="display: inline; margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); padding: 4px 10px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.78rem;" title="حذف سند المصروف">
+                  🗑️ حذف
+                </button>
+              </form>
             </td>
           </tr>
         {% empty %}
           <tr>
-            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 40px;">لا توجد مصروفات مسجلة في هذه الفترة.</td>
+            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 48px;">
+              <div style="font-size: 2.5rem; margin-bottom: 12px;">📋</div>
+              <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-secondary);">لا توجد أي مصروفات مسجلة في هذه الفترة</div>
+              <p style="font-size: 0.84rem; margin-top: 6px;">يمكنك تسجيل مصروف جديد بالضغط على زر "تسجيل مصروف جديد" بالأعلى.</p>
+            </td>
           </tr>
         {% endfor %}
       </tbody>
     </table>
 
+    <!-- Pagination Controls -->
+    {% if page_obj.has_other_pages %}
+    <div style="padding: 14px 20px; background: rgba(255,255,255,0.01); border-top: 1px solid var(--border-color); display: flex; justify-content: center; gap: 8px; align-items: center;">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if period %}&period={{ period }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-secondary btn-sm" style="border-radius: 6px; padding: 4px 12px;">السابق</a>
+      {% endif %}
+
+      <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 700;">
+        صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if period %}&period={{ period }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-secondary btn-sm" style="border-radius: 6px; padding: 4px 12px;">التالي</a>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 
 </div>
+
+<!-- Modal: New Expense Registration -->
+<div id="newExpenseModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10000; justify-content: center; align-items: center; padding: 18px;">
+  <div style="background: #0d1b2a; border: 1px solid #1e3a52; border-radius: 18px; width: 100%; max-width: 520px; padding: 26px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); position: relative;" onclick="event.stopPropagation();">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #1e3a52; padding-bottom: 12px;">
+      <h3 style="color: var(--text-main); font-size: 1.25rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;">
+        <span>💸</span> تسجيل سند صرف ومصروف جديد
+      </h3>
+      <button type="button" onclick="closeNewExpenseModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+
+    <form method="post" action="{% url 'expenses:expense_create' %}" id="quickExpenseForm">
+      {% csrf_token %}
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">تصنيف المصروف</label>
+          <select name="category_id" required style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 14px; color: var(--text-main); font-weight: 700; font-size: 0.95rem;">
+            <option value="" disabled selected>-- اختر التصنيف المناسب --</option>
+            {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">المبلغ المطلوب صرفه (ج.م)</label>
+            <input type="number" step="0.01" min="0.01" name="amount" placeholder="0.00" required style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 14px; color: #ef4444; font-weight: 900; font-size: 1.1rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">تاريخ الصرف</label>
+            <input type="date" name="expense_date" value="{{ today|date:'Y-m-d' }}" required style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 14px; color: var(--text-main); font-weight: 700; font-size: 0.95rem;">
+          </div>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">البيان والتفاصيل (اختياري)</label>
+          <textarea name="description" rows="3" placeholder="اكتب هنا أي تفاصيل: سبب الصرف، رقم الفاتورة، اسم المستلم..." style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 14px; color: var(--text-main); font-size: 0.9rem; resize: vertical;"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button type="submit" style="flex: 1; background: #ef4444; color: #fff; font-weight: 800; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.95rem; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);">
+            💾 اعتماد وصرف المبلغ من الخزينة
+          </button>
+          <button type="button" onclick="closeNewExpenseModal()" style="padding: 12px 20px; background: #1e293b; color: var(--text-secondary); border: 1px solid #334155; border-radius: 8px; font-weight: 700; cursor: pointer;">
+            إلغاء
+          </button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openNewExpenseModal() {
+    const modal = document.getElementById('newExpenseModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function closeNewExpenseModal() {
+    const modal = document.getElementById('newExpenseModal');
+    if (modal) modal.style.display = 'none';
+  }
+</script>
 {% endblock %}
