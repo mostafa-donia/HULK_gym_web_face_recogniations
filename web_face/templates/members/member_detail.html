@@ -858,6 +858,12 @@ function closeDeleteMemberModal() {
           إلغاء
         </button>
         
+        <!-- Upload Photo from PC/Device Button (for laptops/devices without webcam) -->
+        <input type="file" id="enrollPhotoFileInput" accept="image/*" style="display: none;" onchange="handleEnrollPhotoUpload(event)">
+        <button type="button" onclick="document.getElementById('enrollPhotoFileInput').click()" class="btn btn-secondary btn-sm" style="background: rgba(245, 158, 11, 0.15); border: 1.5px solid #f59e0b; color: #fbbf24; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;" title="رفع صورة العضو من ملفات هذا الجهاز في حال عدم وجود كاميرا">
+          📁 رفع صورة
+        </button>
+
         <!-- Snap Current Pose Button -->
         <button type="button" id="btnSnapPose" onclick="snapCurrentPose()" class="btn btn-secondary btn-sm" style="background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; color: #93c5fd; font-weight: 800;">
           التقاط الوضعية الحالية
@@ -1096,6 +1102,58 @@ async function snapCurrentPose() {
     statusEl.innerHTML = 'تم التقاط الوضعية الإضافية. اضغط <strong>حفظ الوضعية الإضافية</strong> لتأكيد الإضافة.';
     statusEl.style.color = '#34d399';
   }
+}
+
+function handleEnrollPhotoUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    if (wizardMode === '5poses') {
+      const cfg = POSES_CONFIG[currentPoseIdx];
+      capturedPoses[currentPoseIdx] = {
+        label: cfg.label,
+        image_base64: dataUrl
+      };
+      const statusBadge = document.getElementById(`poseStatus${currentPoseIdx}`);
+      if (statusBadge) {
+        statusBadge.textContent = 'تم الرفع ✓';
+        statusBadge.style.color = '#34d399';
+      }
+      updateWizardUI();
+
+      // Advance to next uncaptured pose
+      let nextIdx = -1;
+      for (let i = 0; i < 5; i++) {
+        if (capturedPoses[i] === null) {
+          nextIdx = i;
+          break;
+        }
+      }
+      if (nextIdx !== -1) {
+        selectPoseStep(nextIdx);
+      } else {
+        selectPoseStep(currentPoseIdx);
+        const statusEl = document.getElementById('enrollStatus');
+        statusEl.innerHTML = 'تم رفع واكتمال جميع الوضعيات بنجاح! اضغط الآن على زر <strong>حفظ وتأكيد البصمة</strong>.';
+        statusEl.style.color = '#34d399';
+      }
+    } else {
+      window.singleVariantData = dataUrl;
+      capturedPoses[0] = {
+        label: 'variant',
+        image_base64: dataUrl
+      };
+      updateWizardUI();
+      const statusEl = document.getElementById('enrollStatus');
+      statusEl.innerHTML = 'تم رفع صورة الوضعية المخصصة بنجاح! اضغط <strong>حفظ الوضعية الإضافية</strong>.';
+      statusEl.style.color = '#34d399';
+    }
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
 }
 
 function updateWizardUI() {
