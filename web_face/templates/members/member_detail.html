@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}ملف العضو: {{ member.name }} — {{ gym_profile.gym_name|default:"Systemize Gym" }}
 <!-- Modal 1: تجميد الاشتراك -->
@@ -813,6 +813,7 @@ function closeDeleteMemberModal() {
 
       <div style="position: relative; width: 100%; max-width: 440px; aspect-ratio: 4/3; margin: 0 auto; background: #000; border-radius: 14px; overflow: hidden; border: 2px solid var(--border-color); box-shadow: inset 0 0 25px rgba(0,0,0,0.85);">
         <img id="enrollWebcam" src="" data-src="{% url 'face_recognition:video_feed' %}" alt="بث الكاميرا المباشر" style="width: 100%; height: 100%; object-fit: cover;">
+        <video id="enrollWebcamVideo" playsinline autoplay muted style="display: none; width: 100%; height: 100%; object-fit: cover;"></video>
         <canvas id="enrollCanvas" style="display: none;"></canvas>
 
         <!-- Face Guide Reticle Overlay -->
@@ -1014,23 +1015,35 @@ async function snapCurrentPose() {
   const statusEl = document.getElementById('enrollStatus');
   let dataUrl = null;
 
-  // 1. Fetch direct high-res frame from independent backend camera
-  try {
-    const res = await fetch("{% url 'face_recognition:api_capture_frame' %}");
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.image_base64) {
-        dataUrl = data.image_base64;
-      }
-    }
-  } catch (err) {
-    console.warn("Direct frame capture fallback:", err);
+  // 1. If browser webcam video is active, grab frame from video element
+  const video = document.getElementById('enrollWebcamVideo');
+  const canvas = document.getElementById('enrollCanvas');
+  if (video && video.style.display !== 'none' && video.videoWidth > 0 && canvas) {
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    dataUrl = canvas.toDataURL('image/jpeg', 0.90);
   }
 
-  // 2. Fallback to client canvas
+  // 2. Otherwise fetch from backend enrollment camera endpoint
+  if (!dataUrl) {
+    try {
+      const res = await fetch("{% url 'face_recognition:api_capture_frame' %}?source=enrollment");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.image_base64) {
+          dataUrl = data.image_base64;
+        }
+      }
+    } catch (err) {
+      console.warn("Direct frame capture fallback:", err);
+    }
+  }
+
+  // 3. Fallback to client canvas on image
   if (!dataUrl) {
     const img = document.getElementById('enrollWebcam');
-    const canvas = document.getElementById('enrollCanvas');
     if (img && canvas && (img.naturalWidth || img.videoWidth)) {
       canvas.width = img.naturalWidth || img.videoWidth || 640;
       canvas.height = img.naturalHeight || img.videoHeight || 480;
@@ -1173,14 +1186,44 @@ async function saveAllEnrolledPoses() {
 }
 
 async function startEnrollCamera() {
+  const mode = "{{ gym_profile.enrollment_camera_mode|default:'same' }}";
   const img = document.getElementById('enrollWebcam');
+  const video = document.getElementById('enrollWebcamVideo');
+
+  if (mode === 'browser') {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+      window.enrollBrowserStream = stream;
+      if (video) {
+        video.srcObject = stream;
+        video.style.display = 'block';
+        video.play();
+      }
+      if (img) img.style.display = 'none';
+      return;
+    } catch(err) {
+      console.warn("Browser webcam fallback:", err);
+    }
+  }
+
+  if (video) video.style.display = 'none';
   if (img) {
+    img.style.display = 'block';
     const url = img.getAttribute('data-src') || "{% url 'face_recognition:video_feed' %}";
     img.src = url + "?t=" + Date.now();
   }
 }
 
 function stopEnrollCamera() {
+  if (window.enrollBrowserStream) {
+    window.enrollBrowserStream.getTracks().forEach(t => t.stop());
+    window.enrollBrowserStream = null;
+  }
+  const video = document.getElementById('enrollWebcamVideo');
+  if (video) {
+    video.srcObject = null;
+    video.style.display = 'none';
+  }
   const img = document.getElementById('enrollWebcam');
   if (img) {
     img.src = "";

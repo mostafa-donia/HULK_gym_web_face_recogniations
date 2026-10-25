@@ -328,6 +328,91 @@
 
         </div>
 
+        <!-- Dual Camera Setup (كاميرات المنظومة: كاميرا الحضور + كاميرا التسجيل) -->
+        <div style="background: rgba(15, 23, 42, 0.7); border: 1.5px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.3rem;">📹</span>
+              <div>
+                <strong style="color: #10b981; font-size: 0.98rem; display: block;">تخصيص الكاميرات ومنظومة الكاميرا المزدوجة (Dual-Camera)</strong>
+                <span style="color: #94a3b8; font-size: 0.78rem;">يمكنك تحديد منفذ كاميرا الحضور، وتخصيص كاميرا ثانية مستقلة لتسجيل البصمات بالكاونتر</span>
+              </div>
+            </div>
+            <a href="{% url 'face_recognition:camera_window' %}" target="_blank" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 10px;">
+              نافذة المراقبة ↗
+            </a>
+          </div>
+
+          <!-- Camera 1: Logging Camera -->
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="color: #38bdf8; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                🟢 كاميرا 1: الحضور والدخول والتعرف التلقائي (Logging Camera)
+              </span>
+              <button type="button" onclick="testCameraDevice('face_camera_index', 'face_camera_url', 'cam1Preview')" class="btn btn-sm" style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; font-weight: 700; font-size: 0.78rem; padding: 3px 10px; border-radius: 6px; cursor: pointer;">
+                🔍 اختبار ومعاينة كاميرا 1
+              </button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 140px 1fr; gap: 10px;">
+              <div>
+                <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 3px;">منفذ الكاميرا (USB Index)</label>
+                <select id="face_camera_index" name="face_camera_index" class="form-control" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 8px; width: 100%; font-weight: 700;">
+                  <option value="0" {% if profile.face_camera_index == 0 %}selected{% endif %}>كاميرا 0 (الافتراضية)</option>
+                  <option value="1" {% if profile.face_camera_index == 1 %}selected{% endif %}>كاميرا 1</option>
+                  <option value="2" {% if profile.face_camera_index == 2 %}selected{% endif %}>كاميرا 2</option>
+                  <option value="3" {% if profile.face_camera_index == 3 %}selected{% endif %}>كاميرا 3</option>
+                  <option value="4" {% if profile.face_camera_index == 4 %}selected{% endif %}>كاميرا 4</option>
+                </select>
+              </div>
+              <div>
+                <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 3px;">أو رابط كاميرا IP / RTSP للدخول (اختياري)</label>
+                <input type="text" id="face_camera_url" name="face_camera_url" value="{{ profile.face_camera_url }}" placeholder="rtsp://admin:pass@192.168.1.50:554/stream1" class="form-control" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; font-family: monospace; font-size: 0.8rem; direction: ltr; text-align: left;">
+              </div>
+            </div>
+            <div id="cam1Preview" style="display: none; margin-top: 10px; padding: 8px; background: #000; border-radius: 8px; text-align: center;"></div>
+          </div>
+
+          <!-- Camera 2: Enrollment Camera -->
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="color: #f59e0b; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                🟡 كاميرا 2: تسجيل البصمات للكاونتر والاستقبال (Enrollment Camera)
+              </span>
+              <button type="button" id="btnTestCam2" onclick="testCameraDevice('enrollment_camera_index', 'enrollment_camera_url', 'cam2Preview')" class="btn btn-sm" style="display: {% if profile.enrollment_camera_mode == 'separate_index' %}inline-block{% else %}none{% endif %}; background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; color: #f59e0b; font-weight: 700; font-size: 0.78rem; padding: 3px 10px; border-radius: 6px; cursor: pointer;">
+                🔍 اختبار ومعاينة كاميرا 2
+              </button>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+              <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 3px;">نمط كاميرا التسجيل (Enrollment Source)</label>
+              <select id="enrollment_camera_mode" name="enrollment_camera_mode" onchange="toggleEnrollmentCameraFields()" class="form-control" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; font-weight: 700;">
+                <option value="same" {% if profile.enrollment_camera_mode == 'same' %}selected{% endif %}>نفس كاميرا الحضور (كاميرا واحدة مشتركة للمنظومة)</option>
+                <option value="separate_index" {% if profile.enrollment_camera_mode == 'separate_index' %}selected{% endif %}>كاميرا ثانية منفصلة على الجهاز (Secondary USB/Webcam للكاونتر)</option>
+                <option value="browser" {% if profile.enrollment_camera_mode == 'browser' %}selected{% endif %}>كاميرا ويب المتصفح المباشرة (Direct Browser Webcam)</option>
+              </select>
+            </div>
+
+            <div id="enrollment_separate_fields" style="display: {% if profile.enrollment_camera_mode == 'separate_index' %}grid{% else %}none{% endif %}; grid-template-columns: 140px 1fr; gap: 10px;">
+              <div>
+                <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 3px;">منفذ الكاميرا الثانية</label>
+                <select id="enrollment_camera_index" name="enrollment_camera_index" class="form-control" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 8px; width: 100%; font-weight: 700;">
+                  <option value="1" {% if profile.enrollment_camera_index == 1 %}selected{% endif %}>كاميرا 1 (موصى به للثانية)</option>
+                  <option value="0" {% if profile.enrollment_camera_index == 0 %}selected{% endif %}>كاميرا 0</option>
+                  <option value="2" {% if profile.enrollment_camera_index == 2 %}selected{% endif %}>كاميرا 2</option>
+                  <option value="3" {% if profile.enrollment_camera_index == 3 %}selected{% endif %}>كاميرا 3</option>
+                  <option value="4" {% if profile.enrollment_camera_index == 4 %}selected{% endif %}>كاميرا 4</option>
+                </select>
+              </div>
+              <div>
+                <label style="color: var(--text-secondary); font-size: 0.78rem; font-weight: 700; display: block; margin-bottom: 3px;">أو رابط كاميرا التسجيل RTSP / IP (اختياري)</label>
+                <input type="text" id="enrollment_camera_url" name="enrollment_camera_url" value="{{ profile.enrollment_camera_url }}" placeholder="rtsp://admin:pass@192.168.1.51:554/stream1" class="form-control" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; font-family: monospace; font-size: 0.8rem; direction: ltr; text-align: left;">
+              </div>
+            </div>
+            <div id="cam2Preview" style="display: none; margin-top: 10px; padding: 8px; background: #000; border-radius: 8px; text-align: center;"></div>
+          </div>
+        </div>
+
 
 
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 14px;">
@@ -5554,7 +5639,50 @@ function handleLicenseDaysChange(days) {
 
 }
 
+
+function toggleEnrollmentCameraFields() {
+  const mode = document.getElementById('enrollment_camera_mode').value;
+  const fields = document.getElementById('enrollment_separate_fields');
+  const btn = document.getElementById('btnTestCam2');
+  if (mode === 'separate_index') {
+    fields.style.display = 'grid';
+    btn.style.display = 'inline-block';
+  } else {
+    fields.style.display = 'none';
+    btn.style.display = 'none';
+  }
+}
+
+async function testCameraDevice(idxId, urlId, targetDivId) {
+  const target = document.getElementById(targetDivId);
+  const idx = document.getElementById(idxId) ? document.getElementById(idxId).value : '0';
+  const url = document.getElementById(urlId) ? document.getElementById(urlId).value.trim() : '';
+  const source = url || idx;
+
+  target.style.display = 'block';
+  target.innerHTML = `<span style="color: #38bdf8; font-size: 0.82rem;">⏳ جاري فحص الكاميرا (${source})...</span>`;
+
+  try {
+    const res = await fetch(`{% url 'face_recognition:api_test_camera' %}?source=${encodeURIComponent(source)}`);
+    const data = await res.json();
+    if (data.success && data.image_base64) {
+      target.innerHTML = `
+        <div style="font-size: 0.8rem; color: #10b981; font-weight: 800; margin-bottom: 6px;">✓ ${data.message}</div>
+        <img src="${data.image_base64}" style="max-width: 100%; max-height: 240px; border-radius: 8px; border: 1.5px solid #10b981;">
+      `;
+    } else {
+      target.innerHTML = `
+        <div style="font-size: 0.8rem; color: #ef4444; font-weight: 800; margin-bottom: 4px;">⚠️ ${data.message || 'تعذر فتح الكاميرا'}</div>
+        <div style="font-size: 0.74rem; color: #94a3b8;">تأكد أن الكاميرا متصلة بالجهاز وأنها غير مستخدمة حصرياً في تطبيق آخر.</div>
+      `;
+    }
+  } catch(err) {
+    target.innerHTML = `<span style="color: #ef4444; font-size: 0.82rem;">خطأ في الاتصال: ${err.message}</span>`;
+  }
+}
+
 </script>
+
 
 {% endblock %}
 

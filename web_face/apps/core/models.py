@@ -58,6 +58,44 @@ class GymProfile(models.Model):
         verbose_name="تشغيل كاميرا التعرف على الوجه التلقائية في النظام",
         help_text="عند التفعيل، تعمل الكاميرا تلقائياً في خلفية الموقع لإظهار إشعار الدخول أو انتهاء الاشتراك فوراً فور اقتراب المشترك.",
     )
+    face_camera_index = models.IntegerField(
+        default=0,
+        verbose_name="منفذ كاميرا الحضور والدخول (Logging Camera Index)",
+        help_text="رقم كاميرا USB المتصلة المخصصة لتسجيل الحضور والدخول (0 هو المنفذ الافتراضي)",
+    )
+    face_camera_url = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name="رابط كاميرا IP / RTSP للحضور والدخول (اختياري)",
+        help_text="اتركه فارغاً لاستخدام كاميرا USB برقم المنفذ، أو أدخل رابط RTSP / IP مثل rtsp://admin:12345@192.168.1.50:554/stream1",
+    )
+
+    # Secondary / Dual Camera for Face Enrollment (الكاميرا الثانية لتسجيل بصمات الأعضاء والمدربين)
+    enrollment_camera_mode = models.CharField(
+        max_length=20,
+        choices=[
+            ("same", "نفس كاميرا الحضور (كاميرا واحدة مشتركة)"),
+            ("separate_index", "كاميرا منفصلة ثانية على الجهاز (Secondary USB/Webcam)"),
+            ("browser", "كاميرا ويب المتصفح المباشرة (Direct Browser Webcam)"),
+        ],
+        default="same",
+        verbose_name="مصدر كاميرا التسجيل وإدخال البصمات",
+        help_text="حدد ما إذا كان تسجيل البصمات يستخدم نفس كاميرا الدخول، أو كاميرا ثانية مخصصة للكاونتر، أو متصفح الويب مباشرة",
+    )
+    enrollment_camera_index = models.IntegerField(
+        default=1,
+        verbose_name="منفذ كاميرا التسجيل المنفصلة (Enrollment Camera Index)",
+        help_text="رقم كاميرا USB الثانية المخصصة لكاونتر التسجيل (الافتراضي 1)",
+    )
+    enrollment_camera_url = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name="رابط كاميرا التسجيل IP / RTSP (اختياري)",
+        help_text="اتركه فارغاً لاستخدام كاميرا USB برقم المنفذ، أو أدخل رابط RTSP / IP لكاميرا التسجيل",
+    )
+
     face_match_threshold = models.FloatField(
         default=65.0,
         verbose_name="دقة مطابقة الوجه المطلوبة (0 - 100%)",

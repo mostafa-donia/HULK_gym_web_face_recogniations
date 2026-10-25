@@ -73,3 +73,54 @@ class FaceRecognitionTests(TestCase):
         self.member.refresh_from_db()
         self.assertFalse(self.member.has_face_enrolled)
         self.assertEqual(len(self.member.face_embeddings), 0)
+
+    def test_dual_camera_profile_fields(self):
+        self.assertEqual(self.profile.face_camera_index, 0)
+        self.assertEqual(self.profile.face_camera_url, "")
+        self.assertEqual(self.profile.enrollment_camera_mode, "same")
+        self.assertEqual(self.profile.enrollment_camera_index, 1)
+
+        self.profile.enrollment_camera_mode = "separate_index"
+        self.profile.enrollment_camera_index = 2
+        self.profile.face_camera_index = 1
+        self.profile.face_camera_url = "rtsp://192.168.1.100:554/live"
+        self.profile.save()
+
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.enrollment_camera_mode, "separate_index")
+        self.assertEqual(self.profile.enrollment_camera_index, 2)
+        self.assertEqual(self.profile.face_camera_index, 1)
+        self.assertEqual(self.profile.face_camera_url, "rtsp://192.168.1.100:554/live")
+
+    def test_api_test_camera_endpoint(self):
+        self.client.force_login(self.admin)
+        url = reverse("face_recognition:api_test_camera")
+        # Testing non-existent or test source returns json with success flag and message
+        res = self.client.get(f"{url}?source=999")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("success", data)
+        self.assertIn("message", data)
+        self.assertEqual(data["source"], "999")
+
+    def test_api_capture_frame_enrollment_source(self):
+        url = reverse("face_recognition:api_capture_frame")
+        res = self.client.get(f"{url}?source=enrollment")
+        # May be 200 (if camera available) or 503 (if headless/no camera), but valid JSON
+        self.assertIn(res.status_code, [200, 503])
+        data = res.json()
+        self.assertIn("success", data)
+        self.assertIn("message", data)
+
+    def test_face_engine_camera_helpers(self):
+        from apps.face_recognition.engine import get_face_engine
+        engine = get_face_engine()
+        self.assertTrue(hasattr(engine, "test_or_capture_source"))
+        self.assertTrue(hasattr(engine, "capture_enrollment_frame"))
+        self.assertTrue(hasattr(engine, "restart_camera"))
+
+        # Test enrollment frame capture in "same" mode
+        self.profile.enrollment_camera_mode = "same"
+        self.profile.save()
+        success, b64, msg = engine.capture_enrollment_frame()
+        self.assertIsInstance(msg, str)

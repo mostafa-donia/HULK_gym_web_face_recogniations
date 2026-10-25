@@ -390,22 +390,52 @@ def api_live_events_view(request):
 
 def api_capture_frame_view(request):
     """
-    Captures a high-resolution base64 frame from the independent camera for enrollment.
+    Captures a high-resolution base64 frame for enrollment.
+    Supports ?source=enrollment (respecting enrollment_camera_mode) or ?source=logging.
     """
     engine = get_face_engine()
-    if not engine.camera_running and not engine.camera_starting:
-        engine.start_camera(camera_index=0)
+    source = request.GET.get("source", "").lower()
 
-    # Wait up to 2.5 seconds if camera was initializing
-    for _ in range(25):
-        if engine.current_raw_frame is not None:
-            break
-        time.sleep(0.1)
+    if source == "enrollment":
+        success, b64_frame, msg = engine.capture_enrollment_frame()
+    else:
+        if not engine.camera_running and not engine.camera_starting:
+            from apps.core.models import GymProfile
+            p = GymProfile.get_solo()
+            engine.start_camera(camera_source=p.face_camera_url.strip() if p.face_camera_url else p.face_camera_index)
 
-    success, b64_frame, msg = engine.capture_current_frame()
+        # Wait up to 2.5 seconds if camera was initializing
+        for _ in range(25):
+            if engine.current_raw_frame is not None:
+                break
+            time.sleep(0.1)
+
+        success, b64_frame, msg = engine.capture_current_frame()
+
     if not success:
         return JsonResponse({"success": False, "message": msg}, status=503)
     return JsonResponse({"success": True, "image_base64": b64_frame, "message": msg})
+
+
+@csrf_exempt
+@login_required
+def api_test_camera_view(request):
+    """
+    Tests opening a camera by index or RTSP URL and returns a single test snapshot frame.
+    Allows manager to test Camera 0, Camera 1, Camera 2, or IP Stream directly from settings.
+    """
+    engine = get_face_engine()
+    raw_source = request.GET.get("source") or request.GET.get("index") or request.POST.get("source") or request.POST.get("index") or 0
+    source = raw_source
+    if isinstance(source, str) and source.isdigit():
+        source = int(source)
+    success, b64_frame, msg = engine.test_or_capture_source(source)
+    return JsonResponse({
+        "success": success,
+        "image_base64": b64_frame,
+        "message": msg,
+        "source": str(raw_source),
+    })
 
 
 @login_required
@@ -491,12 +521,17 @@ def api_enroll_manager_face(request):
         return JsonResponse({"success": False, "message": "محرك الذكاء الاصطناعي قيد التهيئة، يرجى المحاولة بعد لحظات."}, status=503)
 
     source = request.POST.get("source") or ""
-    if not raw_img or source == "same":
-        with engine.frame_lock:
-            if engine.current_raw_frame is not None:
-                raw_img = engine.current_raw_frame.copy()
-            elif engine.latest_jpeg_bytes is not None:
-                raw_img = engine.latest_jpeg_bytes
+    if not raw_img or source in ["same", "enrollment"]:
+        if source == "enrollment":
+            success_c, b64_frame, _ = engine.capture_enrollment_frame()
+            if success_c and b64_frame:
+                raw_img = b64_frame
+        if not raw_img:
+            with engine.frame_lock:
+                if engine.current_raw_frame is not None:
+                    raw_img = engine.current_raw_frame.copy()
+                elif engine.latest_jpeg_bytes is not None:
+                    raw_img = engine.latest_jpeg_bytes
 
     if not raw_img:
         return JsonResponse({"success": False, "message": "لم يتم التقاط صورة من الكاميرا، يرجى التأكد من تشغيل الكاميرا."}, status=400)
@@ -589,12 +624,25 @@ def api_enroll_employee_face(request, employee_id):
     elif "image" in request.POST:
         raw_img = request.POST.get("image", "").strip()
 
-    if not raw_img:
-        return JsonResponse({"success": False, "message": "لم يتم إرسال أي صورة لتسجيل البصمة."}, status=400)
-
     engine = get_face_engine()
     if not engine.ensure_models_loaded(timeout=5.0):
         return JsonResponse({"success": False, "message": "نماذج الذكاء الاصطناعي قيد التحميل، يرجى الانتظار ثوانٍ."}, status=503)
+
+    if not raw_img:
+        source = request.POST.get("source") or "enrollment"
+        if source == "enrollment":
+            success_c, b64_frame, _ = engine.capture_enrollment_frame()
+            if success_c and b64_frame:
+                raw_img = b64_frame
+        if not raw_img:
+            with engine.frame_lock:
+                if engine.current_raw_frame is not None:
+                    raw_img = engine.current_raw_frame.copy()
+                elif engine.latest_jpeg_bytes is not None:
+                    raw_img = engine.latest_jpeg_bytes
+
+    if not raw_img:
+        return JsonResponse({"success": False, "message": "لم يتم التقاط صورة من الكاميرا، يرجى التأكد من تشغيل الكاميرا."}, status=400)
 
     success, embs, crop_bytes, err_msg = engine.extract_face_and_embedding(raw_img)
     if not success or not embs:

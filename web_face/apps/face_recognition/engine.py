@@ -59,6 +59,7 @@ class FaceEngine:
         self.event_lock = threading.RLock()
         self.cap = None
         self.camera_running = False
+        self.camera_source = 0
         self.camera_index = 0
         self.camera_thread = None
         self.camera_error = None
@@ -601,7 +602,7 @@ class FaceEngine:
             threading.Thread(target=_do_trigger, daemon=True).start()
             return True, "جاري إرسال إشارة فتح البوابة في الخلفية."
 
-    def start_camera(self, camera_index: int = 0):
+    def start_camera(self, camera_source=None):
         """Starts the persistent independent camera capture thread."""
         import sys
         if any(cmd in sys.argv for cmd in ["test", "migrate", "makemigrations"]):
@@ -610,12 +611,35 @@ class FaceEngine:
         with self.camera_lock:
             if self.camera_running or self.camera_starting:
                 return
+
+            if camera_source is None:
+                try:
+                    from apps.core.models import GymProfile
+                    p = GymProfile.get_solo()
+                    camera_source = p.face_camera_url.strip() if p.face_camera_url else p.face_camera_index
+                except Exception:
+                    camera_source = 0
+
             self.stop_camera()
-            self.camera_index = camera_index
+            self.camera_source = camera_source
+            if isinstance(camera_source, int):
+                self.camera_index = camera_source
+            elif isinstance(camera_source, str) and camera_source.isdigit():
+                self.camera_index = int(camera_source)
+            else:
+                self.camera_index = 0
+
             self.camera_starting = True
             self.camera_running = False
             self.camera_thread = threading.Thread(target=self._capture_worker, daemon=True)
             self.camera_thread.start()
+
+    def restart_camera(self, camera_source=None):
+        """Safely stops and restarts the background camera with the new source/index."""
+        with self.camera_lock:
+            self.stop_camera()
+            time.sleep(0.3)
+            self.start_camera(camera_source=camera_source)
 
     def stop_camera(self):
         """Stops the persistent background camera."""
@@ -632,26 +656,37 @@ class FaceEngine:
     def _capture_worker(self):
         try:
             self.cap = None
-            # Prioritize DirectShow (CAP_DSHOW) on Windows to eliminate MSMF error -1072873822
-            backends = [cv2.CAP_DSHOW, cv2.CAP_ANY, cv2.CAP_MSMF]
-            for backend in backends:
+            source = self.camera_source
+            is_stream_url = isinstance(source, str) and not source.isdigit() and ("://" in source or source.startswith("rtsp") or source.startswith("http"))
+
+            if is_stream_url:
                 try:
-                    c = cv2.VideoCapture(self.camera_index, backend)
+                    c = cv2.VideoCapture(source.strip())
                     if c and c.isOpened():
-                        c.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                        c.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-                        c.set(cv2.CAP_PROP_FPS, 30)
-                        ret, test_frame = c.read()
-                        if ret and test_frame is not None and test_frame.size > 0:
-                            self.cap = c
-                            break
-                        else:
-                            c.release()
-                except Exception:
-                    continue
+                        self.cap = c
+                except Exception as ex:
+                    print(f"[FaceEngine] Error opening stream URL {source}: {ex}")
+            else:
+                idx = int(source) if source is not None and str(source).isdigit() else 0
+                backends = [cv2.CAP_DSHOW, cv2.CAP_ANY, cv2.CAP_MSMF]
+                for backend in backends:
+                    try:
+                        c = cv2.VideoCapture(idx, backend)
+                        if c and c.isOpened():
+                            c.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                            c.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                            c.set(cv2.CAP_PROP_FPS, 30)
+                            ret, test_frame = c.read()
+                            if ret and test_frame is not None and test_frame.size > 0:
+                                self.cap = c
+                                break
+                            else:
+                                c.release()
+                    except Exception:
+                        continue
 
             if not self.cap or not self.cap.isOpened():
-                self.camera_error = f"تعذر فتح الكاميرا رقم {self.camera_index}. تأكد من توصيل الكاميرا بالجهاز."
+                self.camera_error = f"تعذر فتح الكاميرا ({self.camera_source}). تأكد من توصيل الكاميرا بالجهاز."
                 print(f"[FaceEngine] {self.camera_error}")
                 self.camera_running = False
                 self.camera_starting = False
@@ -660,7 +695,7 @@ class FaceEngine:
             self.camera_error = None
             self.camera_running = True
             self.camera_starting = False
-            print(f"[FaceEngine] Independent Camera #{self.camera_index} is active and running in background via DirectShow.")
+            print(f"[FaceEngine] Independent Camera #{self.camera_source} is active and running in background.")
 
             frame_count = 0
             consecutive_failures = 0
@@ -669,13 +704,17 @@ class FaceEngine:
                 if not ret or frame is None:
                     consecutive_failures += 1
                     if consecutive_failures > 30:
-                        # Attempt soft auto-reconnect via DirectShow
+                        # Attempt soft auto-reconnect
                         time.sleep(1.0)
                         try:
                             self.cap.release()
-                            self.cap = cv2.VideoCapture(self.camera_index, cv2.CAP_DSHOW)
-                            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-                            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                            if is_stream_url:
+                                self.cap = cv2.VideoCapture(source.strip())
+                            else:
+                                idx = int(source) if source is not None and str(source).isdigit() else 0
+                                self.cap = cv2.VideoCapture(idx, cv2.CAP_DSHOW)
+                                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
                             consecutive_failures = 0
                         except Exception:
                             pass
@@ -963,6 +1002,93 @@ class FaceEngine:
         b64 = base64.b64encode(buf.tobytes()).decode("utf-8")
         return True, f"data:image/jpeg;base64,{b64}", "تم التقاط الإطار بنجاح."
 
+    def test_or_capture_source(self, camera_source) -> Tuple[bool, Optional[str], str]:
+        """
+        Tests opening a camera source (index int or RTSP/URL string),
+        grabs a single frame, encodes as base64 JPEG, and releases immediately.
+        If the source is the currently active background camera, reuses live raw frame.
+        """
+        is_curr = False
+        if self.camera_running:
+            curr_s = str(self.camera_source).strip()
+            req_s = str(camera_source).strip()
+            if curr_s == req_s:
+                is_curr = True
+            elif curr_s.isdigit() and req_s.isdigit() and int(curr_s) == int(req_s):
+                is_curr = True
+
+        if is_curr:
+            with self.frame_lock:
+                frame = self.current_raw_frame.copy() if self.current_raw_frame is not None else None
+            if frame is not None and frame.size > 0:
+                ret, buf = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+                if ret:
+                    b64 = base64.b64encode(buf.tobytes()).decode("utf-8")
+                    return True, f"data:image/jpeg;base64,{b64}", f"تم التقاط الإطار بنجاح من الكاميرا النشطة ({camera_source})."
+
+        cap = None
+        try:
+            s_str = str(camera_source).strip() if camera_source is not None else "0"
+            if not s_str.isdigit() and ("://" in s_str or s_str.startswith("rtsp") or s_str.startswith("http")):
+                cap = cv2.VideoCapture(s_str)
+            else:
+                idx = int(s_str) if s_str.isdigit() else 0
+                cap = cv2.VideoCapture(idx, cv2.CAP_DSHOW)
+                if not cap or not cap.isOpened():
+                    cap = cv2.VideoCapture(idx, cv2.CAP_ANY)
+
+            if not cap or not cap.isOpened():
+                return False, None, f"تعذر الاتصال بالكاميرا ({camera_source}). تأكد من توصيل الكاميرا أو صحة الرابط."
+
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+            ret, frame = False, None
+            for _ in range(6):
+                ret, frame = cap.read()
+                if ret and frame is not None and frame.size > 0:
+                    break
+                time.sleep(0.04)
+
+            if not ret or frame is None or frame.size == 0:
+                return False, None, f"تم فتح الكاميرا ({camera_source}) لكن لم يتم استقبال أي إطار."
+
+            ret_jpg, buf = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+            if not ret_jpg:
+                return False, None, "فشل ترميز إطار المعاينة."
+
+            b64 = base64.b64encode(buf.tobytes()).decode("utf-8")
+            return True, f"data:image/jpeg;base64,{b64}", f"تم الاتصال والتقاط إطار الاختبار بنجاح ({frame.shape[1]}x{frame.shape[0]})."
+        except Exception as e:
+            return False, None, f"خطأ أثناء فحص الكاميرا: {str(e)}"
+        finally:
+            if cap:
+                try:
+                    cap.release()
+                except Exception:
+                    pass
+
+    def capture_enrollment_frame(self) -> Tuple[bool, Optional[str], str]:
+        """
+        Captures an enrollment frame based on GymProfile configuration:
+        - 'same': uses current raw frame from the primary logging camera.
+        - 'separate_index': captures directly from the secondary enrollment camera.
+        - 'browser': fallback to current raw frame if browser sends capture request.
+        """
+        try:
+            from apps.core.models import GymProfile
+            profile = GymProfile.get_solo()
+            mode = getattr(profile, "enrollment_camera_mode", "same")
+            if mode == "separate_index":
+                url = getattr(profile, "enrollment_camera_url", "").strip()
+                idx = getattr(profile, "enrollment_camera_index", 1)
+                src = url if url else idx
+                return self.test_or_capture_source(src)
+        except Exception as ex:
+            print(f"[FaceEngine] Error resolving enrollment camera: {ex}")
+
+        return self.capture_current_frame()
+
 
 # Global Singleton accessor
 def get_face_engine() -> FaceEngine:
@@ -972,7 +1098,8 @@ def get_face_engine() -> FaceEngine:
             from apps.core.models import GymProfile
             profile = GymProfile.get_solo()
             if profile.face_camera_enabled:
-                engine.start_camera(camera_index=0)
+                src = profile.face_camera_url.strip() if profile.face_camera_url else profile.face_camera_index
+                engine.start_camera(camera_source=src)
         except Exception:
             pass
     return engine

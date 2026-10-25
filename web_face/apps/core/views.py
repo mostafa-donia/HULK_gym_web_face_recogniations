@@ -1561,8 +1561,26 @@ def settings_view(request):
                 except (ValueError, TypeError):
                     pass
 
-            if "form_face" in request.POST or "gate_relay_type" in request.POST or "face_match_threshold" in request.POST:
+            if "form_face" in request.POST or "gate_relay_type" in request.POST or "face_match_threshold" in request.POST or "face_camera_index" in request.POST:
                 profile.face_camera_enabled = "face_camera_enabled" in request.POST
+                if "face_camera_index" in request.POST:
+                    try:
+                        profile.face_camera_index = int(request.POST.get("face_camera_index", 0))
+                    except (ValueError, TypeError):
+                        pass
+                if "face_camera_url" in request.POST:
+                    profile.face_camera_url = request.POST.get("face_camera_url", "").strip()
+
+                if "enrollment_camera_mode" in request.POST:
+                    profile.enrollment_camera_mode = request.POST.get("enrollment_camera_mode", "same").strip()
+                if "enrollment_camera_index" in request.POST:
+                    try:
+                        profile.enrollment_camera_index = int(request.POST.get("enrollment_camera_index", 1))
+                    except (ValueError, TypeError):
+                        pass
+                if "enrollment_camera_url" in request.POST:
+                    profile.enrollment_camera_url = request.POST.get("enrollment_camera_url", "").strip()
+
                 profile.gate_relay_enabled = "gate_relay_enabled" in request.POST
                 profile.gate_relay_type = request.POST.get("gate_relay_type", profile.gate_relay_type or "lan_http").strip()
                 profile.gate_ip_address = request.POST.get("gate_ip_address", profile.gate_ip_address or "192.168.1.50").strip()
@@ -1608,6 +1626,19 @@ def settings_view(request):
                 profile.telegram_manager_chat_id = request.POST.get("telegram_manager_chat_id", profile.telegram_manager_chat_id or "").strip()
 
             profile.save()
+
+            if "form_face" in request.POST or "face_camera_index" in request.POST:
+                try:
+                    from apps.face_recognition.engine import get_face_engine
+                    eng = get_face_engine()
+                    if profile.face_camera_enabled:
+                        cam_src = profile.face_camera_url.strip() if profile.face_camera_url else profile.face_camera_index
+                        eng.restart_camera(camera_source=cam_src)
+                    else:
+                        eng.stop_camera()
+                except Exception as ex:
+                    print(f"[Settings] Error updating camera state: {ex}")
+
             messages.success(request, "تم حفظ الإعدادات بنجاح.")
             return redirect("core:settings")
 
