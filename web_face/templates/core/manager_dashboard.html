@@ -66,40 +66,16 @@
       </div>
 
       <!-- Quick Action Buttons -->
-      <div class="no-print" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-        <button type="button" onclick="history.back()" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; font-weight: 800;" title="العودة للصفحة السابقة">
-          ← رجوع
-        </button>
-        <a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; font-weight: 800;" title="الصفحة الرئيسية">
-          🏠 الرئيسية
-        </a>
-        <button type="button" onclick="openManagerReportModal()" class="btn btn-sm" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; background: #22c55e; color: #052e16; font-weight: 900; border: none; border-radius: 8px; cursor: pointer;">
-          📱 تقرير الواتساب للمدير
+      <div class="no-print" style="display: flex; gap: 10px; align-items: center;">
+        <button type="button" onclick="openManagerReportModal()" class="btn btn-sm" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 7px; background: #22c55e; color: #052e16; font-weight: 900; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);" title="إرسال تقرير تنفيذي شامل للمدير عبر واتساب">
+          <span>📱</span>
+          <span>تقرير الواتساب للمدير</span>
         </button>
 
-        <button type="button" onclick="window.print()" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
-          🖨️ طباعة / PDF
+        <button type="button" onclick="window.print()" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 14px; display: inline-flex; align-items: center; gap: 6px; font-weight: 800; border-radius: 8px;" title="طباعة أو تصدير كـ PDF">
+          <span>🖨️</span>
+          <span>طباعة</span>
         </button>
-
-        <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
-          🏋️‍♂️ المدربين
-        </a>
-
-        <a href="{% url 'payroll:payroll_runs' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
-          💼 مسير الرواتب
-        </a>
-
-        <a href="{% url 'payroll:payout_checklist_current' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.35);" title="صفحة كشف تسليم الرواتب للموظفين والمدربين والخصم من الخزينة">
-          💵 تسليم الرواتب
-        </a>
-
-        <a href="{% url 'reports:financial_report' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
-          📑 التقارير المالية
-        </a>
-
-        <a href="?tab=ai" class="btn btn-sm" style="height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 7px; {% if active_tab == 'ai' %}background: #84cc16; color: #000; font-weight: 900; box-shadow: 0 0 15px rgba(132, 204, 22, 0.4); border: none;{% else %}background: rgba(132, 204, 22, 0.16); border: 1px solid rgba(132, 204, 22, 0.45); color: #84cc16; font-weight: 800;{% endif %} border-radius: 8px;">
-          <span>🧠 ذكاء الجيم والتوقعات</span>
-        </a>
       </div>
     </div>
 
@@ -107,21 +83,15 @@
     <div class="no-print" style="display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-top: 4px; flex-wrap: wrap;">
       <a href="?tab=overview{% if period %}&period={{ period }}{% endif %}" 
          class="btn btn-sm {% if active_tab != 'ai' %}btn-primary{% else %}btn-secondary{% endif %}"
-         style="padding: 8px 18px; font-weight: 900; font-size: 0.9rem; border-radius: 9px; display: inline-flex; align-items: center; gap: 7px;">
-        <span>📊 المؤشرات والعمليات التنفيذية</span>
+         style="padding: 8px 20px; font-weight: 900; font-size: 0.92rem; border-radius: 9px; display: inline-flex; align-items: center; gap: 8px;">
+        <span>📊 العمليات والمؤشرات التنفيذية</span>
       </a>
 
       <a href="?tab=ai" 
          class="btn btn-sm {% if active_tab == 'ai' %}btn-primary{% else %}btn-secondary{% endif %}"
-         style="padding: 8px 20px; font-weight: 900; font-size: 0.9rem; border-radius: 9px; display: inline-flex; align-items: center; gap: 8px; {% if active_tab != 'ai' %}background: rgba(132, 204, 22, 0.12); border: 1px solid rgba(132, 204, 22, 0.4); color: #84cc16;{% else %}background: #84cc16; color: #000; border: 1px solid #84cc16; box-shadow: 0 0 16px rgba(132, 204, 22, 0.35);{% endif %}">
+         style="padding: 8px 22px; font-weight: 900; font-size: 0.92rem; border-radius: 9px; display: inline-flex; align-items: center; gap: 8px; {% if active_tab != 'ai' %}background: rgba(132, 204, 22, 0.12); border: 1px solid rgba(132, 204, 22, 0.4); color: #84cc16;{% else %}background: #84cc16; color: #000; border: 1px solid #84cc16; box-shadow: 0 0 16px rgba(132, 204, 22, 0.35);{% endif %}">
         <span>🧠 ذكاء الجيم والتوقعات الاستراتيجية</span>
         <span style="font-size: 0.7rem; padding: 2px 7px; border-radius: 999px; background: {% if active_tab == 'ai' %}#000; color: #84cc16;{% else %}rgba(132, 204, 22, 0.25); color: #84cc16;{% endif %} font-weight: 900;">AI Engine</span>
-      </a>
-
-      <a href="?period=compare" 
-         class="btn btn-sm {% if period == 'compare' and active_tab != 'ai' %}btn-primary{% else %}btn-secondary{% endif %}"
-         style="padding: 8px 16px; font-weight: 800; font-size: 0.86rem; border-radius: 9px; display: inline-flex; align-items: center; gap: 6px;">
-        <span>⚖️ مقارنة الفترات</span>
       </a>
     </div>
 
