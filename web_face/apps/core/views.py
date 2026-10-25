@@ -1456,6 +1456,15 @@ def manager_dashboard_view(request):
         "all_branches": Branch.objects.filter(is_active=True),
     }
 
+    try:
+        from apps.payments.services import get_all_financial_accounts_summary
+        treasury_summary = get_all_financial_accounts_summary(branch=active_branch)
+        context["treasury_accounts"] = treasury_summary["accounts_details"]
+        context["treasury_total_balance"] = treasury_summary["total_balance"]
+    except Exception as e:
+        context["treasury_accounts"] = []
+        context["treasury_total_balance"] = Decimal("0.00")
+
     active_tab = request.GET.get("tab", "overview")
     if active_tab == "ai":
         try:

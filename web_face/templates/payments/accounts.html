@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+
+{% block title %}الخزائن والحسابات المالية والتحويلات — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 24px; max-width: 1560px; margin: 0 auto; padding-bottom: 40px;">
+
+  <!-- ==================== 1. HEADER & TOOLBAR ==================== -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 18px 24px; box-shadow: var(--shadow-sm);">
+    <div>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <span style="font-size: 1.8rem;">🏦</span>
+        <h1 style="color: var(--text-main); font-size: 1.55rem; font-weight: 900; margin: 0; letter-spacing: -0.3px;">
+          الخزائن والحسابات المالية والتحويلات
+        </h1>
+        <span style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 4px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 800;">
+          Multi-Treasury Engine
+        </span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin: 6px 0 0 0;">
+        متابعة وتوزيع أرصدة الخزينة النقدية، فودافون كاش، والحسابات البنكية مع إمكانية التحويل بينها واحتساب الرسوم التشغيلية
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <a href="{% url 'expenses:expense_list' %}" class="btn btn-secondary btn-sm" style="height: 38px; padding: 0 16px; font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+        <span>💸</span> المصروفات
+      </a>
+
+      <button type="button" onclick="openTransferModal()" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 900; border: none; height: 38px; padding: 0 20px; border-radius: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+        <span>🔄</span> إجراء تحويل بين الحسابات
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== 2. TREASURY BALANCES CARDS ==================== -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 18px;">
+    
+    {% for acc_info in accounts_details %}
+      {% with acc=acc_info.account %}
+      <div style="background: var(--bg-card); border: 1px solid {% if acc.account_type == 'cash' %}rgba(34, 197, 94, 0.35){% elif acc.account_type == 'vodafone_cash' %}rgba(239, 68, 68, 0.35){% elif acc.account_type == 'bank' %}rgba(56, 189, 248, 0.35){% else %}var(--border-color){% endif %}; border-radius: 16px; padding: 22px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; justify-content: space-between; gap: 16px; position: relative; overflow: hidden;">
+        
+        <!-- Top bar of card -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.3rem;">
+                {% if acc.account_type == 'cash' %}💵{% elif acc.account_type == 'vodafone_cash' %}📱{% elif acc.account_type == 'bank' %}🏦{% else %}💼{% endif %}
+              </span>
+              <strong style="color: var(--text-main); font-size: 1.1rem; font-weight: 900;">{{ acc.name }}</strong>
+            </div>
+            
+            {% if acc.account_number %}
+              <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; margin-top: 4px;">
+                رقم: <span style="color: #38bdf8; font-family: monospace;">{{ acc.account_number }}</span>
+              </div>
+            {% else %}
+              <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
+                {{ acc.get_account_type_display }}
+              </div>
+            {% endif %}
+          </div>
+
+          <span style="background: {% if acc.account_type == 'cash' %}rgba(34, 197, 94, 0.15); color: #4ade80;{% elif acc.account_type == 'vodafone_cash' %}rgba(239, 68, 68, 0.15); color: #f87171;{% elif acc.account_type == 'bank' %}rgba(56, 189, 248, 0.15); color: #38bdf8;{% else %}rgba(255,255,255,0.08); color: #fff;{% endif %} font-size: 0.72rem; font-weight: 900; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">
+            {{ acc.account_type }}
+          </span>
+        </div>
+
+        <!-- Big Current Balance -->
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px 18px;">
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; display: block;">الرصيد الفعلي الحالي المتاح:</span>
+          <div style="font-size: 2.1rem; font-weight: 900; line-height: 1.2; margin-top: 6px; color: {% if acc_info.current_balance >= 0 %}#4ade80{% else %}#f87171{% endif %}; font-variant-numeric: tabular-nums;">
+            {{ acc_info.current_balance|floatformat:2 }} <small style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+          </div>
+        </div>
+
+        <!-- Inflows & Outflows Details -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.8rem; border-top: 1px solid var(--border-color); padding-top: 12px;">
+          <div>
+            <span style="color: var(--text-muted); display: block;">المقبوضات المحصلة:</span>
+            <strong style="color: #4ade80; font-size: 0.92rem;">+{{ acc_info.inflows|floatformat:2 }} ج</strong>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); display: block;">المصروفات المنصرفة:</span>
+            <strong style="color: #f87171; font-size: 0.92rem;">-{{ acc_info.outflows|floatformat:2 }} ج</strong>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); display: block;">وارد من تحويلات:</span>
+            <strong style="color: #38bdf8; font-size: 0.92rem;">+{{ acc_info.transfers_in|floatformat:2 }} ج</strong>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); display: block;">صادر بتحويلات:</span>
+            <strong style="color: #fbbf24; font-size: 0.92rem;">-{{ acc_info.transfers_out|floatformat:2 }} ج</strong>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+          <button type="button" onclick="openTransferModal('{{ acc.id }}')" class="btn btn-sm btn-secondary" style="flex: 1; font-weight: 800; font-size: 0.82rem; height: 34px; border-radius: 8px;">
+            🔄 تحويل من هذا الحساب
+          </button>
+          <button type="button" onclick="openEditAccountModal('{{ acc.id }}', '{{ acc.name|escapejs }}', '{{ acc.account_number|escapejs }}', '{{ acc.initial_balance }}', '{{ acc.notes|escapejs }}')" class="btn btn-sm btn-secondary" style="font-weight: 800; font-size: 0.82rem; height: 34px; border-radius: 8px;" title="تعديل بيانات ورقم الحساب والرصيد الافتتاحي">
+            ⚙️
+          </button>
+        </div>
+
+      </div>
+      {% endwith %}
+    {% endfor %}
+
+    <!-- 4. TOTAL GYM GENERAL TREASURY CARD -->
+    <div style="background: linear-gradient(135deg, rgba(168, 241, 75, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1.5px solid rgba(168, 241, 75, 0.45); border-radius: 16px; padding: 22px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); display: flex; flex-direction: column; justify-content: space-between; gap: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.4rem;">💎</span>
+            <strong style="color: var(--text-main); font-size: 1.15rem; font-weight: 900;">إجمالي السيولة المالية للصالة</strong>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+            مجموع أرصدة الكاش + فودافون كاش + البنك والإنستاباي
+          </div>
+        </div>
+        <span style="background: rgba(168, 241, 75, 0.18); color: #A8F14B; font-size: 0.75rem; font-weight: 900; padding: 4px 10px; border-radius: 999px;">
+          TOTAL GYM CASH
+        </span>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(168, 241, 75, 0.2); border-radius: 12px; padding: 16px 20px;">
+        <span style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700; display: block;">صافي الخزينة الكلي المتاح حالياً:</span>
+        <div style="font-size: 2.3rem; font-weight: 900; line-height: 1.2; margin-top: 6px; color: {% if total_balance >= 0 %}#A8F14B{% else %}#f87171{% endif %}; font-variant-numeric: tabular-nums;">
+          {{ total_balance|floatformat:2 }} <small style="font-size: 0.95rem; font-weight: 700;">{{ gym_profile.currency|default:"ج" }}</small>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.82rem; border-top: 1px solid var(--border-color); padding-top: 12px;">
+        <div>
+          <span style="color: var(--text-muted); display: block;">إجمالي الإيرادات الكلية:</span>
+          <strong style="color: #4ade80; font-size: 0.95rem;">+{{ total_inflows|floatformat:2 }} ج</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block;">إجمالي المصروفات الكلية:</span>
+          <strong style="color: #f87171; font-size: 0.95rem;">-{{ total_outflows|floatformat:2 }} ج</strong>
+        </div>
+      </div>
+
+      <div style="padding-top: 12px; border-top: 1px solid var(--border-color);">
+        <button type="button" onclick="openTransferModal()" class="btn btn-primary" style="width: 100%; height: 38px; font-weight: 800; border-radius: 8px;">
+          🔄 نقل وتحويل أموال بين الحسابات
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== 3. TRANSFERS HISTORY AUDIT LOG ==================== -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-sm);">
+    
+    <!-- Table Toolbar -->
+    <div style="padding: 16px 22px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h3 style="color: var(--text-main); font-size: 1.1rem; font-weight: 900; margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>📋</span> سجل التحويلات بين الخزائن والحسابات
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.82rem; margin: 4px 0 0 0;">
+          توثيق كامل لكافة حركات نقل الأموال الداخلية والرسوم المقتطعة
+        </p>
+      </div>
+
+      <!-- Search Bar -->
+      <form method="GET" action="" style="display: flex; gap: 8px; align-items: center;">
+        <input type="text" name="q" value="{{ search_q }}" placeholder="بحث برقم التحويل، الحساب، المرجع..." class="form-control" style="height: 36px; font-size: 0.85rem; width: 260px; border-radius: 8px;">
+        <button type="submit" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 14px; font-weight: 800; border-radius: 8px;">
+          بحث
+        </button>
+        {% if search_q %}
+          <a href="{% url 'payments:accounts_index' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; color: #ef4444; border-radius: 8px;">
+            ✕
+          </a>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <table class="dark-table" style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: var(--bg-input); border-bottom: 2px solid var(--border-color);">
+            <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">رقم المعاملة والتاريخ</th>
+            <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">من حساب (المصدر)</th>
+            <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">إلى حساب (الوجهة)</th>
+            <th style="padding: 12px 16px; text-align: left; color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">المبلغ المحول</th>
+            <th style="padding: 12px 16px; text-align: left; color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">رسوم التحويل</th>
+            <th style="padding: 12px 16px; text-align: left; color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">إجمالي المخصوم</th>
+            <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">البيان والمرجع</th>
+            <th style="padding: 12px 16px; text-align: right; color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">المسؤول</th>
+            <th style="padding: 12px 16px; text-align: center; color: var(--text-muted); font-size: 0.84rem; font-weight: 700;">الإجراء</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for trf in transfers %}
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+              <td style="padding: 12px 16px; font-variant-numeric: tabular-nums;">
+                <strong style="color: #38bdf8; font-size: 0.88rem; font-family: monospace;">{{ trf.transfer_id }}</strong>
+                <div style="font-size: 0.74rem; color: var(--text-muted);">{{ trf.transfer_date|date:"Y-m-d" }}</div>
+              </td>
+
+              <td style="padding: 12px 16px;">
+                <span style="background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.8rem;">
+                  {{ trf.from_account.name }}
+                </span>
+              </td>
+
+              <td style="padding: 12px 16px;">
+                <span style="background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.8rem;">
+                  {{ trf.to_account.name }}
+                </span>
+              </td>
+
+              <td style="padding: 12px 16px; text-align: left; font-weight: 900; font-size: 1.05rem; color: #4ade80; font-variant-numeric: tabular-nums;">
+                {{ trf.amount|floatformat:2 }} <small style="font-size: 0.75rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+              </td>
+
+              <td style="padding: 12px 16px; text-align: left; font-weight: 800; font-size: 0.95rem; color: {% if trf.fee > 0 %}#f87171{% else %}var(--text-muted){% endif %}; font-variant-numeric: tabular-nums;">
+                {% if trf.fee > 0 %}
+                  -{{ trf.fee|floatformat:2 }} <small style="font-size: 0.75rem;">{{ gym_profile.currency|default:"ج" }}</small>
+                {% else %}
+                  <span style="color: var(--text-muted); font-size: 0.8rem;">0.00</span>
+                {% endif %}
+              </td>
+
+              <td style="padding: 12px 16px; text-align: left; font-weight: 900; font-size: 1.05rem; color: #ef4444; font-variant-numeric: tabular-nums;">
+                {{ trf.amount|add:trf.fee|floatformat:2 }} <small style="font-size: 0.75rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+              </td>
+
+              <td style="padding: 12px 16px; color: var(--text-secondary); font-size: 0.84rem; max-width: 280px; line-height: 1.4;">
+                <div>{{ trf.notes|default:"تحويل داخلي بين الحسابات" }}</div>
+                {% if trf.reference_no %}
+                  <div style="font-size: 0.74rem; color: #38bdf8; font-family: monospace;">مرجع: {{ trf.reference_no }}</div>
+                {% endif %}
+              </td>
+
+              <td style="padding: 12px 16px; color: var(--text-muted); font-size: 0.82rem;">
+                {{ trf.created_by.first_name|default:trf.created_by.username|default:"مدير النظام" }}
+              </td>
+
+              <td style="padding: 12px 16px; text-align: center;">
+                <form method="POST" action="{% url 'payments:transfer_delete' trf.id %}" onsubmit="return confirm('هل أنت متأكد من رغبتك في إلغاء وحذف هذا التحويل؟ سيتم إعادة المبلغ والرسوم للحساب الأصلي.');" style="margin: 0; display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-secondary" style="color: #ef4444; padding: 4px 10px; font-size: 0.78rem; font-weight: 800; border-radius: 6px;" title="حذف التحويل وإعادة ضبط الأرصدة">
+                    إلغاء 🗑️
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="9" style="text-align: center; padding: 36px; color: var(--text-muted); font-size: 0.92rem;">
+                لا توجد تحويلات مسجلة حتى الآن. انقر على "إجراء تحويل بين الحسابات" بالأعلى لنقل مبالغ بين الخزائن.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if transfers.has_other_pages %}
+    <div style="padding: 14px 20px; background: rgba(255,255,255,0.01); border-top: 1px solid var(--border-color); display: flex; justify-content: center; gap: 8px; align-items: center;">
+      {% if transfers.has_previous %}
+        <a href="?page={{ transfers.previous_page_number }}{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-secondary btn-sm" style="border-radius: 6px; padding: 4px 12px;">السابق</a>
+      {% endif %}
+      <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 700;">
+        صفحة {{ transfers.number }} من {{ transfers.paginator.num_pages }}
+      </span>
+      {% if transfers.has_next %}
+        <a href="?page={{ transfers.next_page_number }}{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-secondary btn-sm" style="border-radius: 6px; padding: 4px 12px;">التالي</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+
+</div>
+
+<!-- ==================== 4. TRANSFER MODAL ==================== -->
+<div id="transferModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10500; justify-content: center; align-items: center; padding: 18px;" onclick="if(event.target === this) closeTransferModal();">
+  <div style="background: #0d1b2a; border: 1px solid #1e3a52; border-radius: 18px; width: 100%; max-width: 540px; padding: 26px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); position: relative;" onclick="event.stopPropagation();">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #1e3a52; padding-bottom: 12px;">
+      <h3 style="color: var(--text-main); font-size: 1.25rem; font-weight: 900; margin: 0; display: flex; align-items: center; gap: 8px;">
+        <span>🔄</span> تحويل أموال بين الحسابات والخزائن
+      </h3>
+      <button type="button" onclick="closeTransferModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+
+    <form method="POST" action="{% url 'payments:transfer_money' %}" id="moneyTransferForm" onsubmit="return validateTransferForm();">
+      {% csrf_token %}
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+
+        <!-- From and To Account -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #f87171; margin-bottom: 6px;">من حساب (المحول منه) *</label>
+            <select name="from_account_id" id="fromAccountSelect" required onchange="updateTransferPreview()" style="width: 100%; background: #07111b; border: 1px solid #ef4444; border-radius: 8px; padding: 10px 12px; color: var(--text-main); font-weight: 800; font-size: 0.92rem;">
+              <option value="" disabled selected>-- اختر الحساب --</option>
+              {% for acc in all_accounts %}
+                <option value="{{ acc.id }}">
+                  {% if acc.account_type == 'cash' %}💵{% elif acc.account_type == 'vodafone_cash' %}📱{% elif acc.account_type == 'bank' %}🏦{% else %}💼{% endif %}
+                  {{ acc.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #4ade80; margin-bottom: 6px;">إلى حساب (المحول إليه) *</label>
+            <select name="to_account_id" id="toAccountSelect" required onchange="updateTransferPreview()" style="width: 100%; background: #07111b; border: 1px solid #22c55e; border-radius: 8px; padding: 10px 12px; color: var(--text-main); font-weight: 800; font-size: 0.92rem;">
+              <option value="" disabled selected>-- اختر الحساب --</option>
+              {% for acc in all_accounts %}
+                <option value="{{ acc.id }}">
+                  {% if acc.account_type == 'cash' %}💵{% elif acc.account_type == 'vodafone_cash' %}📱{% elif acc.account_type == 'bank' %}🏦{% else %}💼{% endif %}
+                  {{ acc.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Amount and Fee -->
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">المبلغ المحول (ج.م) *</label>
+            <input type="number" step="0.01" min="0.01" name="amount" id="transferAmountInput" placeholder="0.00" required oninput="updateTransferPreview()" style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 14px; color: #4ade80; font-weight: 900; font-size: 1.15rem;">
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">رسوم التحويل (ج.م)</label>
+            <input type="number" step="0.01" min="0.00" name="fee" id="transferFeeInput" value="0.00" oninput="updateTransferPreview()" style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 14px; color: #f87171; font-weight: 900; font-size: 1.15rem;">
+            <small style="color: var(--text-muted); font-size: 0.72rem;">تخصم كمصروف تشغيلي</small>
+          </div>
+        </div>
+
+        <!-- Date & Reference -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">تاريخ التحويل</label>
+            <input type="date" name="transfer_date" value="{{ today|date:'Y-m-d' }}" required style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 12px; color: var(--text-main); font-weight: 700; font-size: 0.92rem;">
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">رقم الإشعار / المرجع (اختياري)</label>
+            <input type="text" name="reference_no" placeholder="رقم التحويل أو الإيصال..." style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 12px; color: var(--text-main); font-size: 0.92rem;">
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">البيان والملاحظات</label>
+          <textarea name="notes" rows="2" placeholder="اكتب هنا سبب التحويل (مثال: تحويل إيراد فودافون كاش لحساب البنك)..." style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 12px; color: var(--text-main); font-size: 0.88rem; resize: vertical;"></textarea>
+        </div>
+
+        <!-- Dynamic Live Calculation Preview -->
+        <div id="transferPreviewBox" style="display: none; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 10px; padding: 12px 16px; font-size: 0.85rem;">
+          <div style="font-weight: 800; color: #38bdf8; margin-bottom: 6px;">معاينة تأثير التحويل على الحسابات:</div>
+          <div style="display: flex; flex-direction: column; gap: 4px; color: #cbd5e1;">
+            <div>• سيتم خصم من الحساب المصدر: <strong id="previewDeduct" style="color: #f87171;">0.00 ج</strong> (المبلغ + الرسوم)</div>
+            <div>• سيتم إضافة للحساب الوجهة: <strong id="previewCredit" style="color: #4ade80;">0.00 ج</strong></div>
+            <div id="previewFeeRow" style="display: none;">• رسوم التحويل المحتسبة كمصروف: <strong id="previewFee" style="color: #fbbf24;">0.00 ج</strong></div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button type="submit" style="flex: 1; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 800; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.98rem; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+            💾 تأكيد واعتماد التحويل الفوري
+          </button>
+          <button type="button" onclick="closeTransferModal()" style="padding: 12px 20px; background: #1e293b; color: var(--text-secondary); border: 1px solid #334155; border-radius: 8px; font-weight: 700; cursor: pointer;">
+            إلغاء
+          </button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== 5. EDIT ACCOUNT MODAL ==================== -->
+<div id="editAccountModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10500; justify-content: center; align-items: center; padding: 18px;" onclick="if(event.target === this) closeEditAccountModal();">
+  <div style="background: #0d1b2a; border: 1px solid #1e3a52; border-radius: 18px; width: 100%; max-width: 480px; padding: 26px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); position: relative;" onclick="event.stopPropagation();">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #1e3a52; padding-bottom: 12px;">
+      <h3 style="color: var(--text-main); font-size: 1.2rem; font-weight: 900; margin: 0; display: flex; align-items: center; gap: 8px;">
+        <span>⚙️</span> تعديل بيانات الحساب المالي
+      </h3>
+      <button type="button" onclick="closeEditAccountModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+
+    <form method="POST" id="editAccountForm" action="">
+      {% csrf_token %}
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">اسم الحساب</label>
+          <input type="text" id="editAccountName" readonly style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 14px; color: #38bdf8; font-weight: 800; font-size: 0.95rem;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">رقم الحساب / المحفظة / IBAN</label>
+          <input type="text" name="account_number" id="editAccountNumber" placeholder="مثال: 01012345678 أو رقم الآيبان..." style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 14px; color: var(--text-main); font-weight: 700; font-size: 0.95rem;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">الرصيد الافتتاحي (ج.م)</label>
+          <input type="number" step="0.01" name="initial_balance" id="editAccountInitialBalance" placeholder="0.00" style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 14px; color: #4ade80; font-weight: 900; font-size: 1.1rem;">
+          <small style="color: var(--text-muted); font-size: 0.75rem;">الرصيد الافتتاحي عند بدء استخدام النظام</small>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">ملاحظات ووصف الحساب</label>
+          <textarea name="notes" id="editAccountNotes" rows="2" style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 14px; color: var(--text-main); font-size: 0.88rem;"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button type="submit" style="flex: 1; background: #38bdf8; color: #000; font-weight: 800; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.95rem;">
+            💾 حفظ التعديلات
+          </button>
+          <button type="button" onclick="closeEditAccountModal()" style="padding: 12px 20px; background: #1e293b; color: var(--text-secondary); border: 1px solid #334155; border-radius: 8px; font-weight: 700; cursor: pointer;">
+            إلغاء
+          </button>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openTransferModal(fromAccountId = '') {
+    const modal = document.getElementById('transferModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      if (fromAccountId) {
+        const fromSel = document.getElementById('fromAccountSelect');
+        if (fromSel) {
+          fromSel.value = fromAccountId;
+        }
+      }
+      updateTransferPreview();
+    }
+  }
+
+  function closeTransferModal() {
+    const modal = document.getElementById('transferModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function updateTransferPreview() {
+    const fromSel = document.getElementById('fromAccountSelect');
+    const toSel = document.getElementById('toAccountSelect');
+    const amtInput = document.getElementById('transferAmountInput');
+    const feeInput = document.getElementById('transferFeeInput');
+    const box = document.getElementById('transferPreviewBox');
+
+    if (!fromSel || !toSel || !amtInput || !feeInput || !box) return;
+
+    const amt = parseFloat(amtInput.value) || 0;
+    const fee = parseFloat(feeInput.value) || 0;
+
+    if (amt > 0 && fromSel.value && toSel.value) {
+      box.style.display = 'block';
+      const totalDeduct = amt + fee;
+      document.getElementById('previewDeduct').textContent = totalDeduct.toFixed(2) + ' ج';
+      document.getElementById('previewCredit').textContent = amt.toFixed(2) + ' ج';
+      
+      const feeRow = document.getElementById('previewFeeRow');
+      if (fee > 0) {
+        feeRow.style.display = 'block';
+        document.getElementById('previewFee').textContent = fee.toFixed(2) + ' ج';
+      } else {
+        feeRow.style.display = 'none';
+      }
+    } else {
+      box.style.display = 'none';
+    }
+  }
+
+  function validateTransferForm() {
+    const fromSel = document.getElementById('fromAccountSelect');
+    const toSel = document.getElementById('toAccountSelect');
+    const amtInput = document.getElementById('transferAmountInput');
+
+    if (fromSel.value === toSel.value) {
+      alert('خطأ: لا يمكن التحويل من وإلى نفس الحساب المالي! يرجى اختيار حسابين مختلفين.');
+      return false;
+    }
+    const amt = parseFloat(amtInput.value) || 0;
+    if (amt <= 0) {
+      alert('خطأ: يجب أن يكون مبلغ التحويل أكبر من الصفر.');
+      return false;
+    }
+    return true;
+  }
+
+  function openEditAccountModal(id, name, number, initBal, notes) {
+    const modal = document.getElementById('editAccountModal');
+    const form = document.getElementById('editAccountForm');
+    if (modal && form) {
+      form.action = `/payments/accounts/${id}/update/`;
+      document.getElementById('editAccountName').value = name;
+      document.getElementById('editAccountNumber').value = number;
+      document.getElementById('editAccountInitialBalance').value = initBal;
+      document.getElementById('editAccountNotes').value = notes;
+      modal.style.display = 'flex';
+    }
+  }
+
+  function closeEditAccountModal() {
+    const modal = document.getElementById('editAccountModal');
+    if (modal) modal.style.display = 'none';
+  }
+</script>
+
+{% endblock %}

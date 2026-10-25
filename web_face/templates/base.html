@@ -395,6 +395,10 @@
           <span>المصروفات</span>
         </a>
 
+        <a href="{% url 'payments:accounts_index' %}" class="top-nav-item {% if 'accounts' in request.path %}active{% endif %}" title="إدارة الخزائن والحسابات المالية والتحويلات">
+          <span>الخزائن</span>
+        </a>
+
         {% if license_features.whatsapp %}
         <a href="{% url 'messaging:whatsapp_queue' %}" class="top-nav-item {% if 'messaging' in request.path %}active{% endif %}">
           <span>واتساب</span>

@@ -751,5 +751,190 @@ def bar_product_delete_view(request, product_id):
     return redirect("payments:bar_inventory")
 
 
+# =========================================================================
+# 💰 FINANCIAL ACCOUNTS & MULTI-TREASURY TRANSFERS VIEWS
+# =========================================================================
+
+from apps.payments.models import FinancialAccount, MoneyTransfer, AccountType
+from apps.payments.services import (
+    get_all_financial_accounts_summary,
+    execute_money_transfer,
+)
+from apps.core.branch_context import filter_by_branch, get_active_branch
+
+
+@login_required
+def financial_accounts_view(request):
+    """
+    Dedicated view for multi-treasury money accounts (Cash safe, Vodafone Cash, Bank/InstaPay)
+    and internal transfer management with transfer fees.
+    """
+    active_branch = get_active_branch(request)
+    summary = get_all_financial_accounts_summary(branch=active_branch)
+
+    transfers_qs = MoneyTransfer.objects.select_related("from_account", "to_account", "created_by").all().order_by("-transfer_date", "-created_at")
+    transfers_qs = filter_by_branch(transfers_qs, request)
+
+    search_q = request.GET.get("q", "").strip()
+    if search_q:
+        transfers_qs = transfers_qs.filter(
+            Q(transfer_id__icontains=search_q) |
+            Q(from_account__name__icontains=search_q) |
+            Q(to_account__name__icontains=search_q) |
+            Q(reference_no__icontains=search_q) |
+            Q(notes__icontains=search_q)
+        )
+
+    paginator = Paginator(transfers_qs, 25)
+    page_number = request.GET.get("page", 1)
+    transfers_page = paginator.get_page(page_number)
+
+    all_accounts = FinancialAccount.objects.filter(is_active=True).order_by("id")
+
+    context = {
+        "accounts_details": summary["accounts_details"],
+        "total_balance": summary["total_balance"],
+        "total_inflows": summary["total_inflows"],
+        "total_outflows": summary["total_outflows"],
+        "all_accounts": all_accounts,
+        "transfers": transfers_page,
+        "search_q": search_q,
+        "today": timezone.localdate(),
+    }
+    return render(request, "payments/accounts.html", context)
+
+
+@login_required
+def transfer_money_view(request):
+    """
+    Executes an internal transfer from one financial account to another,
+    deducting transfer fees automatically as an operational expense.
+    """
+    if request.method != "POST":
+        return redirect("payments:accounts_index")
+
+    from_account_id = request.POST.get("from_account_id")
+    to_account_id = request.POST.get("to_account_id")
+    amount_raw = request.POST.get("amount", "0")
+    fee_raw = request.POST.get("fee", "0")
+    transfer_date_str = request.POST.get("transfer_date", "")
+    reference_no = request.POST.get("reference_no", "").strip()
+    notes = request.POST.get("notes", "").strip()
+
+    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest" or request.GET.get("ajax") == "1"
+
+    from_acc = get_object_or_404(FinancialAccount, id=from_account_id)
+    to_acc = get_object_or_404(FinancialAccount, id=to_account_id)
+
+    try:
+        amount = Decimal(str(amount_raw or "0").strip())
+        fee = Decimal(str(fee_raw or "0").strip())
+    except Exception:
+        msg = "يرجى إدخال مبلغ ورسوم تحويل صحيحة."
+        if is_ajax:
+            return JsonResponse({"success": False, "message": msg}, status=400)
+        messages.error(request, msg)
+        return redirect("payments:accounts_index")
+
+    transfer_date = timezone.localdate()
+    if transfer_date_str:
+        try:
+            transfer_date = timezone.datetime.strptime(transfer_date_str, "%Y-%m-%d").date()
+        except Exception:
+            pass
+
+    target_branch = None
+    if not getattr(request.user, "is_owner", False):
+        target_branch = getattr(request.user, "branch", None)
+    else:
+        target_branch = get_active_branch(request)
+
+    try:
+        transfer = execute_money_transfer(
+            from_account=from_acc,
+            to_account=to_acc,
+            amount=amount,
+            fee=fee,
+            transfer_date=transfer_date,
+            reference_no=reference_no,
+            notes=notes,
+            user=request.user,
+            branch=target_branch,
+        )
+        success_msg = f"✓ تم تحويل {amount} ج.م بنجاح من '{from_acc.name}' إلى '{to_acc.name}' (رسوم التحويل: {fee} ج.م)."
+        if is_ajax:
+            return JsonResponse({
+                "success": True,
+                "message": success_msg,
+                "transfer_id": transfer.transfer_id,
+            })
+        messages.success(request, success_msg)
+    except ValueError as e:
+        err_msg = str(e)
+        if is_ajax:
+            return JsonResponse({"success": False, "message": err_msg}, status=400)
+        messages.error(request, err_msg)
+    except Exception as e:
+        err_msg = f"حدث خطأ أثناء تنفيذ التحويل: {e}"
+        if is_ajax:
+            return JsonResponse({"success": False, "message": err_msg}, status=500)
+        messages.error(request, err_msg)
+
+    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or "payments:accounts_index"
+    return redirect(next_url)
+
+
+@login_required
+def transfer_delete_view(request, transfer_id):
+    """
+    Cancels/deletes a money transfer and its linked fee expense.
+    """
+    if request.method != "POST":
+        return redirect("payments:accounts_index")
+
+    transfer = get_object_or_404(MoneyTransfer, id=transfer_id)
+    from apps.expenses.models import Expense
+
+    with transaction.atomic():
+        # Remove any automatically created fee expense matching this transfer
+        Expense.objects.filter(
+            description__icontains=transfer.transfer_id,
+            account=transfer.from_account,
+        ).delete()
+
+        transfer_desc = f"{transfer.transfer_id} ({transfer.amount} ج.م)"
+        transfer.delete()
+
+    messages.success(request, f"تم إلغاء وحذف التحويل '{transfer_desc}' وإعادة ضبط الأرصدة بنجاح.")
+    return redirect("payments:accounts_index")
+
+
+@login_required
+def account_update_view(request, account_id):
+    """
+    Updates financial account metadata (account number / wallet phone, initial balance, notes).
+    """
+    if request.method != "POST":
+        return redirect("payments:accounts_index")
+
+    account = get_object_or_404(FinancialAccount, id=account_id)
+    account_number = request.POST.get("account_number", "").strip()
+    notes = request.POST.get("notes", "").strip()
+    initial_balance_raw = request.POST.get("initial_balance", "").strip()
+
+    account.account_number = account_number
+    account.notes = notes
+    if initial_balance_raw:
+        try:
+            account.initial_balance = Decimal(initial_balance_raw)
+        except Exception:
+            pass
+    account.save()
+
+    messages.success(request, f"تم تحديث بيانات الحساب '{account.name}' بنجاح.")
+    return redirect("payments:accounts_index")
+
+
+
 
 

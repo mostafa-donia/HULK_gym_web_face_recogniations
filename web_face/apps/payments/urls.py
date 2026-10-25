@@ -11,6 +11,12 @@ urlpatterns = [
     path("<int:payment_id>/send-whatsapp/", views.send_receipt_whatsapp_now_view, name="send_receipt_whatsapp"),
     path("settle-debt/<int:member_id>/", views.settle_debt_view, name="settle_debt"),
 
+    # Multi-Treasury & Financial Accounts Routes
+    path("accounts/", views.financial_accounts_view, name="accounts_index"),
+    path("accounts/transfer/", views.transfer_money_view, name="transfer_money"),
+    path("accounts/transfer/<int:transfer_id>/delete/", views.transfer_delete_view, name="transfer_delete"),
+    path("accounts/<int:account_id>/update/", views.account_update_view, name="account_update"),
+
     # Bar & Inventory Routes
     path("bar/", views.bar_inventory_view, name="bar_inventory"),
     path("bar/sale/", views.bar_quick_sale_view, name="bar_quick_sale"),

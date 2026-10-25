@@ -53,7 +53,7 @@ def expense_list_view(request):
         start_date = ""
         end_date = ""
 
-    expenses_qs = Expense.objects.select_related("category", "created_by").all().order_by("-expense_date", "-created_at")
+    expenses_qs = Expense.objects.select_related("category", "created_by", "account").all().order_by("-expense_date", "-created_at")
     expenses_qs = filter_by_branch(expenses_qs, request)
 
     if category_id:
@@ -95,6 +95,8 @@ def expense_list_view(request):
         other_expenses_total = Decimal("0.00")
 
     categories = ExpenseCategory.objects.filter(is_active=True).order_by("name")
+    from apps.payments.models import FinancialAccount
+    accounts = FinancialAccount.get_default_accounts()
 
     paginator = Paginator(expenses_qs, 40)
     page_number = request.GET.get("page", 1)
@@ -104,6 +106,7 @@ def expense_list_view(request):
         "expenses": page_obj,
         "page_obj": page_obj,
         "categories": categories,
+        "accounts": accounts,
         "total_amount": total_amount,
         "total_count": total_count,
         "bar_expenses_total": bar_expenses_total,
@@ -124,8 +127,10 @@ def expense_list_view(request):
 @login_required
 def expense_create_view(request):
     from apps.core.branch_context import get_active_branch
+    from apps.payments.models import FinancialAccount
 
     categories = ExpenseCategory.objects.filter(is_active=True).order_by("name")
+    accounts = FinancialAccount.get_default_accounts()
     today = timezone.localdate()
 
     if request.method == "POST":
@@ -133,6 +138,11 @@ def expense_create_view(request):
         category = get_object_or_404(ExpenseCategory, id=category_id)
         amount = Decimal(request.POST.get("amount", "0.00") or "0.00")
         description = request.POST.get("description", "").strip()
+        account_id = request.POST.get("account_id")
+        selected_account = FinancialAccount.objects.filter(id=account_id).first() if account_id else None
+        if not selected_account:
+            selected_account = FinancialAccount.objects.filter(is_default=True).first() or FinancialAccount.objects.first()
+
         expense_date_str = request.POST.get("expense_date")
         expense_date = today
         if expense_date_str:
@@ -145,7 +155,7 @@ def expense_create_view(request):
             if request.headers.get("x-requested-with") == "XMLHttpRequest":
                 return JsonResponse({"success": False, "message": "مبلغ المصروف يجب أن يكون أكبر من الصفر."})
             messages.error(request, "مبلغ المصروف يجب أن يكون أكبر من الصفر.")
-            return render(request, "expenses/expense_form.html", {"categories": categories, "today": today})
+            return render(request, "expenses/expense_form.html", {"categories": categories, "accounts": accounts, "today": today})
 
         target_branch = None
         if not getattr(request.user, "is_owner", False):
@@ -156,6 +166,7 @@ def expense_create_view(request):
         expense = Expense.objects.create(
             category=category,
             amount=amount,
+            account=selected_account,
             description=description,
             expense_date=expense_date,
             created_by=request.user,
@@ -164,10 +175,10 @@ def expense_create_view(request):
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({"success": True, "message": f"تم تسجيل مصروف {category.name} بمبلغ {amount} ج.م بنجاح."})
 
-        messages.success(request, f"تم تسجيل مصروف {category.name} بمبلغ {amount} ج.م بنجاح.")
+        messages.success(request, f"تم تسجيل مصروف {category.name} بمبلغ {amount} ج.م من {selected_account.name if selected_account else 'الخزينة'} بنجاح.")
         return redirect("expenses:expense_list")
 
-    return render(request, "expenses/expense_form.html", {"categories": categories, "today": today})
+    return render(request, "expenses/expense_form.html", {"categories": categories, "accounts": accounts, "today": today})
 
 
 @login_required

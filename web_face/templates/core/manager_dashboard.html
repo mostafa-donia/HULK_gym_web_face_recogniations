@@ -171,6 +171,56 @@
     {% include "reports/ai_strategy_content.html" %}
   {% else %}
 
+  <!-- ==================== 1.5 MULTI-TREASURY CASH & ACCOUNTS LIVE STRIP ==================== -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px 20px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.15rem;">🏦</span>
+        <strong style="color: var(--text-main); font-size: 0.98rem; font-weight: 800;">توزيع السيولة المالية في الخزائن والحسابات</strong>
+        <span style="font-size: 0.78rem; color: var(--text-muted);">(رصيد فعلي لحظي)</span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <a href="{% url 'payments:accounts_index' %}" class="btn btn-secondary btn-sm" style="font-size: 0.8rem; font-weight: 800; padding: 4px 12px; border-radius: 6px;">
+          إدارة الخزائن والتحويلات ←
+        </a>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+      {% for t_acc in treasury_accounts %}
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; display: block;">
+            {% if t_acc.account.account_type == 'cash' %}💵{% elif t_acc.account.account_type == 'vodafone_cash' %}📱{% elif t_acc.account.account_type == 'bank' %}🏦{% else %}💼{% endif %}
+            {{ t_acc.account.name }}
+          </span>
+          <div style="color: {% if t_acc.current_balance >= 0 %}#4ade80{% else %}#f87171{% endif %}; font-size: 1.25rem; font-weight: 900; margin-top: 4px; font-variant-numeric: tabular-nums;">
+            {{ t_acc.current_balance|floatformat:2 }} <small style="font-size: 0.75rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+          </div>
+        </div>
+        <a href="{% url 'payments:accounts_index' %}" class="btn btn-sm btn-secondary" style="font-size: 0.75rem; padding: 3px 8px; border-radius: 6px;" title="تحويل أموال">
+          تحويل 🔄
+        </a>
+      </div>
+      {% endfor %}
+      
+      <!-- Total Available Cash -->
+      <div style="background: rgba(168, 241, 75, 0.08); border: 1px solid rgba(168, 241, 75, 0.3); border-radius: 10px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <span style="color: #cbd5e1; font-size: 0.8rem; font-weight: 800; display: block;">
+            💎 إجمالي السيولة المتاحة
+          </span>
+          <div style="color: #A8F14B; font-size: 1.3rem; font-weight: 900; margin-top: 4px; font-variant-numeric: tabular-nums;">
+            {{ treasury_total_balance|floatformat:2 }} <small style="font-size: 0.75rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+          </div>
+        </div>
+        <span style="font-size: 0.75rem; background: rgba(168, 241, 75, 0.2); color: #A8F14B; padding: 3px 8px; border-radius: 999px; font-weight: 800;">
+          صافي عام
+        </span>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== 2. THE 4 EXECUTIVE HERO KPI CARDS ==================== -->
   <div>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">

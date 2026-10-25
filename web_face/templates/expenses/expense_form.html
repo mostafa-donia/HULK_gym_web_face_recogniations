@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}تسجيل مصروف جديد — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
@@ -20,6 +20,19 @@
             <option value="{{ cat.id }}">{{ cat.name }}</option>
           {% endfor %}
         </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">الخزينة / الحساب المسحوب منه *</label>
+        <select name="account_id" class="form-control" style="font-weight: 700;">
+          {% for acc in accounts %}
+            <option value="{{ acc.id }}" {% if acc.is_default %}selected{% endif %}>
+              {% if acc.account_type == 'cash' %}💵{% elif acc.account_type == 'vodafone_cash' %}📱{% elif acc.account_type == 'bank' %}🏦{% else %}💼{% endif %}
+              {{ acc.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <small style="color: var(--text-muted); font-size: 0.8rem;">يتم خصم هذا المصروف مباشرة من رصيد الحساب المالي المحدد</small>
       </div>
 
       <div class="form-group">

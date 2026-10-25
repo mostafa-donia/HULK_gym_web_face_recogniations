@@ -40,6 +40,14 @@ class Expense(models.Model):
         related_name="expenses",
         verbose_name="الفرع",
     )
+    account = models.ForeignKey(
+        "payments.FinancialAccount",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="expenses",
+        verbose_name="الخزينة المسحوب منها",
+    )
 
     class Meta:
         verbose_name = "مصروف"

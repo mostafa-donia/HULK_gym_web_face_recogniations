@@ -360,3 +360,218 @@ def queue_payment_receipt_whatsapp(payment: Payment, subscription=None) -> Optio
         msg_obj.save(update_fields=["attachment", "message"])
 
     return msg_obj
+
+
+# =========================================================================
+# 💰 MULTI-TREASURY FINANCIAL ACCOUNTS & INTERNAL TRANSFERS SERVICE
+# =========================================================================
+
+import uuid
+from django.db import transaction
+from django.db.models import Sum, Q
+
+
+def resolve_account_for_payment_method(payment_method_name, branch=None):
+    from apps.payments.models import FinancialAccount, AccountType
+    if not payment_method_name:
+        payment_method_name = "نقدي"
+    pm_clean = str(payment_method_name).strip().lower()
+
+    # 1. Match Vodafone Cash / Electronic Wallet
+    if any(k in pm_clean for k in ["فودافون", "vodafone", "محفظة", "wallet", "كاش إلكتروني", "electronic"]):
+        acc = FinancialAccount.objects.filter(account_type=AccountType.VODAFONE_CASH, is_active=True).first()
+        if not acc:
+            acc = FinancialAccount.objects.filter(name__icontains="فودافون", is_active=True).first()
+        if acc:
+            return acc
+
+    # 2. Match Bank / InstaPay / Visa / Card
+    if any(k in pm_clean for k in ["انستا", "إنستا", "insta", "بنك", "bank", "فيزا", "visa", "بطاقة", "card", "pos"]):
+        acc = FinancialAccount.objects.filter(account_type=AccountType.BANK, is_active=True).first()
+        if not acc:
+            acc = FinancialAccount.objects.filter(name__icontains="بنك", is_active=True).first()
+        if acc:
+            return acc
+
+    # 3. Default to Cash account
+    acc = FinancialAccount.objects.filter(account_type=AccountType.CASH, is_active=True).first()
+    if not acc:
+        acc = FinancialAccount.objects.filter(name__icontains="كاش", is_active=True).first()
+    if not acc:
+        FinancialAccount.get_default_accounts(branch=branch)
+        acc = FinancialAccount.objects.filter(account_type=AccountType.CASH, is_active=True).first()
+    return acc
+
+
+def get_account_balance_details(account, branch=None):
+    """
+    Computes real-time inflows, outflows, transfers in/out, and net balance for a FinancialAccount.
+    """
+    from apps.payments.models import Payment, MoneyTransfer, AccountType
+    from apps.expenses.models import Expense
+
+    payments_qs = Payment.objects.all()
+    expenses_qs = Expense.objects.all()
+    transfers_in_qs = MoneyTransfer.objects.filter(to_account=account)
+    transfers_out_qs = MoneyTransfer.objects.filter(from_account=account)
+
+    if branch:
+        payments_qs = payments_qs.filter(branch=branch)
+        expenses_qs = expenses_qs.filter(branch=branch)
+        transfers_in_qs = transfers_in_qs.filter(branch=branch)
+        transfers_out_qs = transfers_out_qs.filter(branch=branch)
+
+    # Inflows: Payments explicitly assigned or matching this account type
+    if account.account_type == AccountType.CASH:
+        p_filter = Q(account=account) | (
+            Q(account__isnull=True) & (
+                Q(payment_method__icontains="نقد") |
+                Q(payment_method__icontains="كاش") |
+                Q(payment_method__icontains="cash") |
+                Q(payment_method="")
+            )
+        )
+    elif account.account_type == AccountType.VODAFONE_CASH:
+        p_filter = Q(account=account) | (
+            Q(account__isnull=True) & (
+                Q(payment_method__icontains="فودافون") |
+                Q(payment_method__icontains="vodafone") |
+                Q(payment_method__icontains="محفظة") |
+                Q(payment_method__icontains="wallet")
+            )
+        )
+    elif account.account_type == AccountType.BANK:
+        p_filter = Q(account=account) | (
+            Q(account__isnull=True) & (
+                Q(payment_method__icontains="انستا") |
+                Q(payment_method__icontains="إنستا") |
+                Q(payment_method__icontains="insta") |
+                Q(payment_method__icontains="بنك") |
+                Q(payment_method__icontains="bank") |
+                Q(payment_method__icontains="فيزا") |
+                Q(payment_method__icontains="visa") |
+                Q(payment_method__icontains="بطاقة") |
+                Q(payment_method__icontains="pos")
+            )
+        )
+    else:
+        p_filter = Q(account=account)
+
+    total_inflows = payments_qs.filter(p_filter).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+
+    # Outflows: Expenses explicitly assigned, or if cash, unassigned expenses default to cash
+    if account.account_type == AccountType.CASH:
+        e_filter = Q(account=account) | Q(account__isnull=True)
+    else:
+        e_filter = Q(account=account)
+
+    total_outflows = expenses_qs.filter(e_filter).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+
+    # Transfers
+    transfers_in = transfers_in_qs.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+    transfers_out = transfers_out_qs.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+
+    current_balance = (
+        Decimal(str(account.initial_balance or "0.00"))
+        + total_inflows
+        - total_outflows
+        + transfers_in
+        - transfers_out
+    )
+
+    return {
+        "account": account,
+        "initial_balance": Decimal(str(account.initial_balance or "0.00")),
+        "inflows": total_inflows,
+        "outflows": total_outflows,
+        "transfers_in": transfers_in,
+        "transfers_out": transfers_out,
+        "current_balance": current_balance,
+    }
+
+
+def get_all_financial_accounts_summary(branch=None):
+    """
+    Returns balance details for all active financial accounts, plus overall totals.
+    """
+    from apps.payments.models import FinancialAccount
+    FinancialAccount.get_default_accounts(branch=branch)
+    accounts = FinancialAccount.objects.filter(is_active=True).order_by("id")
+
+    items = []
+    total_balance = Decimal("0.00")
+    total_inflows = Decimal("0.00")
+    total_outflows = Decimal("0.00")
+
+    for acc in accounts:
+        details = get_account_balance_details(acc, branch=branch)
+        items.append(details)
+        total_balance += details["current_balance"]
+        total_inflows += details["inflows"]
+        total_outflows += details["outflows"]
+
+    return {
+        "accounts_details": items,
+        "total_balance": total_balance,
+        "total_inflows": total_inflows,
+        "total_outflows": total_outflows,
+    }
+
+
+def execute_money_transfer(from_account, to_account, amount, fee=Decimal("0.00"), transfer_date=None, reference_no="", notes="", user=None, branch=None):
+    """
+    Executes an internal transfer between financial accounts with fee deduction.
+    """
+    from apps.payments.models import MoneyTransfer
+    from apps.expenses.models import Expense, ExpenseCategory
+    from django.utils import timezone
+
+    if from_account.id == to_account.id:
+        raise ValueError("لا يمكن التحويل من وإلى نفس الحساب المالي.")
+
+    amount = Decimal(str(amount or "0.00"))
+    fee = Decimal(str(fee or "0.00"))
+
+    if amount <= Decimal("0.00"):
+        raise ValueError("مبلغ التحويل يجب أن يكون أكبر من الصفر.")
+
+    if fee < Decimal("0.00"):
+        raise ValueError("رسوم التحويل لا يمكن أن تكون قيمة سالبة.")
+
+    if not transfer_date:
+        transfer_date = timezone.localdate()
+
+    transfer_id = f"TRF-{timezone.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+
+    with transaction.atomic():
+        transfer = MoneyTransfer.objects.create(
+            transfer_id=transfer_id,
+            from_account=from_account,
+            to_account=to_account,
+            amount=amount,
+            fee=fee,
+            transfer_date=transfer_date,
+            reference_no=reference_no or "",
+            notes=notes or "",
+            created_by=user,
+            branch=branch,
+        )
+
+        # If there is a transfer fee, record it as an Expense automatically
+        if fee > Decimal("0.00"):
+            category, _ = ExpenseCategory.objects.get_or_create(
+                name="رسوم ومصاريف تحويلات بنكية ومحافظ",
+                defaults={"is_active": True},
+            )
+            Expense.objects.create(
+                category=category,
+                amount=fee,
+                account=from_account,
+                description=f"رسوم تحويل مبلغ {amount} ج.م من {from_account.name} إلى {to_account.name} (رقم التحويل: {transfer_id})",
+                expense_date=transfer_date,
+                created_by=user,
+                branch=branch,
+            )
+
+        return transfer
+

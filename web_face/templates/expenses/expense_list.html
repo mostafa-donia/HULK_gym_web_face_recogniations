@@ -19,7 +19,10 @@
       </p>
     </div>
     
-    <div style="display: flex; gap: 10px; align-items: center;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <a href="{% url 'payments:accounts_index' %}" class="btn btn-secondary" style="font-weight: 800; padding: 10px 18px; border-radius: 10px; display: flex; align-items: center; gap: 8px;" title="عرض وإدارة الخزائن والحسابات المالية والتحويلات">
+        <span>🏦</span> الخزائن والتحويلات
+      </a>
       <button type="button" onclick="openNewExpenseModal()" class="btn btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #fff; font-weight: 800; border: none; padding: 10px 22px; border-radius: 10px; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35); cursor: pointer; display: flex; align-items: center; gap: 8px;">
         <span>+</span> تسجيل مصروف جديد
       </button>
@@ -214,6 +217,16 @@
 
             <td style="padding: 12px 16px; text-align: left; color: #ef4444; font-weight: 900; font-size: 1.15rem; font-variant-numeric: tabular-nums;">
               -{{ exp.amount|floatformat:2 }} <small style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">{{ gym_profile.currency|default:"ج" }}</small>
+              <div style="font-size: 0.73rem; color: var(--text-muted); font-weight: 700; margin-top: 3px;">
+                {% if exp.account %}
+                  {% if exp.account.account_type == 'cash' %}💵 {{ exp.account.name }}
+                  {% elif exp.account.account_type == 'vodafone_cash' %}📱 {{ exp.account.name }}
+                  {% elif exp.account.account_type == 'bank' %}🏦 {{ exp.account.name }}
+                  {% else %}💼 {{ exp.account.name }}{% endif %}
+                {% else %}
+                  💵 خزينة النقدية (الكاش)
+                {% endif %}
+              </div>
             </td>
 
             <td style="padding: 12px 16px; color: var(--text-secondary); font-size: 0.88rem; max-width: 320px; line-height: 1.4;">
@@ -285,6 +298,18 @@
             <option value="" disabled selected>-- اختر التصنيف المناسب --</option>
             {% for cat in categories %}
               <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">الخزينة المسحوب منها المصروف</label>
+          <select name="account_id" style="width: 100%; background: #07111b; border: 1px solid #1e3a52; border-radius: 8px; padding: 10px 14px; color: var(--text-main); font-weight: 700; font-size: 0.95rem;">
+            {% for acc in accounts %}
+              <option value="{{ acc.id }}" {% if acc.is_default %}selected{% endif %}>
+                {% if acc.account_type == 'cash' %}💵{% elif acc.account_type == 'vodafone_cash' %}📱{% elif acc.account_type == 'bank' %}🏦{% else %}💼{% endif %}
+                {{ acc.name }}
+              </option>
             {% endfor %}
           </select>
         </div>

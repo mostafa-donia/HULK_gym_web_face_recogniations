@@ -16,6 +16,128 @@ class PaymentMethod(models.Model):
         return self.name
 
 
+class AccountType(models.TextChoices):
+    CASH = "cash", "خزينة نقدية (كاش)"
+    VODAFONE_CASH = "vodafone_cash", "محفظة فودافون كاش / إلكترونية"
+    BANK = "bank", "حساب بنكي / فيزا / إنستاباي"
+    OTHER = "other", "حساب مالي آخر"
+
+
+class FinancialAccount(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name="اسم الحساب / الخزينة")
+    account_type = models.CharField(
+        max_length=30,
+        choices=AccountType.choices,
+        default=AccountType.CASH,
+        verbose_name="نوع الحساب",
+    )
+    account_number = models.CharField(max_length=100, blank=True, verbose_name="رقم الحساب / المحفظة / IBAN")
+    initial_balance = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name="الرصيد الافتتاحي",
+    )
+    is_active = models.BooleanField(default=True, verbose_name="نشط")
+    is_default = models.BooleanField(default=False, verbose_name="حساب افتراضي")
+    notes = models.TextField(blank=True, verbose_name="ملاحظات")
+    branch = models.ForeignKey(
+        "core.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="financial_accounts",
+        verbose_name="الفرع",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ التحديث")
+
+    class Meta:
+        verbose_name = "حساب مالي / خزينة"
+        verbose_name_plural = "الحسابات المالية والخزائن"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.get_account_type_display()})"
+
+    @classmethod
+    def get_default_accounts(cls, branch=None):
+        """
+        Ensures the 3 core accounts exist:
+        1. Cash: خزينة النقدية (الكاش)
+        2. Vodafone Cash: محفظة فودافون كاش
+        3. Bank: الحساب البنكي / إنستاباي
+        """
+        defaults = [
+            ("خزينة النقدية (الكاش)", AccountType.CASH, "الخزينة الرئيسية في الاستقبال للنقدية السائلة", True),
+            ("محفظة فودافون كاش", AccountType.VODAFONE_CASH, "حساب استقبال وايداع تحويلات فودافون كاش والمحافظ الإلكترونية", False),
+            ("الحساب البنكي / إنستاباي", AccountType.BANK, "الحساب البنكي ومدفوعات الفيزا وإنستاباي (InstaPay)", False),
+        ]
+        accounts = []
+        for name, acc_type, desc, is_def in defaults:
+            acc, _ = cls.objects.get_or_create(
+                name=name,
+                defaults={
+                    "account_type": acc_type,
+                    "notes": desc,
+                    "is_default": is_def,
+                    "branch": branch,
+                },
+            )
+            accounts.append(acc)
+        return accounts
+
+
+class MoneyTransfer(models.Model):
+    transfer_id = models.CharField(max_length=32, unique=True, db_index=True, verbose_name="رقم التحويل")
+    from_account = models.ForeignKey(
+        FinancialAccount,
+        on_delete=models.PROTECT,
+        related_name="transfers_sent",
+        verbose_name="من حساب (المحول منه)",
+    )
+    to_account = models.ForeignKey(
+        FinancialAccount,
+        on_delete=models.PROTECT,
+        related_name="transfers_received",
+        verbose_name="إلى حساب (المحول إليه)",
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="المبلغ المحول")
+    fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name="رسوم ومصاريف التحويل",
+    )
+    transfer_date = models.DateField(db_index=True, verbose_name="تاريخ التحويل")
+    reference_no = models.CharField(max_length=100, blank=True, verbose_name="رقم الإشعار / المرجع")
+    notes = models.TextField(blank=True, verbose_name="ملاحظات وسبب التحويل")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="المسجل",
+    )
+    branch = models.ForeignKey(
+        "core.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="money_transfers",
+        verbose_name="الفرع",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ التسجيل")
+
+    class Meta:
+        verbose_name = "تحويل بين الحسابات"
+        verbose_name_plural = "تحويلات الخزائن والحسابات"
+        ordering = ["-transfer_date", "-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.transfer_id}: {self.amount} ج.م من {self.from_account.name} إلى {self.to_account.name}"
+
+
 class PaymentOperationType(models.TextChoices):
     NEW_SUBSCRIPTION = "new_subscription", "اشتراك جديد"
     RENEWAL = "renewal", "تجديد اشتراك"
@@ -67,6 +189,14 @@ class Payment(models.Model):
         related_name="payments",
         verbose_name="الفرع",
     )
+    account = models.ForeignKey(
+        FinancialAccount,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payments",
+        verbose_name="الخزينة المودع بها",
+    )
 
     class Meta:
         verbose_name = "عملية دفع"
@@ -83,6 +213,9 @@ class Payment(models.Model):
                 self.branch = self.member.branch
             elif self.created_by and getattr(self.created_by, "branch_id", None):
                 self.branch = self.created_by.branch
+        if not self.account_id:
+            from apps.payments.services import resolve_account_for_payment_method
+            self.account = resolve_account_for_payment_method(self.payment_method, self.branch)
         super().save(*args, **kwargs)
 
 
