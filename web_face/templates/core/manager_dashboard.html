@@ -140,6 +140,9 @@
         <span style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; color: var(--text-muted);">
           الشهر: <strong style="color: var(--text-main);">{{ month_revenue }} {{ gym_profile.currency|default:"ج" }}</strong>
         </span>
+        <a href="?tab=ai#forecastCalculationDetailsPanel" onclick="sessionStorage.setItem('open_forecast_details', '1')" style="background: rgba(132, 204, 22, 0.12); border: 1px solid rgba(132, 204, 22, 0.35); color: #84cc16; padding: 4px 10px; border-radius: 8px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;" title="عرض توقعات نهاية الشهر وطريقة حسابها">
+          <span>🔮 توقعات نهاية الشهر (كيف حسبها؟)</span>
+        </a>
       </div>
     </div>
     {% else %}
@@ -155,6 +158,9 @@
         <span style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 8px; color: var(--text-muted);">
           الصافي التقديري المتوقع: <strong style="color: {% if projected_net >= 0 %}#4ade80{% else %}#f87171{% endif %};">{{ projected_net }} {{ profile.currency|default:'ج' }}</strong>
         </span>
+        <button type="button" onclick="toggleForecastCalculationDetails()" style="background: rgba(132, 204, 22, 0.2); border: 1px solid #84cc16; color: #84cc16; font-size: 0.78rem; font-weight: 800; padding: 4px 12px; border-radius: 6px; cursor: pointer;">
+          🔍 كيف حسبها الذكاء الاصطناعي؟
+        </button>
       </div>
       <div>
         <a href="?tab=overview" class="btn btn-secondary btn-sm" style="font-weight: 800; font-size: 0.82rem; padding: 5px 14px;">

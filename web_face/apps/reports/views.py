@@ -507,16 +507,24 @@ def build_ai_strategy_context(request):
     # Active payroll forecast
     cur_period_str = today.strftime("%Y-%m")
     cur_payroll_run = PayrollRun.objects.filter(period=cur_period_str).first()
+    active_staff_count = Employee.objects.filter(status=EmployeeStatus.ACTIVE).count()
     if cur_payroll_run and cur_payroll_run.net_payable > 0:
         estimated_payroll = cur_payroll_run.net_payable
+        payroll_source_type = f"مسير رواتب فعلي معتمد لشهر {cur_period_str}"
+        payroll_source_detail = f"تم الاعتماد الفعلي لمسير الرواتب بقيمة صافية {estimated_payroll} {profile.currency} لعدد {cur_payroll_run.items.count()} موظف."
     else:
         # Sum of active staff fixed salaries
         emp_fixed = Employee.objects.filter(status=EmployeeStatus.ACTIVE).aggregate(s=Sum("fixed_salary"))["s"] or Decimal("0.00")
         estimated_payroll = emp_fixed
+        payroll_source_type = f"تقدير تلقائي لرواتب الكادر النشط ({active_staff_count} كادر)"
+        payroll_source_detail = f"إجمالي الرواتب الشهرية الثابتة لعدد {active_staff_count} موظف وكابتن نشطين في النظام."
 
     # Net Treasury Safe Projected Result
     current_net = cur_revenue - cur_expenses
     projected_net_safe = projected_revenue - projected_expenses - estimated_payroll
+    projected_remaining_revenue = max(Decimal("0.00"), projected_revenue - cur_revenue)
+    projected_remaining_expenses = max(Decimal("0.00"), projected_expenses - cur_expenses)
+    projected_profit_margin = round((float(projected_net_safe) / float(projected_revenue) * 100), 1) if projected_revenue > 0 else 0.0
 
     # Progress % of month elapsed
     month_progress_pct = round((days_passed / total_days_in_month) * 100)
@@ -782,6 +790,12 @@ def build_ai_strategy_context(request):
         "projected_expenses": projected_expenses,
         "estimated_payroll": estimated_payroll,
         "projected_net_safe": projected_net_safe,
+        "active_staff_count": active_staff_count,
+        "payroll_source_type": payroll_source_type,
+        "payroll_source_detail": payroll_source_detail,
+        "projected_remaining_revenue": projected_remaining_revenue,
+        "projected_remaining_expenses": projected_remaining_expenses,
+        "projected_profit_margin": projected_profit_margin,
 
         # Churn & Expirations Forecast
         "expiring_count": expiring_count,

@@ -47,13 +47,21 @@
         </p>
       </div>
 
-      <div style="width: 220px; display: flex; flex-direction: column; gap: 4px;">
-        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted);">
-          <span>مسار الشهر</span>
-          <strong style="color: #84cc16;">{{ month_progress_pct }}%</strong>
-        </div>
-        <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 999px; overflow: hidden;">
-          <div style="width: {{ month_progress_pct }}%; height: 100%; background: linear-gradient(90deg, #84cc16, #22c55e); border-radius: 999px;"></div>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <!-- Button to Show Calculation Details -->
+        <button type="button" id="toggleForecastDetailsBtn" onclick="toggleForecastCalculationDetails()" class="btn btn-sm" style="background: rgba(132, 204, 22, 0.15); border: 1.5px solid #84cc16; color: #84cc16; font-weight: 800; font-size: 0.84rem; padding: 7px 16px; border-radius: 9px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 10px rgba(132, 204, 22, 0.2);" title="انقر لعرض المعادلات الرياضية وطريقة حساب التوقعات بالتفصيل">
+          <span id="forecastBtnIcon">🔍</span>
+          <span id="forecastBtnText">كيف حسبها الذكاء الاصطناعي؟ (عرض التفاصيل والمعادلات)</span>
+        </button>
+
+        <div style="width: 190px; display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted);">
+            <span>مسار الشهر</span>
+            <strong style="color: #84cc16;">{{ month_progress_pct }}%</strong>
+          </div>
+          <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 999px; overflow: hidden;">
+            <div style="width: {{ month_progress_pct }}%; height: 100%; background: linear-gradient(90deg, #84cc16, #22c55e); border-radius: 999px;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -63,7 +71,10 @@
       
       <!-- Card 1: Projected Revenue -->
       <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px 20px;">
-        <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">الإيراد المتوقع بنهاية الشهر</span>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">الإيراد المتوقع بنهاية الشهر</span>
+          <a href="javascript:void(0)" onclick="openSpecificForecast('revenue')" style="color: #84cc16; font-size: 0.74rem; font-weight: 800; text-decoration: underline; cursor: pointer;">طريقة الحساب ℹ️</a>
+        </div>
         <div style="color: #84cc16; font-size: 1.85rem; font-weight: 900; margin-top: 6px; line-height: 1.1;">
           {{ projected_revenue }} <small style="font-size: 0.88rem; font-weight: 700;">{{ profile.currency }}</small>
         </div>
@@ -78,7 +89,10 @@
 
       <!-- Card 2: Projected Expenses -->
       <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px 20px;">
-        <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">المصروفات التشغيلية المتوقعة</span>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">المصروفات التشغيلية المتوقعة</span>
+          <a href="javascript:void(0)" onclick="openSpecificForecast('expenses')" style="color: #f59e0b; font-size: 0.74rem; font-weight: 800; text-decoration: underline; cursor: pointer;">طريقة الحساب ℹ️</a>
+        </div>
         <div style="color: #f59e0b; font-size: 1.85rem; font-weight: 900; margin-top: 6px; line-height: 1.1;">
           {{ projected_expenses }} <small style="font-size: 0.88rem; font-weight: 700;">{{ profile.currency }}</small>
         </div>
@@ -93,7 +107,10 @@
 
       <!-- Card 3: Estimated Payroll -->
       <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px 20px;">
-        <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">فاتورة رواتب الشهر المقدرة</span>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">فاتورة رواتب الشهر المقدرة</span>
+          <a href="javascript:void(0)" onclick="openSpecificForecast('payroll')" style="color: #38bdf8; font-size: 0.74rem; font-weight: 800; text-decoration: underline; cursor: pointer;">طريقة الحساب ℹ️</a>
+        </div>
         <div style="color: #38bdf8; font-size: 1.85rem; font-weight: 900; margin-top: 6px; line-height: 1.1;">
           {{ estimated_payroll }} <small style="font-size: 0.88rem; font-weight: 700;">{{ profile.currency }}</small>
         </div>
@@ -108,7 +125,10 @@
 
       <!-- Card 4: Net Safe Forecast -->
       <div style="background: var(--bg-surface-subtle); border: 1px solid {% if projected_net_safe >= 0 %}rgba(34, 197, 94, 0.4){% else %}rgba(239, 68, 68, 0.4){% endif %}; border-radius: 14px; padding: 18px 20px;">
-        <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">صافي الخزينة النهائي المتوقع (Net Profit)</span>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">صافي الخزينة النهائي المتوقع (Net Profit)</span>
+          <a href="javascript:void(0)" onclick="openSpecificForecast('net_profit')" style="color: #22c55e; font-size: 0.74rem; font-weight: 800; text-decoration: underline; cursor: pointer;">طريقة الحساب ℹ️</a>
+        </div>
         <div style="color: {% if projected_net_safe >= 0 %}#22c55e{% else %}#ef4444{% endif %}; font-size: 1.85rem; font-weight: 900; margin-top: 6px; line-height: 1.1;">
           {% if projected_net_safe > 0 %}+{% endif %}{{ projected_net_safe }} <small style="font-size: 0.88rem; font-weight: 700;">{{ profile.currency }}</small>
         </div>
@@ -121,6 +141,207 @@
         </div>
       </div>
     </div>
+
+
+    <!-- ==================== FORECAST CALCULATION TRANSPARENCY & DETAILS DRAWER ==================== -->
+    <div id="forecastCalculationDetailsPanel" style="display: none; background: #070d1e; border: 2px solid #84cc16; border-radius: 14px; padding: 22px; box-shadow: 0 10px 35px rgba(0,0,0,0.6); margin-top: 6px; margin-bottom: 6px; transition: all 0.3s ease;">
+      
+      <!-- Drawer Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px; margin-bottom: 18px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.5rem;">🧮</span>
+          <div>
+            <h4 style="margin: 0; color: #84cc16; font-size: 1.12rem; font-weight: 900;">
+              دليل الشفافية والمعادلات الرياضية: كيف حسب الذكاء الاصطناعي توقعات نهاية الشهر؟
+            </h4>
+            <span style="color: #94a3b8; font-size: 0.82rem;">
+              تفصيل دقيق للأرقام الحية والمعادلات الحسابية ومصادر البيانات لشهر {{ cur_month }}/{{ cur_year }}
+            </span>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="background: rgba(132, 204, 22, 0.12); color: #84cc16; border: 1px solid rgba(132, 204, 22, 0.3); padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 800;">
+            📅 انقضى: {{ days_passed }} يوماً
+          </span>
+          <span style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 800;">
+            ⏳ متبقي: {{ days_remaining }} يوماً
+          </span>
+          <button type="button" onclick="toggleForecastCalculationDetails()" style="background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); color: #cbd5e1; border-radius: 6px; padding: 4px 12px; font-size: 0.82rem; font-weight: 800; cursor: pointer;">
+            ✖️ إغلاق
+          </button>
+        </div>
+      </div>
+
+      <!-- Master Financial Equation Banner -->
+      <div style="background: rgba(132, 204, 22, 0.08); border: 1px dashed rgba(132, 204, 22, 0.4); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; text-align: center; font-size: 0.92rem; color: #f8fafc;">
+        <span style="font-weight: 800; color: #84cc16;">💎 المعادلة الحسابية الكلية:</span>
+        <span style="background: rgba(132, 204, 22, 0.15); padding: 3px 10px; border-radius: 6px; font-weight: 900; color: #84cc16;">الإيراد المتوقع ({{ projected_revenue }})</span>
+        <span style="font-weight: 900; color: #cbd5e1;">-</span>
+        <span style="background: rgba(245, 158, 11, 0.15); padding: 3px 10px; border-radius: 6px; font-weight: 900; color: #f59e0b;">المصروفات التشغيلية ({{ projected_expenses }})</span>
+        <span style="font-weight: 900; color: #cbd5e1;">-</span>
+        <span style="background: rgba(56, 189, 248, 0.15); padding: 3px 10px; border-radius: 6px; font-weight: 900; color: #38bdf8;">فاتورة الرواتب ({{ estimated_payroll }})</span>
+        <span style="font-weight: 900; color: #cbd5e1;">=</span>
+        <span style="background: {% if projected_net_safe >= 0 %}rgba(34, 197, 94, 0.25){% else %}rgba(239, 68, 68, 0.25){% endif %}; padding: 3px 12px; border-radius: 6px; font-weight: 900; color: {% if projected_net_safe >= 0 %}#4ade80{% else %}#f87171{% endif %}; font-size: 1.05rem;">
+          صافي الخزينة المتوقع ({% if projected_net_safe > 0 %}+{% endif %}{{ projected_net_safe }} {{ profile.currency }})
+        </span>
+      </div>
+
+      <!-- 4 Mathematical Pillars Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+        
+        <!-- Pillar 1: Revenue -->
+        <div id="breakdownPillarRevenue" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(132, 204, 22, 0.3); border-radius: 12px; padding: 16px; transition: all 0.3s;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <strong style="color: #84cc16; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+              <span>📈</span> 1. الإيراد المتوقع (Projected Income)
+            </strong>
+            <span style="font-size: 0.74rem; background: rgba(132, 204, 22, 0.15); color: #84cc16; padding: 2px 8px; border-radius: 4px; font-weight: 800;">Run-Rate</span>
+          </div>
+          <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.6; margin-bottom: 10px;">
+            <strong>المنطق الحسابي:</strong> يُحسب بضرب متوسط التدفق اليومي الفعلي في إجمالي أيام الشهر.
+          </div>
+          <div style="background: #000; border-radius: 8px; padding: 10px 12px; font-family: monospace; font-size: 0.8rem; color: #84cc16; margin-bottom: 10px; line-height: 1.5; direction: ltr; text-align: left;">
+            Daily_Velocity = {{ cur_revenue }} / {{ days_passed }} = {{ daily_revenue_velocity }}<br>
+            Projected_Rev = {{ daily_revenue_velocity }} * {{ total_days_in_month }} = <strong>{{ projected_revenue }} {{ profile.currency }}</strong>
+          </div>
+          <ul style="margin: 0; padding-right: 18px; font-size: 0.8rem; color: #cbd5e1; line-height: 1.6;">
+            <li>المحصل الفعلي حتى الآن: <strong>{{ cur_revenue }} {{ profile.currency }}</strong> (خلال {{ days_passed }} يوم).</li>
+            <li>متوسط التحصيل اليومي: <strong>{{ daily_revenue_velocity }} {{ profile.currency }}/يوم</strong>.</li>
+            <li>المتوقع تحصيله في الـ {{ days_remaining }} يوماً القادمة: <strong style="color: #84cc16;">{{ projected_remaining_revenue }} {{ profile.currency }}</strong>.</li>
+          </ul>
+        </div>
+
+        <!-- Pillar 2: Expenses -->
+        <div id="breakdownPillarExpenses" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 16px; transition: all 0.3s;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <strong style="color: #f59e0b; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+              <span>📉</span> 2. المصروفات التشغيلية (Projected Expenses)
+            </strong>
+            <span style="font-size: 0.74rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 2px 8px; border-radius: 4px; font-weight: 800;">Burn-Rate</span>
+          </div>
+          <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.6; margin-bottom: 10px;">
+            <strong>المنطق الحسابي:</strong> يُحسب بضرب معدل الصرف اليومي المسجل في إجمالي أيام الشهر.
+          </div>
+          <div style="background: #000; border-radius: 8px; padding: 10px 12px; font-family: monospace; font-size: 0.8rem; color: #f59e0b; margin-bottom: 10px; line-height: 1.5; direction: ltr; text-align: left;">
+            Daily_Burn = {{ cur_expenses }} / {{ days_passed }} = {{ daily_expense_velocity }}<br>
+            Projected_Exp = {{ daily_expense_velocity }} * {{ total_days_in_month }} = <strong>{{ projected_expenses }} {{ profile.currency }}</strong>
+          </div>
+          <ul style="margin: 0; padding-right: 18px; font-size: 0.8rem; color: #cbd5e1; line-height: 1.6;">
+            <li>المنصرف الفعلي حتى اليوم: <strong>{{ cur_expenses }} {{ profile.currency }}</strong>.</li>
+            <li>معدل الصرف اليومي: <strong>{{ daily_expense_velocity }} {{ profile.currency }}/يوم</strong>.</li>
+            <li>المصروفات المتوقعة للأيام المتبقية: <strong style="color: #f59e0b;">{{ projected_remaining_expenses }} {{ profile.currency }}</strong>.</li>
+          </ul>
+        </div>
+
+        <!-- Pillar 3: Payroll -->
+        <div id="breakdownPillarPayroll" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 16px; transition: all 0.3s;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <strong style="color: #38bdf8; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+              <span>👥</span> 3. فاتورة الرواتب (Salaries / Payroll)
+            </strong>
+            <span style="font-size: 0.74rem; background: rgba(56, 189, 248, 0.15); color: #38bdf8; padding: 2px 8px; border-radius: 4px; font-weight: 800;">Fixed Commitment</span>
+          </div>
+          <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.6; margin-bottom: 10px;">
+            <strong>المنطق الحسابي:</strong> الرواتب التزام شهري تعاقدي محدد، تُحجز قيمته بالكامل ولا تُقسّم عشوائياً كمتوسط يومي.
+          </div>
+          <div style="background: #000; border-radius: 8px; padding: 10px 12px; font-family: monospace; font-size: 0.8rem; color: #38bdf8; margin-bottom: 10px; line-height: 1.5; direction: ltr; text-align: left;">
+            Payroll_Source = "{{ payroll_source_type }}"<br>
+            Estimated_Payroll = <strong>{{ estimated_payroll }} {{ profile.currency }}</strong>
+          </div>
+          <ul style="margin: 0; padding-right: 18px; font-size: 0.8rem; color: #cbd5e1; line-height: 1.6;">
+            <li>مصدر الحساب: <strong style="color: #38bdf8;">{{ payroll_source_type }}</strong>.</li>
+            <li>{{ payroll_source_detail }}</li>
+            <li>تُخصم ككتلة واحدة من الخزينة عند اعتماد وصرف المسير.</li>
+          </ul>
+        </div>
+
+        <!-- Pillar 4: Safe Net Profit -->
+        <div id="breakdownPillarNetProfit" style="background: rgba(255,255,255,0.03); border: 1px solid {% if projected_net_safe >= 0 %}rgba(34, 197, 94, 0.3){% else %}rgba(239, 68, 68, 0.3){% endif %}; border-radius: 12px; padding: 16px; transition: all 0.3s;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <strong style="color: {% if projected_net_safe >= 0 %}#4ade80{% else %}#f87171{% endif %}; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+              <span>💰</span> 4. صافي أرباح الخزينة الآمن (Net Profit)
+            </strong>
+            <span style="font-size: 0.74rem; background: {% if projected_net_safe >= 0 %}rgba(34, 197, 94, 0.15); color: #4ade80{% else %}rgba(239, 68, 68, 0.15); color: #f87171{% endif %}; padding: 2px 8px; border-radius: 4px; font-weight: 800;">Bottom Line</span>
+          </div>
+          <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.6; margin-bottom: 10px;">
+            <strong>المنطق الحسابي:</strong> الفائض النقدي الحقيقي المتبقي في الخزينة بعد سداد كافة المصروفات والرواتب.
+          </div>
+          <div style="background: #000; border-radius: 8px; padding: 10px 12px; font-family: monospace; font-size: 0.8rem; color: {% if projected_net_safe >= 0 %}#4ade80{% else %}#f87171{% endif %}; margin-bottom: 10px; line-height: 1.5; direction: ltr; text-align: left;">
+            Net_Safe = {{ projected_revenue }} - {{ projected_expenses }} - {{ estimated_payroll }}<br>
+            Net_Safe = <strong>{% if projected_net_safe > 0 %}+{% endif %}{{ projected_net_safe }} {{ profile.currency }}</strong>
+          </div>
+          <ul style="margin: 0; padding-right: 18px; font-size: 0.8rem; color: #cbd5e1; line-height: 1.6;">
+            <li>صافي التدفق اليوم المحقق حتى الآن: <strong>{{ current_net }} {{ profile.currency }}</strong>.</li>
+            <li>هامش الربح التشغيلي المتوقع: <strong style="color: {% if projected_net_safe >= 0 %}#4ade80{% else %}#f87171{% endif %};">{{ projected_profit_margin }}%</strong>.</li>
+            <li>الرصيد يضمن عدم حدوث عجز نقدي عند موعد صرف الرواتب.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Churn & Retention Sub-Explanation -->
+      <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 0.82rem; color: #94a3b8;">
+        <div>
+          <strong style="color: #cbd5e1;">🎯 كيف توقع الذكاء الاصطناعي التجديدات والانسحاب؟</strong>
+          استند إلى تحليل <strong>{{ expiring_count }} اشتراك</strong> تنتهي قبل نهاية الشهر، وبمقارنتها بنسبة التجديد التاريخية المقاسة لشهرك السابق (<strong>{{ historical_renewal_rate }}%</strong>)، يتوقع تجديد <strong>{{ predicted_renewals_count }} عضو</strong> (+{{ predicted_renewal_revenue }} ج) وفقدان <strong>{{ predicted_churn_count }} عضو</strong> (-{{ predicted_churn_loss }} ج).
+        </div>
+        <a href="{% url 'reports:retention_report' %}" class="btn btn-sm btn-secondary" style="font-size: 0.78rem; font-weight: 800; padding: 4px 12px; border-radius: 6px;">
+          تقرير الاحتفاظ والمنقطعين ←
+        </a>
+      </div>
+    </div>
+
+    <script>
+      function toggleForecastCalculationDetails() {
+        var panel = document.getElementById('forecastCalculationDetailsPanel');
+        var btnText = document.getElementById('forecastBtnText');
+        var btnIcon = document.getElementById('forecastBtnIcon');
+        if (!panel) return;
+        if (panel.style.display === 'none' || panel.style.display === '') {
+          panel.style.display = 'block';
+          if (btnText) btnText.innerText = '✖️ إخفاء تفاصيل ومعادلات الحساب';
+          if (btnIcon) btnIcon.innerText = '🔽';
+          panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          panel.style.display = 'none';
+          if (btnText) btnText.innerText = 'كيف حسبها الذكاء الاصطناعي؟ (عرض التفاصيل والمعادلات)';
+          if (btnIcon) btnIcon.innerText = '🔍';
+        }
+      }
+
+      function openSpecificForecast(topic) {
+        var panel = document.getElementById('forecastCalculationDetailsPanel');
+        var btnText = document.getElementById('forecastBtnText');
+        var btnIcon = document.getElementById('forecastBtnIcon');
+        if (panel) {
+          panel.style.display = 'block';
+          if (btnText) btnText.innerText = '✖️ إخفاء تفاصيل ومعادلات الحساب';
+          if (btnIcon) btnIcon.innerText = '🔽';
+          panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        var pillarId = 'breakdownPillarRevenue';
+        if (topic === 'expenses') pillarId = 'breakdownPillarExpenses';
+        else if (topic === 'payroll') pillarId = 'breakdownPillarPayroll';
+        else if (topic === 'net_profit') pillarId = 'breakdownPillarNetProfit';
+        var el = document.getElementById(pillarId);
+        if (el) {
+          el.style.transform = 'scale(1.02)';
+          el.style.boxShadow = '0 0 20px rgba(132, 204, 22, 0.4)';
+          setTimeout(function() {
+            el.style.transform = 'none';
+            el.style.boxShadow = 'none';
+          }, 1800);
+        }
+      }
+
+      // Auto-open if requested via session or hash
+      document.addEventListener('DOMContentLoaded', function() {
+        if (sessionStorage.getItem('open_forecast_details') === '1' || window.location.hash === '#forecastCalculationDetailsPanel') {
+          sessionStorage.removeItem('open_forecast_details');
+          toggleForecastCalculationDetails();
+        }
+      });
+    </script>
 
     <!-- Churn and Renewal Expirations Breakdown -->
     <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
