@@ -477,6 +477,41 @@
           <span id="globalCamDot" style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
           <span id="globalCamText" style="font-size: 0.72rem; color: #10b981; font-weight: 800; white-space: nowrap; line-height: 1;">كاميرا الوجه</span>
         </div>
+
+        <!-- Check-in Overlay Toggle Pill (Allows Manager or Reception to silence / enable check-in popups on this PC) -->
+        <div id="checkinOverlayTogglePill" onclick="toggleCheckinOverlay()" style="cursor: pointer; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 8px; border: 1px solid rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.08); border-radius: 6px; white-space: nowrap;" title="تبديل ظهور نافذة إشعار حضور المشتركين على هذا الجهاز (مفعل / صامت)">
+          <span id="checkinOverlayIcon" style="font-size: 0.74rem;">🔔</span>
+          <span id="checkinOverlayText" style="font-size: 0.72rem; color: #38bdf8; font-weight: 800; white-space: nowrap; line-height: 1;">إشعار الحضور: مفعل</span>
+        </div>
+        <script>
+          function toggleCheckinOverlay() {
+            var curr = localStorage.getItem('systemize_checkin_overlay_enabled');
+            var next = (curr === 'false') ? 'true' : 'false';
+            localStorage.setItem('systemize_checkin_overlay_enabled', next);
+            updateCheckinOverlayPill();
+          }
+          function updateCheckinOverlayPill() {
+            var pill = document.getElementById('checkinOverlayTogglePill');
+            var icon = document.getElementById('checkinOverlayIcon');
+            var text = document.getElementById('checkinOverlayText');
+            if (!pill || !text) return;
+            var isEn = localStorage.getItem('systemize_checkin_overlay_enabled') !== 'false';
+            if (isEn) {
+              pill.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+              pill.style.background = 'rgba(56, 189, 248, 0.08)';
+              text.style.color = '#38bdf8';
+              text.innerText = 'إشعار الحضور: مفعل';
+              if (icon) icon.innerText = '🔔';
+            } else {
+              pill.style.borderColor = 'rgba(148, 163, 184, 0.25)';
+              pill.style.background = 'rgba(255, 255, 255, 0.04)';
+              text.style.color = '#94a3b8';
+              text.innerText = 'إشعار الحضور: صامت';
+              if (icon) icon.innerText = '🔕';
+            }
+          }
+          try { updateCheckinOverlayPill(); } catch(e) {}
+        </script>
         {% endif %}
 
         {% if is_multi_branch_enabled %}

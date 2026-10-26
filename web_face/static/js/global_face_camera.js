@@ -214,6 +214,12 @@
   }
 
   function showFullscreenNotification(m, score, gateOpened) {
+    // Check if check-in overlay notification is silenced on this PC/browser (e.g. Manager PC or silent mode)
+    if (localStorage.getItem('systemize_checkin_overlay_enabled') === 'false') {
+      console.log("[FaceID] Silent check-in on this device: overlay takeover suppressed.");
+      return;
+    }
+
     if (isOverlayActive) return;
     isOverlayActive = true;
 

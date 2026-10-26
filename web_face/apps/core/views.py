@@ -2195,20 +2195,18 @@ _WATCHDOG_LOCK = threading.Lock()
 
 
 def _watchdog_loop():
+    """
+    Background watchdog loop.
+    Keeps system running safely without abruptly killing the Python server process.
+    Server only shuts down upon explicit user request (STOP_SYSTEMIZE.bat or /api/shutdown/).
+    """
     global _LAST_HEARTBEAT_TIME, _FIRST_HEARTBEAT_SEEN
-    time.sleep(60)  # Initial grace buffer
     while True:
-        time.sleep(4)
-        if _FIRST_HEARTBEAT_SEEN:
-            elapsed = time.time() - _LAST_HEARTBEAT_TIME
-            if elapsed > 25:
-                print(f"[Systemize Watchdog] No active browser heartbeat for {elapsed:.1f}s. Releasing camera and exiting.")
-                try:
-                    from apps.face_recognition.engine import get_face_engine
-                    get_face_engine().stop_camera()
-                except Exception:
-                    pass
-                os._exit(0)
+        time.sleep(10)
+        # We do NOT kill Python (os._exit) because browsers aggressively throttle
+        # background/minimized tabs and multi-PC networks.
+        # Python server remains alive and ready 24/7.
+        pass
 
 
 def ensure_watchdog():
