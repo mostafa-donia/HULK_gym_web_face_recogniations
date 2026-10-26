@@ -285,7 +285,7 @@
           <strong style="color: #cbd5e1;">🎯 كيف توقع الذكاء الاصطناعي التجديدات والانسحاب؟</strong>
           استند إلى تحليل <strong>{{ expiring_count }} اشتراك</strong> تنتهي قبل نهاية الشهر، وبمقارنتها بنسبة التجديد التاريخية المقاسة لشهرك السابق (<strong>{{ historical_renewal_rate }}%</strong>)، يتوقع تجديد <strong>{{ predicted_renewals_count }} عضو</strong> (+{{ predicted_renewal_revenue }} ج) وفقدان <strong>{{ predicted_churn_count }} عضو</strong> (-{{ predicted_churn_loss }} ج).
         </div>
-        <a href="{% url 'reports:retention_report' %}" class="btn btn-sm btn-secondary" style="font-size: 0.78rem; font-weight: 800; padding: 4px 12px; border-radius: 6px;">
+        <a href="{% url 'reports:member_retention' %}" class="btn btn-sm btn-secondary" style="font-size: 0.78rem; font-weight: 800; padding: 4px 12px; border-radius: 6px;">
           تقرير الاحتفاظ والمنقطعين ←
         </a>
       </div>
