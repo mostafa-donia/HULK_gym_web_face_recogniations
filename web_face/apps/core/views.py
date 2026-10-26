@@ -802,6 +802,7 @@ def manager_dashboard_view(request):
             "color": "#f59e0b",
             "title": f"رصد {inactive_7d_count} مشترك نشط لم يحضروا للتمرين منذ 7 أيام ({inactive_7d_pct}%)",
             "quick_advice": "أرسل رسالة تحفيزية للاطمئنان عليهم عبر الواتساب لمنع تسربهم وتثبيت تجديدهم.",
+            "action_now": f"إرسال رسالة اطمئنان ومتابعة لـ {inactive_7d_count} مشتركين منقطعين عن التمرين عبر واتساب",
             "impact_pill": f"⚡ خطر تسرب: {inactive_7d_pct}% من الأعضاء",
             "formula_title": "معادلة رصد مؤشر خطر الانقطاع والتسرب (Churn Inactivity Rate)",
             "formula_text": "معدل الانقطاع = (الأعضاء النشطون المنقطعون 7+ أيام ÷ إجمالي المشتركين النشطين) × 100",
@@ -831,6 +832,7 @@ def manager_dashboard_view(request):
             "color": "#84cc16",
             "title": "معدل الحضور والتزام الأعضاء مرتفع جداً",
             "quick_advice": "كافة الأعضاء النشطين يترددون بانتظام على الصالة هذا الأسبوع، ومؤشر الالتزام مثالي.",
+            "action_now": "شكر الأعضاء الملتزمين بالحضور الأسبوعي لتعزيز ولائهم للصالة",
             "impact_pill": "⚡ نسبة الالتزام: 100%",
             "formula_title": "معادلة رصد مؤشر الالتزام بالحضور (Attendance Adherence)",
             "formula_text": "نسبة الالتزام = (المشتركون الحاضرون ÷ إجمالي المشتركين النشطين) × 100",
@@ -859,6 +861,7 @@ def manager_dashboard_view(request):
             "color": "#22c55e",
             "title": f"صافي تدفق الأعضاء بالفترة إيجابي (+{net_member_flow} مشترك)",
             "quick_advice": "الجيم يكتسب أعضاء بوتيرة أسرع من خروجهم؛ واصل خطة الاستقطاب والتجديد.",
+            "action_now": "مواصلة استقطاب أعضاء جدد للحفاظ على وتيرة التوسع الإيجابي",
             "impact_pill": f"⚡ صافي نمو: +{net_member_flow} مشترك",
             "formula_title": "معادلة صافي تدفق قاعدة الأعضاء (Net Member Growth Flow)",
             "formula_text": "صافي التدفق = (المشتركون الجدد + التجديدات) - الاشتراكات المنتهية",
@@ -887,6 +890,7 @@ def manager_dashboard_view(request):
             "color": "#ef4444",
             "title": f"تراجع صافي حركة الأعضاء ({net_member_flow} مشترك)",
             "quick_advice": "تواصل فوراً مع المنتهية اشتراكاتهم واطرح عروض تجديد سريعة لسد هذا العجز.",
+            "action_now": f"تكثيف عروض التجديد والاستعادة لتعويض العضويات المنتهية ({period_ended_count} اشتراك)",
             "impact_pill": f"⚠️ عجز تدفق: {net_member_flow} مشترك",
             "formula_title": "معادلة صافي تدفق قاعدة الأعضاء (Net Member Growth Flow)",
             "formula_text": "صافي التدفق = (المشتركون الجدد + التجديدات) - الاشتراكات المنتهية",
@@ -915,6 +919,7 @@ def manager_dashboard_view(request):
             "color": "#38bdf8",
             "title": "توازن تام بين الإضافات والانتهاء (0 مشترك)",
             "quick_advice": "قاعدة المشتركين مستقرة تماماً؛ ركّز على زيادة المشتركين الجدد لتحقيق نمو صافٍ.",
+            "action_now": "طرح عروض اشتراك ترويجية لكسر الثبات وتحقيق نمو إيجابي",
             "impact_pill": "⚡ ثبات التدفق: 0 صافي",
             "formula_title": "معادلة صافي تدفق قاعدة الأعضاء (Net Member Growth Flow)",
             "formula_text": "صافي التدفق = (المشتركون الجدد + التجديدات) - الاشتراكات المنتهية",
@@ -942,6 +947,7 @@ def manager_dashboard_view(request):
         "color": "#38bdf8",
         "title": f"متوسط الحضور: {avg_daily_attendance} لاعب/يوم (معدل النشاط {attendance_rate}%)",
         "quick_advice": "وزّع حصص التدريب لتفادي التكدس واستثمر ساعات الهدوء الصباحية بعروض خاصة.",
+        "action_now": f"تجهيز صالة الأوزان ومناطق التدريب لاستيعاب معدل {avg_daily_attendance} لاعب يومياً",
         "impact_pill": f"⚡ إجمالي الحضور: {period_checkins} تمرينة",
         "formula_title": "معادلة معدل النشاط اليومي بالصالة (Daily Floor Utilization)",
         "formula_text": "معدل النشاط = (متوسط الحضور اليومي ÷ إجمالي الأعضاء النشطين) × 100",
@@ -972,6 +978,7 @@ def manager_dashboard_view(request):
             "color": "#a855f7",
             "title": f"حماية الاشتراكات: {expiring_3_days_count} ينتهي قريباً و{expired_last_7_days} انتهوا هذا الأسبوع",
             "quick_advice": "أرسل تذكيرات تجديد فورية عبر الواتساب مع حافز تجديد مبكر قبل مرور 48 ساعة.",
+            "action_now": f"مراسلة {expiring_3_days_count + expired_last_7_days} مشتركين لتقديم عروض التجديد الفوري قبل تسربهم",
             "impact_pill": f"⚡ مستهدف متابعة: {expiring_3_days_count + expired_last_7_days} اشتراك",
             "formula_title": "معادلة نافذة خطر فقدان العضويات (Renewal Risk Window)",
             "formula_text": "إجمالي نافذة الخطر = المنتهية عضوياتهم خلال 72 ساعة + المنتهية آخر 7 أيام دون تجديد",
@@ -1000,6 +1007,7 @@ def manager_dashboard_view(request):
             "color": "#84cc16",
             "title": "معدل تجديد العضويات في حالة استقرار ممتازة",
             "quick_advice": "لا توجد عضويات مهددة بالانتهاء الفوري حالياً؛ استمر في تعزيز تجربة الأعضاء.",
+            "action_now": "مواصلة تقديم تجربة تدريب ممتازة للحفاظ على نسبة التجديد 100%",
             "impact_pill": "⚡ استقرار العضويات: 100%",
             "formula_title": "معادلة نافذة خطر فقدان العضويات (Renewal Risk Window)",
             "formula_text": "إجمالي نافذة الخطر = المنتهية عضوياتهم خلال 72 ساعة + المنتهية آخر 7 أيام",
@@ -1027,6 +1035,7 @@ def manager_dashboard_view(request):
             "color": "#ef4444",
             "title": f"متبقيات مستحقة: {total_remaining} {gym_profile.currency} على {debtors_count} مشترك",
             "quick_advice": "طالب بالسداد عند تسجيل الدخول بالبصمة لتأمين سيولة الخزينة فوراً.",
+            "action_now": f"مطالبة {debtors_count} مشتركين بسداد متبقي {total_remaining} {gym_profile.currency} عند الكاونتر",
             "impact_pill": f"⚡ متوسط الدين: {avg_debt} {gym_profile.currency}/لاعب",
             "formula_title": "معادلة رصد المديونيات ومتوسط الدين (Debt Exposure & Average Debt)",
             "formula_text": "متوسط متبقي العضو = إجمالي المبالغ المتبقية غير المحصلة ÷ عدد الأعضاء المدينين",
@@ -1055,6 +1064,7 @@ def manager_dashboard_view(request):
             "color": "#22c55e",
             "title": "خزينة مثالية: لا توجد مديونيات أو متبقيات معلقة",
             "quick_advice": "كافة الاشتراكات مسددة بالكامل بنسبة 100%، استمر في إلزام السداد الكامل.",
+            "action_now": "الاستمرار في إلزام السداد الكامل لمنع ظهور أي مديونيات معلقة",
             "impact_pill": "⚡ نسبة التحصيل: 100%",
             "formula_title": "معادلة رصد المديونيات (Debt Exposure)",
             "formula_text": "نسبة التحصيل = (المسدد ÷ الإجمالي المستحق) × 100",
@@ -1084,6 +1094,7 @@ def manager_dashboard_view(request):
             "color": "#eab308",
             "title": f"ذروة الإقبال: الساعة {peak_str} ({peak_count} متدرب)",
             "quick_advice": "اطرح اشتراك 'الفترة الصباحية المخفضة' لتخفيف الازدحام المسائي وزيادة الدخل.",
+            "action_now": f"توزيع الكباتن وطرح باقة الفترة الصباحية لتخفيف ضغط الذروة المسائية ({peak_str})",
             "impact_pill": f"⚡ أعلى كثافة: {peak_count} حضور/ساعة",
             "formula_title": "معادلة توزيع كثافة الحضور الزمني (Peak Hour Capacity)",
             "formula_text": "ساعة الذروة = الساعة التي سجلت الحد الأقصى Max(حركات الدخول) عبر فترات اليوم",
@@ -1119,6 +1130,7 @@ def manager_dashboard_view(request):
             "color": "#22c55e",
             "title": f"صافي دخل إيجابي: +{period_net} {gym_profile.currency} (نسبة المصروفات {expense_ratio}%)",
             "quick_advice": "نسبة المصروفات ضمن النطاق الصحي؛ استمر في ضبط التكاليف التشغيلية.",
+            "action_now": f"تأمين الفائض النقدي (+{period_net} {gym_profile.currency}) في الخزينة أو الحساب البنكي",
             "impact_pill": f"⚡ فائض نقدي: +{period_net} {gym_profile.currency}",
             "formula_title": "معادلة كفاءة التدفق النقدي وهامش المصروفات (Cashflow & Expense Ratio)",
             "formula_text": "نسبة المصروفات = (إجمالي المصروفات التشغيلية ÷ إجمالي الإيرادات المحصلة) × 100",
@@ -1149,6 +1161,7 @@ def manager_dashboard_view(request):
             "color": "#ef4444",
             "title": f"عجز تشغيلي بالفترة: {period_net} {gym_profile.currency} (نسبة المصروفات {expense_ratio}%)",
             "quick_advice": "راجع بنود الصرف غير الأساسية وسرّع تحصيل المتبقيات لتدارك العجز فوراً.",
+            "action_now": "مراجعة وترشيد بنود المصروفات غير الأساسية فوراً لتدارك العجز",
             "impact_pill": f"⚠️ عجز نقدي: {abs(period_net)} {gym_profile.currency}",
             "formula_title": "معادلة كفاءة التدفق النقدي وهامش المصروفات (Cashflow & Expense Ratio)",
             "formula_text": "نسبة المصروفات = (إجمالي المصروفات التشغيلية ÷ إجمالي الإيرادات المحصلة) × 100",
@@ -1169,6 +1182,39 @@ def manager_dashboard_view(request):
             "action_url": "/expenses/",
             "action_label": "مراجعة بنود المصروفات",
             "text": f"تجاوزت المصروفات التشغيلية إجمالي الإيرادات بعجز قدره {abs(period_net)} {gym_profile.currency}.",
+        })
+
+    # Advice 8: Bar & Inventory Restock (نواقص ومخزون البار)
+    from apps.payments.models import BarProduct
+    low_stock_prods = filter_by_branch(BarProduct.objects.filter(is_active=True, stock_quantity__lte=3), request).order_by("stock_quantity")
+    low_stock_count = low_stock_prods.count()
+    if low_stock_count > 0:
+        names = "، ".join([p.name for p in low_stock_prods[:3]])
+        smart_insights.append({
+            "id": "bar_stock",
+            "type": "bar",
+            "badge": "نواقص ومخزون البار",
+            "icon": "🥤",
+            "color": "#f59e0b",
+            "title": f"يوجد {low_stock_count} منتجات بالبار أوشكت على النفاد ({names})",
+            "quick_advice": "اطلب شحنة توريد جديدة لتجنب فقدان مبيعات وأرباح البار اليومية.",
+            "action_now": f"طلب شحنة نواقص جديدة للبار ({names}) لتأمين مبيعات الكاونتر",
+            "impact_pill": f"⚠️ نواقص: {low_stock_count} أصناف",
+            "formula_title": "مؤشر حد إعادة الطلب لمخزون البار (Reorder Level Alert)",
+            "formula_text": "تنبيه النواقص = المنتجات ذات المخزون المتبقي <= 3 عبوات",
+            "formula_desc": "يرصد المنتجات الأكثر طلباً في كافيه وبار الصالة التي أوشك رصيدها على النفاد لمنع توقف المبيعات.",
+            "data_rows": [
+                {"name": "عدد الأصناف التي قاربت على النفاد", "value": f"{low_stock_count} صنف", "desc": "الكمية المتبقية 3 أو أقل"},
+                {"name": "أبرز الأصناف الناقصة", "value": names, "desc": "مطلوب توريد عاجل"},
+            ],
+            "calc_steps": [
+                "1. فحص جدول منتجات البار النشطة BarProduct.",
+                f"2. حصر الأصناف التي رصيدها الحالي <= 3 = {low_stock_count} أصناف.",
+                "3. التقييم الذكي: طلب التوريد الآن يضمن استمرار تدفق أرباح البار دون توقف.",
+            ],
+            "action_url": "/payments/bar/",
+            "action_label": "إدارة منتجات ومخزون البار",
+            "text": f"يوجد {low_stock_count} منتجات بالبار أوشكت على النفاد.",
         })
 
     # 6. Advanced Managerial Analytics: Debts, Discounts, Private Add-on, and Payroll (strictly branch-filtered)

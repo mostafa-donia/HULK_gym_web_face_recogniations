@@ -510,7 +510,8 @@ from apps.core.text_utils import reshape_arabic
 def generate_manager_report_image_file(report_data: dict) -> str:
     """
     Renders an official executive graphical summary card (PNG) for the manager daily report.
-    Comprehensive 1180px card containing Financial KPIs, Subscriptions, Gym AI Forecasts & Audit Log.
+    Comprehensive high-DPI card with zero missing-glyph boxes (□), beautiful native vector badges,
+    Financial KPIs, Subscriptions, Gym AI Tactical Actions & Audit Log.
     """
     reports_dir = Path(settings.MEDIA_ROOT) / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
@@ -520,51 +521,52 @@ def generate_manager_report_image_file(report_data: dict) -> str:
     png_filename = f"manager_report_{date_str}_{ts}.png"
     png_file_path = reports_dir / png_filename
 
-    w, h = 820, 1180
-    img = Image.new("RGB", (w, h), color=(10, 15, 26))
+    w, h = 860, 1080
+    img = Image.new("RGB", (w, h), color=(11, 15, 25))
     draw = ImageDraw.Draw(img)
 
-    # Outer border / card
-    draw.rounded_rectangle([18, 18, w - 18, h - 18], radius=20, fill=(15, 23, 42), outline=(30, 41, 59), width=2)
-
     from apps.core.text_utils import get_arabic_font, reshape_arabic
-    font_badge = get_arabic_font(size=15, bold=True)
-    font_title = get_arabic_font(size=26, bold=True)
-    font_sub = get_arabic_font(size=15, bold=False)
-    font_card_val = get_arabic_font(size=20, bold=True)
+    font_badge = get_arabic_font(size=14, bold=True)
+    font_gym = get_arabic_font(size=28, bold=True)
+    font_meta = get_arabic_font(size=14, bold=False)
+    font_sec = get_arabic_font(size=16, bold=True)
+    font_card_val = get_arabic_font(size=22, bold=True)
     font_card_lbl = get_arabic_font(size=14, bold=True)
-    font_card_sub = get_arabic_font(size=13, bold=False)
-    font_sec_title = get_arabic_font(size=17, bold=True)
-    font_normal = get_arabic_font(size=14, bold=False)
-    font_sm = get_arabic_font(size=13, bold=False)
+    font_card_sub = get_arabic_font(size=12, bold=False)
+    font_item_lbl = get_arabic_font(size=14, bold=False)
+    font_item_val = get_arabic_font(size=14, bold=True)
+    font_ai = get_arabic_font(size=13, bold=False)
+    font_num_badge = get_arabic_font(size=12, bold=True)
 
     profile = GymProfile.get_solo()
     gym_name = profile.gym_name or report_data.get("gym_name", "Systemize Gym")
     curr = profile.currency or report_data.get("currency", "ج.م")
-    theme_rgb = profile.get_primary_color_rgb() if hasattr(profile, "get_primary_color_rgb") else (56, 189, 248)
+    theme_rgb = profile.get_primary_color_rgb() if hasattr(profile, "get_primary_color_rgb") else (132, 204, 22)
 
-    # Header Top Badge
-    draw.rounded_rectangle([w // 2 - 140, 32, w // 2 + 140, 62], radius=8, fill=(30, 41, 59), outline=(71, 85, 105), width=1)
-    draw.text((w // 2, 47), reshape_arabic("تقرير الإدارة الشامل وتوجيهات الذكاء"), fill=(251, 191, 36), font=font_badge, anchor="mm")
+    # Outer decorative card border
+    draw.rounded_rectangle([16, 16, w - 16, h - 16], radius=20, fill=(15, 23, 42), outline=(30, 41, 59), width=2)
+
+    # Top Header Pill Badge
+    draw.rounded_rectangle([w // 2 - 130, 28, w // 2 + 130, 56], radius=14, fill=(30, 41, 59), outline=(71, 85, 105), width=1)
+    draw.text((w // 2, 42), reshape_arabic("تقرير الإدارة الشامل والذكاء الاصطناعي"), fill=(251, 191, 36), font=font_badge, anchor="mm")
 
     # Gym Name
-    draw.text((w // 2, 88), reshape_arabic(gym_name), fill=theme_rgb, font=font_title, anchor="mm")
+    draw.text((w // 2, 80), reshape_arabic(gym_name), fill=theme_rgb, font=font_gym, anchor="mm")
 
     # Date & Time Meta
     time_str = report_data.get("time_str", "")
-    meta_str = reshape_arabic(f"تاريخ التقرير: {date_str}   |   توقيت الإعداد: {time_str}")
-    draw.text((w // 2, 120), meta_str, fill=(148, 163, 184), font=font_sub, anchor="mm")
+    draw.text((w // 2, 110), reshape_arabic(f"تاريخ التقرير: {date_str}   |   توقيت الإعداد: {time_str}"), fill=(148, 163, 184), font=font_meta, anchor="mm")
 
-    draw.line([(35, 142), (w - 35, 142)], fill=(30, 41, 59), width=1)
+    draw.line([(35, 128), (w - 35, 128)], fill=(30, 41, 59), width=1)
 
     # 4 Key Financial Stats (2x2 grid)
-    card_w = (w - 90) // 2  # 365 px each
-    card_h = 88
+    card_w = (w - 90) // 2
+    card_h = 84
 
     cards = [
         {
             "x": 35,
-            "y": 156,
+            "y": 140,
             "bg": (20, 83, 45),
             "border": (34, 197, 94),
             "lbl": "إجمالي الإيرادات اليوم",
@@ -574,7 +576,7 @@ def generate_manager_report_image_file(report_data: dict) -> str:
         },
         {
             "x": 35 + card_w + 20,
-            "y": 156,
+            "y": 140,
             "bg": (127, 29, 29),
             "border": (239, 68, 68),
             "lbl": "المصروفات اليومية",
@@ -584,20 +586,20 @@ def generate_manager_report_image_file(report_data: dict) -> str:
         },
         {
             "x": 35,
-            "y": 254,
+            "y": 234,
             "bg": (6, 78, 59),
             "border": (16, 185, 129),
             "lbl": "صافي الخزينة النقدية",
             "val": f"{report_data.get('net_cash', 0)} {curr}",
-            "sub": f"المحصل بالخزينة مطروحاً منه المصاريف",
+            "sub": "المحصل بالخزينة مطروحاً منه المصاريف",
             "val_color": (52, 211, 153),
         },
         {
             "x": 35 + card_w + 20,
-            "y": 254,
+            "y": 234,
             "bg": (120, 53, 15),
             "border": (245, 158, 11),
-            "lbl": "مبيعات وأرباح البار اليوم",
+            "lbl": "مبيعات وأرباح البار",
             "val": f"{report_data.get('bar_sales_today', 0)} {curr}",
             "sub": f"المكسب الفعلي للبار: +{report_data.get('bar_profit_today', 0)} {curr}",
             "val_color": (251, 191, 36),
@@ -606,70 +608,75 @@ def generate_manager_report_image_file(report_data: dict) -> str:
 
     for c in cards:
         draw.rounded_rectangle([c["x"], c["y"], c["x"] + card_w, c["y"] + card_h], radius=12, fill=c["bg"], outline=c["border"], width=1)
-        draw.text((c["x"] + card_w // 2, c["y"] + 20), reshape_arabic(c["lbl"]), fill=(226, 232, 240), font=font_card_lbl, anchor="mm")
-        draw.text((c["x"] + card_w // 2, c["y"] + 46), reshape_arabic(c["val"]), fill=c["val_color"], font=font_card_val, anchor="mm")
-        draw.text((c["x"] + card_w // 2, c["y"] + 70), reshape_arabic(c["sub"]), fill=(203, 213, 225), font=font_card_sub, anchor="mm")
+        draw.text((c["x"] + card_w // 2, c["y"] + 18), reshape_arabic(c["lbl"]), fill=(226, 232, 240), font=font_card_lbl, anchor="mm")
+        draw.text((c["x"] + card_w // 2, c["y"] + 44), reshape_arabic(c["val"]), fill=c["val_color"], font=font_card_val, anchor="mm")
+        draw.text((c["x"] + card_w // 2, c["y"] + 67), reshape_arabic(c["sub"]), fill=(203, 213, 225), font=font_card_sub, anchor="mm")
 
-    # Section 1: Subscriptions, Private Coaching & Attendance
-    sy = 356
-    draw.rounded_rectangle([35, sy, w - 35, sy + 230], radius=14, fill=(17, 24, 39), outline=(51, 65, 85), width=1)
-    draw.text((w - 55, sy + 18), reshape_arabic("🏋️‍♂️ نشاط العضويات والتدريب الخاص والحضور اليوم:"), fill=(56, 189, 248), font=font_sec_title, anchor="ra")
-    draw.line([(50, sy + 40), (w - 50, sy + 40)], fill=(30, 41, 59), width=1)
+    # Section 1: Subscriptions, VIP Coaching & Attendance
+    sy = 330
+    draw.rounded_rectangle([35, sy, w - 35, sy + 215], radius=14, fill=(17, 24, 39), outline=(51, 65, 85), width=1)
+    draw.rounded_rectangle([w - 240, sy + 12, w - 50, sy + 38], radius=6, fill=(14, 116, 144))
+    draw.text((w - 145, sy + 25), reshape_arabic("نشاط العضويات والحضور"), fill=(255, 255, 255), font=font_sec, anchor="mm")
 
     items = [
-        ("اشتراكات جديدة ومجددة مسجلة اليوم:", f"{report_data.get('new_subs_count', 0)} اشتراك"),
+        ("اشتراكات جديدة ومجددة مسجلة اليوم:", f"{report_data.get('new_subs_count', 0)} اشتراكات"),
         ("حالات الدخول ببصمة الوجه المعتمدة اليوم:", f"{report_data.get('checkins_today_count', 0)} حضور"),
-        ("اشتراكات التدريب الخاص (Private VIP):", f"{report_data.get('private_count', 0)} مشترك (دخل: {report_data.get('private_rev', 0)} {curr})"),
+        ("اشتراكات التدريب الخاص (Private VIP):", f"{report_data.get('private_count', 0)} مشترك | دخل: {report_data.get('private_rev', 0)} {curr}"),
         ("عمولة الكباتن المستحقة عن البرايفت:", f"{report_data.get('coaches_comm', 0)} {curr}"),
         ("صافي دخل الصالة من التدريب الخاص:", f"{report_data.get('gym_private_profit', 0)} {curr}"),
         ("إجمالي الخصومات الممنوحة اليوم:", f"{report_data.get('total_discounts_today', 0)} {curr}"),
     ]
-    iy = sy + 52
+    iy = sy + 50
     for label, val in items:
-        draw.text((w - 55, iy), reshape_arabic(label), fill=(203, 213, 225), font=font_normal, anchor="ra")
-        draw.text((55, iy), reshape_arabic(val), fill=(255, 255, 255), font=font_card_lbl)
-        iy += 28
+        draw.ellipse([w - 55, iy + 4, w - 49, iy + 10], fill=(56, 189, 248))
+        draw.text((w - 65, iy), reshape_arabic(label), fill=(203, 213, 225), font=font_item_lbl, anchor="ra")
+        draw.text((50, iy), reshape_arabic(val), fill=(255, 255, 255), font=font_item_val, anchor="la")
+        iy += 26
 
-    # Section 2: Gym AI Strategic Recommendations & End-of-Month Forecast
-    gy = 600
-    draw.rounded_rectangle([35, gy, w - 35, gy + 270], radius=14, fill=(15, 23, 42), outline=(14, 165, 233), width=2)
-    draw.text((w - 55, gy + 20), reshape_arabic("🤖 مختصر توصيات وتوقعات ذكاء الجيم (Gym AI Insights):"), fill=(56, 189, 248), font=font_sec_title, anchor="ra")
-    draw.line([(50, gy + 44), (w - 50, gy + 44)], fill=(30, 41, 59), width=1)
+    # Section 2: Gym AI Tactical Actions ("يعمل إيه دلوقتي")
+    gy = 560
+    draw.rounded_rectangle([35, gy, w - 35, gy + 260], radius=14, fill=(15, 23, 42), outline=(14, 165, 233), width=2)
+    draw.rounded_rectangle([w - 300, gy + 12, w - 50, gy + 38], radius=6, fill=(3, 105, 161))
+    draw.text((w - 175, gy + 25), reshape_arabic("توجيهات الذكاء الاصطناعي (أولويات اليوم)"), fill=(255, 255, 255), font=font_sec, anchor="mm")
 
-    ai_lines = report_data.get("ai_lines", [])
-    if not ai_lines:
-        ai_lines = [
+    ai_actions = report_data.get("ai_lines", [])[:4]
+    if not ai_actions:
+        ai_actions = [
             f"توقعات إغلاق الشهر: {report_data.get('projected_month_rev', '0')} {curr} بمعدل نمو متوازن.",
-            f"متابعة التجديد: {report_data.get('expiring_soon_count', 0)} لاعب تنتهي اشتراكاتهم خلال الأسبوع.",
-            "إدارة الإعلانات: أفضل أوقات النشر بين 5:00 م و 9:00 م لاستهداف ذروة الموظفين.",
+            f"متابعة التجديد: {report_data.get('expiring_soon_count', 0)} لاعب تنتهي اشتراكاتهم خلال الأسبوع القادم.",
+            "فرصة مبيعات البار: مراقبة النواقص الأكثر طلباً لطلب شحنة جديدة.",
             "إعادة جذب المتوقفين: فرصة إطلاق حملة واتساب مخصصة لأعضاء الشهر الماضي.",
         ]
-    line_y = gy + 58
-    for line in ai_lines[:5]:
-        draw.text((w - 55, line_y), reshape_arabic(f"⚡ {line}"), fill=(226, 232, 240), font=font_sm, anchor="ra")
-        line_y += 38
 
-    # Section 3: Audit & Sensitive Operations
-    ay = 884
-    draw.rounded_rectangle([35, ay, w - 35, ay + 230], radius=14, fill=(17, 24, 39), outline=(51, 65, 85), width=1)
-    draw.text((w - 55, ay + 18), reshape_arabic("🚨 رقابة العمليات والتعديلات الإدارية اليوم:"), fill=(251, 146, 60), font=font_sec_title, anchor="ra")
-    draw.line([(50, ay + 40), (w - 50, ay + 40)], fill=(30, 41, 59), width=1)
+    line_y = gy + 52
+    for idx, act in enumerate(ai_actions, 1):
+        draw.rounded_rectangle([w - 76, line_y, w - 50, line_y + 24], radius=6, fill=(14, 165, 233))
+        draw.text((w - 63, line_y + 12), str(idx), fill=(255, 255, 255), font=font_num_badge, anchor="mm")
+        draw.text((w - 86, line_y + 2), reshape_arabic(act), fill=(241, 245, 249), font=font_ai, anchor="ra")
+        line_y += 50
 
-    audit_lines = report_data.get("audit_lines", [])
+    # Section 3: Audit & Management Controls
+    ay = 835
+    draw.rounded_rectangle([35, ay, w - 35, ay + 175], radius=14, fill=(17, 24, 39), outline=(51, 65, 85), width=1)
+    draw.rounded_rectangle([w - 230, ay + 12, w - 50, ay + 38], radius=6, fill=(194, 65, 12))
+    draw.text((w - 140, ay + 25), reshape_arabic("رقابة وتعديلات اليوم"), fill=(255, 255, 255), font=font_sec, anchor="mm")
+
+    audit_lines = report_data.get("audit_lines", [])[:3]
     if not audit_lines:
-        draw.text((w // 2, ay + 110), reshape_arabic("لا توجد عمليات استثنائية أو تعديلات حساسة مسجلة اليوم ✓"), fill=(148, 163, 184), font=font_normal, anchor="mm")
+        draw.text((w // 2, ay + 100), reshape_arabic("لا توجد عمليات استثنائية أو تعديلات حساسة مسجلة اليوم"), fill=(148, 163, 184), font=font_item_lbl, anchor="mm")
     else:
         line_y = ay + 52
-        for line in audit_lines[:4]:
-            draw.text((w - 55, line_y), reshape_arabic(f"• {line}"), fill=(226, 232, 240), font=font_sm, anchor="ra")
+        for line in audit_lines:
+            draw.ellipse([w - 55, line_y + 4, w - 49, line_y + 10], fill=(251, 146, 60))
+            draw.text((w - 65, line_y), reshape_arabic(line), fill=(226, 232, 240), font=font_ai, anchor="ra")
             line_y += 32
 
     # Footer
-    footer_text = reshape_arabic(f"نظام {gym_name} الذكي — إصدار الرقابة والإدارة التنفيذية المتطورة")
-    draw.text((w // 2, h - 30), footer_text, fill=(100, 116, 139), font=font_sm, anchor="mm")
+    footer_text = reshape_arabic(f"نظام {gym_name} الذكي — إصدار الرقابة والإدارة التنفيذية")
+    draw.text((w // 2, h - 35), footer_text, fill=(100, 116, 139), font=font_meta, anchor="mm")
 
     img.save(str(png_file_path), "PNG")
-    logger.info("Generated comprehensive manager report PNG at: %s", png_file_path)
+    logger.info("Generated polished manager report PNG at: %s", png_file_path)
     return f"reports/{png_filename}"
 
 
