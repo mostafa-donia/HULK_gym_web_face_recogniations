@@ -1507,9 +1507,15 @@ def manager_dashboard_view(request):
         treasury_summary = get_all_financial_accounts_summary(branch=active_branch)
         context["treasury_accounts"] = treasury_summary["accounts_details"]
         context["treasury_total_balance"] = treasury_summary["total_balance"]
+        context["reception_drawer"] = treasury_summary.get("reception_drawer", {})
+        context["safe_balance"] = treasury_summary.get("safe_balance", treasury_summary["total_balance"])
+        context["drawer_balance"] = treasury_summary.get("drawer_balance", Decimal("0.00"))
     except Exception as e:
         context["treasury_accounts"] = []
         context["treasury_total_balance"] = Decimal("0.00")
+        context["reception_drawer"] = {}
+        context["safe_balance"] = Decimal("0.00")
+        context["drawer_balance"] = Decimal("0.00")
 
     active_tab = request.GET.get("tab", "overview")
     if active_tab == "ai":

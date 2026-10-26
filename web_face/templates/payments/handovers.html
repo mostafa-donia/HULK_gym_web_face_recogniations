@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+
+{% block title %}تسليمات عهدة الريسبشن ومطابقة الخزينة — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; flex-direction: column; gap: 24px; max-width: 1560px; margin: 0 auto; padding-bottom: 40px;">
+
+  <!-- ==================== 1. HEADER & ACTION TOOLBAR ==================== -->
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 18px 24px; box-shadow: var(--shadow-sm);">
+    <div>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <span style="font-size: 1.8rem;">💼</span>
+        <h1 style="color: var(--text-main); font-size: 1.55rem; font-weight: 900; margin: 0; letter-spacing: -0.3px;">
+          تسليمات عهدة الريسبشن ومطابقة الخزينة
+        </h1>
+        <span style="background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 800;">
+          Reception Drawer & Shift Handover
+        </span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin: 6px 0 0 0;">
+        إدارة رصيد النقدية المعلق مع موظف الاستقبال، ومطابقة المبالغ المسلمة للمدير ورصد أي عجز أو زيادة دفترياً
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <a href="{% url 'payments:accounts_index' %}" class="btn btn-secondary btn-sm" style="height: 38px; padding: 0 16px; font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+        <span>🏦</span> الخزائن والحسابات
+      </a>
+
+      <button type="button" onclick="openHandoverModal()" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 900; border: none; height: 38px; padding: 0 20px; border-radius: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+        <span>📥</span> تسليم نقدية للمدير
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== 2. KPI METRIC CARDS ==================== -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+    
+    <!-- Card 1: Current Drawer Balance (بره مع الريسبشن) -->
+    <div style="background: var(--bg-card); border: 2px solid {% if drawer_summary.current_drawer_balance > 0 %}#10b981{% else %}var(--border-color){% endif %}; border-radius: 16px; padding: 20px 22px; box-shadow: 0 4px 18px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 800; display: block;">رصيد النقدية الحالي بالدرج (مع الريسبشن):</span>
+          <div style="font-size: 2.1rem; font-weight: 900; color: #4ade80; margin-top: 4px; font-variant-numeric: tabular-nums;">
+            {{ drawer_summary.current_drawer_balance|floatformat:2 }} <small style="font-size: 0.9rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+          </div>
+        </div>
+        <span style="font-size: 1.8rem; background: rgba(16, 185, 129, 0.12); padding: 8px 12px; border-radius: 12px;">💵</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-dim); border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; justify-content: space-between;">
+        <span>نقدية محصلة بره لم تورد للمدير بعد</span>
+        <button type="button" onclick="openHandoverModal()" style="background: none; border: none; color: #38bdf8; font-weight: 800; font-size: 0.78rem; cursor: pointer; padding: 0;">تسليم الآن ←</button>
+      </div>
+    </div>
+
+    <!-- Card 2: Today Handed Over & Approved -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px 22px; box-shadow: 0 4px 18px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 800; display: block;">المسلم والمودع بالخزينة اليوم:</span>
+          <div style="font-size: 2.1rem; font-weight: 900; color: #38bdf8; margin-top: 4px; font-variant-numeric: tabular-nums;">
+            {{ today_handed_total|floatformat:2 }} <small style="font-size: 0.9rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+          </div>
+        </div>
+        <span style="font-size: 1.8rem; background: rgba(56, 189, 248, 0.12); padding: 8px 12px; border-radius: 12px;">📥</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-dim); border-top: 1px solid var(--border-color); padding-top: 10px;">
+        إجمالي النقدية المعتمدة المستلمة بواسطة المدير اليوم
+      </div>
+    </div>
+
+    <!-- Card 3: Pending Handovers -->
+    <div style="background: var(--bg-card); border: 1px solid {% if drawer_summary.pending_count > 0 %}rgba(245, 158, 11, 0.5){% else %}var(--border-color){% endif %}; border-radius: 16px; padding: 20px 22px; box-shadow: 0 4px 18px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 800; display: block;">تسليمات معلقة بانتظار الاعتماد:</span>
+          <div style="font-size: 2.1rem; font-weight: 900; color: #f59e0b; margin-top: 4px; font-variant-numeric: tabular-nums;">
+            {{ drawer_summary.pending_count }} <small style="font-size: 0.9rem; color: var(--text-muted);">عملية</small>
+          </div>
+        </div>
+        <span style="font-size: 1.8rem; background: rgba(245, 158, 11, 0.12); padding: 8px 12px; border-radius: 12px;">⏳</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-dim); border-top: 1px solid var(--border-color); padding-top: 10px;">
+        المبلغ المعلق: <strong>{{ drawer_summary.total_handed_over_pending|floatformat:2 }} {{ gym_profile.currency|default:"ج" }}</strong>
+      </div>
+    </div>
+
+    <!-- Card 4: Historical Shortages / Deficits -->
+    <div style="background: var(--bg-card); border: 1px solid {% if drawer_summary.total_shortages > 0 %}rgba(239, 68, 68, 0.4){% else %}var(--border-color){% endif %}; border-radius: 16px; padding: 20px 22px; box-shadow: 0 4px 18px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 800; display: block;">إجمالي العجز المسجل دفترياً:</span>
+          <div style="font-size: 2.1rem; font-weight: 900; color: {% if drawer_summary.total_shortages > 0 %}#ef4444{% else %}#10b981{% endif %}; margin-top: 4px; font-variant-numeric: tabular-nums;">
+            {{ drawer_summary.total_shortages|floatformat:2 }} <small style="font-size: 0.9rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+          </div>
+        </div>
+        <span style="font-size: 1.8rem; background: rgba(239, 68, 68, 0.12); padding: 8px 12px; border-radius: 12px;">⚠️</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-dim); border-top: 1px solid var(--border-color); padding-top: 10px;">
+        {% if drawer_summary.total_surpluses > 0 %}
+          يوجد فائض مسجل بقيمة: <strong style="color: #38bdf8;">+{{ drawer_summary.total_surpluses|floatformat:2 }} ج</strong>
+        {% else %}
+          سجل فروقات المطابقة عند تسليم الورديات
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== 3. PENDING HANDOVERS ALERT SECTION (FOR MANAGER) ==================== -->
+  {% if drawer_summary.pending_count > 0 and user.is_manager %}
+  <div style="background: rgba(245, 158, 11, 0.08); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: 16px; padding: 20px 24px; box-shadow: var(--shadow-sm);">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.4rem;">🔔</span>
+        <strong style="color: #f59e0b; font-size: 1.05rem; font-weight: 900;">
+          تنبيه المدير: يوجد {{ drawer_summary.pending_count }} عمليات تسليم نقدية من الريسبشن بانتظار المراجعة والاعتماد
+        </strong>
+      </div>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">
+        إجمالي المبالغ المعلقة: <strong style="color: #f59e0b;">{{ drawer_summary.total_handed_over_pending|floatformat:2 }} {{ gym_profile.currency|default:"ج" }}</strong>
+      </span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      {% for h in handovers %}
+        {% if h.status == 'pending' %}
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-family: monospace; color: #38bdf8; font-weight: 800; font-size: 0.95rem;">{{ h.handover_id }}</span>
+              <span style="background: rgba(255,255,255,0.06); color: var(--text-main); font-size: 0.78rem; font-weight: 700; padding: 2px 10px; border-radius: 6px;">
+                المسلّم: {{ h.receptionist.get_full_name|default:h.receptionist.username }}
+              </span>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">{{ h.handover_time|date:"Y-m-d" }} {{ h.handover_time|date:"h:i A" }}</span>
+            </div>
+            
+            <div style="margin-top: 6px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 0.86rem;">
+              <span>المتوقع بالدرج: <strong>{{ h.expected_amount|floatformat:2 }} ج</strong></span>
+              <span>المبلغ الفعلي المسلّم: <strong style="color: #4ade80; font-size: 1rem;">{{ h.actual_amount|floatformat:2 }} ج</strong></span>
+              
+              <!-- Match / Discrepancy Pill -->
+              {% if h.has_shortage %}
+                <span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.78rem;">
+                  ⚠️ عجز بمقدار: {{ h.shortage_amount|floatformat:2 }} ج
+                </span>
+              {% elif h.has_surplus %}
+                <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.78rem;">
+                  ℹ️ زيادة بمقدار: +{{ h.surplus_amount|floatformat:2 }} ج
+                </span>
+              {% else %}
+                <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.78rem;">
+                  ✓ مطابق تماماً
+                </span>
+              {% endif %}
+
+              {% if h.notes %}
+              <span style="color: var(--text-dim); font-size: 0.8rem;">ملاحظات: "{{ h.notes }}"</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" onclick="openApproveModal('{{ h.id }}', '{{ h.handover_id }}', '{{ h.actual_amount }}', '{{ h.difference }}')" class="btn btn-primary btn-sm" style="background: #10b981; border: none; font-weight: 800; padding: 6px 14px; border-radius: 8px;">
+              ✓ استلام واعتماد بالخزينة
+            </button>
+            <button type="button" onclick="openRejectModal('{{ h.id }}', '{{ h.handover_id }}')" class="btn btn-secondary btn-sm" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 800; padding: 6px 12px; border-radius: 8px;">
+              رفض
+            </button>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ==================== 4. HANDOVERS ARCHIVE & LEDGER TABLE ==================== -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px 24px; box-shadow: var(--shadow-sm);">
+    
+    <!-- Table Toolbar: Search & Filters -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--border-color); padding-bottom: 14px;">
+      <div>
+        <h3 style="margin: 0; color: var(--text-main); font-size: 1.15rem; font-weight: 900;">
+          📋 سجل ومطابقة تسليمات النقدية
+        </h3>
+        <span style="color: var(--text-muted); font-size: 0.82rem;">
+          أرشيف كامل لكافة حركات تسليم العهدة من الريسبشن مع تفاصيل الفارق واعتماد الإدارة
+        </span>
+      </div>
+
+      <!-- Quick Filter Pills -->
+      <form method="get" action="" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+        <input type="text" name="q" value="{{ search_q }}" placeholder="بحث برقم التسليم أو الموظف..." class="form-control" style="width: 220px; font-size: 0.84rem; padding: 6px 12px; height: 36px; border-radius: 8px;">
+        
+        <input type="date" name="date" value="{{ date_filter }}" class="form-control" style="font-size: 0.84rem; padding: 6px 10px; height: 36px; border-radius: 8px;">
+
+        <select name="status" class="form-control" style="font-size: 0.84rem; padding: 6px 10px; height: 36px; border-radius: 8px;" onchange="this.form.submit()">
+          <option value="">جميع الحالات</option>
+          <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>معلق (بانتظار الاعتماد)</option>
+          <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>معتمد ومودع بالخزينة</option>
+          <option value="shortage" {% if status_filter == 'shortage' %}selected{% endif %}>⚠️ يوجد عجز فقط</option>
+          <option value="surplus" {% if status_filter == 'surplus' %}selected{% endif %}>ℹ️ يوجد زيادة فقط</option>
+          <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>مرفوض</option>
+        </select>
+
+        <button type="submit" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 14px; font-weight: 800; border-radius: 8px;">
+          تصفية
+        </button>
+        {% if search_q or date_filter or status_filter %}
+        <a href="{% url 'payments:reception_handovers' %}" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: var(--text-muted); height: 36px; display: inline-flex; align-items: center; border-radius: 8px; padding: 0 12px;">إلغاء الفلتر</a>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- Table -->
+    {% if handovers %}
+    <div class="table-responsive">
+      <table class="dark-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+        <thead>
+          <tr>
+            <th style="padding: 12px 14px; text-align: right; font-size: 0.82rem;">رقم الإيصال</th>
+            <th style="padding: 12px 14px; text-align: right; font-size: 0.82rem;">التاريخ والتوقيت</th>
+            <th style="padding: 12px 14px; text-align: right; font-size: 0.82rem;">موظف الاستقبال (المسلّم)</th>
+            <th style="padding: 12px 14px; text-align: right; font-size: 0.82rem;">المستلم (المدير)</th>
+            <th style="padding: 12px 14px; text-align: right; font-size: 0.82rem;">المتوقع دفترياً</th>
+            <th style="padding: 12px 14px; text-align: right; font-size: 0.82rem;">المبلغ الفعلي المسلّم</th>
+            <th style="padding: 12px 14px; text-align: right; font-size: 0.82rem;">المطابقة والفارق</th>
+            <th style="padding: 12px 14px; text-align: right; font-size: 0.82rem;">الحالة</th>
+            <th style="padding: 12px 14px; text-align: center; font-size: 0.82rem;">الإجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in handovers %}
+          <tr style="border-bottom: 1px solid var(--border-color); transition: background 0.15s ease;">
+            <!-- Handover ID -->
+            <td style="padding: 12px 14px; font-family: monospace; font-weight: 800; color: #38bdf8;">
+              {{ h.handover_id }}
+            </td>
+
+            <!-- Date & Time -->
+            <td style="padding: 12px 14px; font-size: 0.84rem; color: var(--text-muted); white-space: nowrap;">
+              <div>{{ h.handover_time|date:"Y-m-d" }}</div>
+              <small style="color: var(--text-dim);">{{ h.handover_time|date:"h:i A" }}</small>
+            </td>
+
+            <!-- Receptionist -->
+            <td style="padding: 12px 14px; font-weight: 700; color: var(--text-main); font-size: 0.88rem;">
+              {{ h.receptionist.get_full_name|default:h.receptionist.username }}
+            </td>
+
+            <!-- Manager -->
+            <td style="padding: 12px 14px; font-size: 0.84rem; color: var(--text-muted);">
+              {% if h.manager %}
+                <span style="color: #38bdf8; font-weight: 700;">{{ h.manager.get_full_name|default:h.manager.username }}</span>
+              {% else %}
+                <span style="color: var(--text-dim);">— (في الانتظار)</span>
+              {% endif %}
+            </td>
+
+            <!-- Expected Amount -->
+            <td style="padding: 12px 14px; font-size: 0.92rem; font-variant-numeric: tabular-nums; color: var(--text-muted);">
+              {{ h.expected_amount|floatformat:2 }} <small>{{ gym_profile.currency|default:"ج" }}</small>
+            </td>
+
+            <!-- Actual Handed Amount -->
+            <td style="padding: 12px 14px; font-size: 1.05rem; font-weight: 900; font-variant-numeric: tabular-nums; color: #4ade80;">
+              {{ h.actual_amount|floatformat:2 }} <small style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+            </td>
+
+            <!-- Difference & Reconciliation Status -->
+            <td style="padding: 12px 14px; font-size: 0.85rem;">
+              {% if h.has_shortage %}
+                <span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 4px 10px; border-radius: 999px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+                  <span>⚠️</span> عجز: {{ h.shortage_amount|floatformat:2 }} ج
+                </span>
+              {% elif h.has_surplus %}
+                <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 4px 10px; border-radius: 999px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+                  <span>ℹ️</span> زيادة: +{{ h.surplus_amount|floatformat:2 }} ج
+                </span>
+              {% else %}
+                <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 999px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+                  <span>✓</span> مطابق تماماً
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Status -->
+            <td style="padding: 12px 14px;">
+              {% if h.status == 'approved' %}
+                <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 800;">
+                  معتمد بالخزينة
+                </span>
+              {% elif h.status == 'pending' %}
+                <span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 800;">
+                  بانتظار الاعتماد
+                </span>
+              {% else %}
+                <span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 800;">
+                  مرفوض
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td style="padding: 12px 14px; text-align: center; white-space: nowrap;">
+              <div style="display: inline-flex; gap: 6px; align-items: center;">
+                <a href="{% url 'payments:reception_handover_receipt' h.id %}" target="_blank" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.78rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;" title="طباعة سند التسليم والاستلام">
+                  <span>🖨️</span> سند
+                </a>
+
+                {% if h.status == 'pending' and user.is_manager %}
+                <button type="button" onclick="openApproveModal('{{ h.id }}', '{{ h.handover_id }}', '{{ h.actual_amount }}', '{{ h.difference }}')" class="btn btn-primary btn-sm" style="background: #10b981; border: none; padding: 4px 10px; font-size: 0.78rem; border-radius: 6px; font-weight: 800;" title="اعتماد وإيداع بالخزينة">
+                  اعتماد
+                </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if handovers.has_other_pages %}
+    <div style="display: flex; justify-content: center; gap: 6px; margin-top: 20px;">
+      {% if handovers.has_previous %}
+      <a href="?page={{ handovers.previous_page_number }}&q={{ search_q }}&status={{ status_filter }}&date={{ date_filter }}" class="btn btn-secondary btn-sm">السابق</a>
+      {% endif %}
+
+      <span style="padding: 6px 14px; font-size: 0.85rem; color: var(--text-muted); font-weight: 700;">
+        صفحة {{ handovers.number }} من {{ handovers.paginator.num_pages }}
+      </span>
+
+      {% if handovers.has_next %}
+      <a href="?page={{ handovers.next_page_number }}&q={{ search_q }}&status={{ status_filter }}&date={{ date_filter }}" class="btn btn-secondary btn-sm">التالي</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+      <span style="font-size: 2.5rem; display: block; margin-bottom: 10px;">💼</span>
+      <strong style="color: var(--text-main); font-size: 1.1rem; display: block;">لا توجد تسليمات نقدية مطابقة للمعايير المحددة</strong>
+      <p style="font-size: 0.88rem; margin-top: 6px;">يمكنك البدء بعمل تسليم جديد لنقدية الدرج عبر زر "تسليم نقدية للمدير" بالأعلى.</p>
+    </div>
+    {% endif %}
+
+  </div>
+
+</div>
+
+<!-- ==================== 5. MODAL: SUBMIT NEW CASH HANDOVER ==================== -->
+<div id="handoverModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 16px;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; max-width: 520px; width: 100%; padding: 24px 28px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 18px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.5rem;">📥</span>
+        <h3 style="margin: 0; color: var(--text-main); font-size: 1.2rem; font-weight: 900;">
+          تسليم نقدية من الريسبشن للمدير
+        </h3>
+      </div>
+      <button type="button" onclick="closeHandoverModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;">✕</button>
+    </div>
+
+    <!-- Drawer Summary Info in Modal -->
+    <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; display: block;">الرصيد الدفتري المتوقع بالدرج حالياً:</span>
+        <strong id="modalExpectedDisplay" style="color: #4ade80; font-size: 1.45rem; font-weight: 900;">
+          {{ drawer_summary.current_drawer_balance|floatformat:2 }} {{ gym_profile.currency|default:"ج" }}
+        </strong>
+      </div>
+      <span style="font-size: 1.8rem;">💵</span>
+    </div>
+
+    <form method="post" action="{% url 'payments:submit_reception_handover' %}" style="display: flex; flex-direction: column; gap: 14px;">
+      {% csrf_token %}
+      <input type="hidden" id="modalExpectedInput" name="expected_amount" value="{{ drawer_summary.current_drawer_balance }}">
+
+      <div>
+        <label style="display: block; font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
+          المبلغ الفعلي المسلَّم للمدير (العد الفعلي للكاش) <span style="color: #ef4444;">*</span>:
+        </label>
+        <div style="position: relative;">
+          <input type="number" step="0.5" id="actualAmountInput" name="actual_amount" value="{{ drawer_summary.current_drawer_balance }}" required class="form-control" style="font-size: 1.25rem; font-weight: 900; padding: 10px 14px; border-radius: 10px; width: 100%; color: #4ade80;" oninput="recalcModalDifference()">
+          <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--text-muted);">{{ gym_profile.currency|default:"ج.م" }}</span>
+        </div>
+      </div>
+
+      <!-- Real-time Discrepancy Indicator Box -->
+      <div id="diffIndicatorBox" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 0.84rem; font-weight: 800; color: var(--text-muted);">فارق المطابقة:</span>
+        <strong id="diffText" style="color: #10b981; font-size: 0.95rem; font-weight: 900;">✓ مطابق تماماً (0.00 ج)</strong>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.85rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">
+          ملاحظات وتفاصيل التسليم (سبب العجز إن وجد):
+        </label>
+        <textarea name="notes" rows="2" class="form-control" placeholder="اكتب أي ملاحظات أو مبرر للفارق إن وجد..." style="font-size: 0.85rem; padding: 10px; border-radius: 10px; width: 100%;"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+        <button type="button" onclick="closeHandoverModal()" class="btn btn-secondary" style="padding: 8px 18px; border-radius: 8px; font-weight: 700;">
+          إلغاء
+        </button>
+        <button type="submit" class="btn btn-primary" style="background: #10b981; border: none; padding: 8px 24px; border-radius: 8px; font-weight: 900; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);">
+          تأكيد وإرسال التسليم للمدير 📥
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<!-- ==================== 6. MODAL: MANAGER APPROVAL ==================== -->
+<div id="approveModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 16px;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; max-width: 480px; width: 100%; padding: 24px 28px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 16px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <h3 style="margin: 0; color: #10b981; font-size: 1.2rem; font-weight: 900;">
+        ✓ تأكيد استلام النقدية وإيداعها بالخزينة الرئيسية
+      </h3>
+      <button type="button" onclick="closeApproveModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;">✕</button>
+    </div>
+
+    <form id="approveForm" method="post" action="" style="display: flex; flex-direction: column; gap: 14px;">
+      {% csrf_token %}
+      <p style="color: var(--text-main); font-size: 0.92rem; line-height: 1.6; margin: 0;">
+        هل تؤكد استلام مبلغ <strong id="approveAmountText" style="color: #4ade80; font-size: 1.15rem;"></strong> من موظف الاستقبال وإيداعه رسمياً في الخزينة الرئيسية للكاش؟
+      </p>
+
+      <div id="approveDiffNotice" style="padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 800;"></div>
+
+      <div>
+        <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">ملاحظات المدير عند المطابقة (اختياري):</label>
+        <textarea name="manager_notes" rows="2" class="form-control" placeholder="تم العد والمطابقة وإيداع المبلغ في الخزينة..." style="font-size: 0.85rem; padding: 8px 12px; border-radius: 8px; width: 100%;"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px;">
+        <button type="button" onclick="closeApproveModal()" class="btn btn-secondary" style="padding: 6px 16px; border-radius: 8px;">إلغاء</button>
+        <button type="submit" class="btn btn-primary" style="background: #10b981; border: none; font-weight: 900; padding: 6px 22px; border-radius: 8px;">تأكيد الاستلام والإيداع</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== 7. MODAL: MANAGER REJECTION ==================== -->
+<div id="rejectModal" style="display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 16px;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; max-width: 440px; width: 100%; padding: 22px 26px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 14px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+      <h3 style="margin: 0; color: #ef4444; font-size: 1.15rem; font-weight: 900;">
+        رفض تسليم النقدية
+      </h3>
+      <button type="button" onclick="closeRejectModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;">✕</button>
+    </div>
+
+    <form id="rejectForm" method="post" action="" style="display: flex; flex-direction: column; gap: 12px;">
+      {% csrf_token %}
+      <p style="color: var(--text-main); font-size: 0.88rem; margin: 0;">
+        يرجى كتابة سبب رفض التسليم رقم <strong id="rejectHandoverIdText"></strong>:
+      </p>
+
+      <div>
+        <textarea name="reason" required rows="3" class="form-control" placeholder="سبب الرفض (مثلاً: المبلغ الفعلي المسلم لا يطابق ما تم إدخاله)..." style="font-size: 0.85rem; padding: 8px 12px; border-radius: 8px; width: 100%;"></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" onclick="closeRejectModal()" class="btn btn-secondary" style="padding: 6px 16px; border-radius: 8px;">إلغاء</button>
+        <button type="submit" class="btn btn-danger" style="background: #ef4444; border: none; font-weight: 900; padding: 6px 20px; border-radius: 8px;">تأكيد الرفض</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openHandoverModal() {
+    // Optionally fetch live balance
+    fetch("{% url 'payments:api_drawer_balance' %}")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const exp = data.current_drawer_balance;
+          document.getElementById('modalExpectedDisplay').innerText = exp.toFixed(2) + " {{ gym_profile.currency|default:'ج' }}";
+          document.getElementById('modalExpectedInput').value = exp;
+          document.getElementById('actualAmountInput').value = exp;
+          recalcModalDifference();
+        }
+      })
+      .catch(() => {});
+
+    document.getElementById('handoverModal').style.display = 'flex';
+  }
+
+  function closeHandoverModal() {
+    document.getElementById('handoverModal').style.display = 'none';
+  }
+
+  function recalcModalDifference() {
+    const expected = parseFloat(document.getElementById('modalExpectedInput').value) || 0;
+    const actual = parseFloat(document.getElementById('actualAmountInput').value) || 0;
+    const diff = actual - expected;
+
+    const box = document.getElementById('diffIndicatorBox');
+    const text = document.getElementById('diffText');
+
+    if (Math.abs(diff) < 0.01) {
+      box.style.background = 'rgba(16, 185, 129, 0.12)';
+      box.style.borderColor = 'rgba(16, 185, 129, 0.35)';
+      text.style.color = '#10b981';
+      text.innerText = '✓ مطابق تماماً للرصيد الدفتري (0.00 ج)';
+    } else if (diff < 0) {
+      box.style.background = 'rgba(239, 68, 68, 0.12)';
+      box.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+      text.style.color = '#ef4444';
+      text.innerText = '⚠️ يوجد عجز بمقدار: ' + Math.abs(diff).toFixed(2) + ' ج';
+    } else {
+      box.style.background = 'rgba(56, 189, 248, 0.12)';
+      box.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+      text.style.color = '#38bdf8';
+      text.innerText = 'ℹ️ يوجد زيادة بمقدار: +' + diff.toFixed(2) + ' ج';
+    }
+  }
+
+  function openApproveModal(id, handoverId, amount, diff) {
+    document.getElementById('approveForm').action = "/payments/handovers/" + id + "/approve/";
+    document.getElementById('approveAmountText').innerText = parseFloat(amount).toFixed(2) + " {{ gym_profile.currency|default:'ج.م' }} (" + handoverId + ")";
+    
+    const diffNotice = document.getElementById('approveDiffNotice');
+    const diffVal = parseFloat(diff);
+    if (diffVal < 0) {
+      diffNotice.style.background = 'rgba(239, 68, 68, 0.12)';
+      diffNotice.style.color = '#ef4444';
+      diffNotice.innerText = '⚠️ تنبيه للمدير: يوجد عجز بمقدار ' + Math.abs(diffVal).toFixed(2) + ' ج.م مسجل على هذا التسليم.';
+      diffNotice.style.display = 'block';
+    } else if (diffVal > 0) {
+      diffNotice.style.background = 'rgba(56, 189, 248, 0.12)';
+      diffNotice.style.color = '#38bdf8';
+      diffNotice.innerText = 'ℹ️ ملاحظة: يوجد زيادة بمقدار +' + diffVal.toFixed(2) + ' ج.م على هذا التسليم.';
+      diffNotice.style.display = 'block';
+    } else {
+      diffNotice.style.background = 'rgba(16, 185, 129, 0.12)';
+      diffNotice.style.color = '#10b981';
+      diffNotice.innerText = '✓ المبلغ مطابق تماماً للرصيد الدفتري بدون أي عجز.';
+      diffNotice.style.display = 'block';
+    }
+
+    document.getElementById('approveModal').style.display = 'flex';
+  }
+
+  function closeApproveModal() {
+    document.getElementById('approveModal').style.display = 'none';
+  }
+
+  function openRejectModal(id, handoverId) {
+    document.getElementById('rejectForm').action = "/payments/handovers/" + id + "/reject/";
+    document.getElementById('rejectHandoverIdText').innerText = handoverId;
+    document.getElementById('rejectModal').style.display = 'flex';
+  }
+
+  function closeRejectModal() {
+    document.getElementById('rejectModal').style.display = 'none';
+  }
+</script>
+{% endblock %}

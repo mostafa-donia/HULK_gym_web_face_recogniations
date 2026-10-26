@@ -406,9 +406,11 @@ def resolve_account_for_payment_method(payment_method_name, branch=None):
 def get_account_balance_details(account, branch=None):
     """
     Computes real-time inflows, outflows, transfers in/out, and net balance for a FinancialAccount.
+    For Cash Safe: seamlessly tracks money officially handed over and approved into the safe.
     """
-    from apps.payments.models import Payment, MoneyTransfer, AccountType
+    from apps.payments.models import Payment, MoneyTransfer, AccountType, ReceptionCashHandover, HandoverStatus
     from apps.expenses.models import Expense
+    from django.db.models import Q, Sum
 
     payments_qs = Payment.objects.all()
     expenses_qs = Expense.objects.all()
@@ -423,14 +425,25 @@ def get_account_balance_details(account, branch=None):
 
     # Inflows: Payments explicitly assigned or matching this account type
     if account.account_type == AccountType.CASH:
-        p_filter = Q(account=account) | (
-            Q(account__isnull=True) & (
-                Q(payment_method__icontains="نقد") |
-                Q(payment_method__icontains="كاش") |
-                Q(payment_method__icontains="cash") |
-                Q(payment_method="")
+        handovers_qs = ReceptionCashHandover.objects.filter(target_account=account)
+        if branch:
+            handovers_qs = handovers_qs.filter(branch=branch)
+        has_any_handovers = handovers_qs.exists()
+
+        if has_any_handovers:
+            # Cash Safe contains strictly what has been officially handed over from reception and approved
+            total_inflows = handovers_qs.filter(status=HandoverStatus.APPROVED).aggregate(Sum("actual_amount"))["actual_amount__sum"] or Decimal("0.00")
+        else:
+            # Backward compatibility if no handovers have been performed yet
+            p_filter = Q(account=account) | (
+                Q(account__isnull=True) & (
+                    Q(payment_method__icontains="نقد") |
+                    Q(payment_method__icontains="كاش") |
+                    Q(payment_method__icontains="cash") |
+                    Q(payment_method="")
+                )
             )
-        )
+            total_inflows = payments_qs.filter(p_filter).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
     elif account.account_type == AccountType.VODAFONE_CASH:
         p_filter = Q(account=account) | (
             Q(account__isnull=True) & (
@@ -440,6 +453,7 @@ def get_account_balance_details(account, branch=None):
                 Q(payment_method__icontains="wallet")
             )
         )
+        total_inflows = payments_qs.filter(p_filter).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
     elif account.account_type == AccountType.BANK:
         p_filter = Q(account=account) | (
             Q(account__isnull=True) & (
@@ -454,10 +468,10 @@ def get_account_balance_details(account, branch=None):
                 Q(payment_method__icontains="pos")
             )
         )
+        total_inflows = payments_qs.filter(p_filter).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
     else:
         p_filter = Q(account=account)
-
-    total_inflows = payments_qs.filter(p_filter).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+        total_inflows = payments_qs.filter(p_filter).aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
 
     # Outflows: Expenses explicitly assigned, or if cash, unassigned expenses default to cash
     if account.account_type == AccountType.CASH:
@@ -490,9 +504,224 @@ def get_account_balance_details(account, branch=None):
     }
 
 
+def get_reception_drawer_summary(branch=None, receptionist=None):
+    """
+    Computes real-time cash drawer status for reception (رصيد بره مع الريسبشن):
+    - Total cash collected (payments with cash method)
+    - Total cash refunds
+    - Total cash handed over to the manager & approved (deposited into safe)
+    - Total cash handed over & pending manager approval
+    - Current drawer balance held by reception:
+        current_drawer = total_cash_collected - total_refunds - approved_handovers - pending_handovers
+    - Discrepancy metrics (shortages and surpluses)
+    """
+    from apps.payments.models import Payment, ReceptionCashHandover, HandoverStatus, PaymentOperationType, AccountType
+    from django.db.models import Q, Sum
+
+    payments_qs = Payment.objects.all()
+    handovers_qs = ReceptionCashHandover.objects.all()
+
+    if branch:
+        payments_qs = payments_qs.filter(branch=branch)
+        handovers_qs = handovers_qs.filter(branch=branch)
+
+    if receptionist:
+        payments_qs = payments_qs.filter(created_by=receptionist)
+        handovers_qs = handovers_qs.filter(receptionist=receptionist)
+
+    # Cash payments filter (matches cash method or default cash account)
+    cash_payments_filter = (
+        Q(account__account_type=AccountType.CASH) |
+        (
+            Q(account__isnull=True) & (
+                Q(payment_method__icontains="نقد") |
+                Q(payment_method__icontains="كاش") |
+                Q(payment_method__icontains="cash") |
+                Q(payment_method="")
+            )
+        )
+    )
+
+    # Inflows: Payments (positive)
+    pos_payments = payments_qs.filter(cash_payments_filter).exclude(operation_type=PaymentOperationType.REFUND)
+    total_cash_collected = pos_payments.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+
+    # Outflows: Refunds (cash returned to members)
+    refund_payments = payments_qs.filter(cash_payments_filter, operation_type=PaymentOperationType.REFUND)
+    total_refunds = refund_payments.aggregate(Sum("amount"))["amount__sum"] or Decimal("0.00")
+
+    # Handovers
+    approved_handovers_qs = handovers_qs.filter(status=HandoverStatus.APPROVED)
+    total_handed_over_approved = approved_handovers_qs.aggregate(Sum("actual_amount"))["actual_amount__sum"] or Decimal("0.00")
+
+    pending_handovers_qs = handovers_qs.filter(status=HandoverStatus.PENDING)
+    total_handed_over_pending = pending_handovers_qs.aggregate(Sum("actual_amount"))["actual_amount__sum"] or Decimal("0.00")
+
+    # Current available balance in drawer
+    current_drawer_balance = max(
+        Decimal("0.00"),
+        total_cash_collected - total_refunds - total_handed_over_approved - total_handed_over_pending
+    )
+
+    # Discrepancies (Shortages and Surpluses on approved handovers)
+    shortages = Decimal("0.00")
+    surpluses = Decimal("0.00")
+    for h in approved_handovers_qs:
+        if h.difference < Decimal("0.00"):
+            shortages += abs(h.difference)
+        elif h.difference > Decimal("0.00"):
+            surpluses += h.difference
+
+    return {
+        "total_cash_collected": total_cash_collected,
+        "total_refunds": total_refunds,
+        "total_handed_over_approved": total_handed_over_approved,
+        "total_handed_over_pending": total_handed_over_pending,
+        "current_drawer_balance": current_drawer_balance,
+        "expected_for_handover": current_drawer_balance,
+        "total_shortages": shortages,
+        "total_surpluses": surpluses,
+        "pending_count": pending_handovers_qs.count(),
+        "approved_count": approved_handovers_qs.count(),
+    }
+
+
+def create_reception_handover(receptionist, actual_amount, expected_amount=None, target_account=None, notes="", branch=None):
+    """
+    Records a cash handover from reception to the manager with audit logging and discrepancy detection.
+    """
+    from apps.payments.models import ReceptionCashHandover, HandoverStatus, FinancialAccount, AccountType
+    from apps.core.models import AuditLog
+    from django.utils import timezone
+    import uuid
+    from django.db import transaction
+
+    actual_amount = Decimal(str(actual_amount or "0.00"))
+    if actual_amount <= Decimal("0.00"):
+        raise ValueError("المبلغ المسلم يجب أن يكون أكبر من الصفر.")
+
+    if branch is None and getattr(receptionist, "branch_id", None):
+        branch = receptionist.branch
+
+    if expected_amount is None:
+        drawer = get_reception_drawer_summary(branch=branch, receptionist=receptionist)
+        expected_amount = drawer["current_drawer_balance"]
+    else:
+        expected_amount = Decimal(str(expected_amount or "0.00"))
+
+    if target_account is None:
+        target_account = resolve_account_for_payment_method("نقدي", branch=branch)
+        if not target_account:
+            target_account = FinancialAccount.objects.filter(account_type=AccountType.CASH, is_active=True).first()
+
+    difference = actual_amount - expected_amount
+    handover_id = f"HND-{timezone.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+
+    is_mgr = getattr(receptionist, "is_manager", False)
+    status = HandoverStatus.APPROVED if is_mgr else HandoverStatus.PENDING
+    approved_at = timezone.now() if is_mgr else None
+    manager = receptionist if is_mgr else None
+
+    with transaction.atomic():
+        handover = ReceptionCashHandover.objects.create(
+            handover_id=handover_id,
+            receptionist=receptionist,
+            manager=manager,
+            branch=branch,
+            target_account=target_account,
+            expected_amount=expected_amount,
+            actual_amount=actual_amount,
+            difference=difference,
+            status=status,
+            handover_date=timezone.localdate(),
+            approved_at=approved_at,
+            notes=notes or "",
+        )
+
+        diff_str = "مطابق تماماً"
+        if difference < Decimal("0.00"):
+            diff_str = f"عجز بقيمة {abs(difference)} ج.م"
+        elif difference > Decimal("0.00"):
+            diff_str = f"زيادة بقيمة {difference} ج.م"
+
+        action_name = "CASH_HANDOVER_APPROVED" if is_mgr else "CASH_HANDOVER_SUBMITTED"
+        status_label = "واعتماده وإيداعه بالخزينة" if is_mgr else "(بانتظار استلام واعتماد المدير)"
+
+        AuditLog.log(
+            action_type=action_name,
+            description=f"تسليم نقدية من الريسبشن {status_label}: سلّم {receptionist.get_full_name() or receptionist.username} مبلغ {actual_amount} ج.م (المتوقع بالدرج: {expected_amount} ج.م | {diff_str}) برقم {handover_id}",
+            user=receptionist,
+            amount=actual_amount,
+        )
+
+    return handover
+
+
+def approve_reception_handover(handover, manager, manager_notes=""):
+    """
+    Manager approves the cash handover and officially deposits the cash into the safe.
+    """
+    from apps.payments.models import HandoverStatus
+    from apps.core.models import AuditLog
+    from django.utils import timezone
+    from django.db import transaction
+
+    if handover.status == HandoverStatus.APPROVED:
+        return handover
+
+    with transaction.atomic():
+        handover.status = HandoverStatus.APPROVED
+        handover.manager = manager
+        handover.approved_at = timezone.now()
+        if manager_notes:
+            handover.manager_notes = manager_notes
+        handover.save(update_fields=["status", "manager", "approved_at", "manager_notes"])
+
+        diff_str = "مطابق تماماً"
+        if handover.difference < Decimal("0.00"):
+            diff_str = f"عجز بقيمة {abs(handover.difference)} ج.م"
+        elif handover.difference > Decimal("0.00"):
+            diff_str = f"زيادة بقيمة {handover.difference} ج.م"
+
+        AuditLog.log(
+            action_type="CASH_HANDOVER_APPROVED",
+            description=f"اعتماد تسليم نقدية ومطابقة: اعتمد المدير {manager.get_full_name() or manager.username} استلام مبلغ {handover.actual_amount} ج.م من {handover.receptionist.get_full_name() or handover.receptionist.username} وإيداعه بالخزينة الرئيسية ({diff_str}) برقم {handover.handover_id}",
+            user=manager,
+            amount=handover.actual_amount,
+        )
+
+    return handover
+
+
+def reject_reception_handover(handover, manager, reason=""):
+    """
+    Manager rejects the cash handover.
+    """
+    from apps.payments.models import HandoverStatus
+    from apps.core.models import AuditLog
+    from django.utils import timezone
+    from django.db import transaction
+
+    with transaction.atomic():
+        handover.status = HandoverStatus.REJECTED
+        handover.manager = manager
+        if reason:
+            handover.manager_notes = reason
+        handover.save(update_fields=["status", "manager", "manager_notes"])
+
+        AuditLog.log(
+            action_type="CASH_HANDOVER_REJECTED",
+            description=f"رفض تسليم نقدية: رفض المدير {manager.get_full_name() or manager.username} تسليم رقم {handover.handover_id} بمبلغ {handover.actual_amount} ج.م. السبب: {reason or 'لا توجد أسباب مدونة'}",
+            user=manager,
+            amount=handover.actual_amount,
+        )
+
+    return handover
+
+
 def get_all_financial_accounts_summary(branch=None):
     """
-    Returns balance details for all active financial accounts, plus overall totals.
+    Returns balance details for all active financial accounts, plus reception cash drawer summary.
     """
     from apps.payments.models import FinancialAccount
     FinancialAccount.get_default_accounts(branch=branch)
@@ -510,11 +739,16 @@ def get_all_financial_accounts_summary(branch=None):
         total_inflows += details["inflows"]
         total_outflows += details["outflows"]
 
+    drawer_summary = get_reception_drawer_summary(branch=branch)
+
     return {
         "accounts_details": items,
-        "total_balance": total_balance,
+        "total_balance": total_balance + drawer_summary["current_drawer_balance"],
+        "safe_balance": total_balance,
+        "drawer_balance": drawer_summary["current_drawer_balance"],
         "total_inflows": total_inflows,
         "total_outflows": total_outflows,
+        "reception_drawer": drawer_summary,
     }
 
 

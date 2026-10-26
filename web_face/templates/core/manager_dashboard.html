@@ -1041,6 +1041,8 @@
                   <span class="badge" style="background: rgba(168, 241, 75, 0.15); color: #A8F14B;">تدريب خاص 🏋️‍♂️</span>
                 {% elif "coach" in log.action %}
                   <span class="badge" style="background: rgba(77, 179, 255, 0.15); color: #38bdf8;">إسناد كابتن 👤</span>
+                {% elif "HANDOVER" in log.action or "handover" in log.action %}
+                  <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">تسليم نقدية 📥</span>
                 {% else %}
                   <span class="badge badge-neutral">{{ log.action }}</span>
                 {% endif %}
@@ -1054,6 +1056,11 @@
               </td>
               <td style="color: var(--text-secondary); font-size: 0.88rem;">
                 {{ log.details }}
+                {% if "عجز" in log.details %}
+                  <span style="background: rgba(239, 68, 68, 0.18); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 800; font-size: 0.74rem; padding: 2px 8px; border-radius: 999px; margin-right: 6px; display: inline-block;">⚠️ رصد عجز مالي</span>
+                {% elif "زيادة" in log.details %}
+                  <span style="background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); font-weight: 800; font-size: 0.74rem; padding: 2px 8px; border-radius: 999px; margin-right: 6px; display: inline-block;">ℹ️ زيادة بالدرج</span>
+                {% endif %}
               </td>
               <td style="font-size: 0.85rem; color: var(--text-main); font-weight: 700;">
                 {{ log.user.username|default:"النظام" }}

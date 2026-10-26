@@ -794,6 +794,9 @@ def financial_accounts_view(request):
     context = {
         "accounts_details": summary["accounts_details"],
         "total_balance": summary["total_balance"],
+        "safe_balance": summary.get("safe_balance", summary["total_balance"]),
+        "drawer_balance": summary.get("drawer_balance", Decimal("0.00")),
+        "reception_drawer": summary.get("reception_drawer", {}),
         "total_inflows": summary["total_inflows"],
         "total_outflows": summary["total_outflows"],
         "all_accounts": all_accounts,
@@ -933,6 +936,224 @@ def account_update_view(request, account_id):
 
     messages.success(request, f"تم تحديث بيانات الحساب '{account.name}' بنجاح.")
     return redirect("payments:accounts_index")
+
+
+# =========================================================================
+# 💼 RECEPTION CASH HANDOVER & SAFE RECONCILIATION VIEWS
+# =========================================================================
+
+from apps.payments.models import ReceptionCashHandover, HandoverStatus
+from apps.payments.services import (
+    get_reception_drawer_summary,
+    create_reception_handover,
+    approve_reception_handover,
+    reject_reception_handover,
+)
+
+
+@login_required
+def reception_handovers_list_view(request):
+    """
+    Dedicated view for Reception Cash Handover and Treasury Safe Reconciliation:
+    - Current cash held by reception in the drawer (رصيد بره مع الريسبشن)
+    - Full list of shift handovers, discrepancies (shortage/surplus), and approvals
+    """
+    from apps.core.branch_context import get_active_branch, filter_by_branch
+    active_branch = get_active_branch(request)
+    drawer_summary = get_reception_drawer_summary(branch=active_branch)
+
+    handovers_qs = ReceptionCashHandover.objects.select_related(
+        "receptionist", "manager", "target_account", "branch"
+    ).all().order_by("-handover_time")
+    handovers_qs = filter_by_branch(handovers_qs, request)
+
+    # Filter by status
+    status_filter = request.GET.get("status", "").strip()
+    if status_filter == "pending":
+        handovers_qs = handovers_qs.filter(status=HandoverStatus.PENDING)
+    elif status_filter == "approved":
+        handovers_qs = handovers_qs.filter(status=HandoverStatus.APPROVED)
+    elif status_filter == "rejected":
+        handovers_qs = handovers_qs.filter(status=HandoverStatus.REJECTED)
+    elif status_filter == "shortage":
+        handovers_qs = handovers_qs.filter(difference__lt=Decimal("0.00"))
+    elif status_filter == "surplus":
+        handovers_qs = handovers_qs.filter(difference__gt=Decimal("0.00"))
+
+    # Search by ID, receptionist name, notes
+    search_q = request.GET.get("q", "").strip()
+    if search_q:
+        handovers_qs = handovers_qs.filter(
+            Q(handover_id__icontains=search_q) |
+            Q(receptionist__username__icontains=search_q) |
+            Q(receptionist__first_name__icontains=search_q) |
+            Q(receptionist__last_name__icontains=search_q) |
+            Q(notes__icontains=search_q) |
+            Q(manager_notes__icontains=search_q)
+        )
+
+    # Date filter
+    date_filter = request.GET.get("date", "").strip()
+    if date_filter:
+        try:
+            handovers_qs = handovers_qs.filter(handover_date=date_filter)
+        except Exception:
+            pass
+
+    paginator = Paginator(handovers_qs, 25)
+    page_number = request.GET.get("page", 1)
+    handovers_page = paginator.get_page(page_number)
+
+    today = timezone.localdate()
+    today_approved_sum = ReceptionCashHandover.objects.filter(
+        status=HandoverStatus.APPROVED,
+        handover_date=today
+    )
+    if active_branch:
+        today_approved_sum = today_approved_sum.filter(branch=active_branch)
+    today_handed_total = today_approved_sum.aggregate(Sum("actual_amount"))["actual_amount__sum"] or Decimal("0.00")
+
+    context = {
+        "drawer_summary": drawer_summary,
+        "handovers": handovers_page,
+        "today_handed_total": today_handed_total,
+        "status_filter": status_filter,
+        "search_q": search_q,
+        "date_filter": date_filter,
+        "gym_profile": GymProfile.get_solo(),
+    }
+    return render(request, "payments/handovers.html", context)
+
+
+@login_required
+def submit_reception_handover_view(request):
+    """
+    Submits a new cash handover from reception to the manager with expected vs actual matching.
+    """
+    if request.method != "POST":
+        return redirect("payments:reception_handovers")
+
+    from apps.core.branch_context import get_active_branch
+    active_branch = get_active_branch(request)
+
+    actual_raw = request.POST.get("actual_amount", "").strip()
+    expected_raw = request.POST.get("expected_amount", "").strip()
+    notes = request.POST.get("notes", "").strip()
+
+    try:
+        actual_amount = Decimal(actual_raw)
+    except Exception:
+        messages.error(request, "يرجى إدخال مبلغ صحيح للتسليم.")
+        return redirect("payments:reception_handovers")
+
+    expected_amount = None
+    if expected_raw:
+        try:
+            expected_amount = Decimal(expected_raw)
+        except Exception:
+            expected_amount = None
+
+    try:
+        handover = create_reception_handover(
+            receptionist=request.user,
+            actual_amount=actual_amount,
+            expected_amount=expected_amount,
+            notes=notes,
+            branch=active_branch,
+        )
+        if handover.status == HandoverStatus.APPROVED:
+            messages.success(request, f"✓ تم تسجيل واعتماد تسليم النقدية برقم ({handover.handover_id}) وإيداع مبلغ {handover.actual_amount} ج.م بالخزينة الرئيسية بنجاح.")
+        else:
+            diff_text = ""
+            if handover.has_shortage:
+                diff_text = f" (تنبيه: يوجد عجز بمقدار {handover.shortage_amount} ج.م)"
+            elif handover.has_surplus:
+                diff_text = f" (ملاحظة: يوجد زيادة بمقدار {handover.surplus_amount} ج.م)"
+            else:
+                diff_text = " (المبلغ مطابق للرصيد الدفتري 100%)"
+            messages.success(request, f"✓ تم إنشاء طلب تسليم نقدية برقم ({handover.handover_id}) بمبلغ {handover.actual_amount} ج.م{diff_text} وفي انتظار اعتماد واستلام المدير.")
+    except Exception as e:
+        messages.error(request, f"خطأ أثناء تسجيل التسليم: {str(e)}")
+
+    return redirect("payments:reception_handovers")
+
+
+@login_required
+def approve_reception_handover_view(request, handover_id):
+    """
+    Manager endpoint to approve cash handover, match amounts, and deposit into main safe.
+    """
+    if not getattr(request.user, "is_manager", False):
+        messages.error(request, "عذراً، صلاحية اعتماد واستلام النقدية بالخزينة مخصصة للمدير فقط.")
+        return redirect("payments:reception_handovers")
+
+    handover = get_object_or_404(ReceptionCashHandover, id=handover_id)
+    manager_notes = request.POST.get("manager_notes", "").strip() if request.method == "POST" else ""
+
+    try:
+        approve_reception_handover(handover, manager=request.user, manager_notes=manager_notes)
+        messages.success(request, f"✓ تم استلام واعتماد تسليم النقدية ({handover.handover_id}) بمبلغ {handover.actual_amount} ج.م وإيداعه في الخزينة الرئيسية بنجاح.")
+    except Exception as e:
+        messages.error(request, f"حدث خطأ أثناء الاعتماد: {str(e)}")
+
+    return redirect("payments:reception_handovers")
+
+
+@login_required
+def reject_reception_handover_view(request, handover_id):
+    """
+    Manager endpoint to reject a cash handover.
+    """
+    if not getattr(request.user, "is_manager", False):
+        messages.error(request, "عذراً، صلاحية رفض تسليم النقدية مخصصة للمدير فقط.")
+        return redirect("payments:reception_handovers")
+
+    handover = get_object_or_404(ReceptionCashHandover, id=handover_id)
+    reason = request.POST.get("reason", "").strip() if request.method == "POST" else ""
+
+    try:
+        reject_reception_handover(handover, manager=request.user, reason=reason)
+        messages.warning(request, f"تم رفض تسليم النقدية ({handover.handover_id}).")
+    except Exception as e:
+        messages.error(request, f"حدث خطأ أثناء رفض التسليم: {str(e)}")
+
+    return redirect("payments:reception_handovers")
+
+
+@login_required
+def reception_handover_receipt_view(request, handover_id):
+    """
+    Printable voucher / receipt for cash handover from reception to manager.
+    """
+    handover = get_object_or_404(ReceptionCashHandover, id=handover_id)
+    profile = GymProfile.get_solo()
+
+    context = {
+        "handover": handover,
+        "profile": profile,
+    }
+    return render(request, "payments/handover_receipt.html", context)
+
+
+@login_required
+def api_reception_drawer_balance_view(request):
+    """
+    API endpoint returning real-time reception drawer balance for modals & front-end widgets.
+    """
+    from apps.core.branch_context import get_active_branch
+    active_branch = get_active_branch(request)
+    summary = get_reception_drawer_summary(branch=active_branch)
+
+    return JsonResponse({
+        "success": True,
+        "current_drawer_balance": float(summary["current_drawer_balance"]),
+        "total_cash_collected": float(summary["total_cash_collected"]),
+        "total_handed_over_approved": float(summary["total_handed_over_approved"]),
+        "total_handed_over_pending": float(summary["total_handed_over_pending"]),
+        "total_shortages": float(summary["total_shortages"]),
+        "total_surpluses": float(summary["total_surpluses"]),
+        "pending_count": summary["pending_count"],
+    })
 
 
 

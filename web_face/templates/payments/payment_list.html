@@ -15,6 +15,15 @@
         فلترة متقدمة حسب نوع المعاملة والفترة الزمنية وطريقة الدفع
       </p>
     </div>
+
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <a href="{% url 'payments:reception_handovers' %}" class="btn btn-secondary btn-sm" style="height: 38px; padding: 0 16px; font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35);">
+        <span>💼</span> تسليمات عهدة الريسبشن
+      </a>
+      <a href="{% url 'payments:accounts_index' %}" class="btn btn-secondary btn-sm" style="height: 38px; padding: 0 16px; font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+        <span>🏦</span> الخزائن والحسابات
+      </a>
+    </div>
   </div>
 
   <!-- KPI Summary Strip -->

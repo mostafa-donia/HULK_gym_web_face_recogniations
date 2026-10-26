@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سند تسليم واستلام نقدية — {{ handover.handover_id }}</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f8fafc;
+      color: #0f172a;
+      direction: rtl;
+    }
+    .receipt-container {
+      max-width: 650px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+    .title {
+      font-size: 1.4rem;
+      font-weight: 900;
+      margin: 0;
+      color: #0f172a;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    .data-table th, .data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: right;
+      font-size: 0.92rem;
+    }
+    .data-table th {
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 700;
+      width: 35%;
+    }
+    .amount-highlight {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #059669;
+    }
+    .diff-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 0.85rem;
+    }
+    .diff-match { background: #d1fae5; color: #065f46; }
+    .diff-shortage { background: #fee2e2; color: #991b1b; }
+    .diff-surplus { background: #e0f2fe; color: #075985; }
+    .signatures {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 36px;
+      padding-top: 20px;
+      border-top: 1px dashed #cbd5e1;
+    }
+    .sig-box {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .btn-print {
+      background: #0f172a;
+      color: #fff;
+      border: none;
+      padding: 10px 24px;
+      font-weight: 800;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .receipt-container { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="no-print" style="max-width: 650px; margin: 0 auto 16px auto; display: flex; justify-content: space-between; align-items: center;">
+    <button onclick="window.print()" class="btn-print">🖨️ طباعة السند</button>
+    <button onclick="window.close()" style="background: #e2e8f0; color: #475569; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 700;">إغلاق</button>
+  </div>
+
+  <div class="receipt-container">
+    <div class="header">
+      <div>
+        <h1 class="title">{{ profile.gym_name|default:"صالة اللياقة الرياضية" }}</h1>
+        <div class="subtitle">سند تسليم واستلام نقدية عهدة (Reception Cash Handover)</div>
+      </div>
+      <div style="text-align: left;">
+        <div style="font-weight: 900; font-family: monospace; font-size: 1.1rem; color: #0284c7;">{{ handover.handover_id }}</div>
+        <div style="font-size: 0.8rem; color: #64748b;">{{ handover.handover_time|date:"Y-m-d" }} | {{ handover.handover_time|date:"h:i A" }}</div>
+      </div>
+    </div>
+
+    <table class="data-table">
+      <tr>
+        <th>موظف الاستقبال (المسلِّم)</th>
+        <td><strong>{{ handover.receptionist.get_full_name|default:handover.receptionist.username }}</strong></td>
+      </tr>
+      <tr>
+        <th>المدير المستلم والمعتمد</th>
+        <td>
+          {% if handover.manager %}
+            <strong>{{ handover.manager.get_full_name|default:handover.manager.username }}</strong>
+            <small style="color: #059669; font-weight: 700;">(معتمد بتاريخ {{ handover.approved_at|date:"Y-m-d h:i A" }})</small>
+          {% else %}
+            <span style="color: #d97706; font-weight: 700;">قيد المراجعة والاستلام</span>
+          {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th>الفرع</th>
+        <td>{{ handover.branch.name|default:"الفرع الرئيسي" }}</td>
+      </tr>
+      <tr>
+        <th>الخزينة المودع بها</th>
+        <td>{{ handover.target_account.name|default:"خزينة النقدية (الكاش)" }}</td>
+      </tr>
+      <tr>
+        <th>الرصيد الدفتري المتوقع بالدرج</th>
+        <td style="font-variant-numeric: tabular-nums;">{{ handover.expected_amount|floatformat:2 }} {{ profile.currency|default:"ج.م" }}</td>
+      </tr>
+      <tr>
+        <th>المبلغ الفعلي المسلّم للمدير</th>
+        <td>
+          <span class="amount-highlight">{{ handover.actual_amount|floatformat:2 }}</span>
+          <strong style="color: #475569;">{{ profile.currency|default:"ج.م" }}</strong>
+        </td>
+      </tr>
+      <tr>
+        <th>المطابقة والفارق الدفتري</th>
+        <td>
+          {% if handover.has_shortage %}
+            <span class="diff-badge diff-shortage">⚠️ يوجد عجز بمقدار: {{ handover.shortage_amount|floatformat:2 }} {{ profile.currency|default:"ج.م" }}</span>
+          {% elif handover.has_surplus %}
+            <span class="diff-badge diff-surplus">ℹ️ يوجد زيادة بمقدار: +{{ handover.surplus_amount|floatformat:2 }} {{ profile.currency|default:"ج.م" }}</span>
+          {% else %}
+            <span class="diff-badge diff-match">✓ المبلغ مطابق تماماً للرصيد الدفتري (0.00 ج.م)</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% if handover.notes %}
+      <tr>
+        <th>ملاحظات موظف الاستقبال</th>
+        <td style="color: #334155;">{{ handover.notes }}</td>
+      </tr>
+      {% endif %}
+      {% if handover.manager_notes %}
+      <tr>
+        <th>ملاحظات المدير عند المطابقة</th>
+        <td style="color: #334155;">{{ handover.manager_notes }}</td>
+      </tr>
+      {% endif %}
+    </table>
+
+    <div class="signatures">
+      <div class="sig-box">
+        <span style="font-size: 0.85rem; font-weight: 800; color: #475569;">توقيع موظف الاستقبال (المُسَلِّم):</span>
+        <div style="font-weight: 700; font-size: 0.85rem; color: #64748b; margin-top: 30px;">
+          {{ handover.receptionist.get_full_name|default:handover.receptionist.username }}
+        </div>
+      </div>
+
+      <div class="sig-box">
+        <span style="font-size: 0.85rem; font-weight: 800; color: #475569;">توقيع المدير (المستلم والمعتمد):</span>
+        <div style="font-weight: 700; font-size: 0.85rem; color: #64748b; margin-top: 30px;">
+          {{ handover.manager.get_full_name|default:handover.manager.username|default:"..........................." }}
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 24px; font-size: 0.76rem; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+      تم استخراج هذا السند رسمياً عبر منظومة Systemize Gym OS — تاريخ الإصدار: {% now "Y-m-d H:i" %}
+    </div>
+  </div>
+
+</body>
+</html>

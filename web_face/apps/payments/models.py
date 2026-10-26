@@ -354,3 +354,103 @@ class BarSale(models.Model):
             elif self.created_by and getattr(self.created_by, "branch_id", None):
                 self.branch = getattr(self.created_by, "branch", None)
         super().save(*args, **kwargs)
+
+
+class HandoverStatus(models.TextChoices):
+    PENDING = "pending", "معلق (بانتظار استلام واعتماد المدير)"
+    APPROVED = "approved", "معتمد (تم الاستلام والإيداع بالخزينة الرئيسية)"
+    REJECTED = "rejected", "مرفوض"
+
+
+class ReceptionCashHandover(models.Model):
+    handover_id = models.CharField(
+        max_length=32,
+        unique=True,
+        db_index=True,
+        verbose_name="رقم إيصال التسليم",
+    )
+    receptionist = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="handovers_given",
+        verbose_name="موظف الاستقبال (المُسَلِّم)",
+    )
+    manager = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="handovers_received",
+        verbose_name="المدير المستلم والمعتمد",
+    )
+    branch = models.ForeignKey(
+        "core.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cash_handovers",
+        verbose_name="الفرع",
+    )
+    target_account = models.ForeignKey(
+        FinancialAccount,
+        on_delete=models.PROTECT,
+        related_name="handovers_deposited",
+        verbose_name="الخزينة المودع بها",
+    )
+    expected_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="الرصيد الدفتري المتوقع بالدرج",
+    )
+    actual_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="المبلغ الفعلي المسلّم للمدير",
+    )
+    difference = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name="فارق المطابقة (عجز / زيادة)",
+        help_text="المبلغ الفعلي - المبلغ المتوقع. قيمة سالبة تعني عجز، موجبة تعني زيادة، صفر يعني مطابق",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=HandoverStatus.choices,
+        default=HandoverStatus.PENDING,
+        db_index=True,
+        verbose_name="حالة التسليم",
+    )
+    handover_date = models.DateField(db_index=True, verbose_name="تاريخ التسليم")
+    handover_time = models.DateTimeField(auto_now_add=True, verbose_name="توقيت التسليم")
+    approved_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ وتوقيت الاعتماد")
+    notes = models.TextField(blank=True, verbose_name="ملاحظات موظف الاستقبال")
+    manager_notes = models.TextField(blank=True, verbose_name="ملاحظات المدير عند المطابقة")
+
+    class Meta:
+        verbose_name = "تسليم نقدية من الريسبشن"
+        verbose_name_plural = "تسليمات نقدية الريسبشن والخزينة"
+        ordering = ["-handover_time"]
+
+    def __str__(self) -> str:
+        return f"{self.handover_id}: {self.actual_amount} ج.م من {self.receptionist} ({self.get_status_display()})"
+
+    @property
+    def has_shortage(self) -> bool:
+        return self.difference < Decimal("0.00")
+
+    @property
+    def has_surplus(self) -> bool:
+        return self.difference > Decimal("0.00")
+
+    @property
+    def is_matched(self) -> bool:
+        return self.difference == Decimal("0.00")
+
+    @property
+    def shortage_amount(self) -> Decimal:
+        return abs(self.difference) if self.has_shortage else Decimal("0.00")
+
+    @property
+    def surplus_amount(self) -> Decimal:
+        return self.difference if self.has_surplus else Decimal("0.00")

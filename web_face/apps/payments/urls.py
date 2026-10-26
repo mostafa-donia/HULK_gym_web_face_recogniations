@@ -17,6 +17,14 @@ urlpatterns = [
     path("accounts/transfer/<int:transfer_id>/delete/", views.transfer_delete_view, name="transfer_delete"),
     path("accounts/<int:account_id>/update/", views.account_update_view, name="account_update"),
 
+    # Reception Cash Handover & Safe Reconciliation Routes
+    path("handovers/", views.reception_handovers_list_view, name="reception_handovers"),
+    path("handovers/submit/", views.submit_reception_handover_view, name="submit_reception_handover"),
+    path("handovers/<int:handover_id>/approve/", views.approve_reception_handover_view, name="approve_reception_handover"),
+    path("handovers/<int:handover_id>/reject/", views.reject_reception_handover_view, name="reject_reception_handover"),
+    path("handovers/<int:handover_id>/receipt/", views.reception_handover_receipt_view, name="reception_handover_receipt"),
+    path("api/drawer-balance/", views.api_reception_drawer_balance_view, name="api_drawer_balance"),
+
     # Bar & Inventory Routes
     path("bar/", views.bar_inventory_view, name="bar_inventory"),
     path("bar/sale/", views.bar_quick_sale_view, name="bar_quick_sale"),
