@@ -359,70 +359,142 @@
         {% endif %}
       </div>
 
-      <!-- Horizontal Navigation Links (Clean Text Only - No Icons) -->
+      <!-- Horizontal Navigation Links (Grouped into Intuitive Hubs: ماليات، الأعضاء، الإدارة) -->
       <nav class="top-nav-links">
+        <!-- 1. الرئيسية -->
         <a href="{% url 'core:dashboard' %}" class="top-nav-item {% if request.resolver_match.view_name == 'core:dashboard' %}active{% endif %}">
           <span>الرئيسية</span>
         </a>
 
-        {% if user.is_manager %}
-        <a href="{% url 'core:manager_dashboard' %}" class="top-nav-item {% if request.resolver_match.view_name == 'core:manager_dashboard' %}active{% endif %}">
-          <span>لوحة المدير</span>
-        </a>
-        {% endif %}
+        <!-- 2. الأعضاء (Grouped Hub) -->
+        <div class="top-nav-dropdown" id="navDropdownMembersWrap">
+          <button type="button" class="top-nav-item top-nav-dropdown-btn {% if 'members' in request.path or 'retention' in request.path %}active{% endif %}" onclick="toggleNavDropdown('navDropdownMembersWrap', event)" title="إدارة الأعضاء والاشتراكات وسجلات الحضور">
+            <span>الأعضاء</span>
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          <div class="top-nav-dropdown-menu">
+            <a href="{% url 'members:member_list' %}" class="top-nav-dropdown-item {% if request.resolver_match.view_name == 'members:member_list' %}active{% endif %}">
+              <span>👥</span>
+              <span>قائمة المشتركين</span>
+            </a>
+            <a href="{% url 'members:member_create' %}" class="top-nav-dropdown-item {% if request.resolver_match.view_name == 'members:member_create' %}active{% endif %}">
+              <span>➕</span>
+              <span>إضافة مشترك جديد</span>
+            </a>
+            <a href="{% url 'members:checkin_list' %}" class="top-nav-dropdown-item {% if 'checkin' in request.path %}active{% endif %}">
+              <span>🕒</span>
+              <span>سجل الحضور اليومي</span>
+            </a>
+            {% if user.is_manager %}
+            <a href="{% url 'reports:member_retention' %}" class="top-nav-dropdown-item {% if 'retention' in request.path %}active{% endif %}">
+              <span>🔄</span>
+              <span>حركة واحتفاظ الأعضاء</span>
+            </a>
+            {% endif %}
+          </div>
+        </div>
 
+        <!-- 3. الماليات (Grouped Hub - Financials) -->
+        <div class="top-nav-dropdown" id="navDropdownFinancialsWrap">
+          <button type="button" class="top-nav-item top-nav-dropdown-btn {% if 'payments' in request.path or 'expenses' in request.path or 'accounts' in request.path or 'handovers' in request.path %}active{% endif %}" onclick="toggleNavDropdown('navDropdownFinancialsWrap', event)" title="العمليات المالية: المدفوعات، المصروفات، الخزائن، وتسليم العهدة">
+            <span>الماليات</span>
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          <div class="top-nav-dropdown-menu">
+            <a href="{% url 'payments:payment_list' %}" class="top-nav-dropdown-item {% if 'payments' in request.path and not 'bar' in request.path and not 'accounts' in request.path and not 'handovers' in request.path %}active{% endif %}">
+              <span>💳</span>
+              <span>المدفوعات والاشتراكات</span>
+            </a>
+            <a href="{% url 'expenses:expense_list' %}" class="top-nav-dropdown-item {% if 'expenses' in request.path %}active{% endif %}">
+              <span>📉</span>
+              <span>المصروفات وسندات الصرف</span>
+            </a>
+            <a href="{% url 'payments:accounts_index' %}" class="top-nav-dropdown-item {% if 'accounts' in request.path %}active{% endif %}">
+              <span>🏦</span>
+              <span>الخزائن والحسابات والتحويلات</span>
+            </a>
+            <a href="{% url 'payments:reception_handovers' %}" class="top-nav-dropdown-item {% if 'handovers' in request.path %}active{% endif %}">
+              <span>🤝</span>
+              <span>تسليم عهدة الريسبشن</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- 4. الموظفين والمدربين -->
         {% if license_features.payroll %}
         <a href="{% url 'payroll:trainers_index' %}" class="top-nav-item {% if 'trainers' in request.path or 'payroll' in request.path %}active{% endif %}" title="إدارة الموظفين والمدربين وكشوف الرواتب والحضور">
           <span>الموظفين والمدربين</span>
         </a>
         {% endif %}
 
-        <a href="{% url 'members:member_list' %}" class="top-nav-item {% if 'members' in request.path and not 'subscription' in request.path %}active{% endif %}">
-          <span>الأعضاء</span>
-        </a>
-
-        <a href="{% url 'payments:payment_list' %}" class="top-nav-item {% if 'payments' in request.path and not 'bar' in request.path %}active{% endif %}">
-          <span>المدفوعات</span>
-        </a>
-
+        <!-- 5. البار والمخزون -->
         {% if license_features.bar %}
-        <a href="{% url 'payments:bar_inventory' %}" class="top-nav-item {% if 'bar' in request.path %}active{% endif %}">
+        <a href="{% url 'payments:bar_inventory' %}" class="top-nav-item {% if 'bar' in request.path %}active{% endif %}" title="مبيعات البار والمكملات وإدارة المخزون">
           <span>البار والمخزون</span>
         </a>
         {% endif %}
 
-        <a href="{% url 'expenses:expense_list' %}" class="top-nav-item {% if 'expenses' in request.path %}active{% endif %}" title="سجل المصروفات وسندات الصرف التشغيلية">
-          <span>المصروفات</span>
-        </a>
-
-        <a href="{% url 'payments:accounts_index' %}" class="top-nav-item {% if 'accounts' in request.path %}active{% endif %}" title="إدارة الخزائن والحسابات المالية والتحويلات">
-          <span>الخزائن</span>
-        </a>
-
-        <a href="{% url 'payments:reception_handovers' %}" class="top-nav-item {% if 'handovers' in request.path %}active{% endif %}" title="تسليمات عهدة الريسبشن ومطابقة الخزينة">
-          <span>تسليم العهدة</span>
-        </a>
-
+        <!-- 6. واتساب -->
         {% if license_features.whatsapp %}
-        <a href="{% url 'messaging:whatsapp_queue' %}" class="top-nav-item {% if 'messaging' in request.path %}active{% endif %}">
+        <a href="{% url 'messaging:whatsapp_queue' %}" class="top-nav-item {% if 'messaging' in request.path %}active{% endif %}" title="طابور رسائل الواتساب والتنبيهات التلقائية">
           <span>واتساب</span>
         </a>
         {% endif %}
 
+        <!-- 7. الإدارة (Grouped Hub for Managers) -->
         {% if user.is_manager %}
-        <a href="{% url 'reports:member_retention' %}" class="top-nav-item {% if 'retention' in request.path %}active{% endif %}" title="تقرير حركة واحتفاظ الأعضاء وميزان الأرباح والخسائر">
-          <span>حركة الأعضاء</span>
-        </a>
-
-        <a href="{% url 'core:settings' %}" class="top-nav-item {% if 'settings' in request.path %}active{% endif %}">
-          <span>الإعدادات</span>
-        </a>
-
-        <a href="{% url 'core:manager_mobile_dashboard' %}?view=mobile" class="top-nav-item" title="معاينة أو التبديل إلى نسخة الموبايل المخصصة">
-          <span>الهاتف</span>
-        </a>
+        <div class="top-nav-dropdown" id="navDropdownManagerWrap">
+          <button type="button" class="top-nav-item top-nav-dropdown-btn {% if 'manager' in request.path or 'settings' in request.path or 'ai-strategy' in request.path %}active{% endif %}" onclick="toggleNavDropdown('navDropdownManagerWrap', event)" title="لوحة المدير، ذكاء الجيم، وإعدادات المنظومة">
+            <span>الإدارة</span>
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          <div class="top-nav-dropdown-menu">
+            <a href="{% url 'core:manager_dashboard' %}" class="top-nav-dropdown-item {% if request.resolver_match.view_name == 'core:manager_dashboard' and 'tab=ai' not in request.get_full_path %}active{% endif %}">
+              <span>📊</span>
+              <span>لوحة المدير العامة</span>
+            </a>
+            <a href="{% url 'core:manager_dashboard' %}?tab=ai" class="top-nav-dropdown-item {% if 'tab=ai' in request.get_full_path or 'ai-strategy' in request.path %}active{% endif %}">
+              <span>🧠</span>
+              <span>ذكاء الجيم والتوقعات</span>
+            </a>
+            <a href="{% url 'core:settings' %}" class="top-nav-dropdown-item {% if 'settings' in request.path %}active{% endif %}">
+              <span>⚙️</span>
+              <span>إعدادات النظام والكاميرات</span>
+            </a>
+            <a href="{% url 'core:manager_mobile_dashboard' %}?view=mobile" class="top-nav-dropdown-item" title="معاينة أو التبديل إلى نسخة الموبايل">
+              <span>📱</span>
+              <span>لوحة الهاتف الذكي</span>
+            </a>
+          </div>
+        </div>
         {% endif %}
       </nav>
+      <script>
+        function toggleNavDropdown(wrapId, e) {
+          if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          var wrap = document.getElementById(wrapId);
+          if (!wrap) return;
+          var wasOpen = wrap.classList.contains('open');
+          document.querySelectorAll('.top-nav-dropdown.open').forEach(function(el) {
+            if (el !== wrap) el.classList.remove('open');
+          });
+          if (wasOpen) {
+            wrap.classList.remove('open');
+          } else {
+            wrap.classList.add('open');
+          }
+        }
+        document.addEventListener('click', function(e) {
+          if (!e.target.closest('.top-nav-dropdown')) {
+            document.querySelectorAll('.top-nav-dropdown.open').forEach(function(el) {
+              el.classList.remove('open');
+            });
+          }
+        });
+      </script>
 
       <!-- User Profile, Face Camera Indicator & Logout on Left (RTL) -->
       <div class="top-navbar-user">
