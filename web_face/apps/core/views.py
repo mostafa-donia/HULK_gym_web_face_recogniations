@@ -230,6 +230,23 @@ def check_manager_page_access(request, target_url=None):
     if request.session.get("manager_page_unlocked"):
         return True, None
 
+    # Automatic Fast-Unlock: If Face ID verified the manager recently in camera engine
+    import time
+    try:
+        from apps.face_recognition.engine import get_face_engine
+        engine = get_face_engine()
+        last_m = getattr(engine, "last_detected_manager", None)
+        if last_m and last_m.get("matched") and (time.time() - last_m.get("timestamp", 0)) <= 6.0:
+            request.session["manager_page_unlocked"] = True
+            request.session["settings_page_unlocked"] = True
+            request.session["trainers_page_unlocked"] = True
+            request.session["retention_page_unlocked"] = True
+            request.session["reports_page_unlocked"] = True
+            request.session.modified = True
+            return True, None
+    except Exception:
+        pass
+
     profile = GymProfile.get_solo()
     target = request.POST.get("target_url") or target_url or request.get_full_path()
     is_mobile = is_mobile_device(request)
@@ -265,6 +282,20 @@ def check_settings_page_access(request, target_url=None):
     """
     if request.session.get("settings_page_unlocked") or request.session.get("manager_page_unlocked"):
         return True, None
+
+    # Automatic Fast-Unlock: If Face ID verified the manager recently in camera engine
+    import time
+    try:
+        from apps.face_recognition.engine import get_face_engine
+        engine = get_face_engine()
+        last_m = getattr(engine, "last_detected_manager", None)
+        if last_m and last_m.get("matched") and (time.time() - last_m.get("timestamp", 0)) <= 6.0:
+            request.session["settings_page_unlocked"] = True
+            request.session["manager_page_unlocked"] = True
+            request.session.modified = True
+            return True, None
+    except Exception:
+        pass
 
     profile = GymProfile.get_solo()
     target = request.POST.get("target_url") or target_url or request.get_full_path()

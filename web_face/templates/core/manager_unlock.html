@@ -235,6 +235,7 @@ async function pollVerifySameCamera() {
     const res = await fetch("{% url 'face_recognition:verify_manager_face_unlock' %}", {
       method: 'POST',
       body: formData,
+      credentials: 'same-origin',
       headers: { 'X-Requested-With': 'XMLHttpRequest' }
     });
     const data = await res.json();
@@ -271,6 +272,7 @@ async function pollVerifySeparateCamera() {
     const res = await fetch("{% url 'face_recognition:verify_manager_face_unlock' %}", {
       method: 'POST',
       body: formData,
+      credentials: 'same-origin',
       headers: { 'X-Requested-With': 'XMLHttpRequest' }
     });
     const data = await res.json();
@@ -303,19 +305,10 @@ function handleUnlockResult(data) {
       msgBox.style.display = 'block';
     }
 
+    let dest = data.redirect_url || '{{ target_url|default:request.get_full_path }}' || '/manager/';
     setTimeout(() => {
-      let dest = data.redirect_url || '{{ target_url|default:request.get_full_path }}' || window.location.href;
-      try {
-        const destUrl = new URL(dest, window.location.origin);
-        destUrl.searchParams.set('_unlocked', Date.now());
-        window.location.replace(destUrl.href);
-      } catch (e) {
-        window.location.reload();
-      }
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    }, 250);
+      window.location.href = dest;
+    }, 300);
   } else {
     if (data && data.score !== undefined && statusText) {
       if (data.score > 0) {

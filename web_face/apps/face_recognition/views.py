@@ -89,15 +89,23 @@ def api_face_verify(request):
                 request.session["developer_options_unlocked"] = False
                 request.session.modified = True
                 request.session.save()
+
+                gate_opened = False
+                if profile.gate_relay_enabled:
+                    engine.trigger_gate_relay(profile=profile)
+                    gate_opened = True
+
                 return JsonResponse({
                     "success": True,
                     "matched": True,
                     "is_manager": True,
+                    "gate_opened": gate_opened,
                     "score": round(mgr_best * 100, 1),
-                    "member_name": "المدير العام (Manager)",
+                    "member_name": "المدير العام (إدارة الصالة)",
                     "status": "مدير النظام",
                     "photo_url": profile.manager_face_photo.url if profile.manager_face_photo else None,
-                    "message": "✓ تم التعرف على وجه مدير الصالة بنجاح. أهلاً بك!",
+                    "sound": "welcome",
+                    "message": "✓ تم التعرف على وجه مدير الصالة بنجاح (تم فتح البوابة). أهلاً بك!",
                 })
 
         return JsonResponse({

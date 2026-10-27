@@ -823,13 +823,51 @@ class FaceEngine:
                     mgr_label = f"👑 المدير ({round(best_mgr_score * 100)}%)"
                     cv2.putText(annotated, mgr_label, (x, max(28, y - 10)),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.75, mgr_color, 2, cv2.LINE_AA)
-                    with self.frame_lock:
-                        self.last_detected_manager = {
-                            "matched": True,
-                            "score": best_mgr_score,
-                            "box": [x, y, w, h],
-                            "timestamp": time.time(),
-                        }
+
+                    now_ts = time.time()
+                    last_mgr_ts = getattr(self, "last_manager_overlay_time", 0.0)
+                    if (now_ts - last_mgr_ts) >= debounce_sec:
+                        self.last_manager_overlay_time = now_ts
+                        # 1. Trigger Electronic Gate Relay for Manager entrance
+                        if profile.gate_relay_enabled:
+                            self.trigger_gate_relay(profile=profile)
+
+                        # 2. Publish entrance event for Kiosk & Reception live notification
+                        with self.frame_lock:
+                            self.latest_event = {
+                                "id": str(now_ts),
+                                "timestamp": now_ts,
+                                "score": round(best_mgr_score * 100, 1),
+                                "member_id": 0,
+                                "member_code": "👑 الإدارة",
+                                "member_name": "المدير العام (إدارة الصالة)",
+                                "subscription_status": "active",
+                                "access_allowed": True,
+                                "gate_opened": bool(profile.gate_relay_enabled),
+                                "photo_url": profile.manager_face_photo.url if profile.manager_face_photo else None,
+                                "days_left": "دخول دائم",
+                                "end_date": "غير محدود",
+                                "plan_name": "إدارة الصالة",
+                                "debt": 0,
+                                "sound": "welcome",
+                                "sound_mode": "welcome",
+                                "type": "manager",
+                            }
+                            self.last_event_time = now_ts
+                            self.last_detected_manager = {
+                                "matched": True,
+                                "score": best_mgr_score,
+                                "box": [x, y, w, h],
+                                "timestamp": now_ts,
+                            }
+                    else:
+                        with self.frame_lock:
+                            self.last_detected_manager = {
+                                "matched": True,
+                                "score": best_mgr_score,
+                                "box": [x, y, w, h],
+                                "timestamp": now_ts,
+                            }
                     continue
 
                 # 2. Check if face belongs to an enrolled Employee / Trainer
