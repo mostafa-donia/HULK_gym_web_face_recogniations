@@ -810,6 +810,58 @@ def client_branches_api(hwid: str):
     return jsonify({"success": True, "message": f"تم حفظ الفرع '{branch_name}' بنجاح.", "branches": client["branches"]})
 
 
+def sync_user_to_local_db(username: str, password: str = "", role: str = "RECEPTION", full_name: str = ""):
+    """If local gym_face.sqlite3 exists, applies the user and password directly to the SQLite database."""
+    import sqlite3
+    db_candidates = [
+        os.path.join(os.path.dirname(BASE_DIR), "web_face", "gym_face.sqlite3"),
+        os.path.join(os.path.dirname(BASE_DIR), "dist", "Systemize", "web_face", "gym_face.sqlite3"),
+        os.path.join(BASE_DIR, "web_face", "gym_face.sqlite3"),
+    ]
+    for db_path in db_candidates:
+        if os.path.exists(db_path):
+            try:
+                conn = sqlite3.connect(db_path)
+                c = conn.cursor()
+                is_super = 1 if role in ["OWNER", "ADMIN"] else 0
+                is_staff = 1 if role in ["OWNER", "ADMIN", "MANAGER"] else 0
+                c.execute("SELECT id FROM accounts_user WHERE LOWER(username) = ?", (username.lower(),))
+                row = c.fetchone()
+
+                django_pwd = None
+                if password:
+                    try:
+                        from django.contrib.auth.hashers import make_password
+                        django_pwd = make_password(password)
+                    except Exception:
+                        import hashlib, secrets, base64
+                        salt = secrets.token_hex(8)
+                        dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 600000)
+                        django_pwd = f"pbkdf2_sha256$600000${salt}${base64.b64encode(dk).decode('ascii')}"
+
+                if row:
+                    if django_pwd:
+                        c.execute("UPDATE accounts_user SET password = ?, role = ?, is_superuser = ?, is_staff = ? WHERE id = ?",
+                                  (django_pwd, role, is_super, is_staff, row[0]))
+                    else:
+                        c.execute("UPDATE accounts_user SET role = ?, is_superuser = ?, is_staff = ? WHERE id = ?",
+                                  (role, is_super, is_staff, row[0]))
+                else:
+                    from datetime import datetime
+                    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    if not django_pwd:
+                        django_pwd = "!"
+                    c.execute("""
+                        INSERT INTO accounts_user (username, password, role, is_superuser, is_staff, is_active, first_name, last_name, email, date_joined)
+                        VALUES (?, ?, ?, ?, ?, 1, ?, '', '', ?)
+                    """, (username.lower(), django_pwd, role, is_super, is_staff, full_name or username, now_str))
+                conn.commit()
+                conn.close()
+                print(f"[ControlCenter] Local DB user '{username}' synchronized successfully.")
+            except Exception as ex:
+                print(f"[ControlCenter Local DB Sync] Error updating {username}: {ex}")
+
+
 @app.route("/api/clients/<hwid>/users/", methods=["GET", "POST"])
 def client_users_api(hwid: str):
     """Adds, updates, changes password, or deletes managed users for a specific client."""
@@ -872,6 +924,9 @@ def client_users_api(hwid: str):
         client["managed_users"].append(user_entry)
 
     save_clients_data(data)
+    # Direct local database sync if applicable
+    sync_user_to_local_db(username, password, role, full_name)
+
     return jsonify({
         "success": True,
         "message": f"تم حفظ المستخدم '{username}' وتحديث كلمة المرور والصلاحيات بنجاح.",

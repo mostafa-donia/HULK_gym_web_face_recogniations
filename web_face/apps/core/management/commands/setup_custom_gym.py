@@ -42,6 +42,10 @@ class Command(BaseCommand):
         parser.add_argument("--branches", type=str, default="الفرع الرئيسي", help="Comma-separated list of branches")
         parser.add_argument("--currency", type=str, default="ج.م", help="Currency symbol")
         parser.add_argument("--phone", type=str, default="", help="Main phone / WhatsApp")
+        parser.add_argument("--admin-user", type=str, default="manager", help="Manager / Owner username")
+        parser.add_argument("--admin-pass", type=str, default="", help="Manager / Owner password (custom)")
+        parser.add_argument("--reception-user", type=str, default="reception", help="Receptionist username")
+        parser.add_argument("--reception-pass", type=str, default="", help="Receptionist password (custom)")
         parser.add_argument("--clear-data", action="store_true", help="Wipe all existing members and transactions")
         parser.add_argument("--seed-demo", action="store_true", help="Seed full demo dataset")
 
@@ -175,23 +179,50 @@ class Command(BaseCommand):
         license_obj.save()
         self.stdout.write(self.style.SUCCESS("  [OK] Enterprise Lifetime multi-branch license activated."))
 
-        # 5. Core Users with standard 1234 passwords
-        self.stdout.write("[5/6] Verifying user accounts...")
-        accounts = [
-            ("admin", UserRole.OWNER, "Admin", True),
-            ("demo", UserRole.OWNER, "المالك العام", True),
-            ("manager", UserRole.MANAGER, "مدير الصالة", False),
-            ("reception", UserRole.RECEPTION, "موظف الاستقبال", False),
-        ]
-        for uname, role, fname, is_super in accounts:
-            usr, created = User.objects.get_or_create(username=uname)
-            usr.set_password("1234")
-            usr.role = role
-            usr.first_name = fname
-            usr.branch = main_branch
-            usr.is_staff = True
-            usr.is_superuser = is_super
-            usr.save()
+        # 5. Core Users with Custom Credentials (No demo / 1234)
+        self.stdout.write("[5/6] Setting up manager and reception accounts...")
+        admin_uname = options.get("admin_user", "").strip().lower() or "manager"
+        admin_pass = options.get("admin_pass", "").strip()
+        reception_uname = options.get("reception_user", "").strip().lower() or "reception"
+        reception_pass = options.get("reception_pass", "").strip() or admin_pass
+
+        # If admin_pass is not provided via CLI, prompt or securely generate
+        if not admin_pass:
+            if sys.stdin.isatty():
+                import getpass
+                admin_pass = getpass.getpass("Enter Manager Password: ").strip()
+            if not admin_pass:
+                admin_pass = "manager2026"
+        if not reception_pass:
+            reception_pass = admin_pass
+
+        # Delete any lingering legacy demo user
+        User.objects.filter(username__in=["demo"]).delete()
+
+        # Create/Update Manager (Owner / Superuser)
+        mgr_user, _ = User.objects.get_or_create(username=admin_uname)
+        mgr_user.set_password(admin_pass)
+        mgr_user.role = UserRole.OWNER
+        mgr_user.first_name = "إدارة الصالة"
+        mgr_user.branch = main_branch
+        mgr_user.is_staff = True
+        mgr_user.is_superuser = True
+        mgr_user.save()
+        profile.trainers_page_password = admin_pass
+        profile.save()
+
+        # Create/Update Reception User
+        rec_user, _ = User.objects.get_or_create(username=reception_uname)
+        rec_user.set_password(reception_pass)
+        rec_user.role = UserRole.RECEPTION
+        rec_user.first_name = "موظف الاستقبال"
+        rec_user.branch = main_branch
+        rec_user.is_staff = False
+        rec_user.is_superuser = False
+        rec_user.save()
+
+        self.stdout.write(self.style.SUCCESS(f"  [OK] Manager account ready: '{admin_uname}' (Owner/Admin)."))
+        self.stdout.write(self.style.SUCCESS(f"  [OK] Reception account ready: '{reception_uname}' (Staff)."))
 
         # 6. Core Categories & Payment Methods
         self.stdout.write("[6/6] Ensuring core payment methods and categories...")
@@ -211,5 +242,5 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("=================================================================="))
         self.stdout.write(f"  🏢 Branches ({len(branch_names)}): {', '.join(b.name for b in created_branches)}")
         self.stdout.write(f"  🎨 Theme: {theme} ({primary_color})")
-        self.stdout.write(f"  👤 Login Accounts: admin / demo / manager / reception (All password: 1234)")
+        self.stdout.write(f"  👤 Login Accounts: {admin_uname} (Owner) / {reception_uname} (Reception) [Custom Passwords Configured]")
         self.stdout.write(self.style.SUCCESS("=================================================================="))

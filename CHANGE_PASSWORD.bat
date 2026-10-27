@@ -9,16 +9,14 @@ echo ===================================================================
 echo   SYSTEMIZE GYM OS - CHANGE USER PASSWORD TOOL
 echo ===================================================================
 echo.
-echo المستخدمون المتاحون حالياً:
-echo   - admin      (المالك / المدير العام)
-echo   - demo       (حساب العرض التوضيحي)
-echo   - manager    (مدير الفرع)
-echo   - assistant  (موظف الاستقبال)
+echo المستخدمون الأساسيون:
+echo   - manager    (المالك / مدير الصالة)
+echo   - reception  (موظف الاستقبال)
 echo ===================================================================
 echo.
 
-set /p USERNAME="اسم المستخدم (Username) [افتراضي admin]: "
-if "%USERNAME%"=="" set USERNAME=admin
+set /p USERNAME="اسم المستخدم (Username) [افتراضي manager]: "
+if "%USERNAME%"=="" set USERNAME=manager
 
 set /p NEWPASS="كلمة المرور الجديدة (New Password): "
 if "%NEWPASS%"=="" (

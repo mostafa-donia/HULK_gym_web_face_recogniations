@@ -28,7 +28,7 @@
       "developer_message": "شكراً لاشتراككم في نظام Systemize.",
       "pause_message": "",
       "created_at": "2026-10-24T17:54:17.919243+00:00",
-      "last_seen": "2026-10-24T18:17:12.268998+00:00"
+      "last_seen": "2026-10-27T10:33:14.490594+00:00"
     },
     "HWID-C63C-B762-F62C-75F0": {
       "product_id": "systemize_gym",
@@ -91,5 +91,5 @@
   },
   "default_demo_days": 7,
   "system_announcement": "",
-  "last_updated": "2026-10-24T18:17:12.268998+00:00"
+  "last_updated": "2026-10-27T10:33:14.490594+00:00"
 }

@@ -87,44 +87,49 @@ class Command(BaseCommand):
         # 3. Ensure Default Users with standard passwords (1234)
         # -----------------------------------------------------------------
         self.stdout.write("[3/6] Verifying administrative user accounts (admin, demo, manager, assistant)...")
-        # Admin Superuser
-        admin_user, _ = User.objects.get_or_create(username="admin")
-        admin_user.set_password("1234")
-        admin_user.is_superuser = True
-        admin_user.is_staff = True
-        admin_user.role = UserRole.OWNER
-        admin_user.first_name = "Admin"
-        admin_user.branch = main_branch
-        admin_user.save()
+        # 3. System Accounts Configuration (Preserves existing passwords, removes demo)
+        self.stdout.write("[3/6] Configuring System Accounts...")
+        # Remove legacy demo user
+        User.objects.filter(username="demo").delete()
 
-        # Demo Account
-        demo_user, _ = User.objects.get_or_create(username="demo")
-        demo_user.set_password("1234")
-        demo_user.is_superuser = True
-        demo_user.is_staff = True
-        demo_user.role = UserRole.OWNER
-        demo_user.first_name = "المدير العام"
-        demo_user.branch = main_branch
-        demo_user.save()
-
-        # Manager Account
-        manager_user, _ = User.objects.get_or_create(username="manager")
-        manager_user.set_password("1234")
-        manager_user.is_staff = True
-        manager_user.role = UserRole.MANAGER
-        manager_user.first_name = "مدير الفرع"
-        manager_user.branch = main_branch
-        manager_user.save()
+        # Manager / Owner Account
+        manager_user = User.objects.filter(username__in=["manager", "admin"]).first()
+        if not manager_user:
+            manager_user = User.objects.create(
+                username="manager",
+                is_superuser=True,
+                is_staff=True,
+                role=UserRole.OWNER,
+                first_name="إدارة الصالة",
+                branch=main_branch
+            )
+            manager_user.set_password("manager2026")
+            manager_user.save()
+            self.stdout.write(self.style.SUCCESS("  [OK] Initial manager account created: 'manager'."))
+        else:
+            manager_user.is_superuser = True
+            manager_user.is_staff = True
+            manager_user.role = UserRole.OWNER
+            manager_user.branch = main_branch
+            manager_user.save()
+            self.stdout.write(self.style.SUCCESS(f"  [OK] Preserved existing manager credentials for: '{manager_user.username}'."))
 
         # Reception Account
-        reception_user, _ = User.objects.get_or_create(username="assistant")
-        reception_user.set_password("1234")
-        reception_user.role = UserRole.RECEPTION
-        reception_user.first_name = "الاستقبال"
-        reception_user.branch = main_branch
-        reception_user.save()
-
-        self.stdout.write(self.style.SUCCESS("  [OK] Users ready: admin, demo, manager, assistant (All Passwords: 1234)."))
+        reception_user = User.objects.filter(username__in=["reception", "assistant"]).first()
+        if not reception_user:
+            reception_user = User.objects.create(
+                username="reception",
+                is_superuser=False,
+                is_staff=False,
+                role=UserRole.RECEPTION,
+                first_name="موظف الاستقبال",
+                branch=main_branch
+            )
+            reception_user.set_password("reception2026")
+            reception_user.save()
+            self.stdout.write(self.style.SUCCESS("  [OK] Initial reception account created: 'reception'."))
+        else:
+            self.stdout.write(self.style.SUCCESS(f"  [OK] Preserved existing reception credentials for: '{reception_user.username}'."))
 
         # -----------------------------------------------------------------
         # 4. Clean System License (Lifetime, No Countdown Lag)

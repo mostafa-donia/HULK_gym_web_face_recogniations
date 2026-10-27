@@ -43,6 +43,26 @@ if "%BRANCHES%"=="" set "BRANCHES=الفرع الرئيسي"
 
 set /p CLEAR_DATA="7. هل تريد مسح بيانات الأعضاء والاشتراكات القديمة للبدء على نظيف؟ (Y/N): "
 
+echo.
+echo ===================================================================
+echo  إعداد بيانات تسجيل الدخول والأمان (Security & Credentials):
+echo ===================================================================
+set /p ADMIN_USER="8. اسم مستخدم المدير / المالك (Username) [اضغط Enter لـ: manager]: "
+if "%ADMIN_USER%"=="" set "ADMIN_USER=manager"
+
+:ASK_ADMIN_PASS
+set /p ADMIN_PASS="9. كلمة مرور حساب المدير (Password) [مطلوبة - لا يمكن تركها فارغة]: "
+if "%ADMIN_PASS%"=="" (
+    echo [!] يجب إدخال كلمة مرور لحساب المدير لحماية المنظومة!
+    goto ASK_ADMIN_PASS
+)
+
+set /p RECEPTION_USER="10. اسم مستخدم موظف الاستقبال (Reception Username) [اضغط Enter لـ: reception]: "
+if "%RECEPTION_USER%"=="" set "RECEPTION_USER=reception"
+
+set /p RECEPTION_PASS="11. كلمة مرور موظف الاستقبال (اتركها فارغة لاستخدام نفس كلمة مرور المدير): "
+if "%RECEPTION_PASS%"=="" set "RECEPTION_PASS=%ADMIN_PASS%"
+
 if exist "runtime\python.exe" (
     set "PY_EXE=runtime\python.exe"
 ) else if exist "dist\Systemize\runtime\python.exe" (
@@ -68,7 +88,7 @@ if not "%GYM_TAGLINE%"=="" (
 
 echo.
 echo [*] جارٍ تطبيق الإعدادات وتجهيز قاعدة البيانات للصالة الجديدة...
-"%PY_EXE%" manage.py setup_custom_gym --name "%GYM_NAME%" %TAGLINE_ARG% %LOGO_ARG% --color "%THEME_COLOR%" --accent "%ACCENT_COLOR%" --branches "%BRANCHES%" %CLEAR_ARG%
+"%PY_EXE%" manage.py setup_custom_gym --name "%GYM_NAME%" %TAGLINE_ARG% %LOGO_ARG% --color "%THEME_COLOR%" --accent "%ACCENT_COLOR%" --branches "%BRANCHES%" --admin-user "%ADMIN_USER%" --admin-pass "%ADMIN_PASS%" --reception-user "%RECEPTION_USER%" --reception-pass "%RECEPTION_PASS%" %CLEAR_ARG%
 
 echo.
 echo ===================================================================

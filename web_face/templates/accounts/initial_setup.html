@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}تهيئة المنظومة لأول مرة — Systemize Gym OS{% endblock %}
+
+{% block content %}
+<div style="max-width: 580px; margin: 30px auto; padding: 0 15px;">
+  <div class="card" style="background: var(--bg-card, #121723); border: 1px solid var(--border-color, #1e293b); border-radius: 16px; padding: 32px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+    
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="width: 72px; height: 72px; border-radius: 20px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px auto; font-size: 2rem;">
+        🚀
+      </div>
+      <h2 style="color: var(--text-main, #f8fafc); font-size: 1.55rem; font-weight: 900; margin: 0 0 6px 0;">
+        تهيئة المنظومة لأول مرة
+      </h2>
+      <p style="color: var(--text-muted, #94a3b8); font-size: 0.88rem; line-height: 1.6; margin: 0;">
+        مرحباً بك! قم بتعيين اسم الصالة وبيانات حساب المدير والاستقبال للبدء بحساباتك المخصصة.
+      </p>
+    </div>
+
+    <!-- Alert / Messages -->
+    {% if messages %}
+    <div style="margin-bottom: 20px;">
+      {% for message in messages %}
+      <div style="padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; {% if message.tags == 'error' %}background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);{% else %}background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'accounts:initial_setup' %}">
+      {% csrf_token %}
+
+      <!-- Section 1: Gym Branding -->
+      <div style="margin-bottom: 22px;">
+        <label class="form-label" for="gym_name" style="font-weight: 800; font-size: 0.88rem; color: #38bdf8; display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+          🏢 اسم الصالة الرياضية (Gym Name)
+        </label>
+        <input type="text" id="gym_name" name="gym_name" class="form-control" value="{{ gym_name }}" placeholder="مثال: Number One Gym أو Titan Fitness" required style="background: var(--bg-surface-subtle, #0b0f19); border: 1px solid var(--border-color, #334155); color: #fff; height: 42px; border-radius: 8px; padding: 0 12px; width: 100%;">
+      </div>
+
+      <!-- Section 2: Manager Account -->
+      <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+        <div style="font-size: 0.95rem; font-weight: 800; color: #f59e0b; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+          👑 حساب المدير / المالك (صلاحيات كاملة)
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" for="admin_username" style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">اسم مستخدم المدير</label>
+          <input type="text" id="admin_username" name="admin_username" class="form-control" value="{{ admin_username }}" placeholder="manager" required style="background: var(--bg-surface-subtle, #0b0f19); border: 1px solid var(--border-color, #334155); color: #fff; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; font-family: monospace;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" for="admin_password" style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">كلمة المرور الجديدة</label>
+            <input type="password" id="admin_password" name="admin_password" class="form-control" placeholder="••••••••" required style="background: var(--bg-surface-subtle, #0b0f19); border: 1px solid var(--border-color, #334155); color: #fff; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="confirm_admin_password" style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">تأكيد كلمة المرور</label>
+            <input type="password" id="confirm_admin_password" name="confirm_admin_password" class="form-control" placeholder="••••••••" required style="background: var(--bg-surface-subtle, #0b0f19); border: 1px solid var(--border-color, #334155); color: #fff; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Reception Account -->
+      <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color, #334155); border-radius: 12px; padding: 18px; margin-bottom: 24px;">
+        <div style="font-size: 0.95rem; font-weight: 800; color: #38bdf8; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+          🎧 حساب موظف الاستقبال (الريسبشن)
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" for="reception_username" style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">اسم مستخدم الاستقبال</label>
+            <input type="text" id="reception_username" name="reception_username" class="form-control" value="{{ reception_username }}" placeholder="reception" required style="background: var(--bg-surface-subtle, #0b0f19); border: 1px solid var(--border-color, #334155); color: #fff; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%; font-family: monospace;">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reception_password" style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">كلمة مرور الاستقبال</label>
+            <input type="password" id="reception_password" name="reception_password" class="form-control" placeholder="(اتركه فارغاً لنفس كلمة مرور المدير)" style="background: var(--bg-surface-subtle, #0b0f19); border: 1px solid var(--border-color, #334155); color: #fff; height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="btn" style="background: linear-gradient(135deg, #0284c7 0%, #10b981 100%); color: #fff; width: 100%; padding: 12px; border-radius: 10px; font-weight: 900; font-size: 1.05rem; cursor: pointer; border: none; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35); transition: all 0.2s;">
+        حفظ بيانات الصالة وبدء تشغيل المنظومة 🚀
+      </button>
+    </form>
+
+    <div style="margin-top: 18px; text-align: center; font-size: 0.78rem; color: #64748b;">
+      يمكنك لاحقاً تعديل أو إضافة مستخدمين وفروع جديدة في أي وقت من لوحة تحكم المطور (Control Center).
+    </div>
+
+  </div>
+</div>
+{% endblock %}
