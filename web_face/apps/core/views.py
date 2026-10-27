@@ -42,6 +42,27 @@ def is_mobile_device(request) -> bool:
     return any(k in ua for k in mobile_keywords)
 
 
+def get_system_lan_ip() -> str:
+    """Returns the primary local IPv4 address of this machine on the local network/router."""
+    import socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        pass
+    try:
+        hostname = socket.gethostname()
+        for ip in socket.gethostbyname_ex(hostname)[2]:
+            if not ip.startswith("127.") and not ip.startswith("169.254."):
+                return ip
+    except Exception:
+        pass
+    return "127.0.0.1"
+
+
 @login_required
 def dashboard_view(request):
     if request.user.is_manager and is_mobile_device(request):
@@ -2028,6 +2049,9 @@ def settings_view(request):
             detected_legacy_path = str(cand)
             break
 
+    lan_ip = get_system_lan_ip()
+    lan_url = f"http://{lan_ip}:8000"
+
     context = {
         "profile": profile,
         "plans": plans,
@@ -2042,6 +2066,8 @@ def settings_view(request):
         "developer_unlocked": request.session.get("developer_options_unlocked", False),
         "system_license": system_lic,
         "machine_hwid": hwid,
+        "lan_ip": lan_ip,
+        "lan_url": lan_url,
     }
     return render(request, "core/settings.html", context)
 
