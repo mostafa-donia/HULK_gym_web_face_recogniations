@@ -429,39 +429,10 @@
           <span>الرئيسية</span>
         </a>
 
-        <!-- 2. الأعضاء (Dropdown) -->
-        <div class="nav-dropdown-wrapper" onmouseleave="closeNavDropdown('navDropdownMembersMenu')">
-          <a href="javascript:void(0)" 
-             id="navDropdownMembersBtn" 
-             onclick="toggleNavDropdown('navDropdownMembersMenu', event)" 
-             onmouseenter="openNavDropdown('navDropdownMembersMenu')"
-             class="top-nav-item {% if 'members' in request.path or 'retention' in request.path %}active{% endif %}" 
-             style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;" 
-             title="إدارة المشتركين والاشتراكات وسجلات الحضور">
-            <span>الأعضاء</span>
-            <span style="font-size: 0.60rem; opacity: 0.75; line-height: 1;">▾</span>
-          </a>
-          <div id="navDropdownMembersMenu" class="top-nav-dropdown-panel" style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 200px; background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,0.65); z-index: 9999; padding: 4px; flex-direction: column; gap: 2px;">
-            <a href="{% url 'members:member_list' %}" class="top-nav-sub-link {% if request.resolver_match.view_name == 'members:member_list' %}active{% endif %}">
-              <span>👥</span>
-              <span>قائمة المشتركين</span>
-            </a>
-            <a href="{% url 'members:member_create' %}" class="top-nav-sub-link {% if request.resolver_match.view_name == 'members:member_create' %}active{% endif %}">
-              <span>➕</span>
-              <span>إضافة مشترك جديد</span>
-            </a>
-            <a href="{% url 'members:smart_operations' %}" class="top-nav-sub-link {% if 'operations' in request.path %}active{% endif %}">
-              <span>🕒</span>
-              <span>سجل الحضور والعمليات</span>
-            </a>
-            {% if user.is_manager %}
-            <a href="{% url 'reports:member_retention' %}" class="top-nav-sub-link {% if 'retention' in request.path %}active{% endif %}">
-              <span>🔄</span>
-              <span>حركة واحتفاظ الأعضاء</span>
-            </a>
-            {% endif %}
-          </div>
-        </div>
+        <!-- 2. الأعضاء (Direct link) -->
+        <a href="{% url 'members:member_list' %}" class="top-nav-item {% if 'members' in request.path and not 'retention' in request.path %}active{% endif %}" title="إدارة المشتركين والاشتراكات">
+          <span>الأعضاء</span>
+        </a>
 
         <!-- 3. الماليات (Dropdown - Financials) -->
         <div class="nav-dropdown-wrapper" onmouseleave="closeNavDropdown('navDropdownFinancialsMenu')">
@@ -523,7 +494,7 @@
              id="navDropdownManagerBtn" 
              onclick="toggleNavDropdown('navDropdownManagerMenu', event)" 
              onmouseenter="openNavDropdown('navDropdownManagerMenu')"
-             class="top-nav-item {% if 'manager' in request.path or 'settings' in request.path or 'ai-strategy' in request.path %}active{% endif %}" 
+             class="top-nav-item {% if 'manager' in request.path or 'settings' in request.path or 'ai-strategy' in request.path or 'retention' in request.path %}active{% endif %}" 
              style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;" 
              title="لوحة المدير، ذكاء الجيم، وإعدادات المنظومة">
             <span>الإدارة</span>
@@ -533,6 +504,10 @@
             <a href="{% url 'core:manager_dashboard' %}" class="top-nav-sub-link {% if request.resolver_match.view_name == 'core:manager_dashboard' and 'tab=ai' not in request.get_full_path %}active{% endif %}">
               <span>📊</span>
               <span>لوحة المدير العامة</span>
+            </a>
+            <a href="{% url 'reports:member_retention' %}" class="top-nav-sub-link {% if 'retention' in request.path %}active{% endif %}">
+              <span>🔄</span>
+              <span>حركة واحتفاظ الأعضاء</span>
             </a>
             <a href="{% url 'core:manager_dashboard' %}?tab=ai" class="top-nav-sub-link {% if 'tab=ai' in request.get_full_path or 'ai-strategy' in request.path %}active{% endif %}">
               <span>🧠</span>
