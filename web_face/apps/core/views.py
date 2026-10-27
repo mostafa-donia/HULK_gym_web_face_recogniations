@@ -2049,8 +2049,11 @@ def settings_view(request):
             detected_legacy_path = str(cand)
             break
 
+    import socket
     lan_ip = get_system_lan_ip()
     lan_url = f"http://{lan_ip}:8000"
+    system_hostname = socket.gethostname()
+    host_url = f"http://{system_hostname}:8000"
 
     context = {
         "profile": profile,
@@ -2068,6 +2071,8 @@ def settings_view(request):
         "machine_hwid": hwid,
         "lan_ip": lan_ip,
         "lan_url": lan_url,
+        "system_hostname": system_hostname,
+        "host_url": host_url,
     }
     return render(request, "core/settings.html", context)
 
