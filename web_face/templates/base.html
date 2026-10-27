@@ -381,9 +381,9 @@
               <span>➕</span>
               <span>إضافة مشترك جديد</span>
             </a>
-            <a href="{% url 'members:checkin_list' %}" class="top-nav-dropdown-item {% if 'checkin' in request.path %}active{% endif %}">
+            <a href="{% url 'members:smart_operations' %}" class="top-nav-dropdown-item {% if 'operations' in request.path %}active{% endif %}">
               <span>🕒</span>
-              <span>سجل الحضور اليومي</span>
+              <span>سجل الحضور والعمليات</span>
             </a>
             {% if user.is_manager %}
             <a href="{% url 'reports:member_retention' %}" class="top-nav-dropdown-item {% if 'retention' in request.path %}active{% endif %}">

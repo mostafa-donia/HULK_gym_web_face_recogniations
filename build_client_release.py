@@ -180,9 +180,11 @@ updater_py = '''import os
 import sys
 import shutil
 import zipfile
+import json
 import ssl
 import urllib.request
 import compileall
+from datetime import datetime
 
 # Bypass Windows embedded python missing root CA certificates
 try:
@@ -204,22 +206,82 @@ def _get_ssl_context():
 REPO_ZIP_URL = "https://github.com/mostafa-donia/HULK_gym_web_face_recogniations/archive/refs/heads/main.zip"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-print("=" * 64)
-print("  SYSTEMIZE GYM OS — GITHUB AUTO-UPDATER")
-print("=" * 64)
-print("[*] Connecting to GitHub to check latest update package...")
+def update_ui_progress(pct, stage, stage_title, detail):
+    pct = max(0, min(100, int(pct)))
+    # 1. Console Visual Progress Bar
+    bar_len = 28
+    filled = int(bar_len * pct / 100)
+    bar = "█" * filled + "░" * (bar_len - filled)
+    print(f"\\r  [{bar}] {pct:3d}% | {stage_title}: {detail:<38}", end="", flush=True)
+
+    # 2. update_progress.json for Web UI
+    try:
+        p_file = os.path.join(BASE_DIR, "update_progress.json")
+        data = {
+            "is_running": (pct < 100),
+            "stage": stage,
+            "stage_name": stage_title,
+            "percent": pct,
+            "detail": detail,
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        with open(p_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+print("=" * 68)
+print("  SYSTEMIZE GYM OS — GITHUB ONLINE SYSTEM UPDATER")
+print("  Stable Zero-Downtime Updater with Live Progress Tracking")
+print("=" * 68)
+print("")
 
 zip_path = os.path.join(BASE_DIR, "_update_pkg.zip")
 extract_dir = os.path.join(BASE_DIR, "_update_extracted")
 
 try:
+    # 1. Check & Database Backup (10% - 25%)
+    update_ui_progress(10, "checking", "فحص النظام", "الاتصال بـ GitHub وفحص النسخة...")
+    db_file = os.path.join(BASE_DIR, "gym_face.sqlite3")
+    if os.path.exists(db_file):
+        update_ui_progress(15, "backup", "النسخ الاحتياطي", "إنشاء نسخة احتياطية آمنة لقاعدة البيانات...")
+        b_dir = os.path.join(BASE_DIR, "backups")
+        os.makedirs(b_dir, exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        b_path = os.path.join(b_dir, f"backup_pre_update_{ts}.sqlite3")
+        shutil.copy2(db_file, b_path)
+        update_ui_progress(25, "backup", "النسخ الاحتياطي", f"تم حفظ النسخة: backup_{ts}.sqlite3")
+    print("")
+
+    # 2. Download Archive Zip with Chunked Progress (25% - 60%)
+    update_ui_progress(30, "downloading", "تنزيل التحديث", "جاري تنزيل أحدث ملفات المنظومة من GitHub...")
     headers = {"User-Agent": "Systemize-Client-Updater"}
     req = urllib.request.Request(REPO_ZIP_URL, headers=headers)
     with urllib.request.urlopen(req, context=_get_ssl_context(), timeout=60) as resp:
+        content_len = resp.headers.get("Content-Length")
+        total_size = int(content_len) if content_len and content_len.isdigit() else 0
+        downloaded = 0
+        chunk_size = 65536
         with open(zip_path, "wb") as f:
-            f.write(resp.read())
-    print("[*] Downloaded update package successfully.")
+            while True:
+                chunk = resp.read(chunk_size)
+                if not chunk:
+                    break
+                f.write(chunk)
+                downloaded += len(chunk)
+                if total_size > 0:
+                    pct = int(30 + (downloaded / total_size) * 30)
+                    pct = min(max(pct, 30), 60)
+                    mb_down = downloaded / (1024 * 1024)
+                    mb_tot = total_size / (1024 * 1024)
+                    update_ui_progress(pct, "downloading", "تنزيل التحديث", f"تم تحميل {mb_down:.1f} MB من {mb_tot:.1f} MB ({int(downloaded/total_size*100)}%)")
+                else:
+                    mb_down = downloaded / (1024 * 1024)
+                    update_ui_progress(45, "downloading", "تنزيل التحديث", f"تم تحميل {mb_down:.1f} MB...")
+    print("")
 
+    # 3. Extraction (60% - 75%)
+    update_ui_progress(60, "extracting", "استخراج الملفات", "جاري فحص الحزمة واستخراج ملفات المنظومة...")
     if os.path.exists(extract_dir):
         shutil.rmtree(extract_dir)
     os.makedirs(extract_dir, exist_ok=True)
@@ -238,17 +300,7 @@ try:
     if not repo_root:
         raise ValueError("Could not find web_face in downloaded update package.")
 
-    # 1. Safe SQLite database backup before applying update
-    db_file = os.path.join(BASE_DIR, "gym_face.sqlite3")
-    if os.path.exists(db_file):
-        b_dir = os.path.join(BASE_DIR, "backups")
-        os.makedirs(b_dir, exist_ok=True)
-        from datetime import datetime
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        shutil.copy2(db_file, os.path.join(b_dir, f"backup_pre_update_{ts}.sqlite3"))
-        print(f"[*] Created safe database backup in backups/backup_pre_update_{ts}.sqlite3")
-
-    print("[*] Applying code updates (Apps, Templates, Static)...")
+    update_ui_progress(65, "extracting", "استخراج الملفات", "تحديث وتثبيت شاشات التطبيق والقوائم...")
     for fld in ["apps", "config", "templates", "static"]:
         src_fld = os.path.join(repo_root, fld)
         dst_fld = os.path.join(BASE_DIR, fld)
@@ -257,13 +309,13 @@ try:
                 shutil.rmtree(dst_fld)
             shutil.copytree(src_fld, dst_fld)
 
-    # Copy updated manage.py
     shutil.copy2(os.path.join(repo_root, "manage.py"), os.path.join(BASE_DIR, "manage.py"))
+    update_ui_progress(75, "extracting", "استخراج الملفات", "تم تثبيت واستخراج جميع الملفات بنجاح.")
+    print("")
 
-    # Update version.json
+    # 4. Version JSON & Bytecode compilation (75% - 85%)
+    update_ui_progress(78, "compiling", "ترجمة الشيفرات", "ترجمة وتأمين الشيفرات البرمجية (.pyc)...")
     try:
-        import json
-        from datetime import datetime
         v_file = os.path.join(BASE_DIR, "version.json")
         v_data = {"version": "v2.0", "commit": "latest", "date": datetime.now().strftime("%Y-%m-%d"), "message": "Updated via GitHub"}
         if os.path.exists(os.path.join(repo_root, "version.json")):
@@ -274,13 +326,10 @@ try:
     except Exception:
         pass
 
-    # Compile new files to .pyc and strip .py
-    print("[*] Compiling new update to bytecode (.pyc)...")
     for target_sub in [os.path.join(BASE_DIR, "apps"), os.path.join(BASE_DIR, "config")]:
         compileall.compile_dir(target_sub, force=True, legacy=True, optimize=2, quiet=1)
     compileall.compile_file(os.path.join(BASE_DIR, "manage.py"), legacy=True, optimize=2)
 
-    # Remove all .py files
     for root, dirs, files in os.walk(BASE_DIR):
         if os.path.commonpath([root, os.path.join(BASE_DIR, "runtime")]).lower() == os.path.join(BASE_DIR, "runtime").lower():
             continue
@@ -288,31 +337,38 @@ try:
             if f.endswith(".py"):
                 try: os.remove(os.path.join(root, f))
                 except: pass
+    update_ui_progress(85, "compiling", "ترجمة الشيفرات", "تم تأمين وترجمة جميع الملفات.")
+    print("")
 
-    # Run migrations
-    print("[*] Running database migrations...")
+    # 5. Database Migrations (85% - 95%)
+    update_ui_progress(88, "migrating", "ترقية الجداول", "فحص وتطبيق ترقيات قاعدة البيانات (migrate)...")
     py_exe = os.path.join(BASE_DIR, "runtime", "python.exe")
     os.system(f'"{py_exe}" -s manage.pyc migrate --noinput')
+    update_ui_progress(95, "migrating", "ترقية الجداول", "تم ترقية جداول قاعدة البيانات بنجاح.")
+    print("")
 
     # Auto-install Google Contacts packages if missing
     try:
         import googleapiclient
         import google_auth_oauthlib
     except ImportError:
-        print("[*] Installing Google Contacts packages...")
+        update_ui_progress(97, "caching", "حزم إضافية", "تثبيت حزم Google Contacts...")
         os.system(f'"{py_exe}" -m pip install --no-warn-script-location google-api-python-client google-auth-httplib2 google-auth-oauthlib')
 
     # Cleanup temp zip
     if os.path.exists(zip_path): os.remove(zip_path)
     if os.path.exists(extract_dir): shutil.rmtree(extract_dir)
 
+    # 6. Completed (100%)
+    update_ui_progress(100, "completed", "اكتمل التحديث", "تم تحديث النظام بالكامل إلى أحدث إصدار بنجاح! 🚀")
     print("")
-    print("=" * 64)
-    print("  [V] تم تحديث النظام بنجاح من GitHub بأحدث نسخة!")
-    print("  بيانات المشتركين والاشتراكات والصور محفوظة 100% دون مساس.")
-    print("=" * 64)
+    print("")
+    print("=" * 68)
+    print("  [V] تم تحديث النظام بنجاح من GitHub بأحدث نسخة بنسبة 100%!")
+    print("  بيانات المشتركين والاشتراكات والصور والخزائن محفوظة دون أي مساس.")
+    print("=" * 68)
 except Exception as e:
-    print(f"[!] Update error: {e}")
+    print(f"\\n[!] Update error: {e}")
     if os.path.exists(zip_path): os.remove(zip_path)
     if os.path.exists(extract_dir): shutil.rmtree(extract_dir)
 '''

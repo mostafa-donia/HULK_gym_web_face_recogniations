@@ -2068,21 +2068,51 @@ def api_check_system_updates_view(request):
 
 @login_required
 @manager_required
+def api_update_progress_view(request):
+    """
+    Returns live progress JSON of the currently executing or last completed system update.
+    Includes percent (0-100), current stage, detail message, and log lines.
+    """
+    from apps.core.updater import get_update_progress
+    return JsonResponse(get_update_progress())
+
+
+@login_required
+@manager_required
 def api_perform_system_update_view(request):
     """
-    Executes live git pull, database backup, and Django database migrations.
+    Executes live git pull, database backup, and Django database migrations with live progress.
+    Launches update in background thread so client requests never timeout on slow connections.
     """
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "طلب POST مطلوب."}, status=405)
 
     try:
-        from apps.core.updater import perform_system_update
-        res = perform_system_update()
-        return JsonResponse(res)
+        import threading
+        from apps.core.updater import perform_system_update, get_update_progress
+
+        curr = get_update_progress()
+        if curr.get("is_running"):
+            return JsonResponse({
+                "success": True,
+                "already_running": True,
+                "message": "عملية التحديث جارية بالفعل.",
+                "progress": curr,
+            })
+
+        # Start update worker thread
+        update_thread = threading.Thread(target=perform_system_update, daemon=True)
+        update_thread.start()
+
+        return JsonResponse({
+            "success": True,
+            "started": True,
+            "message": "بدأت عملية التحديث بنجاح، جاري متابعة التقدم...",
+        })
     except Exception as exc:
         return JsonResponse({
             "success": False,
-            "message": f"حدث خطأ أثناء تطبيق التحديث: {str(exc)}",
+            "message": f"حدث خطأ أثناء بدء التحديث: {str(exc)}",
             "logs": [f"❌ خطأ غير متوقع: {str(exc)}"],
         })
 

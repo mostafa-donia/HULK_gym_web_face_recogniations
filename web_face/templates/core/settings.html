@@ -142,30 +142,68 @@
 
     <div id="updateFeedbackBanner" style="display: none; padding: 12px 16px; border-radius: 8px; margin-top: 14px; font-size: 0.88rem; font-weight: 700;"></div>
 
-
-
     <div id="commitsPreviewBox" style="display: none; background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; margin-top: 14px;">
-
       <h4 style="color: var(--text-main); font-size: 0.9rem; font-weight: 800; margin: 0 0 8px 0;">التحديثات الجديدة المتوفرة:</h4>
-
       <ul id="commitsListUl" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px;"></ul>
-
     </div>
 
-
-
-    <div id="updateTerminalBox" style="display: none; background: #030712; border: 1px solid #1f2937; border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 0.82rem; color: #34d399; max-height: 200px; overflow-y: auto; margin-top: 14px;">
-
-      <div style="display: flex; justify-content: space-between; color: #9ca3af; border-bottom: 1px solid #1f2937; padding-bottom: 4px; margin-bottom: 8px; font-size: 0.75rem;">
-
-        <span>TERMINAL UPDATE LOG</span>
-
-        <span id="terminalStatusIndicator">جاري المعالجة...</span>
-
+    <!-- Live Step-by-Step Progress Bar Container -->
+    <div id="updateProgressBarContainer" style="display: none; background: var(--bg-surface-subtle); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 18px 20px; margin-top: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);">
+      <!-- Top Header: Stage title + Big Percentage Badge -->
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 8px #38bdf8;"></span>
+          <span id="updateStageTitle" style="color: #38bdf8; font-weight: 900; font-size: 0.98rem;">جاري التحديث والتثبيت...</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="color: #94a3b8; font-size: 0.78rem; font-weight: 700;">نسبة الإنجاز:</span>
+          <span id="updatePercentBadge" style="background: linear-gradient(135deg, #0284c7, #10b981); color: #FFFFFF; font-weight: 900; font-size: 1.05rem; padding: 3px 12px; border-radius: 20px; letter-spacing: 0.5px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">0%</span>
+        </div>
       </div>
 
-      <div id="terminalLogContent" style="display: flex; flex-direction: column; gap: 4px;"></div>
+      <!-- Animated Progress Bar Track & Fill -->
+      <div style="position: relative; width: 100%; height: 16px; background: rgba(255, 255, 255, 0.08); border-radius: 9999px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.12);">
+        <div id="updateProgressBarFill" style="width: 0%; height: 100%; border-radius: 9999px; background: linear-gradient(90deg, #0284c7 0%, #10b981 100%); transition: width 0.35s ease; box-shadow: 0 0 14px rgba(16, 185, 129, 0.5); position: relative;">
+          <!-- Animated subtle striped glow -->
+          <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent); background-size: 24px 24px;"></div>
+        </div>
+      </div>
 
+      <!-- Sub-activity detailed text -->
+      <div id="updateProgressDetail" style="margin-top: 10px; font-size: 0.84rem; color: #cbd5e1; font-weight: 700; min-height: 20px;">
+        جاري تهيئة عملية التحديث...
+      </div>
+
+      <!-- Visual Stage Step Milestones -->
+      <div id="updateStepsStepper" style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+        <div class="update-step-chip" id="stepChipCheck" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 6px; font-size: 0.74rem; font-weight: 800; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; transition: all 0.2s;">
+          <span>🔍</span> <span>1. الفحص والاتصال</span>
+        </div>
+        <div class="update-step-chip" id="stepChipBackup" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 6px; font-size: 0.74rem; font-weight: 800; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; transition: all 0.2s;">
+          <span>🛡️</span> <span>2. النسخ الاحتياطي</span>
+        </div>
+        <div class="update-step-chip" id="stepChipDownload" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 6px; font-size: 0.74rem; font-weight: 800; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; transition: all 0.2s;">
+          <span>⬇️</span> <span>3. تنزيل الحزمة</span>
+        </div>
+        <div class="update-step-chip" id="stepChipExtract" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 6px; font-size: 0.74rem; font-weight: 800; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; transition: all 0.2s;">
+          <span>📦</span> <span>4. استخراج وتثبيت</span>
+        </div>
+        <div class="update-step-chip" id="stepChipMigrate" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 6px; font-size: 0.74rem; font-weight: 800; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; transition: all 0.2s;">
+          <span>⚙️</span> <span>5. ترقية الجداول</span>
+        </div>
+        <div class="update-step-chip" id="stepChipComplete" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 6px; font-size: 0.74rem; font-weight: 800; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; transition: all 0.2s;">
+          <span>🎉</span> <span>6. اكتمال التحديث</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Terminal Log Box -->
+    <div id="updateTerminalBox" style="display: none; background: #030712; border: 1px solid #1f2937; border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 0.82rem; color: #34d399; max-height: 200px; overflow-y: auto; margin-top: 14px;">
+      <div style="display: flex; justify-content: space-between; color: #9ca3af; border-bottom: 1px solid #1f2937; padding-bottom: 4px; margin-bottom: 8px; font-size: 0.75rem;">
+        <span>سجل التحديث الفوري (LIVE UPDATE LOG)</span>
+        <span id="terminalStatusIndicator">جاري المعالجة...</span>
+      </div>
+      <div id="terminalLogContent" style="display: flex; flex-direction: column; gap: 4px;"></div>
     </div>
 
   </div>
@@ -4396,178 +4434,231 @@ async function checkGitHubUpdates() {
 
 
 
-async function performSystemUpdate() {
+let updatePollTimer = null;
+let lastLogCount = 0;
 
-  if (!confirm("هل أنت متأكد من رغبتك في تحديث النظام الآن من GitHub؟\n\n• سيتم عمل نسخة احتياطية آمنة لقاعدة البيانات تلقائياً.\n• سيتم سحب أحدث ملفات وشاشات النظام وتطبيق ترقيات الجداول.\n• بيانات المشتركين والاشتراكات والمدفوعات والصور محفوظة بالكامل دون أي مساس.")) {
+function updateStepperChips(stage, pct) {
+  const steps = [
+    { id: 'stepChipCheck', minPct: 5, activeStages: ['checking'] },
+    { id: 'stepChipBackup', minPct: 15, activeStages: ['backup'] },
+    { id: 'stepChipDownload', minPct: 30, activeStages: ['downloading'] },
+    { id: 'stepChipExtract', minPct: 60, activeStages: ['extracting', 'compiling'] },
+    { id: 'stepChipMigrate', minPct: 88, activeStages: ['migrating', 'caching'] },
+    { id: 'stepChipComplete', minPct: 100, activeStages: ['completed'] }
+  ];
 
-    return;
+  steps.forEach(s => {
+    const el = document.getElementById(s.id);
+    if (!el) return;
+    if (pct >= s.minPct || s.activeStages.includes(stage)) {
+      if (s.activeStages.includes(stage) && pct < 100) {
+        el.style.background = 'rgba(56, 189, 248, 0.15)';
+        el.style.borderColor = '#38bdf8';
+        el.style.color = '#38bdf8';
+      } else {
+        el.style.background = 'rgba(16, 185, 129, 0.15)';
+        el.style.borderColor = '#10b981';
+        el.style.color = '#34d399';
+      }
+    } else {
+      el.style.background = 'rgba(255, 255, 255, 0.04)';
+      el.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+      el.style.color = '#94a3b8';
+    }
+  });
+}
 
-  }
-
-
-
-  const performBtn = document.getElementById('btnPerformUpdate');
-
-  const performTxt = document.getElementById('performBtnText');
-
+function renderUpdateProgress(data) {
+  const barContainer = document.getElementById('updateProgressBarContainer');
+  const barFill = document.getElementById('updateProgressBarFill');
+  const percentText = document.getElementById('updatePercentBadge');
+  const stageTitle = document.getElementById('updateStageTitle');
+  const detailText = document.getElementById('updateProgressDetail');
   const termBox = document.getElementById('updateTerminalBox');
-
   const termContent = document.getElementById('terminalLogContent');
-
   const termStatus = document.getElementById('terminalStatusIndicator');
 
+  if (!barContainer) return;
+  barContainer.style.display = 'block';
 
+  const pct = Math.min(100, Math.max(0, parseInt(data.percent || 0)));
+  if (barFill) barFill.style.width = pct + '%';
+  if (percentText) percentText.textContent = pct + '%';
+  if (stageTitle) stageTitle.textContent = data.stage_name || 'جاري التحديث والتثبيت...';
+  if (detailText) detailText.textContent = data.detail || '';
 
-  performBtn.disabled = true;
+  updateStepperChips(data.stage, pct);
 
-  performBtn.style.opacity = '0.5';
+  // Append new logs to terminal box
+  if (data.logs && data.logs.length > lastLogCount) {
+    if (termBox) termBox.style.display = 'block';
+    if (termContent) {
+      for (let i = lastLogCount; i < data.logs.length; i++) {
+        const line = document.createElement('div');
+        const text = data.logs[i];
+        if (text.includes('✓') || text.includes('اكتمل') || text.includes('🎉')) {
+          line.style.color = '#34d399';
+        } else if (text.includes('❌') || text.includes('خطأ')) {
+          line.style.color = '#ef4444';
+        } else if (text.includes('⚠️')) {
+          line.style.color = '#fbbf24';
+        } else {
+          line.style.color = '#38bdf8';
+        }
+        line.textContent = text;
+        termContent.appendChild(line);
+      }
+      lastLogCount = data.logs.length;
+      termContent.scrollTop = termContent.scrollHeight;
+    }
+  }
 
-  performTxt.textContent = 'جاري التحديث والتثبيت...';
+  if (termStatus) {
+    termStatus.textContent = data.stage_name || 'جاري المعالجة...';
+  }
+}
 
+async function pollUpdateProgress() {
+  try {
+    const res = await fetch("{% url 'core:update_progress' %}", {
+      headers: { "Accept": "application/json", "X-Requested-With": "XMLHttpRequest" }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    renderUpdateProgress(data);
 
+    if (!data.is_running && data.stage === 'completed') {
+      if (updatePollTimer) clearInterval(updatePollTimer);
+      updatePollTimer = null;
+      onUpdateSuccess(data);
+    } else if (!data.is_running && data.stage === 'failed') {
+      if (updatePollTimer) clearInterval(updatePollTimer);
+      updatePollTimer = null;
+      onUpdateFailure(data);
+    }
+  } catch (err) {
+    console.warn("Polling error (might be reload):", err);
+  }
+}
 
-  termBox.style.display = 'block';
+function startUpdateProgressPolling() {
+  if (updatePollTimer) clearInterval(updatePollTimer);
+  updatePollTimer = setInterval(pollUpdateProgress, 500);
+  pollUpdateProgress();
+}
 
-  termContent.innerHTML = '<div style="color: #fbbf24;">[START] بدء عملية التحديث الشامل للنظام...</div>';
+function onUpdateSuccess(data) {
+  const barFill = document.getElementById('updateProgressBarFill');
+  if (barFill) {
+    barFill.style.width = '100%';
+    barFill.style.background = '#10b981';
+    barFill.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.7)';
+  }
 
-  termStatus.textContent = 'جاري المعالجة...';
+  const stageTitle = document.getElementById('updateStageTitle');
+  if (stageTitle) {
+    stageTitle.innerHTML = '🎉 <strong>اكتمل التحديث بنجاح!</strong>';
+    stageTitle.style.color = '#34d399';
+  }
 
+  const detailText = document.getElementById('updateProgressDetail');
+  if (detailText) {
+    detailText.textContent = 'تم تطبيق كافة التحديثات وترقية الجداول بنجاح. جاري تحديث الصفحة تلقائياً...';
+    detailText.style.color = '#34d399';
+  }
 
+  setTimeout(() => {
+    window.location.reload();
+  }, 2500);
+}
+
+function onUpdateFailure(data) {
+  const barFill = document.getElementById('updateProgressBarFill');
+  if (barFill) barFill.style.background = '#ef4444';
+
+  const stageTitle = document.getElementById('updateStageTitle');
+  if (stageTitle) {
+    stageTitle.textContent = '⚠️ فشل التحديث';
+    stageTitle.style.color = '#f87171';
+  }
+
+  const detailText = document.getElementById('updateProgressDetail');
+  if (detailText) {
+    detailText.textContent = data.error || data.detail || 'حدث خطأ أثناء تنزيل أو تطبيق التحديث. يرجى مراجعة سجل التحديث.';
+    detailText.style.color = '#f87171';
+  }
+
+  const performBtn = document.getElementById('btnPerformUpdate');
+  const performTxt = document.getElementById('performBtnText');
+  if (performBtn) {
+    performBtn.disabled = false;
+    performBtn.style.opacity = '1';
+    performBtn.style.background = '#d97706';
+    if (performTxt) performTxt.textContent = 'إعادة محاولة التحديث';
+  }
+}
+
+async function performSystemUpdate() {
+  if (!confirm("هل أنت متأكد من رغبتك في تحديث النظام الآن من GitHub؟\n\n• سيظهر شريط التقدم اللحظي مع تفاصيل كل مرحلة (فحص، نسخ احتياطي، تنزيل، استخراج، ترقية).\n• سيتم عمل نسخة احتياطية آمنة لقاعدة البيانات تلقائياً.\n• بيانات المشتركين والاشتراكات والمدفوعات والصور محفوظة بالكامل دون أي مساس.")) {
+    return;
+  }
+
+  const performBtn = document.getElementById('btnPerformUpdate');
+  const performTxt = document.getElementById('performBtnText');
+  const barContainer = document.getElementById('updateProgressBarContainer');
+  const termBox = document.getElementById('updateTerminalBox');
+  const termContent = document.getElementById('terminalLogContent');
+  const termStatus = document.getElementById('terminalStatusIndicator');
+
+  if (performBtn) {
+    performBtn.disabled = true;
+    performBtn.style.opacity = '0.5';
+  }
+  if (performTxt) performTxt.textContent = 'جاري التحديث والتثبيت...';
+
+  if (barContainer) barContainer.style.display = 'block';
+  if (termBox) termBox.style.display = 'block';
+  if (termContent) termContent.innerHTML = '<div style="color: #fbbf24;">[START] بدء عملية التحديث الشامل للنظام ومتابعة التقدم...</div>';
+  if (termStatus) termStatus.textContent = 'جاري البدء...';
+  lastLogCount = 0;
 
   try {
-
     const res = await fetch("{% url 'core:perform_update' %}", {
-
       method: "POST",
-
       headers: {
-
         "X-CSRFToken": getCookie("csrftoken") || "",
-
         "Accept": "application/json",
-
         "X-Requested-With": "XMLHttpRequest"
-
       }
-
     });
 
     const data = await res.json();
-
-
-
-    if (data.logs && data.logs.length > 0) {
-
-      data.logs.forEach(l => {
-
-        const line = document.createElement('div');
-
-        line.textContent = l;
-
-        termContent.appendChild(line);
-
-      });
-
+    if (!data.success && !data.already_running) {
+      onUpdateFailure({ error: data.message || 'فشل بدء التحديث' });
+      return;
     }
 
-
-
-    if (data.success) {
-
-      termStatus.textContent = 'اكتمل بنجاح ✓';
-
-      termStatus.style.color = '#34d399';
-
-      alert(data.message || 'تم تحديث النظام بنجاح!');
-
-      setTimeout(() => {
-
-        window.location.reload();
-
-      }, 1500);
-
-    } else {
-
-      termStatus.textContent = 'فشل التحديث ⚠️';
-
-      termStatus.style.color = '#ef4444';
-
-      alert('حدث خطأ أثناء التحديث: ' + (data.message || 'فشل'));
-
-      performBtn.disabled = false;
-
-      performBtn.style.opacity = '1';
-
-      performTxt.textContent = 'إعادة محاولة التحديث';
-
-    }
+    // Start live progress polling
+    startUpdateProgressPolling();
 
   } catch (err) {
-
-    // If files are updated, runserver auto-reloads and drops the active TCP connection.
-
-    // Poll the server health to detect when it's back online:
-
-    termStatus.textContent = 'جاري إعادة تشغيل الخادم وتفعيل التحديثات...';
-
-    termStatus.style.color = '#fbbf24';
-
-    termContent.innerHTML += `<div style="color: #38bdf8;">⏳ جاري تفعيل الملفات وإعادة تشغيل خادم النظام تلقائياً...</div>`;
-
-
-
-    let reloaded = false;
-
-    for (let i = 0; i < 12; i++) {
-
-      await new Promise(r => setTimeout(r, 2000));
-
-      try {
-
-        const ping = await fetch('/?ping=1', { cache: 'no-store' });
-
-        if (ping.ok) {
-
-          reloaded = true;
-
-          break;
-
-        }
-
-      } catch (e) {}
-
-    }
-
-
-
-    if (reloaded) {
-
-      termStatus.textContent = 'اكتمل بنجاح ✓';
-
-      termStatus.style.color = '#34d399';
-
-      termContent.innerHTML += `<div style="color: #34d399; font-weight: bold; margin-top: 8px;">✓ تم تطبيق التحديثات وإعادة تشغيل الخادم بنجاح! جاري تحديث الصفحة...</div>`;
-
-      setTimeout(() => { window.location.reload(); }, 1500);
-
-    } else {
-
-      termContent.innerHTML += `<div style="color: #ef4444; margin-top: 8px;">⚠️ ${err.message}. يمكنك تشغيل ملف UPDATE_SYSTEMIZE.bat من مجلد البرنامج لتحديث فوري وآمن.</div>`;
-
-      termStatus.textContent = 'تنبيه';
-
-      performBtn.disabled = false;
-
-      performBtn.style.opacity = '1';
-
-      performTxt.textContent = 'إعادة محاولة التحديث';
-
-    }
-
+    console.warn("Update trigger error:", err);
+    // If request failed because server dropped or started immediately, try polling anyway:
+    startUpdateProgressPolling();
   }
-
 }
 
+// Auto-resume progress display if update is already running on page open
+document.addEventListener('DOMContentLoaded', function() {
+  fetch("{% url 'core:update_progress' %}")
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.is_running) {
+        startUpdateProgressPolling();
+      }
+    })
+    .catch(() => {});
+});
 
 
 async function relocateWhatsAppCoordinates(callerBtn) {
