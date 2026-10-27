@@ -21,7 +21,7 @@
   {% else %}
     <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
   {% endif %}
-  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20261015_09">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20261027_07">
   
   <!-- Dynamic White-Label Branding & Theme Injection -->
   <style>
@@ -285,6 +285,69 @@
     [data-theme="light"] .tech-support-modal-box h3 {
       color: #0F172A !important;
     }
+
+    /* Clean Standard Top Nav Dropdown System */
+    .nav-dropdown-wrapper {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .top-nav-dropdown-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      min-width: 210px;
+      background: #0F172A;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      padding: 5px;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .nav-dropdown-wrapper:hover .top-nav-dropdown-panel {
+      display: flex !important;
+    }
+    .top-nav-sub-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 6px;
+      color: #E2E8F0 !important;
+      font-size: 0.80rem;
+      font-weight: 700;
+      text-decoration: none !important;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .top-nav-sub-link:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
+      color: var(--hulk-primary, #A8F14B) !important;
+    }
+    .top-nav-sub-link.active {
+      background: rgba(168, 241, 75, 0.12) !important;
+      color: var(--hulk-primary, #A8F14B) !important;
+      font-weight: 800;
+    }
+    [data-theme="light"] .top-nav-dropdown-panel {
+      background: #FFFFFF !important;
+      border: 1px solid #E2E8F0 !important;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12) !important;
+    }
+    [data-theme="light"] .top-nav-sub-link {
+      color: #1E293B !important;
+    }
+    [data-theme="light"] .top-nav-sub-link:hover {
+      background: #F1F5F9 !important;
+      color: #0F172A !important;
+    }
+    [data-theme="light"] .top-nav-sub-link.active {
+      background: #ECFDF5 !important;
+      color: #15803D !important;
+    }
   </style>
 
   <!-- Local offline HTMX for live instant search & dynamic components -->
@@ -359,34 +422,40 @@
         {% endif %}
       </div>
 
-      <!-- Horizontal Navigation Links (Grouped into Intuitive Hubs: ماليات، الأعضاء، الإدارة) -->
+      <!-- Horizontal Navigation Links (Grouped into Intuitive Hubs: الأعضاء، الماليات، الإدارة) -->
       <nav class="top-nav-links">
         <!-- 1. الرئيسية -->
         <a href="{% url 'core:dashboard' %}" class="top-nav-item {% if request.resolver_match.view_name == 'core:dashboard' %}active{% endif %}">
           <span>الرئيسية</span>
         </a>
 
-        <!-- 2. الأعضاء (Grouped Hub) -->
-        <div class="top-nav-dropdown" id="navDropdownMembersWrap">
-          <button type="button" class="top-nav-item top-nav-dropdown-btn {% if 'members' in request.path or 'retention' in request.path %}active{% endif %}" onclick="toggleNavDropdown('navDropdownMembersWrap', event)" title="إدارة الأعضاء والاشتراكات وسجلات الحضور">
+        <!-- 2. الأعضاء (Dropdown) -->
+        <div class="nav-dropdown-wrapper" onmouseleave="closeNavDropdown('navDropdownMembersMenu')">
+          <a href="javascript:void(0)" 
+             id="navDropdownMembersBtn" 
+             onclick="toggleNavDropdown('navDropdownMembersMenu', event)" 
+             onmouseenter="openNavDropdown('navDropdownMembersMenu')"
+             class="top-nav-item {% if 'members' in request.path or 'retention' in request.path %}active{% endif %}" 
+             style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;" 
+             title="إدارة المشتركين والاشتراكات وسجلات الحضور">
             <span>الأعضاء</span>
-            <span class="dropdown-arrow">▼</span>
-          </button>
-          <div class="top-nav-dropdown-menu">
-            <a href="{% url 'members:member_list' %}" class="top-nav-dropdown-item {% if request.resolver_match.view_name == 'members:member_list' %}active{% endif %}">
+            <span style="font-size: 0.60rem; opacity: 0.75; line-height: 1;">▾</span>
+          </a>
+          <div id="navDropdownMembersMenu" class="top-nav-dropdown-panel" style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 200px; background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,0.65); z-index: 9999; padding: 4px; flex-direction: column; gap: 2px;">
+            <a href="{% url 'members:member_list' %}" class="top-nav-sub-link {% if request.resolver_match.view_name == 'members:member_list' %}active{% endif %}">
               <span>👥</span>
               <span>قائمة المشتركين</span>
             </a>
-            <a href="{% url 'members:member_create' %}" class="top-nav-dropdown-item {% if request.resolver_match.view_name == 'members:member_create' %}active{% endif %}">
+            <a href="{% url 'members:member_create' %}" class="top-nav-sub-link {% if request.resolver_match.view_name == 'members:member_create' %}active{% endif %}">
               <span>➕</span>
               <span>إضافة مشترك جديد</span>
             </a>
-            <a href="{% url 'members:smart_operations' %}" class="top-nav-dropdown-item {% if 'operations' in request.path %}active{% endif %}">
+            <a href="{% url 'members:smart_operations' %}" class="top-nav-sub-link {% if 'operations' in request.path %}active{% endif %}">
               <span>🕒</span>
               <span>سجل الحضور والعمليات</span>
             </a>
             {% if user.is_manager %}
-            <a href="{% url 'reports:member_retention' %}" class="top-nav-dropdown-item {% if 'retention' in request.path %}active{% endif %}">
+            <a href="{% url 'reports:member_retention' %}" class="top-nav-sub-link {% if 'retention' in request.path %}active{% endif %}">
               <span>🔄</span>
               <span>حركة واحتفاظ الأعضاء</span>
             </a>
@@ -394,26 +463,32 @@
           </div>
         </div>
 
-        <!-- 3. الماليات (Grouped Hub - Financials) -->
-        <div class="top-nav-dropdown" id="navDropdownFinancialsWrap">
-          <button type="button" class="top-nav-item top-nav-dropdown-btn {% if 'payments' in request.path or 'expenses' in request.path or 'accounts' in request.path or 'handovers' in request.path %}active{% endif %}" onclick="toggleNavDropdown('navDropdownFinancialsWrap', event)" title="العمليات المالية: المدفوعات، المصروفات، الخزائن، وتسليم العهدة">
+        <!-- 3. الماليات (Dropdown - Financials) -->
+        <div class="nav-dropdown-wrapper" onmouseleave="closeNavDropdown('navDropdownFinancialsMenu')">
+          <a href="javascript:void(0)" 
+             id="navDropdownFinancialsBtn" 
+             onclick="toggleNavDropdown('navDropdownFinancialsMenu', event)" 
+             onmouseenter="openNavDropdown('navDropdownFinancialsMenu')"
+             class="top-nav-item {% if 'payments' in request.path or 'expenses' in request.path or 'accounts' in request.path or 'handovers' in request.path %}active{% endif %}" 
+             style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;" 
+             title="العمليات المالية: المدفوعات، المصروفات، الخزائن، وتسليم العهدة">
             <span>الماليات</span>
-            <span class="dropdown-arrow">▼</span>
-          </button>
-          <div class="top-nav-dropdown-menu">
-            <a href="{% url 'payments:payment_list' %}" class="top-nav-dropdown-item {% if 'payments' in request.path and not 'bar' in request.path and not 'accounts' in request.path and not 'handovers' in request.path %}active{% endif %}">
+            <span style="font-size: 0.60rem; opacity: 0.75; line-height: 1;">▾</span>
+          </a>
+          <div id="navDropdownFinancialsMenu" class="top-nav-dropdown-panel" style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 220px; background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,0.65); z-index: 9999; padding: 4px; flex-direction: column; gap: 2px;">
+            <a href="{% url 'payments:payment_list' %}" class="top-nav-sub-link {% if 'payments' in request.path and not 'bar' in request.path and not 'accounts' in request.path and not 'handovers' in request.path %}active{% endif %}">
               <span>💳</span>
               <span>المدفوعات والاشتراكات</span>
             </a>
-            <a href="{% url 'expenses:expense_list' %}" class="top-nav-dropdown-item {% if 'expenses' in request.path %}active{% endif %}">
+            <a href="{% url 'expenses:expense_list' %}" class="top-nav-sub-link {% if 'expenses' in request.path %}active{% endif %}">
               <span>📉</span>
               <span>المصروفات وسندات الصرف</span>
             </a>
-            <a href="{% url 'payments:accounts_index' %}" class="top-nav-dropdown-item {% if 'accounts' in request.path %}active{% endif %}">
+            <a href="{% url 'payments:accounts_index' %}" class="top-nav-sub-link {% if 'accounts' in request.path %}active{% endif %}">
               <span>🏦</span>
               <span>الخزائن والحسابات والتحويلات</span>
             </a>
-            <a href="{% url 'payments:reception_handovers' %}" class="top-nav-dropdown-item {% if 'handovers' in request.path %}active{% endif %}">
+            <a href="{% url 'payments:reception_handovers' %}" class="top-nav-sub-link {% if 'handovers' in request.path %}active{% endif %}">
               <span>🤝</span>
               <span>تسليم عهدة الريسبشن</span>
             </a>
@@ -441,27 +516,33 @@
         </a>
         {% endif %}
 
-        <!-- 7. الإدارة (Grouped Hub for Managers) -->
+        <!-- 7. الإدارة (Dropdown for Managers) -->
         {% if user.is_manager %}
-        <div class="top-nav-dropdown" id="navDropdownManagerWrap">
-          <button type="button" class="top-nav-item top-nav-dropdown-btn {% if 'manager' in request.path or 'settings' in request.path or 'ai-strategy' in request.path %}active{% endif %}" onclick="toggleNavDropdown('navDropdownManagerWrap', event)" title="لوحة المدير، ذكاء الجيم، وإعدادات المنظومة">
+        <div class="nav-dropdown-wrapper" onmouseleave="closeNavDropdown('navDropdownManagerMenu')">
+          <a href="javascript:void(0)" 
+             id="navDropdownManagerBtn" 
+             onclick="toggleNavDropdown('navDropdownManagerMenu', event)" 
+             onmouseenter="openNavDropdown('navDropdownManagerMenu')"
+             class="top-nav-item {% if 'manager' in request.path or 'settings' in request.path or 'ai-strategy' in request.path %}active{% endif %}" 
+             style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;" 
+             title="لوحة المدير، ذكاء الجيم، وإعدادات المنظومة">
             <span>الإدارة</span>
-            <span class="dropdown-arrow">▼</span>
-          </button>
-          <div class="top-nav-dropdown-menu">
-            <a href="{% url 'core:manager_dashboard' %}" class="top-nav-dropdown-item {% if request.resolver_match.view_name == 'core:manager_dashboard' and 'tab=ai' not in request.get_full_path %}active{% endif %}">
+            <span style="font-size: 0.60rem; opacity: 0.75; line-height: 1;">▾</span>
+          </a>
+          <div id="navDropdownManagerMenu" class="top-nav-dropdown-panel" style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 210px; background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,0.65); z-index: 9999; padding: 4px; flex-direction: column; gap: 2px;">
+            <a href="{% url 'core:manager_dashboard' %}" class="top-nav-sub-link {% if request.resolver_match.view_name == 'core:manager_dashboard' and 'tab=ai' not in request.get_full_path %}active{% endif %}">
               <span>📊</span>
               <span>لوحة المدير العامة</span>
             </a>
-            <a href="{% url 'core:manager_dashboard' %}?tab=ai" class="top-nav-dropdown-item {% if 'tab=ai' in request.get_full_path or 'ai-strategy' in request.path %}active{% endif %}">
+            <a href="{% url 'core:manager_dashboard' %}?tab=ai" class="top-nav-sub-link {% if 'tab=ai' in request.get_full_path or 'ai-strategy' in request.path %}active{% endif %}">
               <span>🧠</span>
               <span>ذكاء الجيم والتوقعات</span>
             </a>
-            <a href="{% url 'core:settings' %}" class="top-nav-dropdown-item {% if 'settings' in request.path %}active{% endif %}">
+            <a href="{% url 'core:settings' %}" class="top-nav-sub-link {% if 'settings' in request.path %}active{% endif %}">
               <span>⚙️</span>
               <span>إعدادات النظام والكاميرات</span>
             </a>
-            <a href="{% url 'core:manager_mobile_dashboard' %}?view=mobile" class="top-nav-dropdown-item" title="معاينة أو التبديل إلى نسخة الموبايل">
+            <a href="{% url 'core:manager_mobile_dashboard' %}?view=mobile" class="top-nav-sub-link" title="معاينة أو التبديل إلى نسخة الموبايل">
               <span>📱</span>
               <span>لوحة الهاتف الذكي</span>
             </a>
@@ -470,28 +551,38 @@
         {% endif %}
       </nav>
       <script>
-        function toggleNavDropdown(wrapId, e) {
+        function openNavDropdown(menuId) {
+          closeAllNavDropdowns(menuId);
+          var m = document.getElementById(menuId);
+          if (m) m.style.display = 'flex';
+        }
+        function closeNavDropdown(menuId) {
+          var m = document.getElementById(menuId);
+          if (m) m.style.display = 'none';
+        }
+        function toggleNavDropdown(menuId, e) {
           if (e) {
             e.preventDefault();
             e.stopPropagation();
           }
-          var wrap = document.getElementById(wrapId);
-          if (!wrap) return;
-          var wasOpen = wrap.classList.contains('open');
-          document.querySelectorAll('.top-nav-dropdown.open').forEach(function(el) {
-            if (el !== wrap) el.classList.remove('open');
-          });
-          if (wasOpen) {
-            wrap.classList.remove('open');
-          } else {
-            wrap.classList.add('open');
+          var m = document.getElementById(menuId);
+          if (!m) return;
+          var isOpen = (m.style.display === 'flex' || m.style.display === 'block');
+          closeAllNavDropdowns();
+          if (!isOpen) {
+            m.style.display = 'flex';
           }
         }
+        function closeAllNavDropdowns(exceptId) {
+          document.querySelectorAll('.top-nav-dropdown-panel').forEach(function(el) {
+            if (!exceptId || el.id !== exceptId) {
+              el.style.display = 'none';
+            }
+          });
+        }
         document.addEventListener('click', function(e) {
-          if (!e.target.closest('.top-nav-dropdown')) {
-            document.querySelectorAll('.top-nav-dropdown.open').forEach(function(el) {
-              el.classList.remove('open');
-            });
+          if (!e.target.closest('.nav-dropdown-wrapper')) {
+            closeAllNavDropdowns();
           }
         });
       </script>
