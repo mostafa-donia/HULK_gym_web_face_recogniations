@@ -39,6 +39,7 @@ class Command(BaseCommand):
         parser.add_argument("--logo", type=str, default="", help="Path to logo file on disk (png/jpg)")
         parser.add_argument("--theme", type=str, default="lime", help="Accent theme name (lime, emerald, blue, orange, red, purple, gold, monochrome)")
         parser.add_argument("--color", type=str, default="", help="Primary brand color hex")
+        parser.add_argument("--accent", type=str, default="", help="Accent brand color hex")
         parser.add_argument("--branches", type=str, default="الفرع الرئيسي", help="Comma-separated list of branches")
         parser.add_argument("--currency", type=str, default="ج.م", help="Currency symbol")
         parser.add_argument("--phone", type=str, default="", help="Main phone / WhatsApp")
@@ -182,19 +183,9 @@ class Command(BaseCommand):
         # 5. Core Users with Custom Credentials (No demo / 1234)
         self.stdout.write("[5/6] Setting up manager and reception accounts...")
         admin_uname = options.get("admin_user", "").strip().lower() or "manager"
-        admin_pass = options.get("admin_pass", "").strip()
+        admin_pass = options.get("admin_pass", "").strip() or "manager2026"
         reception_uname = options.get("reception_user", "").strip().lower() or "reception"
-        reception_pass = options.get("reception_pass", "").strip() or admin_pass
-
-        # If admin_pass is not provided via CLI, prompt or securely generate
-        if not admin_pass:
-            if sys.stdin.isatty():
-                import getpass
-                admin_pass = getpass.getpass("Enter Manager Password: ").strip()
-            if not admin_pass:
-                admin_pass = "manager2026"
-        if not reception_pass:
-            reception_pass = admin_pass
+        reception_pass = options.get("reception_pass", "").strip() or "reception2026"
 
         # Delete any lingering legacy demo user
         User.objects.filter(username__in=["demo"]).delete()

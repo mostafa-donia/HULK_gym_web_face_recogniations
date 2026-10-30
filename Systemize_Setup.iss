@@ -55,8 +55,8 @@ Name: "{autoprograms}\{#MyAppName}\Uninstall Systemize"; Filename: "{uninstallex
 ; Auto-run migrations silently upon installation
 Filename: "{app}\runtime\python.exe"; Parameters: "-s manage.pyc migrate --noinput"; WorkingDir: "{app}"; StatusMsg: "Configuring database schema..."; Flags: runhidden
 
-; Apply custom gym onboarding parameters (Name, Theme, Logo, Clean vs Demo)
-Filename: "{app}\runtime\python.exe"; Parameters: "-s manage.pyc setup_custom_gym --name ""{code:GetGymName}"" --theme ""{code:GetGymTheme}"" --logo ""{code:GetGymLogo}"" {code:GetDbModeFlag}"; WorkingDir: "{app}"; StatusMsg: "Configuring gym branding & database..."; Flags: runhidden
+; Apply custom gym onboarding parameters (Name, Theme, Logo, Clean vs Demo, Credentials)
+Filename: "{app}\runtime\python.exe"; Parameters: "-s manage.pyc setup_custom_gym {code:GetSetupParams}"; WorkingDir: "{app}"; StatusMsg: "Configuring gym branding & database..."; Flags: runhidden
 
 ; Launch Systemize immediately after install
 Filename: "{app}\Systemize.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: postinstall nowait
@@ -67,6 +67,7 @@ var
   ThemeComboPage: TInputOptionWizardPage;
   DbModePage: TInputOptionWizardPage;
   LogoPage: TInputFileWizardPage;
+  CredentialsPage: TInputQueryWizardPage;
 
 procedure InitializeWizard;
 begin
@@ -110,6 +111,20 @@ begin
     'تحديد ملف اللوجو الخاص بالصالة',
     'إذا كان لديك ملف شعار (PNG أو JPG)، يمكنك اختياره الآن ليتم ربطه تلقائياً بالنظام والإيصالات:');
   LogoPage.Add('مسار ملف اللوجو (اتركه فارغاً للاحتفاظ باللوجو الافتراضي):', 'Image files (*.png;*.jpg;*.jpeg;*.ico)|*.png;*.jpg;*.jpeg;*.ico|All files (*.*)|*.*', '.png');
+
+  // Page 5: Login Credentials (Optional - Default: manager / manager2026)
+  CredentialsPage := CreateInputQueryPage(LogoPage.ID,
+    'حسابات الدخول والأمان (Login Accounts)',
+    'تعيين اسم المستخدم وكلمة المرور للمدير والاستقبال:',
+    'يمكنك إدخال كلمات المرور الخاصة بك الآن (يمكن تغييرها لاحقاً في أي وقت من لوحة التحكم):');
+  CredentialsPage.Add('اسم مستخدم المدير (Manager Username):', False);
+  CredentialsPage.Values[0] := 'manager';
+  CredentialsPage.Add('كلمة مرور حساب المدير (Manager Password):', False);
+  CredentialsPage.Values[1] := 'manager2026';
+  CredentialsPage.Add('اسم مستخدم الاستقبال (Reception Username):', False);
+  CredentialsPage.Values[2] := 'reception';
+  CredentialsPage.Add('كلمة مرور الاستقبال (Reception Password):', False);
+  CredentialsPage.Values[3] := 'reception2026';
 end;
 
 function GetGymName(Param: String): String;
@@ -135,15 +150,48 @@ begin
   end;
 end;
 
-function GetGymLogo(Param: String): String;
-begin
-  Result := Trim(LogoPage.Values[0]);
-end;
-
 function GetDbModeFlag(Param: String): String;
 begin
   if DbModePage.SelectedValueIndex = 1 then
     Result := '--seed-demo'
   else
     Result := '--clear-data';
+end;
+
+function GetAdminUser(Param: String): String;
+begin
+  Result := Trim(CredentialsPage.Values[0]);
+  if Result = '' then Result := 'manager';
+end;
+
+function GetAdminPass(Param: String): String;
+begin
+  Result := Trim(CredentialsPage.Values[1]);
+  if Result = '' then Result := 'manager2026';
+end;
+
+function GetReceptionUser(Param: String): String;
+begin
+  Result := Trim(CredentialsPage.Values[2]);
+  if Result = '' then Result := 'reception';
+end;
+
+function GetReceptionPass(Param: String): String;
+begin
+  Result := Trim(CredentialsPage.Values[3]);
+  if Result = '' then Result := 'reception2026';
+end;
+
+function GetSetupParams(Param: String): String;
+var
+  P: String;
+  L: String;
+begin
+  P := '--name "' + GetGymName('') + '" --theme "' + GetGymTheme('') + '" ' + GetDbModeFlag('');
+  L := Trim(LogoPage.Values[0]);
+  if (L <> '') and FileExists(L) then
+    P := P + ' --logo "' + L + '"';
+  P := P + ' --admin-user "' + GetAdminUser('') + '" --admin-pass "' + GetAdminPass('') + '"';
+  P := P + ' --reception-user "' + GetReceptionUser('') + '" --reception-pass "' + GetReceptionPass('') + '"';
+  Result := P;
 end;
