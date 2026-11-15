@@ -7,10 +7,14 @@ color 0A
 
 cd /d "%~dp0"
 
-if not exist "manage.py" (
-    if exist "web_face\manage.py" (
-        cd /d "%~dp0web_face"
+if not exist "web_face\manage.py" (
+    if exist "manage.py" (
+        cd /d "%~dp0"
+    ) else if exist "d:\move\career\gym system\web_face\manage.py" (
+        cd /d "d:\move\career\gym system\web_face"
     )
+) else (
+    cd /d "%~dp0web_face"
 )
 
 echo ===================================================================
@@ -24,6 +28,16 @@ if exist "runtime\python.exe" (
     set "PY_EXE=..\dist\Systemize\runtime\python.exe"
 ) else (
     set "PY_EXE=python"
+)
+
+rem Check if server is already running on port 8000
+netstat -ano | findstr ":8000" | findstr "LISTENING" >nul 2>&1
+if %ERRORLEVEL% equ 0 (
+    echo [*] المنظومة تعمل بالفعل على المنفذ 8000.
+    echo [*] جارٍ فتح الشاشة الرئيسية في المتصفح...
+    start "" "http://127.0.0.1:8000"
+    ping 127.0.0.1 -n 3 >nul
+    exit /b 0
 )
 
 echo [*] Checking database migrations...
@@ -43,7 +57,7 @@ echo [*] Launching Systemize in default web browser...
 start "" "http://127.0.0.1:8000"
 
 echo.
-echo [*] Starting Systemize Server (listening on 0.0.0.0:8000)...
+echo [*] Starting Systemize Server - listening on 0.0.0.0:8000...
 echo [*] Note: Keep this window open while using Systemize.
 echo ===================================================================
 echo.
@@ -52,7 +66,7 @@ echo.
 if %ERRORLEVEL% neq 0 (
     echo.
     echo ===================================================================
-    echo  [!] Systemize Server encountered an issue (Exit Code: %ERRORLEVEL%).
+    echo  [!] Systemize Server encountered an issue - Exit Code: %ERRORLEVEL%
     echo ===================================================================
     pause
 )
