@@ -3,113 +3,308 @@
 {% block title %}الرئيسية — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
 {% block content %}
-<div style="display: flex; flex-direction: column; gap: 20px; max-width: 1200px; margin: 0 auto; width: 100%; padding: 10px 16px;">
+<div style="display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 1400px; margin: 0 auto; padding: 4px 6px;">
 
-  <!-- Search Row (Prominent, Broad & Modern) -->
-  <div class="search-row" style="margin-bottom: 4px;">
-    <button type="button" class="search-btn" onclick="document.getElementById('main-search-input').focus()" style="border-radius: 12px; height: 54px; font-weight: 800; font-size: 1.15rem; padding: 0 24px; border-color: rgba(255,255,255,0.18);">
-      🔍 بحث
-    </button>
-    <input 
-      type="text" 
-      id="main-search-input"
-      name="q" 
-      class="search-input" 
-      placeholder="ابحث باسم المتدرب، رقم الموبايل، أو نوع الباقة..." 
-      autocomplete="off"
-      autofocus
-      style="height: 54px; border-radius: 12px; font-size: 1.12rem; padding: 0 20px; font-weight: 700;"
-      hx-get="{% url 'core:quick_search' %}" 
-      hx-trigger="keyup changed delay:200ms, search" 
-      hx-target="#search-results"
-      hx-indicator="#search-spinner"
-    >
+  <!-- 1. KPI Metric Strip (Compact Desktop Density) -->
+  <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;">
+    <!-- Metric 1: Active Members -->
+    <a href="{% url 'members:member_list' %}?filter=active" style="text-decoration: none; display: block;">
+      <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); transition: border-color 0.15s;">
+        <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; display: block;">الأعضاء النشطين</span>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px;">
+          <span style="font-size: 1.35rem; font-weight: 800; color: var(--accent-green); font-variant-numeric: tabular-nums;">{{ active_members_count }}</span>
+          <span style="font-size: 0.72rem; color: var(--text-dim);">مشترك</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Metric 2: Expiring Soon -->
+    <a href="{% url 'members:member_list' %}?filter=expiring" style="text-decoration: none; display: block;">
+      <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); transition: border-color 0.15s;">
+        <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; display: block;">ينتهي خلال 3 أيام</span>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px;">
+          <span style="font-size: 1.35rem; font-weight: 800; color: {% if expiring_soon_count > 0 %}#f59e0b{% else %}var(--text-main){% endif %}; font-variant-numeric: tabular-nums;">{{ expiring_soon_count }}</span>
+          <span style="font-size: 0.72rem; color: var(--text-dim);">مشترك</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Metric 3: Expired Members -->
+    <a href="{% url 'members:member_list' %}?filter=expired" style="text-decoration: none; display: block;">
+      <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); transition: border-color 0.15s;">
+        <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; display: block;">اشتراكات منتهية</span>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px;">
+          <span style="font-size: 1.35rem; font-weight: 800; color: {% if expired_members_count > 0 %}#ef4444{% else %}var(--text-main){% endif %}; font-variant-numeric: tabular-nums;">{{ expired_members_count }}</span>
+          <span style="font-size: 0.72rem; color: var(--text-dim);">مشترك</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Metric 4: Today Revenue -->
+    <a href="{% url 'payments:payment_list' %}" style="text-decoration: none; display: block;">
+      <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); transition: border-color 0.15s;">
+        <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; display: block;">إيراد اليوم</span>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px;">
+          <span style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); font-variant-numeric: tabular-nums;">{{ today_revenue }}</span>
+          <span style="font-size: 0.72rem; color: var(--text-dim);">{{ gym_profile.currency|default:"ج.م" }}</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Metric 5: Total Debt -->
+    <a href="{% url 'members:member_list' %}?filter=remaining" style="text-decoration: none; display: block;">
+      <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); transition: border-color 0.15s;">
+        <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; display: block;">المتبقي على الأعضاء</span>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px;">
+          <span style="font-size: 1.35rem; font-weight: 800; color: {% if total_debt > 0 %}#f59e0b{% else %}var(--text-main){% endif %}; font-variant-numeric: tabular-nums;">{{ total_debt }}</span>
+          <span style="font-size: 0.72rem; color: var(--text-dim);">{{ gym_profile.currency|default:"ج.م" }}</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Metric 6: Unpaid Bar -->
+    <div onclick="openBarUnpaidModal()" style="cursor: pointer;">
+      <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); transition: border-color 0.15s;">
+        <span style="font-size: 0.76rem; color: var(--text-muted); font-weight: 700; display: block;">حسابات البار المعلقة</span>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 4px;">
+          <span style="font-size: 1.35rem; font-weight: 800; color: {% if unpaid_bar_count > 0 %}#a78bfa{% else %}var(--text-main){% endif %}; font-variant-numeric: tabular-nums;">{{ unpaid_bar_total }}</span>
+          <span style="font-size: 0.72rem; color: var(--text-dim);">{{ unpaid_bar_count }} معلق</span>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Live Search Spinner -->
-  <div id="search-spinner" class="htmx-indicator" style="text-align: center; color: var(--hulk-primary, #E11D48); font-weight: 800; margin-top: -8px; font-size: 0.95rem;">
-    جاري البحث الفوري...
+  <!-- 2. Command / Action Bar: Instant Search & Core Primary Actions -->
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+    <!-- Live Instant Search (Compact Desktop) -->
+    <div style="position: relative; flex: 1; min-width: 300px; max-width: 620px;">
+      <input 
+        type="text" 
+        id="main-search-input"
+        name="q" 
+        class="form-control" 
+        placeholder="ابحث باسم العضو، الهاتف، أو كود المشترك..." 
+        autocomplete="off"
+        autofocus
+        style="height: 34px; font-size: 0.85rem; padding: 0 12px;"
+        hx-get="{% url 'core:quick_search' %}" 
+        hx-trigger="keyup changed delay:200ms, search" 
+        hx-target="#search-results"
+        hx-indicator="#search-spinner"
+      >
+      <span id="search-spinner" class="htmx-indicator" style="position: absolute; left: 10px; top: 8px; font-size: 0.74rem; color: var(--accent-green); font-weight: 700;">
+        جاري البحث...
+      </span>
+    </div>
+
+    <!-- Quick Action Buttons (Standard 32px Desktop Height) -->
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <!-- Action 1: New / Renew Subscription -->
+      <a href="{% url 'members:smart_operations' %}" class="btn btn-primary" style="height: 32px; font-size: 0.82rem; font-weight: 700; padding: 0 14px;">
+        <span>+ تسجيل / تجديد اشتراك</span>
+      </a>
+
+      <!-- Action 2: Add Expense -->
+      <a href="{% url 'expenses:expense_create' %}" class="btn btn-secondary" style="height: 32px; font-size: 0.82rem; font-weight: 600; padding: 0 12px;">
+        <span>+ تسجيل مصروف</span>
+      </a>
+
+      <!-- Action 3: Bar Sale -->
+      <button type="button" onclick="openBarSaleModal()" class="btn btn-secondary" style="height: 32px; font-size: 0.82rem; font-weight: 600; padding: 0 12px;">
+        <span>+ بيع من البار</span>
+      </button>
+
+      <!-- Action 4: Unpaid Bar Modal -->
+      <button type="button" onclick="openBarUnpaidModal()" class="btn btn-secondary" style="height: 32px; font-size: 0.82rem; font-weight: 600; padding: 0 12px; {% if unpaid_bar_count > 0 %}border-color: rgba(167, 139, 250, 0.4); color: #c084fc;{% endif %}">
+        <span>آجل البار</span>
+        {% if unpaid_bar_count > 0 %}
+          <span class="badge" style="background: rgba(167, 139, 250, 0.2); color: #c084fc; padding: 1px 5px; font-size: 0.7rem; margin-right: 4px;">{{ unpaid_bar_count }}</span>
+        {% endif %}
+      </button>
+    </div>
   </div>
 
-  <!-- Live Search Results (appears dynamically when typing) -->
+  <!-- Live Search Results Container (Expands when searching) -->
   <div id="search-results"></div>
 
-  <!-- Prominent 6 Large Action Buttons (Filling Screen Commandingly) -->
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 4px;">
+  <!-- 3. Desktop 2-Column Work Desk -->
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px; align-items: start;">
     
-    <!-- Button 1: سجل / جدد / دفع المتبقي -->
-    <a href="{% url 'members:smart_operations' %}" class="btn-dashboard-action btn-lime" style="min-height: 105px; font-size: 1.45rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 10px 25px rgba(225, 29, 72, 0.35); text-decoration: none; padding: 18px 24px;">
-      <span style="font-size: 2.2rem;">⚡</span>
-      <span>سجل / جدد / دفع المتبقي</span>
-    </a>
+    <!-- Right Column: Recent Check-Ins Today -->
+    <div class="card" style="padding: 0; overflow: hidden; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border-color); background: var(--bg-surface-elevated);">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-weight: 700; font-size: 0.88rem; color: var(--text-main);">حركات تسجيل الدخول اليوم</span>
+          <span class="badge badge-neutral" style="font-size: 0.72rem;">{{ recent_checkins|length }} أحدث حركات</span>
+        </div>
+        <a href="{% url 'members:member_list' %}" style="font-size: 0.76rem; color: var(--accent-green); text-decoration: none; font-weight: 600;">
+          عرض سجل الأعضاء &larr;
+        </a>
+      </div>
 
-    <!-- Button 2: إضافة مصروف للخزينة -->
-    <a href="{% url 'expenses:expense_create' %}" class="btn-dashboard-action" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; border: 2px solid color-mix(in srgb, var(--hulk-primary, #E11D48) 60%, #334155); min-height: 105px; font-size: 1.45rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 8px 22px rgba(0,0,0,0.5); text-decoration: none; padding: 18px 24px;">
-      <span style="font-size: 2.2rem;">💸</span>
-      <span>إضافة مصروف للخزينة</span>
-    </a>
+      <div class="table-responsive">
+        <table class="table" style="margin: 0; width: 100%;">
+          <thead>
+            <tr>
+              <th style="width: 30%;">العضو</th>
+              <th style="width: 18%;">وقت الدخول</th>
+              <th style="width: 20%;">حالة الاشتراك</th>
+              <th style="width: 16%;">المتبقي</th>
+              <th style="width: 16%; text-align: left;">إجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in recent_checkins %}
+            <tr>
+              <td>
+                <div style="display: flex; align-items: baseline; gap: 6px;">
+                  <a href="{% url 'members:member_detail' c.member.id %}" style="font-weight: 700; color: var(--text-main); text-decoration: none; font-size: 0.84rem;">
+                    {{ c.member.name }}
+                  </a>
+                  <span style="font-family: monospace; font-size: 0.72rem; color: var(--text-dim);">#{{ c.member.member_id }}</span>
+                </div>
+              </td>
+              <td>
+                <span style="font-family: monospace; font-size: 0.78rem; color: var(--text-secondary); font-variant-numeric: tabular-nums;">
+                  {{ c.checked_in_at|date:"h:i A" }}
+                </span>
+              </td>
+              <td>
+                {% if c.member.last_subscription_end %}
+                  {% if c.member.is_active_subscription %}
+                    <span class="badge badge-active">نشط</span>
+                  {% else %}
+                    <span class="badge badge-expired">منتهي</span>
+                  {% endif %}
+                {% else %}
+                  <span class="badge badge-neutral">بدون اشتراك</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if c.member.current_remaining > 0 %}
+                  <span style="color: #f59e0b; font-weight: 700; font-size: 0.78rem; font-variant-numeric: tabular-nums;">
+                    {{ c.member.current_remaining }} ج.م
+                  </span>
+                {% else %}
+                  <span style="color: var(--text-dim); font-size: 0.78rem;">خالص</span>
+                {% endif %}
+              </td>
+              <td style="text-align: left;">
+                <a href="{% url 'members:member_detail' c.member.id %}" class="btn btn-secondary btn-sm" style="font-size: 0.74rem; padding: 2px 8px;">
+                  الملف
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 32px 14px; color: var(--text-muted); font-size: 0.82rem;">
+                لم يتم تسجيل أي حركة دخول اليوم حتى الآن.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-    <!-- Button 3: عليهم متبقي (ديون) -->
-    <a href="{% url 'members:member_list' %}?filter=remaining" class="btn-dashboard-action btn-orange" style="min-height: 105px; font-size: 1.4rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 8px 22px rgba(217, 119, 6, 0.3); text-decoration: none; padding: 18px 24px;">
-      <span style="font-size: 2.2rem;">⚠️</span>
-      <span>عليهم متبقي (ديون)</span>
-      {% if total_debt > 0 %}
-        <span style="background: rgba(0,0,0,0.45); color: #fef08a; font-size: 1.15rem; font-weight: 900; padding: 6px 16px; border-radius: 999px; margin-right: 8px; border: 1px solid rgba(254, 240, 138, 0.3);">
-          {{ total_debt }} ج
-        </span>
-      {% endif %}
-    </a>
+    <!-- Left Column: Quick Financial & Membership Health -->
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+      
+      <!-- Operations Attention Panel -->
+      <div class="card" style="padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-subtle);">
+          <span style="font-weight: 700; font-size: 0.82rem; color: var(--text-main);">تنبيهات المتابعة</span>
+          <span style="font-size: 0.72rem; color: var(--text-dim);">تحديث فوري</span>
+        </div>
 
-    <!-- Button 4: انتهت اشتراكاتهم -->
-    <a href="{% url 'members:member_list' %}?filter=expired" class="btn-dashboard-action btn-red" style="min-height: 105px; font-size: 1.4rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 8px 22px rgba(225, 29, 72, 0.3); text-decoration: none; padding: 18px 24px;">
-      <span style="font-size: 2.2rem;">❌</span>
-      <span>انتهت اشتراكاتهم</span>
-      {% if expired_members_count > 0 %}
-        <span style="background: rgba(0,0,0,0.45); color: #fecdd3; font-size: 1.15rem; font-weight: 900; padding: 6px 16px; border-radius: 999px; margin-right: 8px; border: 1px solid rgba(254, 205, 211, 0.3);">
-          {{ expired_members_count }}
-        </span>
-      {% endif %}
-    </a>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Expiring Row -->
+          <a href="{% url 'members:member_list' %}?filter=expiring" style="text-decoration: none; display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: var(--radius-xs); background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle);">
+            <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600;">اشتراكات تنتهي قريباً</span>
+            <span style="font-weight: 700; font-size: 0.82rem; color: {% if expiring_soon_count > 0 %}#f59e0b{% else %}var(--text-dim){% endif %}; font-variant-numeric: tabular-nums;">
+              {{ expiring_soon_count }}
+            </span>
+          </a>
 
-    <!-- Button 5: شراء منتج من البار -->
-    <button type="button" onclick="openBarSaleModal()" class="btn-dashboard-action" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; min-height: 105px; border-radius: 16px; font-size: 1.4rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 16px; border: 2px solid rgba(56, 189, 248, 0.5); box-shadow: 0 8px 22px rgba(2, 132, 199, 0.35); cursor: pointer; padding: 18px 24px;">
-      <span style="font-size: 2.2rem;">🥤</span>
-      <span>شراء منتج من البار</span>
-    </button>
+          <!-- Debts Row -->
+          <a href="{% url 'members:member_list' %}?filter=remaining" style="text-decoration: none; display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: var(--radius-xs); background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle);">
+            <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600;">أعضاء عليهم متبقي (ديون)</span>
+            <span style="font-weight: 700; font-size: 0.82rem; color: {% if total_debt > 0 %}#ef4444{% else %}var(--text-dim){% endif %}; font-variant-numeric: tabular-nums;">
+              {{ total_debt }} {{ gym_profile.currency|default:"ج" }}
+            </span>
+          </a>
 
-    <!-- Button 6: لم يدفع للبار (آجل) -->
-    <button type="button" onclick="openBarUnpaidModal()" class="btn-dashboard-action" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: #ffffff; min-height: 105px; border-radius: 16px; font-size: 1.4rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 16px; border: 2px solid rgba(167, 139, 250, 0.5); box-shadow: 0 8px 22px rgba(109, 40, 217, 0.35); cursor: pointer; padding: 18px 24px;">
-      <span style="font-size: 2.2rem;">⏳</span>
-      <span>لم يدفع للبار (آجل)</span>
-      {% if unpaid_bar_count > 0 %}
-        <span style="background: #ef4444; color: #ffffff; font-size: 1.1rem; font-weight: 900; padding: 6px 14px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); margin-right: 8px;">
-          {{ unpaid_bar_count }} ({{ unpaid_bar_total }} ج)
-        </span>
-      {% else %}
-        <span style="background: rgba(255,255,255,0.2); color: #f1f5f9; font-size: 0.95rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; margin-right: 8px;">
-          0 معلق
-        </span>
-      {% endif %}
-    </button>
+          <!-- WhatsApp Queue Row -->
+          {% if license_features.whatsapp %}
+          <a href="{% url 'messaging:whatsapp_queue' %}" style="text-decoration: none; display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: var(--radius-xs); background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle);">
+            <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 600;">رسائل واتساب في الانتظار</span>
+            <span style="font-weight: 700; font-size: 0.82rem; color: {% if pending_whatsapp_count > 0 %}#38bdf8{% else %}var(--text-dim){% endif %}; font-variant-numeric: tabular-nums;">
+              {{ pending_whatsapp_count }}
+            </span>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Quick Unpaid Bar Tabs Card (Direct Action) -->
+      <div class="card" style="padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border-subtle);">
+          <span style="font-weight: 700; font-size: 0.82rem; color: var(--text-main);">آجل البار غير المحصل</span>
+          <button type="button" onclick="openBarSaleModal()" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 2px 7px;">
+            + طلب جديد
+          </button>
+        </div>
+
+        {% if unpaid_bar_sales %}
+          <div style="display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto;">
+            {% for s in unpaid_bar_sales|slice:":4" %}
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: var(--radius-xs); background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle);">
+              <div>
+                <span style="font-weight: 700; font-size: 0.80rem; color: var(--text-main); display: block;">{{ s.buyer_name }}</span>
+                <span style="font-size: 0.72rem; color: var(--text-dim);">{{ s.product.name }} &times; {{ s.quantity }}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 0.80rem; font-weight: 800; color: #a78bfa; font-variant-numeric: tabular-nums;">{{ s.total_price }} ج</span>
+                <form method="post" action="{% url 'payments:bar_settle_sale' s.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <input type="hidden" name="payment_method" value="نقدي">
+                  <button type="submit" class="btn btn-primary btn-sm" style="font-size: 0.70rem; padding: 2px 6px;" title="سداد الآن">
+                    سداد
+                  </button>
+                </form>
+              </div>
+            </div>
+            {% endfor %}
+            {% if unpaid_bar_sales|length > 4 %}
+            <button type="button" onclick="openBarUnpaidModal()" style="background: none; border: none; color: #a78bfa; font-size: 0.74rem; font-weight: 600; cursor: pointer; text-align: center; padding: 4px;">
+              عرض كافة الطلبات الآجلة ({{ unpaid_bar_sales|length }}) &larr;
+            </button>
+            {% endif %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 14px 6px; color: var(--text-dim); font-size: 0.78rem;">
+            لا توجد حسابات معلقة على البار حالياً.
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
 
   </div>
 
 </div>
 
-<!-- 1. Modal: شراء منتج من البار (Fast Bar Sale - Wide Responsive Layout) -->
-<div id="bar-sale-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 9999; justify-content: center; align-items: center; padding: 20px; overflow-y: auto;">
-  <div style="background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 22px; width: 100%; max-width: 1080px; max-height: 92vh; overflow-y: auto; padding: 26px 30px; box-shadow: 0 25px 60px rgba(0,0,0,0.6);">
+<!-- 1. Modal: شراء منتج من البار (Fast Bar Sale - Professional Desktop Modal) -->
+<div id="bar-sale-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9999; justify-content: center; align-items: center; padding: 16px; overflow-y: auto;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); width: 100%; max-width: 960px; max-height: 90vh; overflow-y: auto; padding: 18px 22px; box-shadow: var(--shadow-lg);">
     
     <!-- Modal Header -->
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--border-color); padding-bottom: 14px; margin-bottom: 20px;">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 2rem; background: rgba(56, 189, 248, 0.15); width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.3);">🥤</span>
-        <div>
-          <h2 style="color: var(--text-main); font-size: 1.45rem; font-weight: 900; margin: 0;">شراء منتج من البار والمشروبات</h2>
-          <small style="color: var(--text-muted); font-size: 0.85rem;">نقطة بيع سريعة للمشروبات والمكملات والوجبات الخفيفة (نقدي أو آجل بعد التمرين)</small>
-        </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 14px;">
+      <div>
+        <h2 style="color: var(--text-main); font-size: 1.15rem; font-weight: 700; margin: 0;">تسجيل مبيعات البار</h2>
+        <span style="color: var(--text-muted); font-size: 0.76rem;">تسجيل عملية بيع نقدية أو مؤجلة على حساب المشترك</span>
       </div>
-      <button type="button" onclick="closeBarSaleModal()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; width: 38px; height: 38px; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s ease;" onmouseover="this.style.color='#fff'; this.style.background='rgba(239,68,68,0.2)';" onmouseout="this.style.color='var(--text-muted)'; this.style.background='rgba(255,255,255,0.08)';">✕</button>
+      <button type="button" onclick="closeBarSaleModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 4px 8px; line-height: 1;">✕</button>
     </div>
 
     <form method="post" action="{% url 'payments:bar_quick_sale' %}" id="quickBarSaleForm">
@@ -118,44 +313,34 @@
       <input type="hidden" name="member_id" id="barMemberIdInput" value="">
 
       <!-- 2-Column Wide Layout -->
-      <div style="display: grid; grid-template-columns: 1.35fr 1fr; gap: 24px; align-items: start;">
+      <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: start;">
         
-        <!-- Right Column: Big Touch Product Cards & Instant Filter -->
-        <div style="background: var(--bg-surface-subtle); border: 1.5px solid var(--border-color); border-radius: 16px; padding: 18px 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <label style="font-size: 1rem; font-weight: 900; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
-              <span>📦</span> اختر المنتج من البار
+        <!-- Right Column: Product Cards & Live Filter -->
+        <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label style="font-size: 0.82rem; font-weight: 700; color: var(--text-main); margin: 0;">
+              اختر المنتج
             </label>
-            <span style="font-size: 0.82rem; color: #38bdf8; font-weight: 800; background: rgba(56, 189, 248, 0.12); padding: 3px 10px; border-radius: 8px;">⚡ اضغط على كرت المنتج مباشرة</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">انقر على المنتج للاختيار</span>
           </div>
 
           <!-- Quick Product Search Input -->
-          <div style="position: relative; margin-bottom: 14px;">
-            <input type="text" id="barProductSearchInput" oninput="filterBarProductsLive(this.value)" placeholder="🔍 اكتب اسم المنتج للفلترة الفورية (ماء، بروتين، مشروب طاقة)..." class="form-control" style="height: 44px; font-size: 0.95rem; padding-right: 38px; border-radius: 10px;" autocomplete="off">
-            <span style="position: absolute; right: 12px; top: 12px; color: var(--text-muted); pointer-events: none; font-size: 1.1rem;">🔍</span>
+          <div style="position: relative; margin-bottom: 10px;">
+            <input type="text" id="barProductSearchInput" oninput="filterBarProductsLive(this.value)" placeholder="ابحث باسم المنتج..." class="form-control" style="height: 32px; font-size: 0.82rem;" autocomplete="off">
           </div>
 
-          <!-- Interactive Large Product Cards Grid -->
-          <div id="barProductChipsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 12px; max-height: 440px; overflow-y: auto; padding: 4px; border-radius: 10px;">
+          <!-- Interactive Product Cards Grid -->
+          <div id="barProductChipsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; max-height: 380px; overflow-y: auto; padding: 2px;">
             {% for p in bar_products %}
-              <button type="button" class="bar-product-chip" data-id="{{ p.id }}" data-name="{{ p.name|lower }}" data-price="{{ p.price }}" data-stock="{{ p.stock_quantity }}" onclick="selectBarProductChip('{{ p.id }}')" style="background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 14px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none;">
-                <div style="font-size: 1.8rem; line-height: 1;">
-                  {% if 'ماء' in p.name or 'مياه' in p.name %}💧
-                  {% elif 'بروتين' in p.name or 'protein' in p.name|lower %}🥤
-                  {% elif 'شوكو' in p.name or 'سناك' in p.name or 'بار' in p.name %}🍫
-                  {% elif 'ريد' in p.name or 'طاقة' in p.name or 'energy' in p.name|lower %}⚡
-                  {% elif 'عصير' in p.name %}🧃
-                  {% elif 'قهوة' in p.name or 'اسبريسو' in p.name %}☕
-                  {% else %}🥤{% endif %}
-                </div>
-                <div style="color: var(--text-main); font-weight: 800; font-size: 0.96rem; line-height: 1.3; min-height: 2.6em; display: flex; align-items: center;">{{ p.name }}</div>
-                <div style="color: #A8F14B; font-weight: 900; font-size: 1.25rem;">{{ p.price }} <small style="font-size: 0.72rem; color: #94a3b8;">{{ gym_profile.currency|default:"ج" }}</small></div>
-                <span style="font-size: 0.74rem; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: {% if p.stock_quantity <= 0 %}rgba(239, 68, 68, 0.2); color: #f87171;{% else %}rgba(56, 189, 248, 0.15); color: #38bdf8;{% endif %};">
+              <button type="button" class="bar-product-chip" data-id="{{ p.id }}" data-name="{{ p.name|lower }}" data-price="{{ p.price }}" data-stock="{{ p.stock_quantity }}" onclick="selectBarProductChip('{{ p.id }}')" style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-xs); padding: 10px 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; transition: border-color 0.15s, background 0.15s; outline: none;">
+                <div style="color: var(--text-main); font-weight: 700; font-size: 0.82rem; line-height: 1.3; min-height: 2.2em; display: flex; align-items: center;">{{ p.name }}</div>
+                <div style="color: var(--accent-green); font-weight: 800; font-size: 0.95rem; font-variant-numeric: tabular-nums;">{{ p.price }} <small style="font-size: 0.70rem; color: var(--text-dim);">{{ gym_profile.currency|default:"ج" }}</small></div>
+                <span style="font-size: 0.70rem; font-weight: 600; padding: 2px 6px; border-radius: 3px; background: {% if p.stock_quantity <= 0 %}rgba(239, 68, 68, 0.15); color: #ef4444;{% else %}var(--bg-surface-elevated); color: var(--text-secondary);{% endif %};">
                   {% if p.stock_quantity <= 0 %}نفذت الكمية{% else %}متاح: {{ p.stock_quantity }}{% endif %}
                 </span>
               </button>
             {% empty %}
-              <div style="grid-column: 1 / -1; text-align: center; padding: 30px; color: var(--text-muted);">
+              <div style="grid-column: 1 / -1; text-align: center; padding: 24px; color: var(--text-muted); font-size: 0.80rem;">
                 لا توجد منتجات مسجلة بالمخزون حالياً
               </div>
             {% endfor %}
@@ -172,129 +357,114 @@
         </div>
 
         <!-- Left Column: Checkout Details & Member Search -->
-        <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
           
           <!-- Quantity Stepper -->
-          <div style="background: var(--bg-surface-subtle); border: 1.5px solid var(--border-color); border-radius: 14px; padding: 12px 16px;">
-            <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">
-              الكمية المطلوبة *
+          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px 12px;">
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">
+              الكمية
             </label>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <button type="button" onclick="stepBarQty(-1)" class="btn btn-secondary" style="width: 46px; height: 46px; font-size: 1.5rem; font-weight: 900; padding: 0; justify-content: center; border-radius: 10px;">-</button>
-              <input type="number" id="barQtyInput" name="quantity" value="1" min="1" max="999" oninput="updateBarSaleTotal()" class="form-control" style="text-align: center; font-size: 1.35rem; font-weight: 900; height: 46px; border-radius: 10px;">
-              <button type="button" onclick="stepBarQty(1)" class="btn btn-secondary" style="width: 46px; height: 46px; font-size: 1.5rem; font-weight: 900; padding: 0; justify-content: center; border-radius: 10px;">+</button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" onclick="stepBarQty(-1)" class="btn btn-secondary" style="width: 32px; height: 32px; font-size: 1.1rem; font-weight: 700; padding: 0; justify-content: center;">-</button>
+              <input type="number" id="barQtyInput" name="quantity" value="1" min="1" max="999" oninput="updateBarSaleTotal()" class="form-control" style="text-align: center; font-size: 1.05rem; font-weight: 700; height: 32px;">
+              <button type="button" onclick="stepBarQty(1)" class="btn btn-secondary" style="width: 32px; height: 32px; font-size: 1.1rem; font-weight: 700; padding: 0; justify-content: center;">+</button>
             </div>
           </div>
 
           <!-- Member Live Search & Selection Section -->
-          <div style="background: var(--bg-surface-subtle); border: 1.5px solid var(--border-color); border-radius: 14px; padding: 12px 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <label style="font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin: 0;">
-                المشتري / اللاعب
-              </label>
-              <span style="font-size: 0.75rem; color: #38bdf8;">👤 بحث سريع في الأعضاء</span>
-            </div>
+          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px 12px;">
+            <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px; display: block;">
+              المشتري / اللاعب
+            </label>
 
             <!-- Quick Member Live Search -->
-            <div style="position: relative; margin-bottom: 8px;">
-              <input type="text" id="barMemberSearchInput" oninput="searchBarMembersLive(this.value)" placeholder="🔍 اكتب اسم المشترك، الكود (MEM)، أو الهاتف..." class="form-control" style="height: 40px; font-size: 0.88rem;" autocomplete="off">
+            <div style="position: relative; margin-bottom: 6px;">
+              <input type="text" id="barMemberSearchInput" oninput="searchBarMembersLive(this.value)" placeholder="ابحث باسم العضو أو الهاتف أو الكود..." class="form-control" style="height: 32px; font-size: 0.80rem;" autocomplete="off">
               
               <!-- Dropdown suggestions -->
-              <div id="barMemberSearchResults" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #0b1320; border: 1px solid #38bdf8; border-radius: 10px; max-height: 220px; overflow-y: auto; z-index: 10000; box-shadow: 0 12px 30px rgba(0,0,0,0.7);">
+              <div id="barMemberSearchResults" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-sm); max-height: 200px; overflow-y: auto; z-index: 10000; box-shadow: var(--shadow-md);">
               </div>
             </div>
 
             <!-- Selected Member Pill -->
-            <div id="barSelectedMemberPill" style="display: none; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px; justify-content: space-between; align-items: center;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 1.1rem; color: #38bdf8;">✓</span>
-                <div>
-                  <strong id="barSelectedMemberName" style="color: #38bdf8; font-size: 0.92rem; display: block;"></strong>
-                  <small id="barSelectedMemberMeta" style="color: var(--text-muted); font-size: 0.76rem;"></small>
-                </div>
+            <div id="barSelectedMemberPill" style="display: none; background: var(--bg-surface); border: 1px solid var(--accent-green); border-radius: var(--radius-xs); padding: 6px 10px; margin-bottom: 6px; justify-content: space-between; align-items: center;">
+              <div>
+                <strong id="barSelectedMemberName" style="color: var(--accent-green); font-size: 0.82rem; display: block;"></strong>
+                <span id="barSelectedMemberMeta" style="color: var(--text-muted); font-size: 0.72rem;"></span>
               </div>
-              <button type="button" onclick="clearSelectedBarMember()" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 0.75rem; color: #ef4444;" title="إزالة واختيار عميل آخر">
-                ✕ إلغاء
+              <button type="button" onclick="clearSelectedBarMember()" class="btn btn-secondary btn-sm" style="padding: 1px 6px; font-size: 0.72rem; color: #ef4444;" title="إزالة">
+                إلغاء
               </button>
             </div>
 
             <!-- Buyer Name Input (Auto-filled or walk-in) -->
-            <div style="margin-bottom: 8px;">
-              <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
-                اسم المشتري
-              </label>
-              <input type="text" id="barBuyerNameInput" name="buyer_name" class="form-control" placeholder="اسم المتدرب أو اتركه كعميل نقدي..." style="height: 38px; font-size: 0.9rem;">
+            <div style="margin-bottom: 6px;">
+              <input type="text" id="barBuyerNameInput" name="buyer_name" class="form-control" placeholder="اسم العميل (أو اتركه نقدي)..." style="height: 32px; font-size: 0.82rem;">
             </div>
 
             <!-- Phone Number Input (Required for Unpaid!) -->
             <div id="barBuyerPhoneBox">
-              <label style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
-                <span>
-                  رقم الهاتف 
-                  <span id="barPhoneRequiredBadge" style="color: #ef4444; font-weight: 900; display: none;">* (إجباري عند الشراء بالآجل)</span>
-                </span>
-                <span id="barPhoneHint" style="font-size: 0.72rem; color: #a78bfa;">11 رقم (متابعة وتحصيل)</span>
+              <label style="display: flex; justify-content: space-between; align-items: center; font-size: 0.74rem; font-weight: 600; color: var(--text-muted); margin-bottom: 3px;">
+                <span>رقم الهاتف <span id="barPhoneRequiredBadge" style="color: #ef4444; font-weight: 700; display: none;">* (إجباري للآجل)</span></span>
+                <span id="barPhoneHint" style="font-size: 0.70rem; color: var(--text-dim);">11 رقم</span>
               </label>
-              <input type="tel" id="barBuyerPhoneInput" name="buyer_phone" class="form-control" placeholder="مثال: 01012345678" style="height: 38px; font-size: 0.95rem; direction: ltr; text-align: right;" oninput="validateBarPhoneLive()">
-              <div id="barPhoneErrorMsg" style="display: none; color: #ef4444; font-size: 0.78rem; font-weight: 700; margin-top: 4px;"></div>
+              <input type="tel" id="barBuyerPhoneInput" name="buyer_phone" class="form-control" placeholder="01012345678" style="height: 32px; font-size: 0.84rem; direction: ltr; text-align: right;" oninput="validateBarPhoneLive()">
+              <div id="barPhoneErrorMsg" style="display: none; color: #ef4444; font-size: 0.74rem; font-weight: 600; margin-top: 3px;"></div>
             </div>
           </div>
 
           <!-- Payment Status Toggle: تم الدفع vs لم يدفع (آجل) -->
           <div>
-            <label style="display: block; font-size: 0.88rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">
-              حالة الدفع *
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">
+              حالة السداد
             </label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-              <label id="lbl-status-paid" style="border: 2px solid #10b981; background: rgba(16, 185, 129, 0.12); padding: 10px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.15s ease;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <label id="lbl-status-paid" style="border: 1px solid var(--accent-green); background: rgba(16, 185, 129, 0.08); padding: 8px; border-radius: var(--radius-xs); cursor: pointer; text-align: center; transition: all 0.15s ease;">
                 <input type="radio" name="payment_status" value="paid" checked onchange="toggleBarPaymentStatus()" style="display: none;">
-                <span style="color: #10b981; font-weight: 900; font-size: 0.95rem; display: block;">✅ تم الدفع الآن</span>
-                <small style="color: var(--text-muted); font-size: 0.74rem;">تسجيل فوري بالخزينة</small>
+                <span style="color: var(--accent-green); font-weight: 700; font-size: 0.84rem; display: block;">تم السداد نقداً</span>
               </label>
 
-              <label id="lbl-status-unpaid" style="border: 2px solid rgba(255,255,255,0.15); background: var(--bg-surface-subtle); padding: 10px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.15s ease;">
+              <label id="lbl-status-unpaid" style="border: 1px solid var(--border-color); background: var(--bg-surface-subtle); padding: 8px; border-radius: var(--radius-xs); cursor: pointer; text-align: center; transition: all 0.15s ease;">
                 <input type="radio" name="payment_status" value="unpaid" onchange="toggleBarPaymentStatus()" style="display: none;">
-                <span style="color: #c084fc; font-weight: 900; font-size: 0.95rem; display: block;">⏳ لم يدفع (آجل)</span>
-                <small style="color: var(--text-muted); font-size: 0.74rem;">هيدفع بعد التمرين</small>
+                <span style="color: #c084fc; font-weight: 700; font-size: 0.84rem; display: block;">آجل (على الحساب)</span>
               </label>
             </div>
           </div>
 
           <!-- Payment Method (shown if paid) -->
           <div id="barPaymentMethodBox">
-            <label style="display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); margin-bottom: 5px;">طريقة الدفع</label>
-            <select name="payment_method" class="form-control" style="height: 40px; font-weight: 700;">
+            <select name="payment_method" class="form-control" style="height: 32px; font-size: 0.80rem;">
               <option value="نقدي" selected>نقدي (Cash)</option>
               <option value="انستا باي">انستا باي (InstaPay)</option>
-              <option value="محفظة الكترونية">محفظة الكترونية (Vodafone/Orange/Etisalat Cash)</option>
-              <option value="فيزا">فيزا / بطاقة بنكية (Visa/Mastercard)</option>
+              <option value="محفظة الكترونية">محفظة إلكترونية</option>
+              <option value="فيزا">بطاقة بنكية (Visa/Mastercard)</option>
             </select>
           </div>
 
           <!-- Notes field -->
           <div>
-            <input type="text" name="notes" class="form-control" placeholder="ملاحظة إضافية (اختياري)..." style="height: 38px; font-size: 0.85rem;">
+            <input type="text" name="notes" class="form-control" placeholder="ملاحظة إضافية (اختياري)..." style="height: 32px; font-size: 0.80rem;">
           </div>
 
           <!-- Total Price Live Calculation Strip -->
-          <div style="background: rgba(168, 241, 75, 0.12); border: 2px solid rgba(168, 241, 75, 0.4); border-radius: 12px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: 800; color: var(--text-main); font-size: 1rem;">الإجمالي المطلوب:</span>
-            <strong id="barSaleTotalText" style="color: #A8F14B; font-size: 1.45rem; font-weight: 900;">0.00 ج.م</strong>
+          <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-xs); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 600; color: var(--text-muted); font-size: 0.82rem;">الإجمالي:</span>
+            <strong id="barSaleTotalText" style="color: var(--accent-green); font-size: 1.15rem; font-weight: 800; font-variant-numeric: tabular-nums;">0.00 ج.م</strong>
           </div>
 
           <!-- Submit Buttons -->
-          <div style="display: flex; gap: 10px; margin-top: 4px;">
-            <button type="submit" id="barSubmitSaleBtn" class="btn btn-primary" style="flex: 1; min-height: 48px; font-size: 1.05rem; font-weight: 900; justify-content: center; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-color: #0284c7; border-radius: 10px;">
-              ✓ تسجيل العملية فوراً
+          <div style="display: flex; gap: 8px; margin-top: 2px;">
+            <button type="submit" id="barSubmitSaleBtn" class="btn btn-primary" style="flex: 1; height: 34px; font-size: 0.84rem; font-weight: 700; justify-content: center;">
+              تأكيد العملية
             </button>
-            <button type="button" onclick="closeBarSaleModal()" class="btn btn-secondary" style="min-height: 48px; border-radius: 10px; padding: 0 18px;">
+            <button type="button" onclick="closeBarSaleModal()" class="btn btn-secondary" style="height: 34px; font-size: 0.84rem; padding: 0 14px;">
               إلغاء
             </button>
           </div>
 
-          <div style="text-align: center; margin-top: 2px;">
-            <a href="{% url 'payments:bar_inventory' %}" style="color: #38bdf8; font-size: 0.84rem; text-decoration: none; font-weight: 800;">
-              📦 فتح صفحة إدارة مخزون وأسعار البار بالكامل ←
+          <div style="text-align: center;">
+            <a href="{% url 'payments:bar_inventory' %}" style="color: var(--text-dim); font-size: 0.76rem; text-decoration: none;">
+              فتح إدارة مخزون البار &larr;
             </a>
           </div>
         </div>
@@ -305,69 +475,62 @@
 </div>
 
 <!-- 2. Modal: لم يدفع للبار (Unpaid / Deferred Bar Orders) -->
-<div id="bar-unpaid-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; padding: 18px;">
-  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 18px; width: 100%; max-width: 680px; max-height: 85vh; display: flex; flex-direction: column; padding: 24px; box-shadow: var(--shadow-lg);">
+<div id="bar-unpaid-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 9999; justify-content: center; align-items: center; padding: 16px;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); width: 100%; max-width: 650px; max-height: 85vh; display: flex; flex-direction: column; padding: 18px 20px; box-shadow: var(--shadow-lg);">
     
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 14px;">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 1.5rem;">⏳</span>
-        <div>
-          <h2 style="color: var(--text-main); font-size: 1.35rem; font-weight: 900; margin: 0;">حسابات البار المعلقة (آجل)</h2>
-          <p style="color: var(--text-muted); font-size: 0.8rem; margin: 2px 0 0 0;">لاعبين أخذوا منتجات وهيدفعوا بعد انتهاء التمرين</p>
-        </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 12px;">
+      <div>
+        <h2 style="color: var(--text-main); font-size: 1.15rem; font-weight: 700; margin: 0;">حسابات البار المعلقة (الآجل)</h2>
+        <span style="color: var(--text-muted); font-size: 0.76rem;">قائمة الطلبات غير المسددة لمتابعتها وسدادها</span>
       </div>
-      <button type="button" onclick="closeBarUnpaidModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
+      <button type="button" onclick="closeBarUnpaidModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; padding: 4px 8px; line-height: 1;">✕</button>
     </div>
 
     <!-- Scrollable Unpaid Orders List -->
-    <div style="flex: 1; overflow-y: auto; padding-left: 4px;">
+    <div style="flex: 1; overflow-y: auto;">
       {% if unpaid_bar_sales %}
-        <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
           {% for s in unpaid_bar_sales %}
-          <div style="background: var(--bg-surface-subtle); border: 1px solid rgba(139, 92, 246, 0.35); border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-xs); padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <strong style="color: var(--text-main); font-size: 1.05rem;">{{ s.buyer_name }}</strong>
-                <span style="font-size: 0.76rem; color: #a78bfa; background: rgba(139, 92, 246, 0.16); padding: 2px 8px; border-radius: 6px; font-weight: 800;">آجل</span>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <strong style="color: var(--text-main); font-size: 0.86rem;">{{ s.buyer_name }}</strong>
+                <span class="badge" style="background: rgba(167, 139, 250, 0.15); color: #c084fc; font-size: 0.70rem; padding: 1px 5px;">آجل</span>
               </div>
               
               {% if s.buyer_phone %}
-              <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
-                <span style="color: #38bdf8; font-size: 0.82rem; font-weight: 800; direction: ltr; font-family: monospace;">📱 {{ s.buyer_phone }}</span>
-                <a href="https://wa.me/2{{ s.buyer_phone }}?text=مرحباً%20كابتن%20{{ s.buyer_name }}،%20نود%20تذكيركم%20بحساب%20البار%20المعلق%20بمبلغ%20{{ s.total_price }}%20ج.م" target="_blank" class="btn btn-secondary btn-sm" style="padding: 1px 7px; font-size: 0.72rem; color: #22c55e; border-color: rgba(34, 197, 94, 0.35);" title="مراسلة عبر واتساب">
-                  💬 واتساب
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                <span style="color: var(--text-muted); font-size: 0.74rem; direction: ltr; font-family: monospace;">{{ s.buyer_phone }}</span>
+                <a href="https://wa.me/2{{ s.buyer_phone }}?text=مرحباً%20كابتن%20{{ s.buyer_name }}،%20نود%20تذكيركم%20بحساب%20البار%20المعلق%20بمبلغ%20{{ s.total_price }}%20ج.م" target="_blank" class="btn btn-secondary btn-sm" style="padding: 0 6px; font-size: 0.70rem; color: #22c55e;" title="واتساب">
+                  واتساب
                 </a>
               </div>
               {% endif %}
 
-              <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 3px;">
-                المنتج: <span style="color: #38bdf8; font-weight: 800;">{{ s.product.name }}</span> (عدد: {{ s.quantity }})
-                {% if s.notes %} • <span style="color: var(--text-muted);">{{ s.notes }}</span>{% endif %}
-              </div>
-              <div style="font-size: 0.76rem; color: var(--text-dim); margin-top: 3px; font-family: monospace;">
-                {{ s.created_at|date:"Y-m-d h:i A" }}
+              <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 2px;">
+                المنتج: <span style="color: var(--text-secondary); font-weight: 600;">{{ s.product.name }}</span> (عدد: {{ s.quantity }})
+                {% if s.notes %} &bull; <span>{{ s.notes }}</span>{% endif %}
+                &bull; <span style="font-family: monospace; font-size: 0.72rem;">{{ s.created_at|date:"h:i A" }}</span>
               </div>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="text-align: left;">
-                <div style="color: #A8F14B; font-size: 1.25rem; font-weight: 900;">
-                  {{ s.total_price }} <small style="font-size: 0.8rem;">{{ gym_profile.currency|default:"ج" }}</small>
-                </div>
-              </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--accent-green); font-size: 0.95rem; font-weight: 800; font-variant-numeric: tabular-nums;">
+                {{ s.total_price }} <small style="font-size: 0.72rem; color: var(--text-dim);">{{ gym_profile.currency|default:"ج" }}</small>
+              </span>
 
               <!-- Fast Actions: Settle Now & Cancel -->
-              <div style="display: flex; gap: 6px;">
+              <div style="display: flex; gap: 4px;">
                 <form method="post" action="{% url 'payments:bar_settle_sale' s.id %}" style="display: inline;">
                   {% csrf_token %}
                   <input type="hidden" name="payment_method" value="نقدي">
-                  <button type="submit" class="btn btn-primary btn-sm" style="background: #10b981; border-color: #10b981; font-weight: 800; padding: 6px 12px; font-size: 0.85rem;" title="سداد الحساب الآن وإضافته للخزينة">
-                    ✓ سداد الآن
+                  <button type="submit" class="btn btn-primary btn-sm" style="font-size: 0.74rem; padding: 2px 8px;" title="سداد الحساب الآن">
+                    سداد
                   </button>
                 </form>
                 <form method="post" action="{% url 'payments:bar_cancel_sale' s.id %}" onsubmit="return confirm('إلغاء هذا الطلب واسترجاع الكمية للمخزون؟');" style="display: inline;">
                   {% csrf_token %}
-                  <button type="submit" class="btn btn-secondary btn-sm" style="padding: 6px 10px; color: #ef4444; font-size: 0.85rem;" title="إلغاء الطلب">
+                  <button type="submit" class="btn btn-secondary btn-sm" style="padding: 2px 6px; color: #ef4444; font-size: 0.74rem;" title="إلغاء الطلب">
                     ✕
                   </button>
                 </form>
@@ -377,21 +540,19 @@
           {% endfor %}
         </div>
       {% else %}
-        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
-          <span style="font-size: 2.8rem; display: block; margin-bottom: 10px;">✨</span>
-          <p style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">لا توجد أي مبالغ معلقة على البار حالياً</p>
-          <p style="font-size: 0.85rem;">جميع طلبات البار مسددة بالكامل ولا يوجد مديونيات مؤجلة.</p>
+        <div style="text-align: center; padding: 28px 14px; color: var(--text-muted); font-size: 0.82rem;">
+          لا توجد أي مبالغ معلقة على البار حالياً.
         </div>
       {% endif %}
     </div>
 
     <!-- Modal Footer -->
-    <div style="border-top: 1px solid var(--border-color); padding-top: 14px; margin-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <div style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
       <div>
-        <span style="color: var(--text-muted); font-size: 0.85rem;">إجمالي المعلقات: </span>
-        <strong style="color: #c084fc; font-size: 1.15rem; font-weight: 900;">{{ unpaid_bar_total }} {{ gym_profile.currency|default:"ج" }}</strong>
+        <span style="color: var(--text-muted); font-size: 0.78rem;">إجمالي المعلقات: </span>
+        <strong style="color: #c084fc; font-size: 0.92rem; font-weight: 700; font-variant-numeric: tabular-nums;">{{ unpaid_bar_total }} {{ gym_profile.currency|default:"ج" }}</strong>
       </div>
-      <button type="button" onclick="closeBarUnpaidModal()" class="btn btn-secondary btn-sm" style="padding: 6px 18px;">
+      <button type="button" onclick="closeBarUnpaidModal()" class="btn btn-secondary btn-sm" style="padding: 3px 14px; font-size: 0.78rem;">
         إغلاق
       </button>
     </div>

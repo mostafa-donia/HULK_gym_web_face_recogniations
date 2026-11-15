@@ -415,8 +415,8 @@
         <button type="button" onclick="if(window.history.length > 1) { window.history.back(); } else { window.location.href='/'; }" 
                 class="top-navbar-back-btn" 
                 title="الرجوع للصفحة السابقة"
-                style="cursor: pointer; display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 12px; border-radius: 8px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16); color: var(--text-main, #fff); font-weight: 800; font-size: 0.8rem; transition: all 0.2s; white-space: nowrap;">
-          <span style="font-size: 0.95rem;">←</span>
+                style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border-radius: var(--radius-sm); background: var(--bg-surface-elevated); border: 1px solid var(--border-color); color: var(--text-main); font-weight: 600; font-size: 0.8rem; transition: background 0.15s; white-space: nowrap;">
+          <span style="font-size: 0.85rem; line-height: 1;">&rarr;</span>
           <span>رجوع</span>
         </button>
         {% endif %}
@@ -444,23 +444,19 @@
              style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;" 
              title="العمليات المالية: المدفوعات، المصروفات، الخزائن، وتسليم العهدة">
             <span>الماليات</span>
-            <span style="font-size: 0.60rem; opacity: 0.75; line-height: 1;">▾</span>
+            <span style="font-size: 0.60rem; opacity: 0.7; line-height: 1;">▾</span>
           </a>
-          <div id="navDropdownFinancialsMenu" class="top-nav-dropdown-panel" style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 220px; background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,0.65); z-index: 9999; padding: 4px; flex-direction: column; gap: 2px;">
+          <div id="navDropdownFinancialsMenu" class="top-nav-dropdown-panel" style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 210px; background: var(--bg-surface-elevated, #1a2234); border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12)); border-radius: var(--radius-md, 6px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 9999; padding: 4px; flex-direction: column; gap: 2px;">
             <a href="{% url 'payments:payment_list' %}" class="top-nav-sub-link {% if 'payments' in request.path and not 'bar' in request.path and not 'accounts' in request.path and not 'handovers' in request.path %}active{% endif %}">
-              <span>💳</span>
               <span>المدفوعات والاشتراكات</span>
             </a>
             <a href="{% url 'expenses:expense_list' %}" class="top-nav-sub-link {% if 'expenses' in request.path %}active{% endif %}">
-              <span>📉</span>
               <span>المصروفات وسندات الصرف</span>
             </a>
             <a href="{% url 'payments:accounts_index' %}" class="top-nav-sub-link {% if 'accounts' in request.path %}active{% endif %}">
-              <span>🏦</span>
               <span>الخزائن والحسابات والتحويلات</span>
             </a>
             <a href="{% url 'payments:reception_handovers' %}" class="top-nav-sub-link {% if 'handovers' in request.path %}active{% endif %}">
-              <span>🤝</span>
               <span>تسليم عهدة الريسبشن</span>
             </a>
           </div>
@@ -498,32 +494,26 @@
              style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;" 
              title="لوحة المدير، ذكاء الجيم، وإعدادات المنظومة">
             <span>الإدارة</span>
-            <span style="font-size: 0.60rem; opacity: 0.75; line-height: 1;">▾</span>
+            <span style="font-size: 0.60rem; opacity: 0.7; line-height: 1;">▾</span>
           </a>
-          <div id="navDropdownManagerMenu" class="top-nav-dropdown-panel" style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 210px; background: #0F172A; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,0.65); z-index: 9999; padding: 4px; flex-direction: column; gap: 2px;">
+          <div id="navDropdownManagerMenu" class="top-nav-dropdown-panel" style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 210px; background: var(--bg-surface-elevated, #1a2234); border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12)); border-radius: var(--radius-md, 6px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 9999; padding: 4px; flex-direction: column; gap: 2px;">
             <a href="{% url 'core:manager_dashboard' %}" class="top-nav-sub-link {% if request.resolver_match.view_name == 'core:manager_dashboard' and 'tab=ai' not in request.get_full_path %}active{% endif %}">
-              <span>📊</span>
               <span>لوحة المدير العامة</span>
             </a>
             <a href="{% url 'reports:member_retention' %}" class="top-nav-sub-link {% if 'retention' in request.path %}active{% endif %}">
-              <span>🔄</span>
               <span>حركة واحتفاظ الأعضاء</span>
             </a>
             <a href="{% url 'core:manager_dashboard' %}?tab=ai" class="top-nav-sub-link {% if 'tab=ai' in request.get_full_path or 'ai-strategy' in request.path %}active{% endif %}">
-              <span>🧠</span>
               <span>ذكاء الجيم والتوقعات</span>
             </a>
             <a href="{% url 'core:settings' %}" class="top-nav-sub-link {% if 'settings' in request.path %}active{% endif %}">
-              <span>⚙️</span>
               <span>إعدادات النظام والكاميرات</span>
             </a>
             <a href="{% url 'core:manager_mobile_dashboard' %}?view=mobile" class="top-nav-sub-link" title="معاينة أو التبديل إلى نسخة الموبايل">
-              <span>📱</span>
               <span>لوحة الهاتف الذكي</span>
             </a>
-            <a href="{% url 'core:pre_delivery_qa' %}" class="top-nav-sub-link {% if 'qa' in request.path %}active{% endif %}" style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 2px; padding-top: 6px; color: #a3e635;">
-              <span>🧪</span>
-              <span>معمل فحص التسليم (QA Wizard)</span>
+            <a href="{% url 'core:pre_delivery_qa' %}" class="top-nav-sub-link {% if 'qa' in request.path %}active{% endif %}" style="border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.08)); margin-top: 2px; padding-top: 6px; color: var(--accent-green);">
+              <span>فحص واختبار المنظومة (QA)</span>
             </a>
           </div>
         </div>
@@ -724,8 +714,8 @@
         <a href="{% url 'accounts:logout' %}" class="top-btn-logout" title="تسجيل خروج">
           خروج
         </a>
-        <button type="button" onclick="shutdownSystemize()" class="top-btn-logout" style="background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #f87171; cursor: pointer;" title="إغلاق النظام وإيقاف الكاميرا بالكامل">
-          🛑 إغلاق
+        <button type="button" onclick="shutdownSystemize()" class="top-btn-logout" style="background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.3); color: #f87171; cursor: pointer;" title="إغلاق النظام وإيقاف الكاميرا بالكامل">
+          إغلاق
         </button>
       </div>
 

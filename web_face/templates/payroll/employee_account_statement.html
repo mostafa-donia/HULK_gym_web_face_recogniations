@@ -3,137 +3,137 @@
 {% block title %}كشف حساب موظف — {{ employee.name }} — {{ profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
 {% block content %}
-<div style="display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; flex-direction: column; gap: 12px;">
 
   <!-- Header & Biometric Strip -->
-  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 22px 26px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-    <div style="display: flex; align-items: center; gap: 16px;">
+  <div class="card" style="padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
       {% if employee.face_photo %}
-      <img src="{{ employee.face_photo.url }}" style="width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid #84cc16; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+      <img src="{{ employee.face_photo.url }}" style="width: 44px; height: 44px; border-radius: var(--radius-xs); object-fit: cover; border: 1px solid var(--border-color);">
       {% else %}
-      <div style="width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 2px dashed var(--border-color);">
-        👤
+      <div style="width: 44px; height: 44px; border-radius: var(--radius-xs); background: var(--bg-surface-elevated); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 1px solid var(--border-color); color: var(--text-muted);">
+        م
       </div>
       {% endif %}
 
       <div>
-        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-          <h1 style="color: var(--text-main); font-size: 1.5rem; font-weight: 900; margin: 0;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <h1 style="color: var(--text-main); font-size: 1.15rem; font-weight: 700; margin: 0;">
             {{ employee.name }}
           </h1>
-          <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 0.8rem; font-weight: 800;">
+          <span class="badge" style="background: var(--bg-surface-elevated); font-size: 0.72rem;">
             {{ employee.get_role_display }}
           </span>
           {% if employee.status == 'ACTIVE' %}
-          <span class="badge badge-active" style="font-size: 0.78rem;">نشط بالعمل</span>
+          <span class="badge badge-active" style="font-size: 0.70rem;">نشط</span>
           {% else %}
-          <span class="badge badge-debt" style="font-size: 0.78rem;">متوقف</span>
+          <span class="badge badge-debt" style="font-size: 0.70rem;">متوقف</span>
           {% endif %}
         </div>
 
-        <div style="display: flex; gap: 16px; margin-top: 6px; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap;">
-          <span>📞 {{ employee.phone|default:"-" }}</span>
-          <span>📅 تاريخ التعيين: {{ employee.hire_date|default:"-" }}</span>
-          <span>💼 الراتب الأساسي: <strong style="color: var(--text-main);">{{ employee.fixed_salary }} {{ profile.currency }}</strong></span>
-          <span>⚡ الإضافي: <strong>{{ employee.hourly_overtime_rate }} {{ profile.currency }}/ساعة</strong></span>
+        <div style="display: flex; gap: 12px; margin-top: 3px; font-size: 0.76rem; color: var(--text-muted); flex-wrap: wrap;">
+          <span>الهاتف: <strong style="color: var(--text-secondary); font-family: monospace;">{{ employee.phone|default:"-" }}</strong></span>
+          <span>التعيين: {{ employee.hire_date|default:"-" }}</span>
+          <span>الأساسي: <strong style="color: var(--text-main); font-variant-numeric: tabular-nums;">{{ employee.fixed_salary }} {{ profile.currency }}</strong></span>
+          <span>الإضافي: <strong style="color: var(--accent-green); font-variant-numeric: tabular-nums;">{{ employee.hourly_overtime_rate }} {{ profile.currency }}/ساعة</strong></span>
         </div>
       </div>
     </div>
 
     <!-- Actions & Biometric Button -->
-    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
       {% if employee.face_enrolled %}
-      <span style="background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.4); padding: 6px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
-        <span>✓ بصمة الوجه مفعلة</span>
+      <span class="badge badge-active" style="font-size: 0.72rem;">
+        بصمة الوجه مفعلة
       </span>
-      <button type="button" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); font-size: 0.78rem;" onclick="deleteEmployeeFace({{ employee.id }})">
+      <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; color: #ef4444; height: 28px;" onclick="deleteEmployeeFace({{ employee.id }})">
         حذف البصمة
       </button>
       {% else %}
-      <button type="button" class="btn btn-sm" style="background: rgba(168, 85, 247, 0.18); border: 1px solid rgba(168, 85, 247, 0.45); color: #c084fc; font-weight: 800; font-size: 0.82rem; padding: 6px 14px;" onclick="openStaffFaceEnrollModal({{ employee.id }}, '{{ employee.name }}')">
-        📸 تسجيل بصمة الوجه بالكاميرا
+      <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.74rem; height: 28px;" onclick="openStaffFaceEnrollModal({{ employee.id }}, '{{ employee.name }}')">
+        تسجيل بصمة الوجه
       </button>
       {% endif %}
 
-      <button type="button" onclick="window.print()" class="btn btn-secondary btn-sm" style="padding: 6px 14px;">
-        🖨️ طباعة كشف الحساب
+      <button type="button" onclick="window.print()" class="btn btn-secondary btn-sm" style="height: 28px; font-size: 0.74rem;">
+        طباعة
       </button>
-      <a href="{% url 'payroll:employee_edit' employee.id %}" class="btn btn-secondary btn-sm" style="padding: 6px 14px;">
-        ✏️ تعديل البيانات
+      <a href="{% url 'payroll:employee_edit' employee.id %}" class="btn btn-secondary btn-sm" style="height: 28px; font-size: 0.74rem;">
+        تعديل
       </a>
-      <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary btn-sm" style="padding: 6px 14px;">
-        ← العودة
+      <a href="{% url 'payroll:trainers_index' %}" class="btn btn-secondary btn-sm" style="height: 28px; font-size: 0.74rem;">
+        &larr; العودة
       </a>
     </div>
   </div>
 
   <!-- 4 Summary Financial KPI Cards -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
     
-    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; display: block;">إجمالي الاستحقاقات التاريخية</span>
-      <div style="color: #ffffff; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
-        {{ total_earned }} <small style="font-size: 0.85rem; color: var(--text-muted);">{{ profile.currency }}</small>
+    <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+      <span style="color: var(--text-muted); font-size: 0.74rem; font-weight: 600; display: block;">الاستحقاقات التاريخية</span>
+      <div style="color: var(--text-main); font-size: 1.25rem; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums;">
+        {{ total_earned }} <small style="font-size: 0.78rem; color: var(--text-dim);">{{ profile.currency }}</small>
       </div>
-      <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">
-        مجموع صافي كشوف الرواتب المعتمدة
-      </div>
-    </div>
-
-    <div style="background: var(--bg-card); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; display: block;">المبالغ المصروفة والمسلمة</span>
-      <div style="color: #22c55e; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
-        {{ total_paid }} <small style="font-size: 0.85rem;">{{ profile.currency }}</small>
-      </div>
-      <div style="font-size: 0.76rem; color: #22c55e; margin-top: 4px; font-weight: 700;">
-        ✓ تم الصرف الفعلي من الخزينة
+      <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">
+        مجموع كشوف الرواتب المعتمدة
       </div>
     </div>
 
-    <div style="background: var(--bg-card); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; display: block;">المتبقي المعلق للصرف</span>
-      <div style="color: #f59e0b; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
-        {{ total_pending }} <small style="font-size: 0.85rem;">{{ profile.currency }}</small>
+    <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+      <span style="color: var(--text-muted); font-size: 0.74rem; font-weight: 600; display: block;">المصروف والمسلم</span>
+      <div style="color: var(--accent-green); font-size: 1.25rem; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums;">
+        {{ total_paid }} <small style="font-size: 0.78rem; color: var(--text-dim);">{{ profile.currency }}</small>
       </div>
-      <div style="font-size: 0.76rem; color: #f59e0b; margin-top: 4px; font-weight: 700;">
-        ⏳ مستحق بانتظار التسليم
+      <div style="font-size: 0.72rem; color: var(--accent-green); margin-top: 2px;">
+        تم الصرف الفعلي من الخزينة
       </div>
     </div>
 
-    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.8rem; font-weight: 700; display: block;">إجمالي السلف المسحوبة</span>
-      <div style="color: #ef4444; font-size: 1.6rem; font-weight: 900; margin-top: 4px;">
-        {{ total_advances }} <small style="font-size: 0.85rem; color: var(--text-muted);">{{ profile.currency }}</small>
+    <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+      <span style="color: var(--text-muted); font-size: 0.74rem; font-weight: 600; display: block;">المتبقي المعلق للصرف</span>
+      <div style="color: {% if total_pending > 0 %}#f59e0b{% else %}var(--text-dim){% endif %}; font-size: 1.25rem; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums;">
+        {{ total_pending }} <small style="font-size: 0.78rem; color: var(--text-dim);">{{ profile.currency }}</small>
       </div>
-      <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 4px;">
-        سلف نقدية مخصومة من الرواتب
+      <div style="font-size: 0.72rem; color: {% if total_pending > 0 %}#f59e0b{% else %}var(--text-dim){% endif %}; margin-top: 2px;">
+        مستحق بانتظار التسليم
+      </div>
+    </div>
+
+    <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+      <span style="color: var(--text-muted); font-size: 0.74rem; font-weight: 600; display: block;">إجمالي السلف المسحوبة</span>
+      <div style="color: #ef4444; font-size: 1.25rem; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums;">
+        {{ total_advances }} <small style="font-size: 0.78rem; color: var(--text-dim);">{{ profile.currency }}</small>
+      </div>
+      <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 2px;">
+        سلف مخصومة من الرواتب
       </div>
     </div>
 
   </div>
 
   <!-- Contract & Shift Regulations Box -->
-  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px 22px; box-shadow: var(--shadow-sm);">
-    <h3 style="margin: 0 0 12px 0; font-size: 1.05rem; font-weight: 800; color: var(--text-main);">
-      ⚙️ قواعد الوردية، الحضور، الإضافي والجزاءات
-    </h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; font-size: 0.86rem;">
-      <div style="background: var(--bg-surface-subtle); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
+  <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+    <span style="font-size: 0.80rem; font-weight: 700; color: var(--text-main); display: block; margin-bottom: 8px;">
+      قواعد الوردية، الحضور، الإضافي والجزاءات
+    </span>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; font-size: 0.78rem;">
+      <div style="background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: var(--radius-xs); border: 1px solid var(--border-subtle);">
         <strong style="color: var(--text-muted); display: block;">مواعيد الوردية:</strong>
-        <span style="color: var(--text-main); font-weight: 700;">من {{ employee.shift_start_time|default:"09:00" }} إلى {{ employee.shift_end_time|default:"17:00" }} ({{ employee.daily_working_hours|default:"8" }} ساعات/يوم)</span>
+        <span style="color: var(--text-main); font-weight: 600;">من {{ employee.shift_start_time|default:"09:00" }} إلى {{ employee.shift_end_time|default:"17:00" }} ({{ employee.daily_working_hours|default:"8" }} س/يوم)</span>
       </div>
 
-      <div style="background: var(--bg-surface-subtle); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
-        <strong style="color: var(--text-muted); display: block;">سعر الإضافي / البونص:</strong>
-        <span style="color: #22c55e; font-weight: 800;">ساعة: {{ employee.hourly_overtime_rate|default:"0.00" }} {{ profile.currency }} | نصف ساعة: {{ employee.half_hourly_overtime_rate|default:"0.00" }} {{ profile.currency }}</span>
+      <div style="background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: var(--radius-xs); border: 1px solid var(--border-subtle);">
+        <strong style="color: var(--text-muted); display: block;">سعر الإضافي:</strong>
+        <span style="color: var(--accent-green); font-weight: 700;">ساعة: {{ employee.hourly_overtime_rate|default:"0.00" }} {{ profile.currency }} | نصف ساعة: {{ employee.half_hourly_overtime_rate|default:"0.00" }} {{ profile.currency }}</span>
       </div>
 
-      <div style="background: var(--bg-surface-subtle); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color);">
-        <strong style="color: var(--text-muted); display: block;">شرائح خصم التأخير اليومي:</strong>
-        <span style="color: #ef4444; font-weight: 700;">
-          +{{ employee.late_deduction_tier1_minutes|default:15 }} د: خصم {{ employee.late_deduction_tier1_days|default:"0.25" }} يوم | 
-          +{{ employee.late_deduction_tier2_minutes|default:30 }} د: خصم {{ employee.late_deduction_tier2_days|default:"0.50" }} يوم | 
-          +{{ employee.late_deduction_tier3_minutes|default:120 }} د: خصم {{ employee.late_deduction_tier3_days|default:"1.00" }} يوم
+      <div style="background: var(--bg-surface-subtle); padding: 8px 12px; border-radius: var(--radius-xs); border: 1px solid var(--border-subtle);">
+        <strong style="color: var(--text-muted); display: block;">شرائح التأخير اليومي:</strong>
+        <span style="color: #ef4444; font-weight: 600;">
+          +{{ employee.late_deduction_tier1_minutes|default:15 }}د: {{ employee.late_deduction_tier1_days|default:"0.25" }}يوم | 
+          +{{ employee.late_deduction_tier2_minutes|default:30 }}د: {{ employee.late_deduction_tier2_days|default:"0.50" }}يوم | 
+          +{{ employee.late_deduction_tier3_minutes|default:120 }}د: {{ employee.late_deduction_tier3_days|default:"1.00" }}يوم
         </span>
       </div>
     </div>

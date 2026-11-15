@@ -63,17 +63,17 @@
   --text-muted: #8292A6;
   --text-dim: #506176;
 
-  /* Geometry & Shadows */
-  --radius-xs: 6px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-pill: 9999px;
+  /* Geometry & Shadows (Professional Desktop Design System) */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-pill: 4px;
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 4px 18px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.45);
-  --shadow-glow: 0 0 20px rgba(132, 204, 22, 0.2);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.18);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.22);
+  --shadow-lg: 0 3px 8px rgba(0, 0, 0, 0.28);
+  --shadow-glow: none;
 }
 
 [data-theme="light"] {
@@ -140,10 +140,10 @@
   --text-dim: #94A3B8;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.08);
-  --shadow-glow: 0 0 20px rgba(101, 163, 13, 0.2);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 3px 8px rgba(0, 0, 0, 0.08);
+  --shadow-glow: none;
 }
 
 * {
@@ -539,18 +539,17 @@ body {
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   background-color: var(--bg-card);
-  margin-bottom: 24px;
-  box-shadow: var(--shadow-md);
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
 }
 
 .table,
 .dark-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   color: var(--text-main);
   text-align: right;
-  font-size: 0.92rem;
+  font-size: 0.84rem;
   min-width: 100%;
 }
 
@@ -558,43 +557,34 @@ body {
 .dark-table th {
   background-color: var(--bg-surface-subtle);
   color: var(--text-muted);
-  padding: 14px 18px;
-  font-size: 0.84rem;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  border-bottom: 2px solid var(--border-color);
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+  border-bottom: 1px solid var(--border-color);
   white-space: nowrap;
   user-select: none;
 }
 
-.table th:first-child,
-.dark-table th:first-child {
-  border-top-right-radius: var(--radius-md);
-}
-
-.table th:last-child,
-.dark-table th:last-child {
-  border-top-left-radius: var(--radius-md);
-}
-
 .table td,
 .dark-table td {
-  padding: 15px 18px;
+  padding: 7px 12px;
   border-bottom: 1px solid var(--border-subtle);
   vertical-align: middle;
   transition: background-color 0.12s ease;
-  font-size: 0.92rem;
+  font-size: 0.84rem;
   color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .table tbody tr:nth-child(even),
 .dark-table tbody tr:nth-child(even) {
-  background-color: rgba(255, 255, 255, 0.012);
+  background-color: rgba(255, 255, 255, 0.015);
 }
 
 .table tbody tr:hover,
 .dark-table tbody tr:hover {
-  background-color: rgba(132, 204, 22, 0.04) !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
 }
 
 .table tbody tr:last-child td,
@@ -606,29 +596,29 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
+  padding: 8px 12px;
   background-color: var(--bg-surface-subtle);
   border-bottom: 1px solid var(--border-color);
   border-top-right-radius: var(--radius-md);
   border-top-left-radius: var(--radius-md);
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
 
 /* ==========================================================================
-   Professional Pill Badges
+   Clean Corporate Badges (Rectangular, Matte, Restrained)
    ========================================================================== */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 11px;
+  gap: 4px;
+  padding: 2px 6px;
   border-radius: var(--radius-pill);
-  font-size: 0.8rem;
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.25;
   white-space: nowrap;
-  letter-spacing: 0.2px;
+  letter-spacing: 0;
 }
 
 .badge-success,
@@ -671,25 +661,25 @@ body {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  margin-bottom: 24px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 14px;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
   border-bottom: 1px solid var(--border-subtle);
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .card-title {
-  font-size: 1.15rem;
-  font-weight: 800;
+  font-size: 0.98rem;
+  font-weight: 700;
   color: var(--text-main);
   margin: 0;
 }
@@ -709,17 +699,17 @@ body {
   background-color: var(--bg-input);
   border: 1px solid var(--border-input);
   color: var(--text-main);
-  font-size: 0.90rem;
-  padding: 6px 14px;
-  border-radius: 8px;
-  height: 38px;
+  font-size: 0.86rem;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  height: 34px;
   outline: none;
-  transition: all 0.15s ease;
+  transition: border-color 0.12s ease;
 }
 
 .search-input:focus {
   border-color: var(--hulk-primary);
-  box-shadow: 0 0 0 2px rgba(132, 204, 22, 0.18);
+  box-shadow: 0 0 0 1px var(--hulk-primary);
   background-color: var(--bg-card);
 }
 
@@ -727,28 +717,28 @@ body {
   background-color: var(--bg-surface-subtle);
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
-  font-size: 0.90rem;
-  font-weight: 800;
-  padding: 0 20px;
-  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  height: 38px;
-  transition: all 0.15s ease;
+  height: 34px;
+  transition: all 0.12s ease;
 }
 
 .search-btn:hover {
   background-color: var(--nav-hover-bg);
-  border-color: var(--hulk-primary);
+  border-color: var(--border-strong);
   color: var(--text-main);
 }
 
-/* Quick Search Result Cards */
+/* Quick Search Result Cards (Clean Desktop List Item) */
 .member-result-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 16px 20px;
-  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 6px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -800,41 +790,38 @@ body {
   justify-content: center;
   text-align: center;
   text-decoration: none;
-  min-height: 44px;
-  max-height: 48px;
-  border-radius: 9px;
-  font-size: 1.05rem;
-  font-weight: 800;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: none;
+  transition: all 0.12s ease;
   user-select: none;
-  letter-spacing: -0.2px;
-  padding: 8px 16px;
+  letter-spacing: -0.1px;
+  padding: 0 14px;
+  border: 1px solid var(--border-color);
 }
 
 .btn-dashboard-action:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: none;
+  filter: brightness(1.08);
 }
 
 .btn-dashboard-action:active {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
-/* Primary Athletic CTA - Palette Adaptive */
+/* Primary Athletic CTA - Palette Adaptive Solid */
 .btn-lime {
-  background-color: var(--lime-btn-bg, var(--hulk-primary, #84CC16));
-  background: linear-gradient(135deg, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 0%, color-mix(in srgb, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 75%, #000) 100%);
-  color: var(--lime-btn-text, #081104);
-  border: 1px solid color-mix(in srgb, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 85%, #fff);
-  box-shadow: 0 4px 18px color-mix(in srgb, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 28%, transparent);
+  background-color: var(--hulk-primary, #84CC16);
+  color: #081104;
+  border: 1px solid #65a30d;
 }
 
 .btn-lime:hover {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 88%, #fff) 0%, var(--lime-btn-bg, var(--hulk-primary, #84CC16)) 100%);
-  color: var(--lime-btn-text, #081104);
-  filter: brightness(1.05);
+  background-color: #9ae62e;
+  color: #081104;
 }
 
 .btn-split-row {
@@ -843,76 +830,74 @@ body {
   gap: 7px;
 }
 
-/* Professional Accent Cards (Theme Adaptive) */
+/* Professional Accent Cards (Theme Adaptive Solid) */
 .btn-orange {
-  background: linear-gradient(135deg, #1A1410 0%, #261A0C 100%);
-  border: 1px solid #78350F;
-  color: #FBBF24;
+  background-color: #78350F;
+  border: 1px solid #92400e;
+  color: #fef08a;
 }
 
 .btn-orange:hover {
-  background: linear-gradient(135deg, #241A12 0%, #34220E 100%);
-  border-color: #B45309;
-  color: #FDE68A;
+  background-color: #92400e;
+  color: #ffffff;
 }
 
 .btn-red {
-  background: linear-gradient(135deg, #1A0F13 0%, #261118 100%);
-  border: 1px solid #881337;
-  color: #FB7185;
+  background-color: #881337;
+  border: 1px solid #9f1239;
+  color: #fecdd3;
 }
 
 .btn-red:hover {
-  background: linear-gradient(135deg, #241419 0%, #33141F 100%);
-  border-color: #BE123C;
-  color: #FECDD3;
+  background-color: #9f1239;
+  color: #ffffff;
 }
 
 [data-theme="light"] .btn-orange {
-  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+  background-color: #FEF3C7;
   border: 1px solid #FDE68A;
-  color: #B45309;
-}
-
-[data-theme="light"] .btn-orange:hover {
-  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
-  border-color: #F59E0B;
   color: #92400E;
 }
 
-[data-theme="light"] .btn-red {
-  background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%);
-  border: 1px solid #FECDD3;
-  color: #BE123C;
+[data-theme="light"] .btn-orange:hover {
+  background-color: #FDE68A;
+  color: #78350F;
 }
 
-[data-theme="light"] .btn-red:hover {
-  background: linear-gradient(135deg, #FFE4E6 0%, #FECDD3 100%);
-  border-color: #E11D48;
+[data-theme="light"] .btn-red {
+  background-color: #FFE4E6;
+  border: 1px solid #FECDD3;
   color: #9F1239;
 }
 
+[data-theme="light"] .btn-red:hover {
+  background-color: #FECDD3;
+  color: #881337;
+}
+
 /* ==========================================================================
-   Buttons
+   Buttons (Enterprise Compact Standard)
    ========================================================================== */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 20px;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
   border-radius: var(--radius-sm);
-  font-size: 0.94rem;
-  font-weight: 700;
+  font-size: 0.84rem;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
+  white-space: nowrap;
 }
 
 .btn-primary {
   background-color: var(--hulk-primary);
-  color: var(--lime-btn-text);
+  color: #081104;
   border-color: var(--hulk-hover);
 }
 
@@ -934,28 +919,32 @@ body {
 }
 
 .btn-sm {
-  padding: 6px 14px;
-  font-size: 0.84rem;
+  height: 26px;
+  padding: 0 8px;
+  font-size: 0.78rem;
+  border-radius: 3px;
 }
 
 .btn-icon {
-  padding: 8px 12px;
-  font-size: 0.88rem;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 0.84rem;
   line-height: 1;
 }
 
 /* ==========================================================================
-   Form Controls
+   Form Controls (Clean, Compact, Desktop-Optimized)
    ========================================================================== */
 .form-group {
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .form-label {
   display: block;
-  font-size: 0.88rem;
-  font-weight: 700;
-  margin-bottom: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 4px;
   color: var(--text-secondary);
 }
 
@@ -964,16 +953,17 @@ body {
   background-color: var(--bg-input);
   border: 1px solid var(--border-input);
   color: var(--text-main);
-  padding: 11px 14px;
+  height: 34px;
+  padding: 4px 10px;
   border-radius: var(--radius-sm);
-  font-size: 0.96rem;
+  font-size: 0.85rem;
   outline: none;
-  transition: all 0.15s ease;
+  transition: border-color 0.12s ease;
 }
 
 .form-control:focus {
   border-color: var(--hulk-primary);
-  box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.18);
+  box-shadow: 0 0 0 1px var(--hulk-primary);
 }
 
 select.form-control {

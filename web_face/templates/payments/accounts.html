@@ -3,164 +3,132 @@
 {% block title %}الخزائن والحسابات المالية والتحويلات — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
 {% block content %}
-<div style="display: flex; flex-direction: column; gap: 24px; max-width: 1560px; margin: 0 auto; padding-bottom: 40px;">
+<div style="display: flex; flex-direction: column; gap: 12px; max-width: 1560px; margin: 0 auto;">
 
   <!-- ==================== 1. HEADER & TOOLBAR ==================== -->
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 18px 24px; box-shadow: var(--shadow-sm);">
+  <div class="card" style="padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
     <div>
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <span style="font-size: 1.8rem;">🏦</span>
-        <h1 style="color: var(--text-main); font-size: 1.55rem; font-weight: 900; margin: 0; letter-spacing: -0.3px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <h1 style="color: var(--text-main); font-size: 1.15rem; font-weight: 700; margin: 0;">
           الخزائن والحسابات المالية والتحويلات
         </h1>
-        <span style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 4px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 800;">
-          Multi-Treasury Engine
+        <span class="badge" style="background: var(--bg-surface-elevated); font-size: 0.72rem;">
+          إدارة الحسابات
         </span>
       </div>
-      <p style="color: var(--text-muted); font-size: 0.88rem; margin: 6px 0 0 0;">
-        متابعة وتوزيع أرصدة الخزينة النقدية، فودافون كاش، والحسابات البنكية مع إمكانية التحويل بينها واحتساب الرسوم التشغيلية
-      </p>
+      <span style="color: var(--text-muted); font-size: 0.78rem;">
+        أرصدة الخزينة النقدية، فودافون كاش، والحسابات البنكية والتحويلات البينية
+      </span>
     </div>
 
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-      <a href="{% url 'payments:reception_handovers' %}" class="btn btn-secondary btn-sm" style="height: 38px; padding: 0 16px; font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35);">
-        <span>💼</span> تسليمات عهدة الريسبشن
+    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+      <a href="{% url 'payments:reception_handovers' %}" class="btn btn-secondary btn-sm" style="height: 30px; font-size: 0.80rem;">
+        تسليمات عهدة الريسبشن
         {% if reception_drawer.pending_count > 0 %}
-          <span style="background: #ef4444; color: #fff; font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; font-weight: 900;">{{ reception_drawer.pending_count }}</span>
+          <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 0.68rem; margin-right: 3px;">{{ reception_drawer.pending_count }}</span>
         {% endif %}
       </a>
 
-      <a href="{% url 'expenses:expense_list' %}" class="btn btn-secondary btn-sm" style="height: 38px; padding: 0 16px; font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
-        <span>💸</span> المصروفات
+      <a href="{% url 'expenses:expense_list' %}" class="btn btn-secondary btn-sm" style="height: 30px; font-size: 0.80rem;">
+        المصروفات
       </a>
 
-      <button type="button" onclick="openTransferModal()" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 900; border: none; height: 38px; padding: 0 20px; border-radius: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
-        <span>🔄</span> إجراء تحويل بين الحسابات
+      <button type="button" onclick="openTransferModal()" class="btn btn-primary btn-sm" style="height: 30px; font-size: 0.80rem; font-weight: 600;">
+        + تحويل بين الحسابات
       </button>
     </div>
   </div>
 
   <!-- ==================== 2. TREASURY BALANCES CARDS ==================== -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 18px;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px;">
     
-    <!-- Dedicated Card: Reception Cash Drawer (رصيد بره مع الريسبشن) -->
-    <div style="background: var(--bg-card); border: 2px solid {% if reception_drawer.current_drawer_balance > 0 %}#10b981{% else %}var(--border-color){% endif %}; border-radius: 16px; padding: 22px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; justify-content: space-between; gap: 16px; position: relative; overflow: hidden;">
-      <!-- Top bar -->
+    <!-- Dedicated Card: Reception Cash Drawer -->
+    <div class="card" style="padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 1.3rem;">💼</span>
-            <strong style="color: var(--text-main); font-size: 1.1rem; font-weight: 900;">عهدة درج الريسبشن</strong>
-          </div>
-          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
-            نقدية معلقة مع موظف الاستقبال (بره قبل الخزنة)
-          </div>
+          <strong style="color: var(--text-main); font-size: 0.90rem; font-weight: 700; display: block;">عهدة درج الريسبشن</strong>
+          <span style="font-size: 0.74rem; color: var(--text-muted);">نقدية معلقة مع موظف الاستقبال</span>
         </div>
-        <span style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 0.72rem; font-weight: 900; padding: 4px 10px; border-radius: 999px;">
-          RECEPTION DRAWER
+        <span class="badge" style="background: var(--bg-surface-elevated); font-size: 0.68rem;">
+          الدرج
         </span>
       </div>
 
-      <!-- Current Balance -->
-      <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 14px 18px;">
-        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; display: block;">الرصيد الفعلي الحالي بالدرج:</span>
-        <div style="font-size: 2.1rem; font-weight: 900; line-height: 1.2; margin-top: 6px; color: #4ade80; font-variant-numeric: tabular-nums;">
-          {{ reception_drawer.current_drawer_balance|floatformat:2 }} <small style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 8px 12px;">
+        <span style="font-size: 0.74rem; color: var(--text-muted); display: block;">الرصيد الفعلي بالدرج:</span>
+        <div style="font-size: 1.35rem; font-weight: 800; color: var(--accent-green); margin-top: 2px; font-variant-numeric: tabular-nums;">
+          {{ reception_drawer.current_drawer_balance|floatformat:2 }} <small style="font-size: 0.78rem; color: var(--text-dim);">{{ gym_profile.currency|default:"ج" }}</small>
         </div>
       </div>
 
-      <!-- Inflows & Outflows Details -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.8rem; border-top: 1px solid var(--border-color); padding-top: 12px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.76rem; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
         <div>
-          <span style="color: var(--text-muted); display: block;">المحصل بالاستقبال:</span>
-          <strong style="color: #4ade80; font-size: 0.92rem;">+{{ reception_drawer.total_cash_collected|floatformat:2 }} ج</strong>
+          <span style="color: var(--text-muted); display: block;">المحصل:</span>
+          <strong style="color: var(--accent-green); font-variant-numeric: tabular-nums;">+{{ reception_drawer.total_cash_collected|floatformat:2 }} ج</strong>
         </div>
         <div>
           <span style="color: var(--text-muted); display: block;">المسلم للخزينة:</span>
-          <strong style="color: #38bdf8; font-size: 0.92rem;">-{{ reception_drawer.total_handed_over_approved|floatformat:2 }} ج</strong>
+          <strong style="color: var(--text-secondary); font-variant-numeric: tabular-nums;">-{{ reception_drawer.total_handed_over_approved|floatformat:2 }} ج</strong>
         </div>
       </div>
 
-      <!-- Footer Button -->
-      <div style="border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-size: 0.78rem; color: var(--text-dim);">
+      <div style="border-top: 1px solid var(--border-subtle); padding-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.72rem; color: var(--text-dim);">
           {% if reception_drawer.pending_count > 0 %}
-            <strong style="color: #f59e0b;">⏳ معلق: {{ reception_drawer.pending_count }} تسليم</strong>
+            <strong style="color: #f59e0b;">معلق: {{ reception_drawer.pending_count }} تسليم</strong>
           {% else %}
-            سجل المطابقة اليومي
+            مطابق
           {% endif %}
         </span>
-        <a href="{% url 'payments:reception_handovers' %}" class="btn btn-sm btn-primary" style="background: #10b981; border: none; font-size: 0.78rem; font-weight: 800; padding: 4px 12px; border-radius: 6px;">
-          إدارة وتسليم العهدة ←
+        <a href="{% url 'payments:reception_handovers' %}" class="btn btn-sm btn-secondary" style="font-size: 0.72rem; padding: 2px 8px;">
+          إدارة وتسليم &larr;
         </a>
       </div>
     </div>
     
     {% for acc_info in accounts_details %}
       {% with acc=acc_info.account %}
-      <div style="background: var(--bg-card); border: 1px solid {% if acc.account_type == 'cash' %}rgba(34, 197, 94, 0.35){% elif acc.account_type == 'vodafone_cash' %}rgba(239, 68, 68, 0.35){% elif acc.account_type == 'bank' %}rgba(56, 189, 248, 0.35){% else %}var(--border-color){% endif %}; border-radius: 16px; padding: 22px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; justify-content: space-between; gap: 16px; position: relative; overflow: hidden;">
+      <div class="card" style="padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
         
-        <!-- Top bar of card -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
           <div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 1.3rem;">
-                {% if acc.account_type == 'cash' %}💵{% elif acc.account_type == 'vodafone_cash' %}📱{% elif acc.account_type == 'bank' %}🏦{% else %}💼{% endif %}
-              </span>
-              <strong style="color: var(--text-main); font-size: 1.1rem; font-weight: 900;">{{ acc.name }}</strong>
-            </div>
-            
+            <strong style="color: var(--text-main); font-size: 0.90rem; font-weight: 700; display: block;">{{ acc.name }}</strong>
             {% if acc.account_number %}
-              <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; margin-top: 4px;">
-                رقم: <span style="color: #38bdf8; font-family: monospace;">{{ acc.account_number }}</span>
-              </div>
+              <span style="font-size: 0.74rem; color: var(--text-muted); font-family: monospace;">{{ acc.account_number }}</span>
             {% else %}
-              <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;">
-                {{ acc.get_account_type_display }}
-              </div>
+              <span style="font-size: 0.74rem; color: var(--text-muted);">{{ acc.get_account_type_display }}</span>
             {% endif %}
           </div>
 
-          <span style="background: {% if acc.account_type == 'cash' %}rgba(34, 197, 94, 0.15); color: #4ade80;{% elif acc.account_type == 'vodafone_cash' %}rgba(239, 68, 68, 0.15); color: #f87171;{% elif acc.account_type == 'bank' %}rgba(56, 189, 248, 0.15); color: #38bdf8;{% else %}rgba(255,255,255,0.08); color: #fff;{% endif %} font-size: 0.72rem; font-weight: 900; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">
-            {{ acc.account_type }}
+          <span class="badge" style="background: var(--bg-surface-elevated); font-size: 0.68rem;">
+            {{ acc.get_account_type_display }}
           </span>
         </div>
 
-        <!-- Big Current Balance -->
-        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 14px 18px;">
-          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; display: block;">الرصيد الفعلي الحالي المتاح:</span>
-          <div style="font-size: 2.1rem; font-weight: 900; line-height: 1.2; margin-top: 6px; color: {% if acc_info.current_balance >= 0 %}#4ade80{% else %}#f87171{% endif %}; font-variant-numeric: tabular-nums;">
-            {{ acc_info.current_balance|floatformat:2 }} <small style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+        <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-xs); padding: 8px 12px;">
+          <span style="font-size: 0.74rem; color: var(--text-muted); display: block;">الرصيد المتاح:</span>
+          <div style="font-size: 1.35rem; font-weight: 800; color: {% if acc_info.current_balance >= 0 %}var(--accent-green){% else %}#ef4444{% endif %}; margin-top: 2px; font-variant-numeric: tabular-nums;">
+            {{ acc_info.current_balance|floatformat:2 }} <small style="font-size: 0.78rem; color: var(--text-dim);">{{ gym_profile.currency|default:"ج" }}</small>
           </div>
         </div>
 
-        <!-- Inflows & Outflows Details -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.8rem; border-top: 1px solid var(--border-color); padding-top: 12px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.76rem; border-top: 1px solid var(--border-subtle); padding-top: 8px;">
           <div>
-            <span style="color: var(--text-muted); display: block;">المقبوضات المحصلة:</span>
-            <strong style="color: #4ade80; font-size: 0.92rem;">+{{ acc_info.inflows|floatformat:2 }} ج</strong>
+            <span style="color: var(--text-muted); display: block;">المقبوضات:</span>
+            <strong style="color: var(--accent-green); font-variant-numeric: tabular-nums;">+{{ acc_info.inflows|floatformat:2 }} ج</strong>
           </div>
           <div>
-            <span style="color: var(--text-muted); display: block;">المصروفات المنصرفة:</span>
-            <strong style="color: #f87171; font-size: 0.92rem;">-{{ acc_info.outflows|floatformat:2 }} ج</strong>
-          </div>
-          <div>
-            <span style="color: var(--text-muted); display: block;">وارد من تحويلات:</span>
-            <strong style="color: #38bdf8; font-size: 0.92rem;">+{{ acc_info.transfers_in|floatformat:2 }} ج</strong>
-          </div>
-          <div>
-            <span style="color: var(--text-muted); display: block;">صادر بتحويلات:</span>
-            <strong style="color: #fbbf24; font-size: 0.92rem;">-{{ acc_info.transfers_out|floatformat:2 }} ج</strong>
+            <span style="color: var(--text-muted); display: block;">المصروفات:</span>
+            <strong style="color: #ef4444; font-variant-numeric: tabular-nums;">-{{ acc_info.outflows|floatformat:2 }} ج</strong>
           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div style="display: flex; gap: 8px; border-top: 1px solid var(--border-color); padding-top: 12px;">
-          <button type="button" onclick="openTransferModal('{{ acc.id }}')" class="btn btn-sm btn-secondary" style="flex: 1; font-weight: 800; font-size: 0.82rem; height: 34px; border-radius: 8px;">
-            🔄 تحويل من هذا الحساب
+        <div style="display: flex; gap: 6px; border-top: 1px solid var(--border-subtle); padding-top: 6px;">
+          <button type="button" onclick="openTransferModal('{{ acc.id }}')" class="btn btn-sm btn-secondary" style="flex: 1; font-size: 0.74rem; height: 28px;">
+            تحويل من هذا الحساب
           </button>
-          <button type="button" onclick="openEditAccountModal('{{ acc.id }}', '{{ acc.name|escapejs }}', '{{ acc.account_number|escapejs }}', '{{ acc.initial_balance }}', '{{ acc.notes|escapejs }}')" class="btn btn-sm btn-secondary" style="font-weight: 800; font-size: 0.82rem; height: 34px; border-radius: 8px;" title="تعديل بيانات ورقم الحساب والرصيد الافتتاحي">
-            ⚙️
+          <button type="button" onclick="openEditAccountModal('{{ acc.id }}', '{{ acc.name|escapejs }}', '{{ acc.account_number|escapejs }}', '{{ acc.initial_balance }}', '{{ acc.notes|escapejs }}')" class="btn btn-sm btn-secondary" style="font-size: 0.74rem; height: 28px; padding: 0 8px;" title="تعديل">
+            تعديل
           </button>
         </div>
 
@@ -169,15 +137,14 @@
     {% endfor %}
 
     <!-- 4. TOTAL GYM GENERAL TREASURY CARD -->
-    <div style="background: linear-gradient(135deg, rgba(168, 241, 75, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1.5px solid rgba(168, 241, 75, 0.45); border-radius: 16px; padding: 22px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); display: flex; flex-direction: column; justify-content: space-between; gap: 16px;">
+    <div class="card" style="padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 1.4rem;">💎</span>
-            <strong style="color: var(--text-main); font-size: 1.15rem; font-weight: 900;">إجمالي السيولة المالية للصالة</strong>
-          </div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-            مجموع أرصدة الكاش + فودافون كاش + البنك والإنستاباي
+          <strong style="color: var(--text-main); font-size: 0.90rem; font-weight: 700; display: block;">إجمالي السيولة المالية للصالة</strong>
+          <span style="font-size: 0.74rem; color: var(--text-muted);">مجموع أرصدة الكاش والبنك والمحافظ</span>
+        </div>
+        <span class="badge badge-active" style="font-size: 0.68rem;">مجمّع</span>
+      </div>
           </div>
         </div>
         <span style="background: rgba(168, 241, 75, 0.18); color: #A8F14B; font-size: 0.75rem; font-weight: 900; padding: 4px 10px; border-radius: 999px;">

@@ -3,109 +3,109 @@
 {% block title %}إدارة الموظفين والمدربين — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
 {% block content %}
-<div style="display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 12px;">
 
   <!-- ==================== 1. UNIFIED HEADER & QUICK ACTIONS ==================== -->
-  <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px 22px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+  <div class="card" style="padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
     <div>
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <h1 style="color: var(--text-main); font-size: 1.45rem; font-weight: 900; margin: 0; display: flex; align-items: center; gap: 8px;">
-          <span>👥 إدارة الموظفين والمدربين (Staff & Coaches Hub)</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <h1 style="color: var(--text-main); font-size: 1.15rem; font-weight: 700; margin: 0;">
+          إدارة الموظفين والمدربين
         </h1>
-        <span class="badge badge-active" style="font-size: 0.78rem;">مفتوح ومؤمّن</span>
+        <span class="badge badge-active" style="font-size: 0.72rem;">مؤمّن</span>
       </div>
-      <p style="color: var(--text-muted); margin: 4px 0 0 0; font-size: 0.88rem;">
-        منظومة شاملة لرواتب الكباتن وموظفي الاستقبال والإدارة، بصمة الوجه البيومترية، كشوف الحسابات، وتسليم الرواتب
-      </p>
+      <span style="color: var(--text-muted); font-size: 0.78rem;">
+        رواتب الكباتن وموظفي الاستقبال، الحضور ببصمة الوجه، كشوف الحسابات
+      </span>
     </div>
 
-    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-      <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary btn-sm" style="height: 36px; padding: 0 14px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;">
-        ➕ إضافة موظف / كابتن
+    <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+      <a href="{% url 'payroll:employee_create' %}" class="btn btn-primary btn-sm" style="height: 30px; font-size: 0.80rem; font-weight: 600;">
+        + إضافة موظف
       </a>
-      <a href="{% url 'payroll:payout_checklist_current' %}" class="btn btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; font-weight: 800;">
-        📋 تسليم الرواتب
+      <a href="{% url 'payroll:payout_checklist_current' %}" class="btn btn-secondary btn-sm" style="height: 30px; font-size: 0.80rem; font-weight: 600;">
+        تسليم الرواتب
       </a>
-      <a href="{% url 'payroll:payroll_archive' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
-        📚 أرشيف الشهور
+      <a href="{% url 'payroll:payroll_archive' %}" class="btn btn-secondary btn-sm" style="height: 30px; font-size: 0.80rem; font-weight: 600;">
+        أرشيف الشهور
       </a>
-      <a href="{% url 'payroll:employee_attendance' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
-        ⏱️ سجل الحضور
+      <a href="{% url 'payroll:employee_attendance' %}" class="btn btn-secondary btn-sm" style="height: 30px; font-size: 0.80rem; font-weight: 600;">
+        سجل الحضور
       </a>
-      <a href="{% url 'payroll:advance_create' %}" class="btn btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; background: rgba(34, 197, 94, 0.14); border: 1px solid rgba(34, 197, 94, 0.4); color: #22c55e; font-weight: 800;">
-        💵 صرف سلفة
+      <a href="{% url 'payroll:advance_create' %}" class="btn btn-secondary btn-sm" style="height: 30px; font-size: 0.80rem; font-weight: 600;">
+        صرف سلفة
       </a>
-      <a href="{% url 'payroll:payroll_runs' %}" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px;">
-        💼 مسير الرواتب
+      <a href="{% url 'payroll:payroll_runs' %}" class="btn btn-secondary btn-sm" style="height: 30px; font-size: 0.80rem; font-weight: 600;">
+        مسير الرواتب
       </a>
-      <a href="{% url 'payroll:trainers_lock' %}" class="btn btn-sm" style="height: 36px; padding: 0 12px; display: inline-flex; align-items: center; gap: 5px; background: rgba(239, 68, 68, 0.14); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 800;">
-        🔒 قفل
+      <a href="{% url 'payroll:trainers_lock' %}" class="btn btn-secondary btn-sm" style="height: 30px; font-size: 0.80rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+        قفل
       </a>
     </div>
   </div>
 
   <!-- ==================== 2. COMPACT 4-CARD KPI STRIP ==================== -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
     
-    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">فريق العمل النشط / الإجمالي</span>
-      <div style="color: var(--text-main); font-size: 1.65rem; font-weight: 900; margin-top: 4px;">
-        <span style="color: #A8F14B;">{{ active_staff }}</span>
-        <small style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600;">/ {{ total_staff }} موظف وكابتن</small>
+    <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+      <span style="color: var(--text-muted); font-size: 0.74rem; font-weight: 600; display: block;">فريق العمل النشط</span>
+      <div style="font-size: 1.25rem; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums;">
+        <span style="color: var(--accent-green);">{{ active_staff }}</span>
+        <small style="font-size: 0.78rem; color: var(--text-dim); font-weight: normal;">/ {{ total_staff }} إجمالي</small>
       </div>
     </div>
 
-    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">حضور اليوم بالصالة (بصمة الوجه)</span>
-      <div style="color: #22c55e; font-size: 1.65rem; font-weight: 900; margin-top: 4px;">
-        {{ present_staff_count }} <small style="font-size: 0.88rem; color: var(--text-muted);">حاضر اليوم</small>
+    <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+      <span style="color: var(--text-muted); font-size: 0.74rem; font-weight: 600; display: block;">حضور اليوم (بالوجه)</span>
+      <div style="color: var(--accent-green); font-size: 1.25rem; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums;">
+        {{ present_staff_count }} <small style="font-size: 0.78rem; color: var(--text-dim); font-weight: normal;">حاضر</small>
       </div>
     </div>
 
-    <div style="background: var(--bg-card); border: 1px solid rgba(77, 179, 255, 0.3); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">إجمالي الرواتب الأساسية الثابتة</span>
-      <div style="color: #4DB3FF; font-size: 1.65rem; font-weight: 900; margin-top: 4px;">
-        {{ total_fixed_salaries|default:"0.00" }} <small style="font-size: 0.88rem; color: var(--text-muted);">{{ gym_profile.currency|default:"ج" }}</small>
+    <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+      <span style="color: var(--text-muted); font-size: 0.74rem; font-weight: 600; display: block;">إجمالي الرواتب الأساسية</span>
+      <div style="color: var(--text-main); font-size: 1.25rem; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums;">
+        {{ total_fixed_salaries|default:"0.00" }} <small style="font-size: 0.78rem; color: var(--text-dim);">{{ gym_profile.currency|default:"ج" }}</small>
       </div>
     </div>
 
-    <div style="background: var(--bg-card); border: 1px solid rgba(168, 241, 75, 0.35); border-radius: 12px; padding: 14px 18px; box-shadow: var(--shadow-sm);">
-      <span style="color: var(--text-muted); font-size: 0.82rem; font-weight: 700; display: block;">عمولات البرايفت المستحقة هذا الشهر</span>
-      <div style="color: #A8F14B; font-size: 1.65rem; font-weight: 900; margin-top: 4px;">
-        {{ month_pt_commissions }} <small style="font-size: 0.88rem;">{{ gym_profile.currency|default:"ج" }}</small>
+    <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface);">
+      <span style="color: var(--text-muted); font-size: 0.74rem; font-weight: 600; display: block;">عمولات البرايفت المستحقة</span>
+      <div style="color: var(--accent-green); font-size: 1.25rem; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums;">
+        {{ month_pt_commissions }} <small style="font-size: 0.78rem; color: var(--text-dim);">{{ gym_profile.currency|default:"ج" }}</small>
       </div>
     </div>
 
   </div>
 
   <!-- ==================== 3. FAST INTERACTIVE TABS BAR ==================== -->
-  <div style="display: flex; gap: 8px; flex-wrap: wrap; background: var(--bg-card); border: 1px solid var(--border-color); padding: 8px; border-radius: 12px;">
+  <div style="display: flex; gap: 4px; flex-wrap: wrap; background: var(--bg-surface-elevated); border: 1px solid var(--border-color); padding: 4px; border-radius: var(--radius-sm);">
     <button type="button" class="tr-tab-btn active" onclick="switchTrainerTab('all', this)">
-      👥 كافة الموظفين والمدربين
+      كافة الموظفين
       <span class="tr-tab-count">{{ total_staff }}</span>
     </button>
     <button type="button" class="tr-tab-btn" onclick="switchTrainerTab('coaches', this)">
-      🏋️‍♂️ المدربون والكباتن
+      المدربون والكباتن
       <span class="tr-tab-count">{{ total_trainers }}</span>
     </button>
     <button type="button" class="tr-tab-btn" onclick="switchTrainerTab('reception', this)">
-      💼 موظفو الاستقبال
+      موظفو الاستقبال
       <span class="tr-tab-count">{{ reception_staff|length }}</span>
     </button>
     <button type="button" class="tr-tab-btn" onclick="switchTrainerTab('staff', this)">
-      🏢 الإدارة والخدمات
+      الإدارة والخدمات
       <span class="tr-tab-count">{{ admin_services_staff|length }}</span>
     </button>
     <button type="button" class="tr-tab-btn" onclick="switchTrainerTab('attendance', this)">
-      ⏱️ حضور اليوم بالوجه
+      حضور اليوم
       <span class="tr-tab-count">{{ present_staff_count }}</span>
     </button>
     <button type="button" class="tr-tab-btn" onclick="switchTrainerTab('contracts', this)">
-      🤝 عقود البرايفت
+      عقود البرايفت
       <span class="tr-tab-count">{{ total_private_members|default:assignments_count }}</span>
     </button>
     <button type="button" class="tr-tab-btn" onclick="switchTrainerTab('sessions', this)">
-      ⏱️ حصص البرايفت المنفصلة
+      حصص البرايفت
       <span class="tr-tab-count">{{ recent_sessions|length }}</span>
     </button>
   </div>
@@ -699,37 +699,39 @@
 <style>
   .tr-tab-btn {
     flex: 1;
-    min-width: 150px;
+    min-width: 120px;
     background: transparent;
     border: 1px solid transparent;
     color: var(--text-muted);
-    padding: 10px 14px;
-    border-radius: 9px;
-    font-size: 0.88rem;
-    font-weight: 800;
+    padding: 6px 10px;
+    border-radius: var(--radius-xs);
+    font-size: 0.80rem;
+    font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition: all 0.15s ease;
+    gap: 6px;
+    transition: background 0.15s, color 0.15s;
   }
   .tr-tab-btn:hover { background: var(--bg-surface-subtle); color: var(--text-main); }
   .tr-tab-btn.active {
-    background: rgba(168, 241, 75, 0.14);
-    border-color: rgba(168, 241, 75, 0.4);
-    color: #A8F14B;
+    background: var(--bg-surface);
+    border-color: var(--border-color);
+    color: var(--accent-green);
+    font-weight: 700;
   }
   .tr-tab-btn .tr-tab-count {
-    background: rgba(255, 255, 255, 0.08);
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 0.76rem;
+    background: var(--bg-surface-elevated);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
   }
   .tr-tab-btn.active .tr-tab-count {
-    background: #A8F14B;
-    color: #071209;
-    font-weight: 900;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent-green);
+    font-weight: 700;
   }
   .tr-tab-panel { display: none; }
   .tr-tab-panel.active { display: block; }
