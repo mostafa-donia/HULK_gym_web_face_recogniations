@@ -521,6 +521,10 @@
               <span>📱</span>
               <span>لوحة الهاتف الذكي</span>
             </a>
+            <a href="{% url 'core:pre_delivery_qa' %}" class="top-nav-sub-link {% if 'qa' in request.path %}active{% endif %}" style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 2px; padding-top: 6px; color: #a3e635;">
+              <span>🧪</span>
+              <span>معمل فحص التسليم (QA Wizard)</span>
+            </a>
           </div>
         </div>
         {% endif %}

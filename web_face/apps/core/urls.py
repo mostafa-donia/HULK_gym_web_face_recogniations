@@ -20,5 +20,7 @@ urlpatterns = [
     path("support/ticket/", views.submit_support_ticket_api, name="submit_support_ticket"),
     path("api/heartbeat/", views.api_heartbeat_view, name="api_heartbeat"),
     path("api/shutdown/", views.api_shutdown_system_view, name="api_shutdown"),
+    path("qa/", views.pre_delivery_qa_view, name="pre_delivery_qa"),
+    path("qa/api/check/<int:level>/", views.api_qa_level_check, name="api_qa_level_check"),
 ]
 

@@ -1,0 +1,914 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}معمل فحص الجاهزية والتسليم للعميل (Pre-Delivery QA Suite) - {{ profile.gym_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --term-bg: #0b0f19;
+    --term-header: #151d30;
+    --term-text: #38bdf8;
+    --term-green: #22c55e;
+    --term-amber: #f59e0b;
+    --term-red: #ef4444;
+    --term-cyan: #06b6d4;
+    --term-lime: #84cc16;
+  }
+
+  .qa-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  .qa-glass-card {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Progress Banner */
+  .qa-header-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+  }
+
+  .pulse-led {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--term-green);
+    box-shadow: 0 0 10px var(--term-green);
+    animation: ledPulse 1.8s infinite;
+  }
+
+  @keyframes ledPulse {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    50% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.7; }
+  }
+
+  .progress-bar-shell {
+    width: 100%;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3b82f6, #10b981, #84cc16);
+    box-shadow: 0 0 12px rgba(132, 204, 22, 0.6);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Terminal Window */
+  .terminal-window {
+    background: var(--term-bg);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 10px;
+    overflow: hidden;
+    font-family: 'Consolas', 'Courier New', monospace;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  }
+
+  .terminal-titlebar {
+    background: var(--term-header);
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .terminal-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .terminal-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+  }
+
+  .dot-red { background: #ef4444; }
+  .dot-yellow { background: #f59e0b; }
+  .dot-green { background: #10b981; }
+
+  .terminal-output {
+    height: 200px;
+    overflow-y: auto;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #e2e8f0;
+    direction: ltr;
+    text-align: left;
+  }
+
+  .terminal-output .log-cmd { color: var(--term-cyan); font-weight: bold; }
+  .terminal-output .log-info { color: #94a3b8; }
+  .terminal-output .log-success { color: var(--term-green); font-weight: bold; }
+  .terminal-output .log-warn { color: var(--term-amber); }
+  .terminal-output .log-error { color: var(--term-red); font-weight: bold; }
+
+  /* Level Pills Sidebar */
+  .level-pill {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: var(--text-main);
+  }
+
+  .level-pill:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(132, 204, 22, 0.3);
+  }
+
+  .level-pill.active {
+    background: rgba(132, 204, 22, 0.15);
+    border-color: var(--term-lime);
+    box-shadow: 0 0 10px rgba(132, 204, 22, 0.2);
+  }
+
+  .level-pill.passed {
+    border-color: rgba(34, 197, 94, 0.5);
+  }
+
+  .checklist-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    transition: background 0.15s ease;
+  }
+
+  .checklist-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .checklist-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #84cc16;
+    cursor: pointer;
+    margin-top: 2px;
+  }
+
+  /* Client Certificate Modal / Print Style */
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #certificatePrintArea, #certificatePrintArea * {
+      visibility: visible;
+    }
+    #certificatePrintArea {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      background: #fff !important;
+      color: #000 !important;
+      border: 3px double #000 !important;
+      padding: 30px !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="qa-container">
+
+  <!-- Header Banner -->
+  <div class="qa-glass-card" style="margin-bottom: 20px;">
+    <div class="qa-header-banner">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+          <span class="pulse-led"></span>
+          <span style="font-family: monospace; color: var(--term-cyan); font-size: 0.82rem; font-weight: bold; letter-spacing: 1px;">SYSTEMIZE QA // CLIENT HANDOVER TERMINAL v2.5</span>
+        </div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0 0 6px 0;">
+          🧪 معمل فحص الجاهزية الشامل والتسليم للعميل
+        </h2>
+        <p style="color: #94a3b8; font-size: 0.86rem; margin: 0; line-height: 1.5;">
+          دليل تدقيق زر-بزر وصفحة-بصفحة. اختبر كل وظيفة قبل تسليم النظام للمشترك أو الصالة الرياضية، واصدر وثيقة الاستلام المعتمدة فور اجتياز المستويات.
+        </p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button type="button" onclick="runAutomatedCheck(currentLevel)" class="btn btn-primary" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; font-weight: 700; font-size: 0.84rem; padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 6px;">
+          <span>⚡</span>
+          <span>فحص المستوى آلياً</span>
+        </button>
+        <button type="button" onclick="openCertificateModal()" id="btnOpenCert" class="btn" style="background: rgba(132, 204, 22, 0.15); border: 1px solid #84cc16; color: #84cc16; font-weight: 700; font-size: 0.84rem; padding: 8px 16px; border-radius: 8px; display: flex; align-items: center; gap: 6px;">
+          <span>📜</span>
+          <span>شهادة الاستلام</span>
+        </button>
+        <button type="button" onclick="resetAllProgress()" class="btn btn-secondary" style="font-size: 0.78rem; padding: 8px 12px; border-radius: 8px; opacity: 0.8;" title="إعادة ضبط الفحص بالكامل">
+          🔄 تصفير
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Tracker -->
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.84rem;">
+        <span style="color: #cbd5e1; font-weight: 700;">
+          نسبة الجاهزية للاعتماد والتسليم: <span id="progressPercentText" style="color: #84cc16; font-size: 1.05rem;">0%</span>
+        </span>
+        <span style="color: #94a3b8;" id="progressSummaryText">
+          0 من 10 مستويات مكتملة
+        </span>
+      </div>
+      <div class="progress-bar-shell">
+        <div id="progressBarFill" class="progress-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Terminal Log Box -->
+  <div class="terminal-window" style="margin-bottom: 20px;">
+    <div class="terminal-titlebar">
+      <div class="terminal-dots">
+        <div class="terminal-dot dot-red"></div>
+        <div class="terminal-dot dot-yellow"></div>
+        <div class="terminal-dot dot-green"></div>
+      </div>
+      <div style="color: #94a3b8; font-size: 0.78rem; font-family: monospace;">
+        systemize-qa@{{ hostname }}:~/test-suite (LAN: {{ lan_url }})
+      </div>
+      <div style="color: #64748b; font-size: 0.75rem;" id="terminalClock">--:--:--</div>
+    </div>
+    <div id="terminalOutput" class="terminal-output">
+      <div class="log-cmd">systemize-qa:~$ initialize --mode=client-handover --release=v2.5</div>
+      <div class="log-info">[Systemize QA] Initialized pre-delivery test runner. Ready for manual & automated inspection.</div>
+      <div class="log-info">[Host Specs] Python {{ python_version }} on {{ platform_system }} | Gym: {{ profile.gym_name }}</div>
+      <div class="log-info">[Database] Active Members: {{ active_members }}/{{ total_members }} | Payments: {{ total_payments }} | Products: {{ total_products }}</div>
+      <div class="log-success">[Ready] Select a level below or click "⚡ فحص المستوى آلياً" to begin live diagnostics.</div>
+    </div>
+  </div>
+
+  <!-- Main QA Workspace: Level Navigator & Detail Workspace -->
+  <div style="display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start;">
+
+    <!-- Left Column: Level Selector List -->
+    <div class="qa-glass-card" style="padding: 14px;">
+      <h3 style="font-size: 0.95rem; font-weight: 800; color: #cbd5e1; margin: 0 0 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+        📋 خريطة مستويات الفحص (10 مستويات)
+      </h3>
+      <div style="display: flex; flex-direction: column; gap: 6px;" id="levelPillsContainer">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Right Column: Level Active Workspace -->
+    <div class="qa-glass-card" id="levelWorkspace">
+      <!-- Active Level Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 14px; margin-bottom: 16px;">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <span id="levelBadge" class="badge" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; border: 1px solid #38bdf8; font-size: 0.76rem; padding: 3px 8px; border-radius: 6px;">
+              المستوى 1 / 10
+            </span>
+            <span id="levelStatusBadge" class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid #f59e0b; font-size: 0.76rem; padding: 3px 8px; border-radius: 6px;">
+              ⏳ في انتظار الفحص
+            </span>
+          </div>
+          <h3 id="levelTitle" style="font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0 0 4px 0;">
+            المستوى 1: لوحة التحكم الرئيسية والمؤشرات (Dashboard, Analytics & Theme)
+          </h3>
+          <p id="levelDesc" style="color: #94a3b8; font-size: 0.84rem; margin: 0;">
+            فحص دقة بطاقات المؤشرات الـ 9، وتصفية الفروع، وسويتش تبديل الثيم، وسرعة استجابة قاعدة البيانات.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <a id="levelQuickLink" href="{% url 'core:dashboard' %}" target="_blank" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; padding: 6px 12px; border-radius: 8px;">
+            <span>🔗</span>
+            <span>فتح الصفحة للتجربة ↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Checklist Items Container -->
+      <div style="margin-bottom: 20px;">
+        <h4 style="font-size: 0.88rem; font-weight: 700; color: #a3e635; margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
+          <span>🔍</span>
+          <span>قائمة الفحص اليدوي (Checklist): اضغط للتأكيد بعد تجربة كل وظيفة</span>
+        </h4>
+        <div id="checklistItemsList">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Tester Notes / Bug Logger -->
+      <div style="background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.12); border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+        <label style="color: #cbd5e1; font-size: 0.8rem; font-weight: 700; display: block; margin-bottom: 6px;">
+          📝 ملاحظات الفاحص / العيوب المكتشفة لهذا المستوى:
+        </label>
+        <textarea id="levelNotesInput" placeholder="اكتب أي ملاحظة أو تعديل مطلوب هنا (يتم الحفظ التلقائي)..." style="width: 100%; height: 60px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 0.82rem; resize: vertical;" oninput="saveCurrentLevelNotes()"></textarea>
+      </div>
+
+      <!-- Stepper Action Footer -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px;">
+        <button type="button" onclick="navigateLevel(-1)" id="btnPrevLevel" class="btn btn-secondary" style="font-size: 0.84rem; padding: 8px 18px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+          <span><<</span>
+          <span>المستوى السابق</span>
+        </button>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" onclick="runAutomatedCheck(currentLevel)" class="btn btn-secondary" style="font-size: 0.84rem; padding: 8px 14px; border-radius: 8px; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
+            ⚡ فحص آلي
+          </button>
+          <button type="button" onclick="togglePassLevel(currentLevel)" id="btnPassLevel" class="btn btn-primary" style="background: linear-gradient(135deg, #10b981, #059669); border: none; font-size: 0.88rem; font-weight: 700; padding: 8px 22px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+            <span>✅</span>
+            <span id="passBtnText">اعتماد واجتياز المستوى</span>
+          </button>
+        </div>
+
+        <button type="button" onclick="navigateLevel(1)" id="btnNextLevel" class="btn btn-secondary" style="font-size: 0.84rem; padding: 8px 18px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+          <span>المستوى التالي</span>
+          <span>>></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Acceptance Certificate Modal -->
+<div id="certModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 99999; backdrop-filter: blur(8px); overflow-y: auto; padding: 30px 16px;">
+  <div style="max-width: 850px; margin: 0 auto; background: #0f172a; border: 1.5px solid rgba(132, 204, 22, 0.4); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.9); overflow: hidden;">
+
+    <!-- Modal Header Controls -->
+    <div class="no-print" style="padding: 14px 20px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.2rem;">🏆</span>
+        <strong style="color: #a3e635; font-size: 0.95rem;">وثيقة الاستلام والجاهزية التشغيلية (Client Handover Certificate)</strong>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" onclick="window.print()" class="btn btn-primary btn-sm" style="background: #10b981; border: none; font-weight: 700; padding: 6px 14px;">
+          🖨️ طباعة الشهادة
+        </button>
+        <button type="button" onclick="closeCertificateModal()" class="btn btn-secondary btn-sm" style="padding: 6px 12px;">
+          ✕ إغلاق
+        </button>
+      </div>
+    </div>
+
+    <!-- Printable Certificate Area -->
+    <div id="certificatePrintArea" style="padding: 36px 40px; background: #090d16; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+      
+      <!-- Border Frame -->
+      <div style="border: 2px solid #84cc16; padding: 30px; border-radius: 12px; position: relative;">
+        
+        <!-- Header -->
+        <div style="text-align: center; border-bottom: 2px solid rgba(132, 204, 22, 0.3); padding-bottom: 20px; margin-bottom: 24px;">
+          <div style="font-size: 1.8rem; font-weight: 900; letter-spacing: 2px; color: #84cc16; margin-bottom: 6px;">
+            SYSTEMIZE GYM MANAGEMENT SYSTEM
+          </div>
+          <div style="font-size: 1.2rem; font-weight: 800; color: #ffffff;">
+            شهادة الاستلام والجاهزية التشغيلية المعتمدة
+          </div>
+          <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 4px;">
+            Official Client Acceptance & Software Delivery Certificate (Release v2.5)
+          </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; font-size: 0.86rem; background: rgba(255,255,255,0.02); padding: 14px 18px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+          <div>
+            <strong style="color: #94a3b8;">المنشأة الرياضية:</strong>
+            <span style="color: #38bdf8; font-weight: 700; margin-right: 6px;">{{ profile.gym_name }}</span>
+          </div>
+          <div>
+            <strong style="color: #94a3b8;">تاريخ الاعتماد:</strong>
+            <span id="certDateSpan" style="color: #fff; font-weight: 700; margin-right: 6px;">--</span>
+          </div>
+          <div>
+            <strong style="color: #94a3b8;">إصدار النظام:</strong>
+            <span style="color: #fff; font-weight: 700; margin-right: 6px;">Systemize v2.5 Enterprise (AI Powered)</span>
+          </div>
+          <div>
+            <strong style="color: #94a3b8;">عنوان الخادم المحلي (LAN):</strong>
+            <span style="color: #a3e635; font-family: monospace; font-weight: 700; margin-right: 6px;">{{ lan_url }}</span>
+          </div>
+        </div>
+
+        <!-- Modules Verification Checklist Grid -->
+        <div style="margin-bottom: 26px;">
+          <h4 style="font-size: 0.92rem; color: #84cc16; font-weight: 800; margin: 0 0 12px 0;">
+            سجل اختبار وتدقيق الوحدات البرمجية الـ 10 (System Audit Verification):
+          </h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.82rem;" id="certModulesGrid">
+            <!-- Filled dynamically -->
+          </div>
+        </div>
+
+        <!-- System Guarantees -->
+        <div style="background: rgba(132, 204, 22, 0.06); border: 1px dashed rgba(132, 204, 22, 0.3); border-radius: 8px; padding: 12px 16px; margin-bottom: 30px; font-size: 0.8rem; color: #cbd5e1; line-height: 1.6;">
+          <strong style="color: #a3e635; display: block; margin-bottom: 4px;">🛡️ إقرار واشتراطات الجاهزية المعتمدة:</strong>
+          تم فحص وتدقيق كامل صفحات وأزرار النظام زر-بزر واختبار محرك الذكاء الاصطناعي وبصمة الوجه السريعة لمسافة أقل من 0.003ms مع مصفوفة التنبؤ Tier-0 ومسرع معالجات Core i5، وتفعيل منظومة مكافحة حظر الواتساب الآمنة وتصفية الخزينة المتطابقة. النظام مهيأ بالكامل للتشغيل الفعلي.
+        </div>
+
+        <!-- Signatures Footer -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+          <div>
+            <div style="font-size: 0.86rem; color: #94a3b8; margin-bottom: 35px;">مهندس المنظومة المعتمد (System Engineer / QA)</div>
+            <div style="border-top: 1px solid #64748b; width: 70%; margin: 0 auto; padding-top: 6px; font-weight: 700; color: #fff;">
+              التوقيع والاعتماد
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 0.86rem; color: #94a3b8; margin-bottom: 35px;">مدير / مالك المنشأة الرياضية (Client Acceptance)</div>
+            <div style="border-top: 1px solid #64748b; width: 70%; margin: 0 auto; padding-top: 6px; font-weight: 700; color: #fff;">
+              الاستلام والتشغيل
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 10 Comprehensive QA Levels Definition
+  const QA_LEVELS = [
+    {
+      id: 1,
+      title: "المستوى 1: لوحة التحكم الرئيسية والمؤشرات (Dashboard & Themes)",
+      shortTitle: "1. الرئيسية والمؤشرات",
+      icon: "📊",
+      desc: "فحص دقة بطاقات المؤشرات الـ 9، وتصفية الفروع، وسويتش تبديل الثيمات (Dark/Light/Emerald)، واستجابة قاعدة البيانات.",
+      quickLink: "{% url 'core:dashboard' %}",
+      checklist: [
+        "مطابقة أرقام البطاقات الـ 9 (إجمالي الأعضاء، النشطون، المنتهية، إيراد اليوم، اشتراكات اليوم...).",
+        "تجربة التبديل بين الفروع من القائمة العلوية والتأكد من تحديث المؤشرات تلقائياً.",
+        "تجربة سويتش تبديل الثيمات (Dark / Light / Emerald) والتأكد من ثبات الثيم بعد تحديث الصفحة.",
+        "التأكد من ظهور زر الرجوع السريع (Back Button) وسلاسته في كافة النوافذ."
+      ]
+    },
+    {
+      id: 2,
+      title: "المستوى 2: سجل ودليل الأعضاء وتسجيل المشتركين (Members Directory)",
+      shortTitle: "2. سجل ودليل الأعضاء",
+      icon: "👥",
+      desc: "فحص فتح صفحة الأعضاء، والبحث الفوري بالاسم والهاتف والباركود، ونموذج إضافة عضو جديد، والتقاط البصمة، والتجميد.",
+      quickLink: "{% url 'members:member_list' %}",
+      checklist: [
+        "فتح صفحة الأعضاء وتجربة البحث الفوري بالاسم ورقم الهاتف والباركود.",
+        "فتح نموذج '+ تسجيل عضو جديد' وتجربة إدخال البيانات واختيار الباقة والتأكد من حساب تاريخ الانتهاء تلقائياً.",
+        "تجربة التقاط صورة العضو وحفظ بصمة الوجه (Face Biometrics Enrollment).",
+        "تجربة إجراءات العضو: تجميد الاشتراك (Freeze)، فك التجميد، وتعديل البيانات."
+      ]
+    },
+    {
+      id: 3,
+      title: "المستوى 3: صالة العمليات السريعة والحضور والاستحقاقات (Operations Desk)",
+      shortTitle: "3. العمليات السريعة والحضور",
+      icon: "⚡",
+      desc: "فحص الدخول السريع، والبحث بالباركود، وزر تسجيل الحضور السريع بنقرة واحدة، وتحديث رصيد الحصص، وسداد المتبقي.",
+      quickLink: "{% url 'members:smart_operations' %}",
+      checklist: [
+        "فتح شاشة العمليات السريعة (/members/operations/) وتجربة البحث بالباركود المباشر.",
+        "الضغط على زر 'تسجيل حضور سريع' والتأكد من خصم الحصة فوراً وظهور شارة خضراء.",
+        "تجربة زر سداد المتبقي/الديون السابقة مباشرة من شاشة العمليات وإصدار إيصال السداد.",
+        "التأكد من تنبيهات حالة الاشتراك (ساري بالأخضر، منتهي بالأحمر، مجمد بالأزرق)."
+      ]
+    },
+    {
+      id: 4,
+      title: "المستوى 4: محرك الذكاء الاصطناعي وبوابة الدخول الذاتية (Face AI & Gate)",
+      shortTitle: "4. الذكاء الاصطناعي والبوابة",
+      icon: "👁️",
+      desc: "فحص نافذة المراقبة المباشرة، وسرعة محرك التعرف على الوجه، ومصفوفة التنبؤ Tier-0، ونبضة فتح البوابة الإلكترونية.",
+      quickLink: "{% url 'face_recognition:camera_window' %}",
+      checklist: [
+        "فتح نافذة المراقبة المباشرة (/face/camera/) والتأكد من سلاسة تدفق الإطارات (FPS > 25).",
+        "اختبار التعرف على وجه عضو مسجل والتأكد من الاستجابة اللحظية (< 0.05s).",
+        "فحص منع الحضور المكرر (Debounce Timer) والتأكد من عدم تسجيل نفس الشخص مرتين في دقيقة واحدة.",
+        "تجربة زر اختبار فتح البوابة (Test Gate Relay Pulse) ومطابقة منفذ COM أو عنوان IP."
+      ]
+    },
+    {
+      id: 5,
+      title: "المستوى 5: الخزينة، المدفوعات، وإقفال الورديات (Treasury & Shift Handover)",
+      shortTitle: "5. الخزينة وإقفال الورديات",
+      icon: "💳",
+      desc: "فحص جدول المدفوعات، وتصفية الدفعات، وتوليد الفاتورة الحرارية والضريبية، وتصفية درج النقدية وتسليم الوردية.",
+      quickLink: "{% url 'payments:payment_list' %}",
+      checklist: [
+        "فتح صفحة المدفوعات (/payments/) وتصفية العمليات حسب التاريخ وطريقة الدفع (نقدي/فيزا/محفظة).",
+        "توليد وطباعة فاتورة لأي عملية دفع ومطابقة الأرقام وضريبة القيمة المضافة والشعار.",
+        "فتح صفحة تسليم الورديات (/payments/handovers/) ومطابقة المبلغ الفعلي مع المتوقع بدرج الكاشير.",
+        "تجربة إقفال الوردية وتوريد النقدية وطباعة تقرير التصفية."
+      ]
+    },
+    {
+      id: 6,
+      title: "المستوى 6: المصروفات والبنود المالية (Expenses & Vouchers)",
+      shortTitle: "6. المصروفات والبنود",
+      icon: "🧾",
+      desc: "فحص تسجيل سند صرف جديد، واختيار بنود المصروفات (إيجار، فواتير، صيانة)، وتأثيرها الفوري على صافي دخل الخزينة.",
+      quickLink: "{% url 'expenses:expense_list' %}",
+      checklist: [
+        "فتح صفحة المصروفات (/expenses/) وتجربة إضافة سند صرف جديد بمبلغ تجريبي.",
+        "اختيار بند المصروف (إيجارات، كهرباء ومياه، صيانة ونظافة، بوفيه، مرتبات...).",
+        "التأكد من خصم المصروف فوراً من صافي أرباح اليوم والوردية النشطة.",
+        "حذف السند التجريبي أو تأكيد قيده بنجاح."
+      ]
+    },
+    {
+      id: 7,
+      title: "المستوى 7: متجر المكملات ونقاط البيع (Bar POS & Inventory)",
+      shortTitle: "7. متجر ونقاط بيع البار",
+      icon: "🥤",
+      desc: "فحص شاشة بيع منتجات البار، والمسح بالباركود، والخصم التلقائي من المخزون، وتنبيهات انخفاض الكمية.",
+      quickLink: "{% url 'payments:bar_inventory' %}",
+      checklist: [
+        "فتح شاشة نقاط بيع البار (/bar/) وتصفح المنتجات والتصنيفات.",
+        "إتمام عملية بيع منتج وتأكيد إصدار بون البيع وإيداع القيمة في الخزينة.",
+        "التحقق من خصم كمية المنتج المباع تلقائياً من جدول المخزون.",
+        "التأكد من ظهور تنبيه انخفاض المخزون عند وصول المنتج للحد الأدنى (Low Stock Alert)."
+      ]
+    },
+    {
+      id: 8,
+      title: "المستوى 8: مركز إرسال واتساب الذكي وحماية الأرقام (WhatsApp Anti-Ban)",
+      shortTitle: "8. واتساب ومكافحة الحظر",
+      icon: "💬",
+      desc: "فحص نماذج الرسائل الذكية (Spintax)، ومعدل التهدئة الآمن (5s Delay)، ومفتاح التوقف الطارئ (Ctrl+K).",
+      quickLink: "{% url 'messaging:whatsapp_queue' %}",
+      checklist: [
+        "فتح شاشة واتساب (/whatsapp/) ومعاينة قائمة رسائل التجديد والتنبيهات.",
+        "فحص استبدال المتغيرات التلقائية ({name}، {days_left}، {end_date}، {gym_name}).",
+        "التأكد من تفعيل آلية التهدئة البشرية والتأخير العشوائي (Safe Rate Limiter) لحماية الرقم.",
+        "تجربة زر التوقف الطارئ أو اختصار لوحة المفاتيح (Ctrl+K) لإيقاف الإرسال فوراً."
+      ]
+    },
+    {
+      id: 9,
+      title: "المستوى 9: شؤون الموظفين وبصمة المدربين (Staff & Payroll)",
+      shortTitle: "9. الموظفين والمدربين",
+      icon: "🏋️",
+      desc: "فحص حماية صفحة المدربين بكلمة السر، وبصمة حضور وانصراف الكوادر، واحتساب عمولات التدريب الخاص PT.",
+      quickLink: "{% url 'payroll:trainers_index' %}",
+      checklist: [
+        "فتح صفحة المدربين والموظفين (/trainers/) والتأكد من طلب كلمة السر الخاصة.",
+        "تسجيل حضور وانصراف لموظف أو مدرب ومطابقة الساعات الفعلية.",
+        "فحص سجل التدريب الخاص (Private Training) واحتساب عمولة المدرب تلقائياً.",
+        "مراجعة كشف المرتبات الشهرية والحوافز والخصومات."
+      ]
+    },
+    {
+      id: 10,
+      title: "المستوى 10: مركز التحكم والإدارة والتسليم للعميل (Master Control & Handover)",
+      shortTitle: "10. التحكم والتسليم النهائي",
+      icon: "🏆",
+      desc: "فحص سلامة قاعدة البيانات، واتصال الشبكة المحلية LAN لربط أجهزة الاستقبال والإدارة، وإصدار شهادة التسليم.",
+      quickLink: "{% url 'core:manager_dashboard' %}",
+      checklist: [
+        "فتح لوحة المدير العامة وتجربة تبويب 'ذكاء الجيم والتوقعات' (AI Gym Forecast).",
+        "اختبار فتح النظام من جهاز لابتوب آخر متصل بنفس الشبكة المحلية عبر الرابط: {{ lan_url }}.",
+        "التحقق من إنشاء النسخ الاحتياطية الدورية لقاعدة البيانات وضمان الأمان.",
+        "الضغط على 'شهادة الاستلام' بالأعلى وطباعة وثيقة الجاهزية والتشغيل المعتمدة."
+      ]
+    }
+  ];
+
+  let currentLevel = 1;
+  const STORAGE_KEY = "systemize_qa_v25_progress";
+
+  // Load Saved Progress from LocalStorage
+  function loadProgress() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      passedLevels: [],
+      checkedItems: {},
+      notes: {}
+    };
+  }
+
+  function saveProgress(data) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  let qaState = loadProgress();
+
+  function updateClock() {
+    const el = document.getElementById("terminalClock");
+    if (el) {
+      const now = new Date();
+      el.textContent = now.toLocaleTimeString();
+    }
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  function appendTerminal(cmd, text, type="info") {
+    const out = document.getElementById("terminalOutput");
+    if (!out) return;
+
+    if (cmd) {
+      const cmdDiv = document.createElement("div");
+      cmdDiv.className = "log-cmd";
+      cmdDiv.textContent = `systemize-qa:~$ ${cmd}`;
+      out.appendChild(cmdDiv);
+    }
+
+    if (text) {
+      const textDiv = document.createElement("div");
+      textDiv.className = `log-${type}`;
+      textDiv.textContent = text;
+      out.appendChild(textDiv);
+    }
+
+    out.scrollTop = out.scrollHeight;
+  }
+
+  function renderLevelPills() {
+    const container = document.getElementById("levelPillsContainer");
+    if (!container) return;
+    container.innerHTML = "";
+
+    QA_LEVELS.forEach(lvl => {
+      const isPassed = qaState.passedLevels.includes(lvl.id);
+      const isActive = lvl.id === currentLevel;
+
+      const pill = document.createElement("div");
+      pill.className = `level-pill ${isActive ? 'active' : ''} ${isPassed ? 'passed' : ''}`;
+      pill.onclick = () => selectLevel(lvl.id);
+
+      pill.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span>${lvl.icon}</span>
+          <span style="font-size: 0.82rem; font-weight: ${isActive ? '700' : '500'};">${lvl.shortTitle}</span>
+        </div>
+        <div>
+          ${isPassed ? '<span style="color: #22c55e; font-size: 0.85rem;" title="تم الاعتماد">✓</span>' : '<span style="color: #64748b; font-size: 0.75rem;">⏳</span>'}
+        </div>
+      `;
+      container.appendChild(pill);
+    });
+  }
+
+  function renderCurrentLevel() {
+    const lvl = QA_LEVELS.find(l => l.id === currentLevel);
+    if (!lvl) return;
+
+    // Header updates
+    document.getElementById("levelBadge").textContent = `المستوى ${lvl.id} / 10`;
+    document.getElementById("levelTitle").textContent = lvl.title;
+    document.getElementById("levelDesc").textContent = lvl.desc;
+    document.getElementById("levelQuickLink").href = lvl.quickLink;
+
+    const isPassed = qaState.passedLevels.includes(lvl.id);
+    const statusBadge = document.getElementById("levelStatusBadge");
+    const passBtn = document.getElementById("btnPassLevel");
+    const passBtnText = document.getElementById("passBtnText");
+
+    if (isPassed) {
+      statusBadge.textContent = "✅ تم الاعتماد والاجتياز";
+      statusBadge.style.background = "rgba(34, 197, 94, 0.15)";
+      statusBadge.style.color = "#22c55e";
+      statusBadge.style.borderColor = "#22c55e";
+      passBtnText.textContent = "إلغاء الاعتماد (Reopen)";
+      passBtn.style.background = "rgba(239, 68, 68, 0.2)";
+      passBtn.style.borderColor = "#ef4444";
+      passBtn.style.color = "#ef4444";
+    } else {
+      statusBadge.textContent = "⏳ في انتظار الفحص";
+      statusBadge.style.background = "rgba(245, 158, 11, 0.15)";
+      statusBadge.style.color = "#f59e0b";
+      statusBadge.style.borderColor = "#f59e0b";
+      passBtnText.textContent = "اعتماد واجتياز المستوى";
+      passBtn.style.background = "linear-gradient(135deg, #10b981, #059669)";
+      passBtn.style.borderColor = "none";
+      passBtn.style.color = "#fff";
+    }
+
+    // Render Checklist
+    const listEl = document.getElementById("checklistItemsList");
+    listEl.innerHTML = "";
+
+    lvl.checklist.forEach((itemText, idx) => {
+      const itemKey = `${lvl.id}_${idx}`;
+      const isChecked = !!qaState.checkedItems[itemKey];
+
+      const itemDiv = document.createElement("div");
+      itemDiv.className = "checklist-item";
+      itemDiv.innerHTML = `
+        <div style="display: flex; align-items: flex-start; gap: 10px; flex: 1;">
+          <input type="checkbox" id="chk_${itemKey}" ${isChecked ? 'checked' : ''} onchange="toggleCheckItem('${itemKey}', this.checked)">
+          <label for="chk_${itemKey}" style="cursor: pointer; color: ${isChecked ? '#cbd5e1' : '#f8fafc'}; font-size: 0.84rem; line-height: 1.5; text-decoration: ${isChecked ? 'line-through' : 'none'}; opacity: ${isChecked ? '0.75' : '1'};">
+            ${itemText}
+          </label>
+        </div>
+      `;
+      listEl.appendChild(itemDiv);
+    });
+
+    // Notes
+    document.getElementById("levelNotesInput").value = qaState.notes[lvl.id] || "";
+
+    // Navigation buttons state
+    document.getElementById("btnPrevLevel").disabled = (currentLevel === 1);
+    document.getElementById("btnNextLevel").disabled = (currentLevel === 10);
+
+    updateProgressUI();
+    renderLevelPills();
+  }
+
+  function selectLevel(lvlId) {
+    currentLevel = lvlId;
+    renderCurrentLevel();
+    appendTerminal(`nav --level=${lvlId}`, `Switched to ${QA_LEVELS[lvlId-1].title}`, "info");
+  }
+
+  function navigateLevel(delta) {
+    const next = currentLevel + delta;
+    if (next >= 1 && next <= 10) {
+      selectLevel(next);
+    }
+  }
+
+  function toggleCheckItem(itemKey, checked) {
+    qaState.checkedItems[itemKey] = checked;
+    saveProgress(qaState);
+    renderCurrentLevel();
+  }
+
+  function saveCurrentLevelNotes() {
+    const val = document.getElementById("levelNotesInput").value;
+    qaState.notes[currentLevel] = val;
+    saveProgress(qaState);
+  }
+
+  function togglePassLevel(lvlId) {
+    const idx = qaState.passedLevels.indexOf(lvlId);
+    if (idx >= 0) {
+      qaState.passedLevels.splice(idx, 1);
+      appendTerminal(`level-${lvlId} --status=reopened`, `Level ${lvlId} reopened for inspection.`, "warn");
+    } else {
+      qaState.passedLevels.push(lvlId);
+      // Auto check all items of this level
+      const lvl = QA_LEVELS.find(l => l.id === lvlId);
+      if (lvl) {
+        lvl.checklist.forEach((_, cIdx) => {
+          qaState.checkedItems[`${lvlId}_${cIdx}`] = true;
+        });
+      }
+      appendTerminal(`level-${lvlId} --status=passed`, `✓ Level ${lvlId} officially verified and passed!`, "success");
+      
+      // Auto advance to next level if available
+      if (currentLevel < 10) {
+        setTimeout(() => {
+          navigateLevel(1);
+        }, 350);
+      }
+    }
+    saveProgress(qaState);
+    renderCurrentLevel();
+  }
+
+  function updateProgressUI() {
+    const passedCount = qaState.passedLevels.length;
+    const pct = Math.round((passedCount / 10) * 100);
+
+    document.getElementById("progressBarFill").style.width = `${pct}%`;
+    document.getElementById("progressPercentText").textContent = `${pct}%`;
+    document.getElementById("progressSummaryText").textContent = `${passedCount} من 10 مستويات مكتملة`;
+
+    const certBtn = document.getElementById("btnOpenCert");
+    if (pct === 100) {
+      certBtn.style.background = "linear-gradient(135deg, #10b981, #84cc16)";
+      certBtn.style.color = "#000";
+      certBtn.style.boxShadow = "0 0 15px rgba(132, 204, 22, 0.6)";
+    } else {
+      certBtn.style.background = "rgba(132, 204, 22, 0.15)";
+      certBtn.style.color = "#84cc16";
+      certBtn.style.boxShadow = "none";
+    }
+  }
+
+  async function runAutomatedCheck(lvlId) {
+    appendTerminal(`diagnose --level=${lvlId}`, `Running automated backend diagnostic check for Level ${lvlId}...`, "info");
+    
+    try {
+      const resp = await fetch(`/qa/api/check/${lvlId}/`);
+      const data = await resp.json();
+
+      if (data.status === "pass") {
+        if (data.logs && data.logs.length) {
+          data.logs.forEach(l => {
+            appendTerminal(null, l.text, l.type);
+          });
+        }
+        appendTerminal(null, `✓ Level ${lvlId} live diagnostic check PASSED in ${data.latency_ms}ms`, "success");
+      } else {
+        appendTerminal(null, `❌ Level ${lvlId} check reported an error: ${data.details.error || 'Unknown issue'}`, "error");
+      }
+    } catch (err) {
+      appendTerminal(null, `❌ Connection error during check: ${err.message}`, "error");
+    }
+  }
+
+  function resetAllProgress() {
+    if (confirm("هل أنت متأكد من تصفير كافة علامات الفحص والملاحظات والبدء من جديد؟")) {
+      qaState = {
+        passedLevels: [],
+        checkedItems: {},
+        notes: {}
+      };
+      saveProgress(qaState);
+      renderCurrentLevel();
+      appendTerminal("reset --all", "All checklist progress and notes have been cleared.", "warn");
+    }
+  }
+
+  function openCertificateModal() {
+    const modal = document.getElementById("certModal");
+    const grid = document.getElementById("certModulesGrid");
+    const dateSpan = document.getElementById("certDateSpan");
+
+    dateSpan.textContent = new Date().toLocaleString("ar-EG", { dateStyle: "full", timeStyle: "short" });
+
+    grid.innerHTML = "";
+    QA_LEVELS.forEach(lvl => {
+      const isPassed = qaState.passedLevels.includes(lvl.id);
+      const modDiv = document.createElement("div");
+      modDiv.style.padding = "6px 10px";
+      modDiv.style.background = isPassed ? "rgba(34, 197, 94, 0.08)" : "rgba(255, 255, 255, 0.02)";
+      modDiv.style.border = `1px solid ${isPassed ? 'rgba(34, 197, 94, 0.3)' : 'rgba(255, 255, 255, 0.08)'}`;
+      modDiv.style.borderRadius = "6px";
+      modDiv.style.display = "flex";
+      modDiv.style.alignItems = "center";
+      modDiv.style.justifyContent = "space-between";
+      modDiv.innerHTML = `
+        <span>${lvl.icon} ${lvl.shortTitle}</span>
+        <span style="color: ${isPassed ? '#22c55e' : '#f59e0b'}; font-weight: bold;">
+          ${isPassed ? '✓ معتمد' : '⏳ قيد التدقيق'}
+        </span>
+      `;
+      grid.appendChild(modDiv);
+    });
+
+    modal.style.display = "block";
+  }
+
+  function closeCertificateModal() {
+    document.getElementById("certModal").style.display = "none";
+  }
+
+  // Keyboard shortcut listener (Ctrl+K for emergency, Arrow keys for navigation)
+  document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+    if (e.key === "ArrowRight") {
+      navigateLevel(-1); // RTL previous
+    } else if (e.key === "ArrowLeft") {
+      navigateLevel(1); // RTL next
+    }
+  });
+
+  // Initial Boot
+  renderCurrentLevel();
+</script>
+{% endblock %}

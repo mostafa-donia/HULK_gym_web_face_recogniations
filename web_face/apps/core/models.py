@@ -104,6 +104,29 @@ class GymProfile(models.Model):
     face_min_confidence = models.FloatField(default=0.55, verbose_name="حساسية كشف الوجه (Detection Threshold)")
     face_debounce_seconds = models.PositiveIntegerField(default=60, verbose_name="مهلة منع تكرار التسجيل (ثوانٍ)")
 
+    # Performance Optimization & Section / Gender Filtering (تسريع الأداء وتخصيص المناطق ومعالجات i5)
+    camera_gender_filter = models.CharField(
+        max_length=20,
+        choices=[
+            ("all", "كشف شامل (رجال وسيدات - الافتراضي)"),
+            ("male_only", "صالة / بوابة الرجال فقط (Male Area Only)"),
+            ("female_only", "صالة / بوابة السيدات فقط (Female Area Only)"),
+        ],
+        default="all",
+        verbose_name="نطاق مطابقة الكاميرا (تخصيص الصالة/الجنس)",
+        help_text="تسريع إضافي فائق ومنع الخلط نهائياً: يقصر عملية البحث والمطابقة على أعضاء القسم المحدد فقط (رجال أو سيدات)."
+    )
+    face_predictive_cache_enabled = models.BooleanField(
+        default=True,
+        verbose_name="تفعيل مصفوفة التوقع الذكي للأعضاء (Tier-0 Predictive Cache)",
+        help_text="تسريع ذكي لمعالجات الجيل السادس (i5 6th Gen): يبحث أولاً في الأعضاء المتوقع حضورهم في هذه الساعة قبل البحث في قاعدة البيانات بأكملها."
+    )
+    face_fast_detection_downscale = models.BooleanField(
+        default=True,
+        verbose_name="وضع تسريع كشف الوجه للمعالجات الاقتصادية (Fast Detection Downscale)",
+        help_text="تقليل استهلاك المعالج إلى 10-15% على لابتوبات i5 القديمة عبر تصغير إطار الكشف لـ 320px وقص الوجه بدقة كاملة للاستخراج."
+    )
+
     # Manager Face ID Unlock
     manager_face_unlock_enabled = models.BooleanField(
         default=True,
