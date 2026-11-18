@@ -18,8 +18,10 @@ def manager_required(view_func):
             or request.session.get("trainers_page_unlocked")
         )
         if not is_user_manager and not is_session_unlocked:
-            messages.error(request, "عذراً، هذه الصفحة مخصصة للمدير والمالك فقط.")
-            raise PermissionDenied("Manager role required.")
+            from apps.core.views import check_manager_page_access
+            unlocked, resp = check_manager_page_access(request, target_url=request.get_full_path())
+            if not unlocked or resp:
+                return resp
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 

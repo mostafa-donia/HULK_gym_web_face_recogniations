@@ -3,10 +3,99 @@
 {% block title %}الرئيسية — {{ gym_profile.gym_name|default:"Systemize Gym" }}{% endblock %}
 
 {% block content %}
-<div style="display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 1400px; margin: 0 auto; padding: 4px 6px;">
+<div style="display: flex; flex-direction: column; gap: 18px; width: 100%; max-width: 1400px; margin: 0 auto; padding: 6px 10px;">
 
-  <!-- 1. KPI Metric Strip (Compact Desktop Density) -->
-  <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px;">
+  <!-- Search Row (Prominent, Broad & Fast) -->
+  <div class="search-row" style="margin-bottom: 2px;">
+    <button type="button" class="search-btn" onclick="document.getElementById('main-search-input').focus()" style="border-radius: 12px; height: 50px; font-weight: 800; font-size: 1.1rem; padding: 0 22px;">
+      🔍 بحث
+    </button>
+    <input 
+      type="text" 
+      id="main-search-input"
+      name="q" 
+      class="search-input" 
+      placeholder="ابحث باسم المتدرب، رقم الموبايل، أو نوع الباقة..." 
+      autocomplete="off"
+      autofocus
+      style="height: 50px; border-radius: 12px; font-size: 1.05rem; padding: 0 18px; font-weight: 700;"
+      hx-get="{% url 'core:quick_search' %}" 
+      hx-trigger="keyup changed delay:200ms, search" 
+      hx-target="#search-results"
+      hx-indicator="#search-spinner"
+    >
+  </div>
+
+  <!-- Live Search Spinner -->
+  <div id="search-spinner" class="htmx-indicator" style="text-align: center; color: var(--hulk-primary, #E11D48); font-weight: 800; margin-top: -8px; font-size: 0.92rem;">
+    جاري البحث الفوري...
+  </div>
+
+  <!-- Live Search Results (appears dynamically when typing) -->
+  <div id="search-results"></div>
+
+  <!-- Prominent 6 Main Command Buttons (The Core 6 Actions) -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 2px;">
+    
+    <!-- Button 1: سجل / جدد / دفع المتبقي -->
+    <a href="{% url 'members:smart_operations' %}" class="btn-dashboard-action btn-lime" style="min-height: 100px; font-size: 1.4rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 8px 24px rgba(225, 29, 72, 0.3); text-decoration: none; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">⚡</span>
+      <span>سجل / جدد / دفع المتبقي</span>
+    </a>
+
+    <!-- Button 2: إضافة مصروف للخزينة -->
+    <a href="{% url 'expenses:expense_create' %}" class="btn-dashboard-action" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; border: 2px solid color-mix(in srgb, var(--hulk-primary, #E11D48) 60%, #334155); min-height: 100px; font-size: 1.4rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 8px 22px rgba(0,0,0,0.5); text-decoration: none; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">💸</span>
+      <span>إضافة مصروف للخزينة</span>
+    </a>
+
+    <!-- Button 3: عليهم متبقي (ديون) -->
+    <a href="{% url 'members:member_list' %}?filter=remaining" class="btn-dashboard-action btn-orange" style="min-height: 100px; font-size: 1.35rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 8px 22px rgba(217, 119, 6, 0.3); text-decoration: none; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">⚠️</span>
+      <span>عليهم متبقي (ديون)</span>
+      {% if total_debt > 0 %}
+        <span style="background: rgba(0,0,0,0.45); color: #fef08a; font-size: 1.15rem; font-weight: 900; padding: 6px 16px; border-radius: 999px; margin-right: 8px; border: 1px solid rgba(254, 240, 138, 0.3);">
+          {{ total_debt }} ج
+        </span>
+      {% endif %}
+    </a>
+
+    <!-- Button 4: انتهت اشتراكاتهم -->
+    <a href="{% url 'members:member_list' %}?filter=expired" class="btn-dashboard-action btn-red" style="min-height: 100px; font-size: 1.35rem; font-weight: 900; gap: 16px; border-radius: 16px; box-shadow: 0 8px 22px rgba(225, 29, 72, 0.3); text-decoration: none; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">❌</span>
+      <span>انتهت اشتراكاتهم</span>
+      {% if expired_members_count > 0 %}
+        <span style="background: rgba(0,0,0,0.45); color: #fecdd3; font-size: 1.15rem; font-weight: 900; padding: 6px 16px; border-radius: 999px; margin-right: 8px; border: 1px solid rgba(254, 205, 211, 0.3);">
+          {{ expired_members_count }}
+        </span>
+      {% endif %}
+    </a>
+
+    <!-- Button 5: شراء منتج من البار -->
+    <button type="button" onclick="openBarSaleModal()" class="btn-dashboard-action" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; min-height: 100px; border-radius: 16px; font-size: 1.35rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 16px; border: 2px solid rgba(56, 189, 248, 0.5); box-shadow: 0 8px 22px rgba(2, 132, 199, 0.35); cursor: pointer; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">🥤</span>
+      <span>شراء منتج من البار</span>
+    </button>
+
+    <!-- Button 6: لم يدفع للبار (آجل) -->
+    <button type="button" onclick="openBarUnpaidModal()" class="btn-dashboard-action" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: #ffffff; min-height: 100px; border-radius: 16px; font-size: 1.35rem; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 16px; border: 2px solid rgba(167, 139, 250, 0.5); box-shadow: 0 8px 22px rgba(109, 40, 217, 0.35); cursor: pointer; padding: 18px 24px;">
+      <span style="font-size: 2.2rem;">⏳</span>
+      <span>لم يدفع للبار (آجل)</span>
+      {% if unpaid_bar_count > 0 %}
+        <span style="background: #ef4444; color: #ffffff; font-size: 1.1rem; font-weight: 900; padding: 6px 14px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); margin-right: 8px;">
+          {{ unpaid_bar_count }} ({{ unpaid_bar_total }} ج)
+        </span>
+      {% else %}
+        <span style="background: rgba(255,255,255,0.2); color: #f1f5f9; font-size: 0.95rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; margin-right: 8px;">
+          0 معلق
+        </span>
+      {% endif %}
+    </button>
+
+  </div>
+
+  <!-- KPI Metric Strip -->
+  <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 4px;">
     <!-- Metric 1: Active Members -->
     <a href="{% url 'members:member_list' %}?filter=active" style="text-decoration: none; display: block;">
       <div class="card" style="padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-surface); transition: border-color 0.15s;">
@@ -71,56 +160,6 @@
           <span style="font-size: 0.72rem; color: var(--text-dim);">{{ unpaid_bar_count }} معلق</span>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- 2. Command / Action Bar: Instant Search & Core Primary Actions -->
-  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-    <!-- Live Instant Search (Compact Desktop) -->
-    <div style="position: relative; flex: 1; min-width: 300px; max-width: 620px;">
-      <input 
-        type="text" 
-        id="main-search-input"
-        name="q" 
-        class="form-control" 
-        placeholder="ابحث باسم العضو، الهاتف، أو كود المشترك..." 
-        autocomplete="off"
-        autofocus
-        style="height: 34px; font-size: 0.85rem; padding: 0 12px;"
-        hx-get="{% url 'core:quick_search' %}" 
-        hx-trigger="keyup changed delay:200ms, search" 
-        hx-target="#search-results"
-        hx-indicator="#search-spinner"
-      >
-      <span id="search-spinner" class="htmx-indicator" style="position: absolute; left: 10px; top: 8px; font-size: 0.74rem; color: var(--accent-green); font-weight: 700;">
-        جاري البحث...
-      </span>
-    </div>
-
-    <!-- Quick Action Buttons (Standard 32px Desktop Height) -->
-    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-      <!-- Action 1: New / Renew Subscription -->
-      <a href="{% url 'members:smart_operations' %}" class="btn btn-primary" style="height: 32px; font-size: 0.82rem; font-weight: 700; padding: 0 14px;">
-        <span>+ تسجيل / تجديد اشتراك</span>
-      </a>
-
-      <!-- Action 2: Add Expense -->
-      <a href="{% url 'expenses:expense_create' %}" class="btn btn-secondary" style="height: 32px; font-size: 0.82rem; font-weight: 600; padding: 0 12px;">
-        <span>+ تسجيل مصروف</span>
-      </a>
-
-      <!-- Action 3: Bar Sale -->
-      <button type="button" onclick="openBarSaleModal()" class="btn btn-secondary" style="height: 32px; font-size: 0.82rem; font-weight: 600; padding: 0 12px;">
-        <span>+ بيع من البار</span>
-      </button>
-
-      <!-- Action 4: Unpaid Bar Modal -->
-      <button type="button" onclick="openBarUnpaidModal()" class="btn btn-secondary" style="height: 32px; font-size: 0.82rem; font-weight: 600; padding: 0 12px; {% if unpaid_bar_count > 0 %}border-color: rgba(167, 139, 250, 0.4); color: #c084fc;{% endif %}">
-        <span>آجل البار</span>
-        {% if unpaid_bar_count > 0 %}
-          <span class="badge" style="background: rgba(167, 139, 250, 0.2); color: #c084fc; padding: 1px 5px; font-size: 0.7rem; margin-right: 4px;">{{ unpaid_bar_count }}</span>
-        {% endif %}
-      </button>
     </div>
   </div>
 

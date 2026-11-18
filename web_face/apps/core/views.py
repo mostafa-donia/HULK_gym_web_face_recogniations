@@ -265,6 +265,12 @@ def check_manager_page_access(request, target_url=None):
 
         if is_valid:
             request.session["manager_page_unlocked"] = True
+            request.session["settings_page_unlocked"] = True
+            request.session["trainers_page_unlocked"] = True
+            request.session["retention_page_unlocked"] = True
+            request.session["reports_page_unlocked"] = True
+            request.session.modified = True
+            request.session.save()
             messages.success(request, "تم التحقق من كلمة مرور المدير بنجاح.")
             return True, redirect(target)
         else:

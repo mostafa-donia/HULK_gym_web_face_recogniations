@@ -307,8 +307,14 @@ function handleUnlockResult(data) {
 
     let dest = data.redirect_url || '{{ target_url|default:request.get_full_path }}' || '/manager/';
     setTimeout(() => {
-      window.location.href = dest;
-    }, 300);
+      try {
+        const urlObj = new URL(dest, window.location.origin);
+        urlObj.searchParams.set('_unlocked', Date.now());
+        window.location.replace(urlObj.toString());
+      } catch (err) {
+        window.location.reload();
+      }
+    }, 250);
   } else {
     if (data && data.score !== undefined && statusText) {
       if (data.score > 0) {
