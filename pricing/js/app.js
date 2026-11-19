@@ -1,15 +1,190 @@
 /**
- * SYSTEMIZE — 3 Tailored Packages & Quotation Engine
- * Fast, Precision-Calculated, Mobile-Optimized
+ * SYSTEMIZE — Slide Deck Presentation & Pricing Engine
+ * Executive, Fast, Responsive (Arabic RTL)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  initPricingApp();
-  initBottomOnlyPill();
+  initSlideDeck();
+  initPricingEngine();
 });
 
-function initPricingApp() {
-  // Billing plans
+/* ==========================================================================
+   1. SLIDE DECK NAVIGATION ENGINE
+   ========================================================================== */
+function initSlideDeck() {
+  const slides = document.querySelectorAll('.slide-panel');
+  const tabs = document.querySelectorAll('.tab-btn');
+  const dots = document.querySelectorAll('.deck-dot');
+  const btnPrev = document.getElementById('btn-prev-slide');
+  const btnNext = document.getElementById('btn-next-slide');
+  const nextBtnText = document.getElementById('next-btn-text');
+  const currentSlideNumEl = document.getElementById('current-slide-num');
+  const progressBar = document.getElementById('deck-progress-bar');
+  const advanceBtns = document.querySelectorAll('.btn-advance-slide');
+
+  let currentSlide = 1;
+  const totalSlides = slides.length || 5;
+
+  const nextLabels = {
+    1: 'التالي: الهدر القديم vs الحل ←',
+    2: 'التالي: مميزات وقدرات السيستم ←',
+    3: 'التالي: اختيار الباقة وحساب السعر ←',
+    4: 'التالي: الشروط وسياسة الضمان ←',
+    5: 'تواصل عبر واتساب للتنصيب الفوري 💬'
+  };
+
+  function goToSlide(target) {
+    const slideIdx = parseInt(target, 10);
+    if (isNaN(slideIdx) || slideIdx < 1 || slideIdx > totalSlides) return;
+
+    currentSlide = slideIdx;
+
+    // 1. Switch active slide panel
+    slides.forEach(s => {
+      const idx = parseInt(s.getAttribute('data-index'), 10);
+      if (idx === currentSlide) {
+        s.classList.add('active');
+      } else {
+        s.classList.remove('active');
+      }
+    });
+
+    // 2. Switch active top tabs
+    tabs.forEach(tab => {
+      const targetIdx = parseInt(tab.getAttribute('data-target'), 10);
+      if (targetIdx === currentSlide) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    // 3. Switch active bottom dots
+    dots.forEach(dot => {
+      const targetIdx = parseInt(dot.getAttribute('data-target'), 10);
+      if (targetIdx === currentSlide) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
+
+    // 4. Update slide counter and progress bar
+    if (currentSlideNumEl) currentSlideNumEl.textContent = currentSlide;
+    if (progressBar) {
+      const pct = (currentSlide / totalSlides) * 100;
+      progressBar.style.width = `${pct}%`;
+    }
+
+    // 5. Update Previous button state
+    if (btnPrev) {
+      btnPrev.disabled = (currentSlide === 1);
+    }
+
+    // 6. Update Next button label & behavior
+    if (nextBtnText) {
+      nextBtnText.textContent = nextLabels[currentSlide] || 'التالي ←';
+    }
+
+    // Scroll to top of viewport smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Next Button Click
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      if (currentSlide < totalSlides) {
+        goToSlide(currentSlide + 1);
+      } else {
+        // If on the last slide, open WhatsApp
+        const btnOrderWhatsapp = document.getElementById('btn-order-whatsapp');
+        if (btnOrderWhatsapp) {
+          btnOrderWhatsapp.click();
+        } else {
+          window.open('https://wa.me/201000000000', '_blank');
+        }
+      }
+    });
+  }
+
+  // Prev Button Click
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => {
+      if (currentSlide > 1) {
+        goToSlide(currentSlide - 1);
+      }
+    });
+  }
+
+  // Top Tabs Click
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.getAttribute('data-target');
+      goToSlide(target);
+    });
+  });
+
+  // Bottom Dots Click
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const target = dot.getAttribute('data-target');
+      goToSlide(target);
+    });
+  });
+
+  // In-Slide "Advance" Buttons Click
+  advanceBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.getAttribute('data-go');
+      goToSlide(target);
+    });
+  });
+
+  // Keyboard Navigation (Arrow Keys)
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') {
+      // In RTL, ArrowLeft moves forward (next)
+      if (currentSlide < totalSlides) goToSlide(currentSlide + 1);
+    } else if (e.key === 'ArrowRight') {
+      // In RTL, ArrowRight moves backward (prev)
+      if (currentSlide > 1) goToSlide(currentSlide - 1);
+    }
+  });
+
+  // Mobile Touch Swipe Navigation
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  window.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  window.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+  }, { passive: true });
+
+  function handleSwipe() {
+    const diff = touchEndX - touchStartX;
+    if (Math.abs(diff) > 60) {
+      if (diff < 0) {
+        // Swiped left -> in RTL, advance to next slide
+        if (currentSlide < totalSlides) goToSlide(currentSlide + 1);
+      } else {
+        // Swiped right -> go to previous slide
+        if (currentSlide > 1) goToSlide(currentSlide - 1);
+      }
+    }
+  }
+
+  // Init Slide 1
+  goToSlide(1);
+}
+
+/* ==========================================================================
+   2. PRICING & QUOTATION ENGINE (SLIDE 4)
+   ========================================================================== */
+function initPricingEngine() {
   const billingPlans = {
     monthly: {
       price: 550,
@@ -31,7 +206,6 @@ function initPricingApp() {
     }
   };
 
-  // Packages metadata
   const packagesConfig = {
     paper: {
       title: 'باقة «البداية الرقمية»',
@@ -56,7 +230,6 @@ function initPricingApp() {
     }
   };
 
-  // State
   let currentPlanKey = 'yearly';
   let selectedPkgKey = 'vip';
 
@@ -74,36 +247,26 @@ function initPricingApp() {
   const grandTotalDigits = document.getElementById('grand-total-digits');
   const btnOrderWhatsapp = document.getElementById('btn-order-whatsapp');
 
-  // Pill Elements
-  const pillPkgTag = document.getElementById('pill-pkg-tag');
-  const pillPriceVal = document.getElementById('pill-price-val');
-  const pillWhatsappLink = document.getElementById('pill-whatsapp-link');
-
   function formatNumber(num) {
     return new Intl.NumberFormat('en-US').format(num);
   }
 
-  // Update Package Card Displays & Grand Total
-  function renderAll() {
+  function renderPricing() {
     const plan = billingPlans[currentPlanKey];
 
-    // 1. Update each package's displayed prices
+    // 1. Update prices in each package card
     Object.keys(packagesConfig).forEach(pkgKey => {
       const pkg = packagesConfig[pkgKey];
       const licenseEl = document.getElementById(pkg.licenseElId);
       const totalEl = document.getElementById(pkg.totalElId);
 
-      if (licenseEl) {
-        licenseEl.textContent = plan.label;
-      }
+      if (licenseEl) licenseEl.textContent = plan.label;
 
       const pkgTotal = plan.price + pkg.hardwareCost;
-      if (totalEl) {
-        totalEl.textContent = formatNumber(pkgTotal);
-      }
+      if (totalEl) totalEl.textContent = formatNumber(pkgTotal);
     });
 
-    // 2. Update active states on package cards
+    // 2. Update visual active state on cards
     packageCards.forEach(card => {
       const cardPkgKey = card.getAttribute('data-pkg-id');
       const btn = card.querySelector('.btn-package-select');
@@ -132,37 +295,25 @@ function initPricingApp() {
       }
     });
 
-    // 5. Final Grand Total
+    // 5. Grand Total Calculation
     const grandTotal = pkgBaseTotal + externalSum;
     const formattedGrandTotal = formatNumber(grandTotal);
 
-    // 6. Update summary texts
-    if (summaryPkgTitle) {
-      summaryPkgTitle.textContent = selectedPkg.title;
-    }
+    // 6. Update Summary Details
+    if (summaryPkgTitle) summaryPkgTitle.textContent = selectedPkg.title;
     if (summaryPlanTag) {
       summaryPlanTag.textContent = `نظام ${currentPlanKey === 'yearly' ? 'سنوي' : currentPlanKey === 'monthly' ? 'شهري' : 'مدى الحياة'}: ${plan.label}`;
     }
     if (summaryExtrasText) {
       if (selectedAddonNames.length === 0) {
-        summaryExtrasText.textContent = 'بدون إضافات خارجية إضافية (أجهزة الطرفية)';
+        summaryExtrasText.textContent = 'بدون إضافات أجهزة خارجية إضافية';
       } else {
         summaryExtrasText.textContent = `الإضافات المختارة: + ${selectedAddonNames.join(' + ')}`;
       }
     }
-    if (grandTotalDigits) {
-      grandTotalDigits.textContent = formattedGrandTotal;
-    }
+    if (grandTotalDigits) grandTotalDigits.textContent = formattedGrandTotal;
 
-    // 7. Update bottom floating pill
-    if (pillPkgTag) {
-      pillPkgTag.textContent = selectedPkg.title;
-    }
-    if (pillPriceVal) {
-      pillPriceVal.textContent = formattedGrandTotal;
-    }
-
-    // 8. Update WhatsApp links
+    // 7. Update WhatsApp Link
     const extrasMessage = selectedAddonNames.length > 0 
       ? selectedAddonNames.map(name => `   + ${name}`).join('\n') 
       : '   لا توجد إضافات خارجية';
@@ -187,97 +338,56 @@ ${extrasMessage}
         window.open(whatsappUrl, '_blank');
       };
     }
-    if (pillWhatsappLink) {
-      pillWhatsappLink.href = whatsappUrl;
-    }
   }
 
-  // Event Listeners for Billing Plan Switcher
+  // Billing buttons event
   billingButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       const planKey = btn.getAttribute('data-plan');
       if (planKey && billingPlans[planKey]) {
         currentPlanKey = planKey;
-
-        // Toggle active button class
         billingButtons.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
 
-        // Update notice text
         if (billingNoticeText) {
           billingNoticeText.textContent = billingPlans[planKey].notice;
         }
 
-        renderAll();
+        renderPricing();
       }
     });
   });
 
-  // Event Listeners for Package Selection
+  // Package select buttons event
   packageSelectBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
       const pkgKey = btn.getAttribute('data-select-pkg');
       if (pkgKey && packagesConfig[pkgKey]) {
         selectedPkgKey = pkgKey;
-        renderAll();
-
-        // Smooth scroll to builder box
-        const builderBox = document.getElementById('builder-box');
-        if (builderBox && window.innerWidth < 860) {
-          builderBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
+        renderPricing();
       }
     });
   });
 
-  // Make clicking anywhere on the package card select it as well
+  // Package card click
   packageCards.forEach(card => {
     card.addEventListener('click', (e) => {
-      // Don't trigger if already clicked the button
       if (e.target.closest('.btn-package-select')) return;
       const pkgKey = card.getAttribute('data-pkg-id');
       if (pkgKey && packagesConfig[pkgKey]) {
         selectedPkgKey = pkgKey;
-        renderAll();
+        renderPricing();
       }
     });
   });
 
-  // Event Listeners for External Addons Checkboxes
+  // External addons checkbox change
   externalCheckboxes.forEach(chk => {
     chk.addEventListener('change', () => {
-      renderAll();
+      renderPricing();
     });
   });
 
   // Initial render
-  renderAll();
-}
-
-/**
- * Bottom-Only Floating Pill
- * Only appears when scrolling near the bottom of the page
- */
-function initBottomOnlyPill() {
-  const pill = document.getElementById('bottom-pill');
-  if (!pill) return;
-
-  function checkScrollPosition() {
-    const scrollY = window.scrollY || window.pageYOffset;
-    const docHeight = document.documentElement.scrollHeight;
-    const winHeight = window.innerHeight;
-
-    // Show when within 850px from bottom (near builder summary & cta)
-    const distanceFromBottom = docHeight - (scrollY + winHeight);
-
-    if (distanceFromBottom < 850) {
-      pill.classList.add('is-visible');
-    } else {
-      pill.classList.remove('is-visible');
-    }
-  }
-
-  window.addEventListener('scroll', checkScrollPosition, { passive: true });
-  window.addEventListener('resize', checkScrollPosition, { passive: true });
-  checkScrollPosition();
+  renderPricing();
 }
