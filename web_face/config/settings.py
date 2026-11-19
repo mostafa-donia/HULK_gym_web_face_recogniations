@@ -77,6 +77,7 @@ DATABASES = {
         "NAME": BASE_DIR / "gym_face.sqlite3",
         "OPTIONS": {
             "timeout": 60,
+            "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;",
         },
     }
 }
