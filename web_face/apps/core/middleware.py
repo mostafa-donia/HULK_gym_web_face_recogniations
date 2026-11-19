@@ -153,38 +153,17 @@ class ManagerPageAutoLockMiddleware:
         )
 
         if not is_background_or_asset:
-            # 1. Settings & Developer Options Zone
+            # Re-lock strictly Developer Options when navigating away from settings
             is_settings_zone = path.startswith("/settings")
             if not is_settings_zone:
-                if request.session.get("settings_page_unlocked"):
-                    request.session["settings_page_unlocked"] = False
-                    request.session.modified = True
                 if request.session.get("developer_options_unlocked"):
                     request.session["developer_options_unlocked"] = False
                     request.session.modified = True
 
-            # 2. Trainers & Coaches Zone
-            is_trainers_zone = (
-                path.startswith("/payroll/trainers")
-                or path.startswith("/payroll/coaches")
-                or path.startswith("/payroll/trainer-assignments")
-                or path.startswith("/payroll/private-training")
-            )
-            if not is_trainers_zone:
-                if request.session.get("trainers_page_unlocked"):
-                    request.session["trainers_page_unlocked"] = False
-                    request.session.modified = True
-
-            # 3. Manager & Mobile Dashboard Zone
-            is_manager_zone = (
-                path.startswith("/manager")
-                or path.startswith("/mobile")
-                or (path == "/" and request.session.get("view_mode") == "mobile")
-            )
-            if not is_manager_zone:
-                if request.session.get("manager_page_unlocked"):
-                    request.session["manager_page_unlocked"] = False
-                    request.session.modified = True
+            # If manager is detected by AI camera or authorized, keep manager zones open
+            from apps.core.security import is_manager_authorized
+            if is_manager_authorized(request):
+                pass  # Keep manager zones seamlessly unlocked
 
         response = self.get_response(request)
         return response

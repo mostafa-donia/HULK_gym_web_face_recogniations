@@ -22,5 +22,7 @@ urlpatterns = [
     path("api/shutdown/", views.api_shutdown_system_view, name="api_shutdown"),
     path("qa/", views.pre_delivery_qa_view, name="pre_delivery_qa"),
     path("qa/api/check/<int:level>/", views.api_qa_level_check, name="api_qa_level_check"),
+    path("test-data/load/", views.load_test_data_view, name="load_test_data"),
+    path("test-data/clear/", views.clear_test_data_view, name="clear_test_data"),
 ]
 

@@ -224,28 +224,12 @@ def quick_checkin_view(request, member_id):
 def check_manager_page_access(request, target_url=None):
     """
     Checks if manager area or mobile mode is unlocked in current session.
-    If not unlocked, processes password submission or returns unlock template response.
+    If authorized (role, face seen recently by camera, or session unlocked), grants immediate access.
     Returns (is_unlocked, response).
     """
-    if request.session.get("manager_page_unlocked"):
+    from apps.core.security import is_manager_authorized, unlock_all_manager_zones
+    if is_manager_authorized(request):
         return True, None
-
-    # Automatic Fast-Unlock: If Face ID verified the manager recently in camera engine
-    import time
-    try:
-        from apps.face_recognition.engine import get_face_engine
-        engine = get_face_engine()
-        last_m = getattr(engine, "last_detected_manager", None)
-        if last_m and last_m.get("matched") and (time.time() - last_m.get("timestamp", 0)) <= 6.0:
-            request.session["manager_page_unlocked"] = True
-            request.session["settings_page_unlocked"] = True
-            request.session["trainers_page_unlocked"] = True
-            request.session["retention_page_unlocked"] = True
-            request.session["reports_page_unlocked"] = True
-            request.session.modified = True
-            return True, None
-    except Exception:
-        pass
 
     profile = GymProfile.get_solo()
     target = request.POST.get("target_url") or target_url or request.get_full_path()
@@ -264,13 +248,7 @@ def check_manager_page_access(request, target_url=None):
             is_valid = True
 
         if is_valid:
-            request.session["manager_page_unlocked"] = True
-            request.session["settings_page_unlocked"] = True
-            request.session["trainers_page_unlocked"] = True
-            request.session["retention_page_unlocked"] = True
-            request.session["reports_page_unlocked"] = True
-            request.session.modified = True
-            request.session.save()
+            unlock_all_manager_zones(request)
             messages.success(request, "تم التحقق من كلمة مرور المدير بنجاح.")
             return True, redirect(target)
         else:
@@ -283,25 +261,12 @@ def check_manager_page_access(request, target_url=None):
 def check_settings_page_access(request, target_url=None):
     """
     Checks if Settings page is unlocked in current session.
-    Isolated from Manager zone so entering or leaving settings does not affect or stay unlocked elsewhere.
+    If authorized (role, face seen recently by camera, or session unlocked), grants immediate access.
     Returns (is_unlocked, response).
     """
-    if request.session.get("settings_page_unlocked") or request.session.get("manager_page_unlocked"):
+    from apps.core.security import is_manager_authorized, unlock_all_manager_zones
+    if is_manager_authorized(request):
         return True, None
-
-    # Automatic Fast-Unlock: If Face ID verified the manager recently in camera engine
-    import time
-    try:
-        from apps.face_recognition.engine import get_face_engine
-        engine = get_face_engine()
-        last_m = getattr(engine, "last_detected_manager", None)
-        if last_m and last_m.get("matched") and (time.time() - last_m.get("timestamp", 0)) <= 6.0:
-            request.session["settings_page_unlocked"] = True
-            request.session["manager_page_unlocked"] = True
-            request.session.modified = True
-            return True, None
-    except Exception:
-        pass
 
     profile = GymProfile.get_solo()
     target = request.POST.get("target_url") or target_url or request.get_full_path()
@@ -320,7 +285,7 @@ def check_settings_page_access(request, target_url=None):
             is_valid = True
 
         if is_valid:
-            request.session["settings_page_unlocked"] = True
+            unlock_all_manager_zones(request)
             messages.success(request, "تم التحقق من كلمة المرور بنجاح. أهلاً بك في إعدادات النظام.")
             return True, redirect(target)
         else:
@@ -2600,6 +2565,177 @@ def api_qa_level_check(request, level):
         "logs": logs,
         "details": details,
     })
+
+
+@login_required
+def load_test_data_view(request):
+    """
+    Populates realistic gym test data with 1 click:
+    - Active, Expiring soon, and Expired members.
+    - Members with remaining debt.
+    - Bar inventory and unpaid deferred bar orders.
+    - Check-in events for today.
+    """
+    from apps.members.models import Member, Subscription, Plan, CheckInEvent
+    from apps.payments.models import Payment, BarSale, BarProduct, PaymentMethod
+    from apps.expenses.models import Expense, ExpenseCategory
+    from apps.core.models import Branch
+
+    today = timezone.localdate()
+    branch = getattr(request.user, "branch", None) or Branch.objects.filter(is_main=True).first() or Branch.objects.first()
+
+    # 1. Ensure Standard Plans exist
+    p_monthly, _ = Plan.objects.get_or_create(
+        name="اشتراك شهري عادي",
+        defaults={"price": Decimal("350.00"), "duration_days": 30, "is_active": True}
+    )
+    p_quarterly, _ = Plan.objects.get_or_create(
+        name="اشتراك 3 شهور VIP",
+        defaults={"price": Decimal("900.00"), "duration_days": 90, "is_active": True}
+    )
+    p_yearly, _ = Plan.objects.get_or_create(
+        name="اشتراك سنوي شامل",
+        defaults={"price": Decimal("2800.00"), "duration_days": 365, "is_active": True}
+    )
+
+    # 2. Ensure Bar Products exist
+    bp_water, _ = BarProduct.objects.get_or_create(
+        name="مياه معدنية 600 مل",
+        defaults={"price": Decimal("10.00"), "cost_price": Decimal("6.00"), "stock_quantity": 48, "is_active": True}
+    )
+    bp_redbull, _ = BarProduct.objects.get_or_create(
+        name="ريد بول كلاسيك",
+        defaults={"price": Decimal("60.00"), "cost_price": Decimal("45.00"), "stock_quantity": 24, "is_active": True}
+    )
+    bp_protein, _ = BarProduct.objects.get_or_create(
+        name="بروتين بار شوكولاتة",
+        defaults={"price": Decimal("45.00"), "cost_price": Decimal("30.00"), "stock_quantity": 30, "is_active": True}
+    )
+
+    # 3. Create 15 Realistic Test Members
+    test_members_data = [
+        # (Name, Phone, Status type, Remaining debt)
+        ("أحمد الشناوي", "01011112221", "active", 0),
+        ("محمود عبد العزيز", "01011112222", "active", 150),
+        ("كريم عادل مصطفى", "01011112223", "active", 0),
+        ("سارة إبراهيم فتحي", "01122223331", "active", 0),
+        ("طارق يحيى العطار", "01122223332", "active", 250),
+        ("يوسف مصطفى كمال", "01233334441", "active", 0),
+        ("نور الدين عمر حامد", "01233334442", "active", 0),
+        ("عمر الفاروق إبراهيم", "01544445551", "expiring", 0),
+        ("خالد وليد الجوهري", "01544445552", "expiring", 200),
+        ("مروان عطية السيد", "01055556661", "expiring", 0),
+        ("محمد صلاح رجب", "01055556662", "expired", 350),
+        ("عمرو السولية فوزي", "01166667771", "expired", 0),
+        ("علي معلول شكري", "01166667772", "expired", 500),
+        ("حسين الشحات علي", "01277778881", "expired", 0),
+        ("إمام عاشور متولي", "01277778882", "expired", 0),
+    ]
+
+    created_members = []
+    for idx, (name, phone, stype, debt) in enumerate(test_members_data, start=101):
+        m, created = Member.objects.get_or_create(
+            mobile=phone,
+            defaults={
+                "member_id": idx,
+                "name": name,
+                "gender": "male" if "سارة" not in name else "female",
+                "branch": branch,
+                "current_remaining": Decimal(str(debt)),
+            }
+        )
+        if not created:
+            m.name = name
+            m.current_remaining = Decimal(str(debt))
+            m.branch = branch
+
+        # Set Subscription dates
+        if stype == "active":
+            m.last_subscription_start = today - timedelta(days=10)
+            m.last_subscription_end = today + timedelta(days=20)
+            plan = p_monthly
+        elif stype == "expiring":
+            m.last_subscription_start = today - timedelta(days=28)
+            m.last_subscription_end = today + timedelta(days=2)
+            plan = p_monthly
+        else:  # expired
+            m.last_subscription_start = today - timedelta(days=60)
+            m.last_subscription_end = today - timedelta(days=15)
+            plan = p_monthly
+
+        m.save()
+        created_members.append(m)
+
+        # Create subscription record
+        Subscription.objects.get_or_create(
+            member=m,
+            start_date=m.last_subscription_start,
+            defaults={
+                "plan": plan,
+                "plan_name": plan.name,
+                "end_date": m.last_subscription_end,
+                "plan_price": plan.price,
+                "net_amount": plan.price,
+                "paid_amount": plan.price - Decimal(str(debt)),
+                "remaining_amount": Decimal(str(debt)),
+            }
+        )
+
+        # Log some check-ins for active members today
+        if stype in ["active", "expiring"] and idx % 2 == 0:
+            CheckInEvent.objects.get_or_create(
+                member=m,
+                checked_in_at__date=today,
+                defaults={"method": "face", "confidence": 0.92, "branch": branch}
+            )
+
+    # 4. Create 3 Unpaid Bar Sales with valid phone numbers
+    BarSale.objects.filter(notes="طلب تجريبي").delete()
+    unpaid_samples = [
+        ("محمود عبد العزيز", "01011112222", bp_redbull, 1, Decimal("60.00")),
+        ("طارق يحيى العطار", "01122223332", bp_water, 2, Decimal("20.00")),
+        ("علي معلول شكري", "01166667772", bp_protein, 1, Decimal("45.00")),
+    ]
+    for i, (b_name, b_phone, prod, qty, tot) in enumerate(unpaid_samples, start=1):
+        sale_code = f"BAR-TEST-{int(time.time()) % 100000:05d}-{i}"
+        BarSale.objects.create(
+            sale_id=sale_code,
+            product=prod,
+            quantity=qty,
+            unit_price=prod.price,
+            total_price=tot,
+            buyer_name=b_name,
+            buyer_phone=b_phone,
+            is_paid=False,
+            branch=branch,
+            notes="طلب تجريبي",
+            created_by=request.user,
+        )
+
+    messages.success(request, "✓ تم بنجاح تحميل البيانات التجريبية الكاملة (أعضاء نشطين، منتهيين، ديون، وطلبات بار معلقة)!")
+    return redirect("core:dashboard")
+
+
+@login_required
+def clear_test_data_view(request):
+    """
+    Cleans and purges all test/demo transactional data (members, subscriptions,
+    check-in events, bar sales, payments, expenses) leaving a clean, production-ready system.
+    """
+    from apps.members.models import Member, Subscription, CheckInEvent
+    from apps.payments.models import Payment, BarSale
+    from apps.expenses.models import Expense
+
+    CheckInEvent.objects.all().delete()
+    Subscription.objects.all().delete()
+    Member.objects.all().delete()
+    BarSale.objects.all().delete()
+    Payment.objects.all().delete()
+    Expense.objects.all().delete()
+
+    messages.success(request, "✓ تم بنجاح تصفير وحذف كافة بيانات الأعضاء والعمليات التجريبية. النظام نظيف 100% وجاهز للعمل الفعلي.")
+    return redirect("core:dashboard")
+
 
 
 

@@ -27,12 +27,29 @@
   - Located original 6 prominent buttons layout from commit `c1e5832`.
 - **[21:52:00] Step 2 - Dashboard 6 Buttons Restoration:** [COMPLETED]
   - Integrated the 6 large, commanding action buttons in 2 columns on `web_face/templates/core/dashboard.html`.
-  - Retained high-density KPI strip and live check-in / payment ledger beneath them.
 - **[21:58:00] Step 3 - Manager Face Unlock & Redirection Fix:** [COMPLETED]
   - Updated `manager_unlock.html` and `manager_unlock_mobile.html`: replaced static `window.location.href = dest` with `new URL(dest); urlObj.searchParams.set('_unlocked', Date.now()); window.location.replace(urlObj.toString());`.
   - Updated `decorators.py`: `@manager_required` now presents the manager unlock template instead of hard 403 `PermissionDenied` when a receptionist is logged in.
   - Updated `core/views.py`: `check_manager_page_access` now persists all unlock session flags (`manager_page_unlocked`, `settings_page_unlocked`, `trainers_page_unlocked`, `retention_page_unlocked`, `reports_page_unlocked`) with explicit `request.session.save()`.
-- **[22:00:00] Step 4 - Verification & Automated Test:** [PASSED]
-  - Verified 6 buttons presence on dashboard (Status: 200 OK).
-  - Verified non-manager user accessing `/manager/` gets unlock template (Status: 200 OK).
-  - Verified unlocked session loads executive manager dashboard (Status: 200 OK).
+- **[22:05:00] Step 4 - Force Open Protected Pages via Manager Face & Remove Stats:** [COMPLETED]
+  - Created `web_face/apps/core/security.py`:
+    - Added `is_manager_authorized(request)` checking user roles, session unlock flags, or recent AI camera detection of manager face within 180 seconds.
+    - Added `unlock_all_manager_zones(request)` setting all manager session flags simultaneously (`manager_page_unlocked`, `settings_page_unlocked`, `trainers_page_unlocked`, `retention_page_unlocked`, `reports_page_unlocked`).
+  - Removed auto-relocking middleware penalty during inter-zone navigation (`web_face/apps/core/middleware.py`).
+  - Connected `is_manager_authorized` across all manager views:
+    - `/manager/` (Manager executive dashboard)
+    - `/settings/` (System settings - developer password remains protected)
+    - `/payroll/trainers/` (Trainers & salaries)
+    - `/reports/retention/` (Retention analytics)
+  - Accelerated face polling to 350ms in unlock templates and expanded camera memory window to 180s.
+  - Dashboard Cleanup: Stripped all lower stats/tables (KPI cards, check-in desk, payment ledger). Dashboard contains ONLY the search bar + 6 large action buttons + test data controls.
+- **[22:15:00] Step 5 - Test Data Management Buttons:** [COMPLETED]
+  - Added `load_test_data_view` (`/test-data/load/`): populates ~15 realistic members (active, expiring soon, expired, debtors), test bar products, and unpaid bar tabs.
+  - Added `clear_test_data_view` (`/test-data/clear/`): safely purges test data without touching system configs or staff accounts.
+  - Added two quick action buttons directly under the 6 main buttons on the dashboard:
+    - `🧪 تحميل بيانات تجريبية`
+    - `🗑️ حذف وتصفير البيانات التجريبية`
+- **[22:20:00] Step 6 - Verification & Automated Test:** [ALL PASSED]
+  - Verified 6 buttons presence and NO stats down below.
+  - Verified test data loading and clearing.
+  - Verified manager face detection force-opens all protected pages instantly.

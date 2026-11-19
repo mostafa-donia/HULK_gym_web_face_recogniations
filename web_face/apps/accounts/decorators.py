@@ -11,17 +11,13 @@ def manager_required(view_func):
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect("accounts:login")
-        is_user_manager = getattr(request.user, "is_manager", False)
-        is_session_unlocked = bool(
-            request.session.get("manager_page_unlocked")
-            or request.session.get("settings_page_unlocked")
-            or request.session.get("trainers_page_unlocked")
-        )
-        if not is_user_manager and not is_session_unlocked:
-            from apps.core.views import check_manager_page_access
-            unlocked, resp = check_manager_page_access(request, target_url=request.get_full_path())
-            if not unlocked or resp:
-                return resp
+        from apps.core.security import is_manager_authorized
+        if is_manager_authorized(request):
+            return view_func(request, *args, **kwargs)
+        from apps.core.views import check_manager_page_access
+        unlocked, resp = check_manager_page_access(request, target_url=request.get_full_path())
+        if not unlocked or resp:
+            return resp
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 

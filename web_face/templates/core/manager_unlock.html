@@ -187,9 +187,9 @@ async function initAutoFaceUnlock() {
     }
     if (statusText) statusText.textContent = '👁️ جاري التعرف التلقائي على وجه المدير...';
     
-    // Auto-poll verification every 550ms directly from system camera frame
+    // Auto-poll verification every 350ms directly from system camera frame
     scanAttempts = 0;
-    autoScanTimer = setInterval(pollVerifySameCamera, 550);
+    autoScanTimer = setInterval(pollVerifySameCamera, 350);
   } else {
     // Mode 2: Separate Webcam via Browser
     if (imgEl) imgEl.style.display = 'none';

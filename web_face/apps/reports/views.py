@@ -185,7 +185,8 @@ def check_retention_page_access(request, target_url=None):
     Protected by dedicated password, manager account password, manager face, or default '1234'.
     Returns (is_unlocked, response).
     """
-    if request.session.get("retention_page_unlocked") or request.session.get("manager_page_unlocked"):
+    from apps.core.security import is_manager_authorized, unlock_all_manager_zones
+    if is_manager_authorized(request):
         return True, None
 
     profile = GymProfile.get_solo()
@@ -204,8 +205,7 @@ def check_retention_page_access(request, target_url=None):
             is_valid = True
 
         if is_valid:
-            request.session["retention_page_unlocked"] = True
-            request.session["manager_page_unlocked"] = True
+            unlock_all_manager_zones(request)
             messages.success(request, "تم التحقق بنجاح. أهلاً بك في تقرير حركة الأعضاء.")
             return True, redirect(target)
         else:

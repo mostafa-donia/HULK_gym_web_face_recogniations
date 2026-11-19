@@ -762,19 +762,13 @@ def api_verify_manager_face_unlock(request):
 
     source = request.POST.get("source") or request.GET.get("source") or ""
 
-    # 1. Quick pickup from live background engine detection within last 3.5 seconds
-    if source == "same" and getattr(engine, "last_detected_manager", None):
-        last_m = engine.last_detected_manager
-        if (time.time() - last_m.get("timestamp", 0)) <= 3.5 and last_m.get("matched"):
-            pct_score = round(last_m["score"] * 100)
-            request.session["manager_page_unlocked"] = True
-            request.session["settings_page_unlocked"] = True
-            request.session["trainers_page_unlocked"] = True
-            request.session["retention_page_unlocked"] = True
-            request.session["reports_page_unlocked"] = True
-            request.session["developer_options_unlocked"] = False
-            request.session.modified = True
-            request.session.save()
+    # 1. Quick pickup from live background engine detection within last 180 seconds
+    last_m = getattr(engine, "last_detected_manager", None)
+    if last_m and last_m.get("matched"):
+        if (time.time() - last_m.get("timestamp", 0)) <= 180.0:
+            pct_score = round(last_m.get("score", 0.95) * 100)
+            from apps.core.security import unlock_all_manager_zones
+            unlock_all_manager_zones(request)
             return JsonResponse({
                 "success": True,
                 "matched": True,
@@ -822,19 +816,18 @@ def api_verify_manager_face_unlock(request):
             best_score = score
 
     # Threshold for manager unlock (with multi-angle embeddings)
-    thresh = min(0.58, max(0.48, profile.face_match_threshold_ratio - 0.06))
+    thresh = min(0.50, max(0.38, profile.face_match_threshold_ratio - 0.12))
     pct_score = round(max(0.0, best_score) * 100)
 
     if best_score >= thresh:
-        request.session["manager_page_unlocked"] = True
-        request.session["settings_page_unlocked"] = True
-        request.session["trainers_page_unlocked"] = True
-        request.session["retention_page_unlocked"] = True
-        request.session["reports_page_unlocked"] = True
-        # Developer settings requires developer password and is NOT unlocked by manager face
-        request.session["developer_options_unlocked"] = False
-        request.session.modified = True
-        request.session.save()
+        # Cache manager detection on engine so all views fast-unlock immediately
+        engine.last_detected_manager = {
+            "matched": True,
+            "score": best_score,
+            "timestamp": time.time(),
+        }
+        from apps.core.security import unlock_all_manager_zones
+        unlock_all_manager_zones(request)
 
         return JsonResponse({
             "success": True,

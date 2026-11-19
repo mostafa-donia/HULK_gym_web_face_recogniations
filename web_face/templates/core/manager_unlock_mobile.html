@@ -409,7 +409,7 @@
         if (statusText) statusText.textContent = '👁️ جاري التعرف التلقائي على وجه المدير...';
 
         scanAttempts = 0;
-        autoScanTimer = setInterval(pollVerifySameCamera, 550);
+        autoScanTimer = setInterval(pollVerifySameCamera, 350);
       } else {
         // Mode 2: Separate Browser Webcam
         if (imgEl) imgEl.style.display = 'none';
