@@ -1,331 +1,283 @@
 /**
- * SYSTEMIZE — Step-by-Step Presentation Wizard & Cost Estimator
- * Direct, Fast, Zero Fluff
+ * SYSTEMIZE — 3 Tailored Packages & Quotation Engine
+ * Fast, Precision-Calculated, Mobile-Optimized
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  initPresentationWizard();
+  initPricingApp();
   initBottomOnlyPill();
 });
 
-function initPresentationWizard() {
-  const wizardPanels = document.querySelectorAll('.wizard-step-panel');
-  const currentStepNumEl = document.getElementById('current-step-num');
-  const totalStepsNumEl = document.getElementById('total-steps-num');
-  const wizardStepTitleEl = document.getElementById('wizard-step-title');
-  const progressBar = document.getElementById('wizard-progress');
-  const btnPrev = document.getElementById('btn-wizard-prev');
-  const btnNext = document.getElementById('btn-wizard-next');
-  const wizardNavBar = document.getElementById('wizard-nav-bar');
-  const stepDots = document.querySelectorAll('#wizard-dots .dot');
-
-  // Summary Elements
-  const sumSoftwareName = document.getElementById('sum-software-name');
-  const sumSoftwarePrice = document.getElementById('sum-software-price');
-  const sumAddonsList = document.getElementById('sum-addons-list');
-  const wizardTotalDisplay = document.getElementById('wizard-total-display');
-  const pillPriceVal = document.getElementById('pill-price-val');
-  const btnWizardWhatsapp = document.getElementById('btn-wizard-whatsapp');
-  const pillWhatsappLink = document.getElementById('pill-whatsapp-link');
-  const btnRestartWizard = document.getElementById('btn-restart-wizard');
-
-  let currentStep = 1;
-  const totalSteps = 6;
-
-  // State object
-  const configState = {
-    softwarePlan: 'monthly', // 'monthly' (550) or 'annual' (5000)
-    softwarePrice: 550,
-    softwareLabel: 'باقة البرنامج: تثبيت 3 شهور (550 ج.م/شهر)',
-    addons: {
-      face: { selected: true, price: 6000, name: 'بصمة وجه ذكية (شامل الكاميرا والربط)' },
-      whatsapp: { selected: true, price: 1500, name: 'مرسل رسائل الواتساب الآلي' },
-      telegram: { selected: false, price: 2000, name: 'بوت تليجرام الذكي للتقارير' },
-      lock: { selected: false, price: 0, name: 'بدون كالون' },
-      pc: { selected: false, price: 0, name: 'كمبيوتر العميل المعتمد' }
+function initPricingApp() {
+  // Billing plans
+  const billingPlans = {
+    monthly: {
+      price: 550,
+      label: '550 ج.م/شهر',
+      planName: 'شهري (550 ج.م/شهر)',
+      notice: '* خطة الاشتراك الشهري (550 ج.م/شهر) مع تثبيت السعر بدون أي عقود احتكارية.'
+    },
+    yearly: {
+      price: 5500,
+      label: '5,500 ج.م/سنة',
+      planName: 'سنوي موصى به (5,500 ج.م/سنة — وفرت شهرين)',
+      notice: '* خطة الاشتراك السنوي تشمل شهرين مجاناً (تدفع 10 شهور فقط وتعمل سنة كاملة بدون انقطاع).'
+    },
+    lifetime: {
+      price: 11000,
+      label: '11,000 ج.م للأبد',
+      planName: 'مدى الحياة (11,000 ج.م — ترخيص دائم)',
+      notice: '* ترخيص مدى الحياة (Lifetime): تدفع لمرة واحدة فقط وتعمل للأبد بدون أي تجديدات سنوية إطلاقاً.'
     }
   };
 
-  const stepTitles = {
-    1: 'الخطوة 1: اختيار باقة البرنامج الأساسي',
-    2: 'الخطوة 2: بصمة الوجه الذكية للبوابات',
-    3: 'الخطوة 3: مرسل رسائل وتنبيهات الواتساب',
-    4: 'الخطوة 4: بوت تليجرام لتقارير الخزينة',
-    5: 'الخطوة 5: كالون الباب الإلكتروني',
-    6: 'الخطوة 6: توريد جهاز الكمبيوتر',
-    summary: 'الملخص النهائي وعرض السعر'
+  // Packages metadata
+  const packagesConfig = {
+    paper: {
+      title: 'باقة «البداية الرقمية»',
+      hardwareCost: 3500,
+      hardwareNote: 'جهاز بصمة إصبع 500 بصمة (3,500 ج شامل التركيب)',
+      licenseElId: 'pkg-paper-license',
+      totalElId: 'pkg-paper-total'
+    },
+    switch: {
+      title: 'باقة «الترقية الذكية»',
+      hardwareCost: 3500,
+      hardwareNote: 'مرسل واتساب + بوت تليجرام (3,500 ج)',
+      licenseElId: 'pkg-switch-license',
+      totalElId: 'pkg-switch-total'
+    },
+    vip: {
+      title: 'باقة «الأتمتة الكاملة والـ VIP»',
+      hardwareCost: 8500,
+      hardwareNote: 'كاميرا وجه + واتساب + تليجرام (8,500 ج)',
+      licenseElId: 'pkg-vip-license',
+      totalElId: 'pkg-vip-total'
+    }
   };
+
+  // State
+  let currentPlanKey = 'yearly';
+  let selectedPkgKey = 'vip';
+
+  // DOM Elements
+  const billingButtons = document.querySelectorAll('.billing-btn');
+  const billingNoticeText = document.getElementById('billing-notice-text');
+  const packageCards = document.querySelectorAll('.package-card');
+  const packageSelectBtns = document.querySelectorAll('.btn-package-select');
+  const externalCheckboxes = document.querySelectorAll('.external-check');
+
+  // Summary Elements
+  const summaryPkgTitle = document.getElementById('summary-pkg-title');
+  const summaryPlanTag = document.getElementById('summary-plan-tag');
+  const summaryExtrasText = document.getElementById('summary-extras-text');
+  const grandTotalDigits = document.getElementById('grand-total-digits');
+  const btnOrderWhatsapp = document.getElementById('btn-order-whatsapp');
+
+  // Pill Elements
+  const pillPkgTag = document.getElementById('pill-pkg-tag');
+  const pillPriceVal = document.getElementById('pill-price-val');
+  const pillWhatsappLink = document.getElementById('pill-whatsapp-link');
 
   function formatNumber(num) {
     return new Intl.NumberFormat('en-US').format(num);
   }
 
-  function calculateGrandTotal() {
-    let total = configState.softwarePrice;
-    const activeAddons = [];
+  // Update Package Card Displays & Grand Total
+  function renderAll() {
+    const plan = billingPlans[currentPlanKey];
 
-    if (configState.addons.face.selected) {
-      total += configState.addons.face.price;
-      activeAddons.push(configState.addons.face);
-    }
-    if (configState.addons.whatsapp.selected) {
-      total += configState.addons.whatsapp.price;
-      activeAddons.push(configState.addons.whatsapp);
-    }
-    if (configState.addons.telegram.selected) {
-      total += configState.addons.telegram.price;
-      activeAddons.push(configState.addons.telegram);
-    }
-    if (configState.addons.lock.selected && configState.addons.lock.price > 0) {
-      total += configState.addons.lock.price;
-      activeAddons.push(configState.addons.lock);
-    }
-    if (configState.addons.pc.selected && configState.addons.pc.price > 0) {
-      total += configState.addons.pc.price;
-      activeAddons.push(configState.addons.pc);
-    }
+    // 1. Update each package's displayed prices
+    Object.keys(packagesConfig).forEach(pkgKey => {
+      const pkg = packagesConfig[pkgKey];
+      const licenseEl = document.getElementById(pkg.licenseElId);
+      const totalEl = document.getElementById(pkg.totalElId);
 
-    return { total, activeAddons };
-  }
+      if (licenseEl) {
+        licenseEl.textContent = plan.label;
+      }
 
-  function updateSummaryDisplay() {
-    const { total, activeAddons } = calculateGrandTotal();
-
-    sumSoftwareName.textContent = configState.softwareLabel;
-    sumSoftwarePrice.textContent = `${formatNumber(configState.softwarePrice)} ج.م`;
-
-    sumAddonsList.innerHTML = '';
-    if (activeAddons.length === 0) {
-      sumAddonsList.innerHTML = '<div class="summary-line"><span class="item-name" style="color: var(--text-dim);">بدون إضافات أخرى مختارة</span><span class="item-val">0 ج.م</span></div>';
-    } else {
-      activeAddons.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'summary-line';
-        row.innerHTML = `<span class="item-name">+ ${item.name}</span><span class="item-val">${formatNumber(item.price)} ج.م</span>`;
-        sumAddonsList.appendChild(row);
-      });
-    }
-
-    const formattedTotal = formatNumber(total);
-    wizardTotalDisplay.textContent = formattedTotal;
-    if (pillPriceVal) pillPriceVal.textContent = formattedTotal;
-  }
-
-  function showStep(step) {
-    wizardPanels.forEach(p => p.classList.remove('active'));
-
-    if (step === 'summary') {
-      const summaryPanel = document.getElementById('step-summary-view');
-      if (summaryPanel) summaryPanel.classList.add('active');
-      wizardStepTitleEl.textContent = stepTitles.summary;
-      currentStepNumEl.textContent = '6';
-      progressBar.style.width = '100%';
-      wizardNavBar.style.display = 'none';
-      updateSummaryDisplay();
-      return;
-    }
-
-    wizardNavBar.style.display = 'flex';
-    const targetPanel = document.querySelector(`.wizard-step-panel[data-step="${step}"]`);
-    if (targetPanel) targetPanel.classList.add('active');
-
-    currentStepNumEl.textContent = step;
-    wizardStepTitleEl.textContent = stepTitles[step] || '';
-
-    // Update progress
-    const pct = ((step - 1) / (totalSteps - 1)) * 100;
-    progressBar.style.width = `${Math.max(16, pct)}%`;
-
-    // Navigation buttons visibility
-    btnPrev.style.visibility = step > 1 ? 'visible' : 'hidden';
-    btnNext.textContent = step === totalSteps ? 'عرض الملخص النهائي ←' : 'الخطوة التالية ←';
-
-    // Update dots
-    stepDots.forEach((dot, idx) => {
-      if (idx + 1 === step) {
-        dot.classList.add('active');
-      } else {
-        dot.classList.remove('active');
+      const pkgTotal = plan.price + pkg.hardwareCost;
+      if (totalEl) {
+        totalEl.textContent = formatNumber(pkgTotal);
       }
     });
+
+    // 2. Update active states on package cards
+    packageCards.forEach(card => {
+      const cardPkgKey = card.getAttribute('data-pkg-id');
+      const btn = card.querySelector('.btn-package-select');
+      if (cardPkgKey === selectedPkgKey) {
+        card.classList.add('selected-pkg');
+        if (btn) btn.innerHTML = '<span>✓ الباقة المختارة حالياً</span>';
+      } else {
+        card.classList.remove('selected-pkg');
+        if (btn) btn.innerHTML = `<span>اختيار ${packagesConfig[cardPkgKey].title}</span>`;
+      }
+    });
+
+    // 3. Calculate selected package base cost
+    const selectedPkg = packagesConfig[selectedPkgKey];
+    const pkgBaseTotal = plan.price + selectedPkg.hardwareCost;
+
+    // 4. Calculate checked external addons
+    let externalSum = 0;
+    const selectedAddonNames = [];
+
+    externalCheckboxes.forEach(chk => {
+      if (chk.checked) {
+        const val = parseInt(chk.value, 10) || 0;
+        externalSum += val;
+        selectedAddonNames.push(chk.getAttribute('data-name') || 'إضافة مخصصة');
+      }
+    });
+
+    // 5. Final Grand Total
+    const grandTotal = pkgBaseTotal + externalSum;
+    const formattedGrandTotal = formatNumber(grandTotal);
+
+    // 6. Update summary texts
+    if (summaryPkgTitle) {
+      summaryPkgTitle.textContent = selectedPkg.title;
+    }
+    if (summaryPlanTag) {
+      summaryPlanTag.textContent = `نظام ${currentPlanKey === 'yearly' ? 'سنوي' : currentPlanKey === 'monthly' ? 'شهري' : 'مدى الحياة'}: ${plan.label}`;
+    }
+    if (summaryExtrasText) {
+      if (selectedAddonNames.length === 0) {
+        summaryExtrasText.textContent = 'بدون إضافات خارجية إضافية (أجهزة الطرفية)';
+      } else {
+        summaryExtrasText.textContent = `الإضافات المختارة: + ${selectedAddonNames.join(' + ')}`;
+      }
+    }
+    if (grandTotalDigits) {
+      grandTotalDigits.textContent = formattedGrandTotal;
+    }
+
+    // 7. Update bottom floating pill
+    if (pillPkgTag) {
+      pillPkgTag.textContent = selectedPkg.title;
+    }
+    if (pillPriceVal) {
+      pillPriceVal.textContent = formattedGrandTotal;
+    }
+
+    // 8. Update WhatsApp links
+    const extrasMessage = selectedAddonNames.length > 0 
+      ? selectedAddonNames.map(name => `   + ${name}`).join('\n') 
+      : '   لا توجد إضافات خارجية';
+
+    const whatsappMessage = 
+`مرحباً، أريد طلب تجهيز وتشغيل نظام SYSTEMIZE للجيم:
+━━━━━━━━━━━━━━━━━━━━
+📌 الباقة المختارة: ${selectedPkg.title}
+💰 نظام ترخيص البرنامج: ${plan.planName}
+📦 عتاد الباقة: ${selectedPkg.hardwareNote}
+🔧 الإضافات الخارجية:
+${extrasMessage}
+━━━━━━━━━━━━━━━━━━━━
+💵 الإجمالي الصافي المقدر: ${formattedGrandTotal} جنيه مصري
+
+يرجى التواصل لتأكيد ميعاد المعاينة والتنصيب.`;
+
+    const whatsappUrl = `https://wa.me/201000000000?text=${encodeURIComponent(whatsappMessage)}`;
+
+    if (btnOrderWhatsapp) {
+      btnOrderWhatsapp.onclick = () => {
+        window.open(whatsappUrl, '_blank');
+      };
+    }
+    if (pillWhatsappLink) {
+      pillWhatsappLink.href = whatsappUrl;
+    }
   }
 
-  // Next & Prev button listeners
-  btnNext.addEventListener('click', () => {
-    if (currentStep < totalSteps) {
-      currentStep++;
-      showStep(currentStep);
-    } else {
-      showStep('summary');
-    }
-  });
-
-  btnPrev.addEventListener('click', () => {
-    if (currentStep > 1) {
-      currentStep--;
-      showStep(currentStep);
-    }
-  });
-
-  // Next step shortcut buttons inside step panels
-  document.querySelectorAll('.btn-next-step').forEach(btn => {
+  // Event Listeners for Billing Plan Switcher
+  billingButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      const nextStep = parseInt(btn.getAttribute('data-next'), 10);
-      currentStep = nextStep;
-      showStep(currentStep);
-    });
-  });
+      const planKey = btn.getAttribute('data-plan');
+      if (planKey && billingPlans[planKey]) {
+        currentPlanKey = planKey;
 
-  const btnFinish = document.getElementById('btn-show-summary');
-  if (btnFinish) {
-    btnFinish.addEventListener('click', () => {
-      showStep('summary');
-    });
-  }
+        // Toggle active button class
+        billingButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
 
-  if (btnRestartWizard) {
-    btnRestartWizard.addEventListener('click', () => {
-      currentStep = 1;
-      showStep(currentStep);
-    });
-  }
+        // Update notice text
+        if (billingNoticeText) {
+          billingNoticeText.textContent = billingPlans[planKey].notice;
+        }
 
-  // --- Step 1: Software Plan Radios ---
-  const softwareRadios = document.querySelectorAll('.software-radio');
-  softwareRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      document.querySelectorAll('.software-opt-card').forEach(c => c.classList.remove('selected'));
-      radio.closest('.software-opt-card').classList.add('selected');
-
-      if (radio.value === 'monthly') {
-        configState.softwarePlan = 'monthly';
-        configState.softwarePrice = 550;
-        configState.softwareLabel = 'باقة البرنامج: تثبيت 3 شهور (550 ج.م/شهر)';
-      } else {
-        configState.softwarePlan = 'annual';
-        configState.softwarePrice = 5000;
-        configState.softwareLabel = 'باقة البرنامج: عرض الخصم السنوي (5,000 ج.م/سنة)';
+        renderAll();
       }
     });
   });
 
-  // --- Steps 2, 3, 4: Yes / No Choice Buttons ---
-  document.querySelectorAll('.btn-choice-skip, .btn-choice-add').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const addonKey = btn.getAttribute('data-addon');
-      const action = btn.getAttribute('data-action');
-      const parentStep = btn.closest('.wizard-step-panel');
-      const stepNum = parseInt(parentStep.getAttribute('data-step'), 10);
+  // Event Listeners for Package Selection
+  packageSelectBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const pkgKey = btn.getAttribute('data-select-pkg');
+      if (pkgKey && packagesConfig[pkgKey]) {
+        selectedPkgKey = pkgKey;
+        renderAll();
 
-      if (action === 'add') {
-        configState.addons[addonKey].selected = true;
-      } else {
-        configState.addons[addonKey].selected = false;
-      }
-
-      // Automatically advance to the next step
-      if (stepNum < totalSteps) {
-        currentStep = stepNum + 1;
-        showStep(currentStep);
-      } else {
-        showStep('summary');
+        // Smooth scroll to builder box
+        const builderBox = document.getElementById('builder-box');
+        if (builderBox && window.innerWidth < 860) {
+          builderBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
       }
     });
   });
 
-  // --- Step 5: Lock Radios ---
-  const lockRadios = document.querySelectorAll('.lock-radio');
-  lockRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      document.querySelectorAll('.lock-opt-card').forEach(c => c.classList.remove('selected'));
-      radio.closest('.lock-opt-card').classList.add('selected');
-
-      const price = parseInt(radio.value, 10);
-      const name = radio.getAttribute('data-name') || 'بدون كالون';
-
-      configState.addons.lock.selected = price > 0;
-      configState.addons.lock.price = price;
-      configState.addons.lock.name = name;
+  // Make clicking anywhere on the package card select it as well
+  packageCards.forEach(card => {
+    card.addEventListener('click', (e) => {
+      // Don't trigger if already clicked the button
+      if (e.target.closest('.btn-package-select')) return;
+      const pkgKey = card.getAttribute('data-pkg-id');
+      if (pkgKey && packagesConfig[pkgKey]) {
+        selectedPkgKey = pkgKey;
+        renderAll();
+      }
     });
   });
 
-  // --- Step 6: PC Radios ---
-  const pcRadios = document.querySelectorAll('.pc-radio');
-  pcRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      document.querySelectorAll('.pc-opt-card').forEach(c => c.classList.remove('selected'));
-      radio.closest('.pc-opt-card').classList.add('selected');
-
-      const price = parseInt(radio.value, 10);
-      const name = radio.getAttribute('data-name') || 'كمبيوتر العميل الحالي';
-
-      configState.addons.pc.selected = price > 0;
-      configState.addons.pc.price = price;
-      configState.addons.pc.name = name;
+  // Event Listeners for External Addons Checkboxes
+  externalCheckboxes.forEach(chk => {
+    chk.addEventListener('change', () => {
+      renderAll();
     });
   });
 
-  // --- WhatsApp Lead Dispatch ---
-  function generateWhatsAppUrl() {
-    const { total, activeAddons } = calculateGrandTotal();
-
-    let msg = `*طلب تجهيز وتشغيل نظام SYSTEMIZE لإدارة الجيم*\n\n`;
-    msg += `لقد قمت باختيار وتحديد التجهيز التالي لجيمي:\n`;
-    msg += `• ${configState.softwareLabel}\n`;
-
-    if (activeAddons.length > 0) {
-      msg += `\n*الإضافات والأجهزة المختارة:*\n`;
-      activeAddons.forEach((item, idx) => {
-        msg += `${idx + 1}. ${item.name} — ${formatNumber(item.price)} ج.م\n`;
-      });
-    }
-
-    msg += `\n*إجمالي التجهيز التقديري: ${formatNumber(total)} جنيه مصري.*\n\n`;
-    msg += `يرجى التواصل معي لتنسيق موعد التنصيب وبدء التشغيل الفوري.`;
-
-    return `https://wa.me/201000000000?text=${encodeURIComponent(msg)}`;
-  }
-
-  if (btnWizardWhatsapp) {
-    btnWizardWhatsapp.addEventListener('click', () => {
-      window.open(generateWhatsAppUrl(), '_blank');
-    });
-  }
-
-  if (pillWhatsappLink) {
-    pillWhatsappLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.open(generateWhatsAppUrl(), '_blank');
-    });
-  }
-
-  // Initial step setup
-  showStep(1);
+  // Initial render
+  renderAll();
 }
 
 /**
- * Show the floating pill ONLY when the user reaches near the bottom of the page
+ * Bottom-Only Floating Pill
+ * Only appears when scrolling near the bottom of the page
  */
 function initBottomOnlyPill() {
-  const bottomPill = document.getElementById('bottom-pill');
-  if (!bottomPill) return;
+  const pill = document.getElementById('bottom-pill');
+  if (!pill) return;
 
   function checkScrollPosition() {
     const scrollY = window.scrollY || window.pageYOffset;
-    const viewportHeight = window.innerHeight;
-    const fullHeight = document.documentElement.scrollHeight;
+    const docHeight = document.documentElement.scrollHeight;
+    const winHeight = window.innerHeight;
 
-    const distanceToBottom = fullHeight - (scrollY + viewportHeight);
+    // Show when within 850px from bottom (near builder summary & cta)
+    const distanceFromBottom = docHeight - (scrollY + winHeight);
 
-    // Show only when user has reached near bottom (within 650px of bottom or >82% of page)
-    if (distanceToBottom < 650 || (scrollY + viewportHeight) / fullHeight > 0.82) {
-      bottomPill.classList.add('is-visible');
+    if (distanceFromBottom < 850) {
+      pill.classList.add('is-visible');
     } else {
-      bottomPill.classList.remove('is-visible');
+      pill.classList.remove('is-visible');
     }
   }
 
   window.addEventListener('scroll', checkScrollPosition, { passive: true });
-  window.addEventListener('resize', checkScrollPosition);
+  window.addEventListener('resize', checkScrollPosition, { passive: true });
   checkScrollPosition();
 }
