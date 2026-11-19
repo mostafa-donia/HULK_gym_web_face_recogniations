@@ -1,6 +1,6 @@
 /* ==========================================================================
-   SYSTEMIZE — High-Impact, Loss-Prevention Gym Management Pitch
-   Mobile-Optimized & Responsive SaaS Layout (Arabic RTL)
+   SYSTEMIZE — Executive Slide Deck Presentation (Arabic RTL)
+   Clean, Professional, Zero Fluff, Mobile-Optimized
    ========================================================================== */
 
 :root {
@@ -43,7 +43,7 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-full: 9999px;
-  --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* --------------------------------------------------------------------------
@@ -66,7 +66,7 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
-body {
+body.deck-body {
   position: relative;
   overflow-x: hidden;
   background-color: var(--bg-darkest);
@@ -79,12 +79,12 @@ body {
 /* Numeric Styles */
 .loss-number,
 .opt-price,
-.cost-num,
-.total-num,
+.pkg-sum-digits,
+.grand-digits,
 .cap-num,
-#current-step-num,
-#total-steps-num,
-#pill-price-val {
+.item-price,
+.license-price,
+.hw-price {
   font-family: var(--font-numeric);
   letter-spacing: -0.02em;
 }
@@ -116,27 +116,27 @@ button {
 
 /* Ambient Background Lights */
 .ambient-glow {
-  position: absolute;
+  position: fixed;
   border-radius: 50%;
   filter: blur(140px);
   pointer-events: none;
-  z-index: -1;
-  opacity: 0.35;
+  z-index: 0;
+  opacity: 0.3;
 }
 
 .glow-red {
-  top: -60px;
-  right: 10%;
-  width: min(550px, 90vw);
-  height: 380px;
-  background: radial-gradient(circle, rgba(255, 59, 78, 0.18) 0%, transparent 70%);
+  top: -40px;
+  right: 5%;
+  width: min(500px, 90vw);
+  height: 350px;
+  background: radial-gradient(circle, rgba(255, 59, 78, 0.16) 0%, transparent 70%);
 }
 
 .glow-green {
-  top: 900px;
+  bottom: 50px;
   left: 5%;
-  width: min(650px, 95vw);
-  height: 440px;
+  width: min(550px, 90vw);
+  height: 380px;
   background: radial-gradient(circle, rgba(46, 248, 114, 0.12) 0%, transparent 70%);
 }
 
@@ -151,278 +151,287 @@ button {
   text-align: center;
 }
 
-.highlight-red {
-  color: var(--accent-red);
-  text-shadow: 0 0 20px rgba(255, 59, 78, 0.35);
-}
-
-.text-green {
-  color: var(--neon-green);
-}
-
 /* --------------------------------------------------------------------------
-   BUTTONS
+   TOP DECK HEADER & NAVIGATION
    -------------------------------------------------------------------------- */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 22px;
-  border-radius: var(--radius-md);
-  font-weight: 800;
-  font-size: 15px;
-  transition: var(--transition);
-  white-space: nowrap;
-  min-height: 46px;
-}
-
-.btn-primary {
-  background: var(--neon-green);
-  color: #05080c;
-  box-shadow: 0 4px 18px rgba(46, 248, 114, 0.3);
-}
-
-.btn-primary:hover,
-.btn-primary:active {
-  background: var(--neon-green-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(46, 248, 114, 0.45);
-}
-
-.btn-outline {
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-main);
-  border: 1px solid var(--border-medium);
-}
-
-.btn-outline:hover,
-.btn-outline:active {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: var(--text-main);
-}
-
-.btn-whatsapp {
-  background: #25d366;
-  color: #ffffff;
-  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.35);
-}
-
-.btn-whatsapp:hover,
-.btn-whatsapp:active {
-  background: #20bd5a;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 26px rgba(37, 211, 102, 0.5);
-}
-
-.btn-large {
-  padding: 15px 28px;
-  font-size: 16px;
-  border-radius: var(--radius-md);
-}
-
-.pulse-btn {
-  animation: softPulse 2.4s infinite;
-}
-
-@keyframes softPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-}
-
-.pulse-glow {
-  position: relative;
-}
-
-.pulse-glow::after {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border-radius: inherit;
-  border: 2px solid #25d366;
-  opacity: 0.6;
-  animation: ringPulse 2.2s infinite;
-}
-
-@keyframes ringPulse {
-  0% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.04); opacity: 0; }
-  100% { transform: scale(1); opacity: 0; }
-}
-
-/* --------------------------------------------------------------------------
-   MINIMAL HEADER (NO NAVBAR)
-   -------------------------------------------------------------------------- */
-.minimal-header {
-  padding: 14px 0;
+.deck-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background: rgba(6, 8, 12, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
-  background: rgba(6, 8, 12, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  position: relative;
-  z-index: 50;
 }
 
 .header-flex {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  gap: 16px;
 }
 
 .brand-block {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .brand-logo-img {
   width: 38px;
   height: 38px;
   object-fit: contain;
-  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-medium);
 }
 
 .brand-title {
+  display: block;
   font-family: var(--font-numeric);
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 900;
   color: var(--text-main);
-  display: block;
   line-height: 1.1;
+  letter-spacing: -0.01em;
 }
 
 .brand-sub {
+  display: block;
   font-size: 10px;
+  font-weight: 700;
   color: var(--neon-green);
   text-transform: uppercase;
-  font-weight: 700;
   letter-spacing: 0.04em;
-  display: block;
 }
 
+/* SLIDE TABS NAVIGATION (DESKTOP) */
+.slide-tabs-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface);
+  padding: 4px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text-muted);
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.tab-idx {
+  font-family: var(--font-numeric);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+}
+
+.tab-btn:hover {
+  color: var(--text-main);
+}
+
+.tab-btn.active {
+  background: var(--bg-card);
+  color: var(--neon-green);
+  border: 1px solid var(--neon-green-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.tab-btn.active .tab-idx {
+  background: var(--neon-green);
+  color: #06080c;
+  font-weight: 900;
+}
+
+/* DIRECT WHATSAPP BUTTON */
 .btn-whatsapp-direct {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   padding: 7px 14px;
   background: rgba(37, 211, 102, 0.12);
+  border: 1px solid rgba(37, 211, 102, 0.35);
   color: #25d366;
-  border: 1px solid rgba(37, 211, 102, 0.3);
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  font-weight: 700;
-  min-height: 38px;
+  border-radius: var(--radius-full);
+  font-size: 12.5px;
+  font-weight: 800;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+
+.btn-whatsapp-direct svg {
+  width: 16px;
+  height: 16px;
 }
 
 .btn-whatsapp-direct:hover {
   background: #25d366;
   color: #fff;
+  transform: translateY(-1px);
 }
 
-.btn-whatsapp-direct svg,
-.btn-whatsapp svg {
-  width: 17px;
-  height: 17px;
-  flex-shrink: 0;
+/* TOP LINEAR PROGRESS BAR */
+.deck-progress-track {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.deck-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, var(--neon-green));
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* --------------------------------------------------------------------------
-   SECTION 1: THE SHOCK HOOK
+   SLIDES VIEWPORT CONTAINER
    -------------------------------------------------------------------------- */
-.section-shock {
-  padding: 44px 0 54px;
+.deck-content-wrap {
+  position: relative;
+  z-index: 1;
+  padding-top: 88px;   /* clear top bar */
+  padding-bottom: 96px; /* clear bottom nav bar */
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
 }
 
+.deck-stage {
+  width: 100%;
+}
+
+.slide-panel {
+  display: none;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-panel.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.slide-inner {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   SLIDE 1: النزيف المالي (THE SHOCK)
+   -------------------------------------------------------------------------- */
 .alert-pill {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 14px;
+  padding: 4px 14px;
   background: var(--accent-red-subtle);
   border: 1px solid var(--accent-red-border);
   border-radius: var(--radius-full);
   font-size: 12px;
   font-weight: 800;
   color: var(--accent-red);
-  margin-bottom: 18px;
-  max-width: 100%;
+  margin-bottom: 16px;
 }
 
 .alert-dot {
   width: 7px;
   height: 7px;
-  background: var(--accent-red);
   border-radius: 50%;
+  background: var(--accent-red);
   box-shadow: 0 0 8px var(--accent-red);
-  flex-shrink: 0;
 }
 
-.main-shock-title {
-  font-size: clamp(26px, 4vw, 48px);
+.slide-headline {
+  font-size: clamp(24px, 3.4vw, 40px);
   font-weight: 900;
-  line-height: 1.3;
   color: var(--text-main);
-  margin-bottom: 14px;
-  word-break: break-word;
+  line-height: 1.32;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
 }
 
-.main-shock-sub {
-  font-size: 16px;
+.highlight-red {
+  color: var(--accent-red);
+  text-shadow: 0 0 25px rgba(255, 59, 78, 0.35);
+}
+
+.slide-subtext {
+  font-size: clamp(14px, 1.6vw, 16px);
   color: var(--text-secondary);
-  max-width: 720px;
+  max-width: 680px;
   margin: 0 auto 30px;
-  line-height: 1.65;
+  line-height: 1.6;
 }
 
 .loss-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+  text-align: right;
 }
 
 .loss-card {
   background: var(--bg-card);
-  border: 1px solid rgba(255, 59, 78, 0.3);
+  border: 1px solid rgba(255, 59, 78, 0.25);
   border-radius: var(--radius-md);
   padding: 22px 18px;
-  text-align: right;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
   transition: var(--transition);
+  position: relative;
+  overflow: hidden;
 }
 
 .loss-card:hover {
-  transform: translateY(-2px);
   border-color: var(--accent-red);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 59, 78, 0.12);
 }
 
 .loss-badge-wrap {
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
 }
 
 .loss-tag {
-  display: block;
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   color: var(--text-muted);
-  margin-bottom: 4px;
 }
 
 .loss-number {
-  font-size: clamp(24px, 2.6vw, 34px);
+  font-size: 28px;
   font-weight: 900;
   color: var(--accent-red);
   line-height: 1.1;
-  display: block;
 }
 
 .loss-number .curr {
   font-size: 13px;
+  color: var(--text-dim);
   font-weight: 700;
-  color: var(--text-muted);
 }
 
 .loss-explain {
@@ -431,42 +440,45 @@ button {
   line-height: 1.55;
 }
 
+.loss-explain strong {
+  color: var(--text-main);
+}
+
 .total-bleeding-banner {
-  background: linear-gradient(145deg, rgba(255, 59, 78, 0.12), rgba(20, 26, 38, 0.8));
+  background: linear-gradient(135deg, rgba(255, 59, 78, 0.14) 0%, rgba(15, 20, 31, 0.95) 100%);
   border: 1px solid var(--accent-red-border);
-  border-radius: var(--radius-lg);
-  padding: 20px 24px;
+  border-radius: var(--radius-md);
+  padding: 18px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  margin-top: 10px;
 }
 
 .bleeding-text {
   text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .bleeding-text strong {
-  display: block;
-  font-size: 16px;
+  font-size: 13.5px;
   color: var(--accent-red);
 }
 
 .bleeding-text span {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 900;
   color: var(--text-main);
 }
 
 /* --------------------------------------------------------------------------
-   SECTION 2: 3 PACKAGES & BILLING SWITCHER
+   SLIDE 2: الهدر vs الحل (COMPARISON)
    -------------------------------------------------------------------------- */
-.section-packages {
-  padding: 40px 0 70px;
-}
-
-.section-title-wrap {
-  margin-bottom: 28px;
+.slide-header-block {
+  margin-bottom: 24px;
 }
 
 .sub-badge {
@@ -475,31 +487,142 @@ button {
   font-weight: 800;
   color: var(--neon-green);
   background: var(--neon-green-subtle);
-  padding: 4px 14px;
+  border: 1px solid var(--neon-green-border);
+  padding: 3px 12px;
   border-radius: var(--radius-full);
   margin-bottom: 8px;
-  border: 1px solid var(--neon-green-border);
 }
 
-.section-heading {
-  font-size: clamp(22px, 2.8vw, 32px);
+.slide-heading {
+  font-size: clamp(22px, 2.6vw, 32px);
   font-weight: 900;
   color: var(--text-main);
   line-height: 1.35;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
-.section-subtext {
-  font-size: 14.5px;
+.direct-comp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.comp-col {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 22px 20px;
+  border: 1px solid var(--border-subtle);
+}
+
+.col-waste {
+  border-color: rgba(255, 59, 78, 0.3);
+}
+
+.col-solution {
+  border-color: var(--neon-green-border);
+  box-shadow: 0 0 25px rgba(46, 248, 114, 0.08);
+}
+
+.comp-head-tag {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 14px;
+}
+
+.head-red {
+  background: var(--accent-red-subtle);
+  color: var(--accent-red);
+}
+
+.head-green {
+  background: var(--neon-green-subtle);
+  color: var(--neon-green);
+}
+
+.comp-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comp-items-list li {
+  font-size: 13px;
   color: var(--text-secondary);
-  max-width: 620px;
-  margin: 0 auto;
+  line-height: 1.55;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-/* BILLING FREQUENCY SWITCHER */
+.comp-items-list li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.comp-items-list strong {
+  display: block;
+  font-size: 14px;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.slide-action-center {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* --------------------------------------------------------------------------
+   SLIDE 3: مميزات السيستم (CORE 6 TILES)
+   -------------------------------------------------------------------------- */
+.features-6-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.feat-tile {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px 18px;
+  transition: var(--transition);
+}
+
+.feat-tile:hover {
+  border-color: var(--border-bright);
+  transform: translateY(-2px);
+}
+
+.tile-icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.feat-tile h3 {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+
+.feat-tile p {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+/* --------------------------------------------------------------------------
+   SLIDE 4: اختيار الباقة وحساب السعر الإجمالي (PACKAGES & BUILDER)
+   -------------------------------------------------------------------------- */
 .billing-switcher-wrap {
-  max-width: 720px;
-  margin: 0 auto 36px;
+  max-width: 680px;
+  margin: 0 auto 28px;
   text-align: center;
 }
 
@@ -508,7 +631,7 @@ button {
   background: var(--bg-surface);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-full);
-  padding: 5px;
+  padding: 4px;
   gap: 6px;
 }
 
@@ -518,9 +641,9 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: var(--radius-full);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--text-muted);
   transition: var(--transition);
@@ -547,7 +670,7 @@ button {
   font-size: 11px;
   font-weight: 700;
   color: var(--text-dim);
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 .billing-badge.green {
@@ -559,19 +682,18 @@ button {
 }
 
 .billing-notice {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--neon-green);
-  margin-top: 12px;
+  margin-top: 10px;
   font-weight: 700;
 }
 
-/* THE 3 PACKAGES GRID */
 .packages-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 16px;
   align-items: stretch;
-  margin-bottom: 38px;
+  margin-bottom: 28px;
 }
 
 .package-card {
@@ -579,40 +701,41 @@ button {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 30px 22px 24px;
+  padding: 26px 18px 20px;
   display: flex;
   flex-direction: column;
   transition: var(--transition);
+  cursor: pointer;
 }
 
 .package-card:hover {
   border-color: var(--border-bright);
-  transform: translateY(-3px);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 
 .package-card.selected-pkg {
   border-color: var(--neon-green);
   background: linear-gradient(180deg, rgba(46, 248, 114, 0.04) 0%, var(--bg-card) 100%);
-  box-shadow: 0 0 25px rgba(46, 248, 114, 0.16);
+  box-shadow: 0 0 22px rgba(46, 248, 114, 0.16);
 }
 
 .package-card.featured-pkg {
   border-color: var(--neon-green-border);
-  background: linear-gradient(180deg, rgba(46, 248, 114, 0.06) 0%, var(--bg-card) 100%);
-  box-shadow: 0 8px 30px rgba(46, 248, 114, 0.12);
+  background: linear-gradient(180deg, rgba(46, 248, 114, 0.05) 0%, var(--bg-card) 100%);
+  box-shadow: 0 8px 26px rgba(46, 248, 114, 0.12);
 }
 
 .pkg-top-badge {
   position: absolute;
-  top: -12px;
-  right: 20px;
-  font-size: 11px;
+  top: -11px;
+  right: 18px;
+  font-size: 10.5px;
   font-weight: 800;
   color: var(--text-main);
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid var(--border-medium);
-  padding: 3px 12px;
+  padding: 2px 10px;
   border-radius: var(--radius-full);
   backdrop-filter: blur(8px);
 }
@@ -627,41 +750,40 @@ button {
   background: var(--neon-green-subtle);
   border-color: var(--neon-green);
   color: var(--neon-green);
-  box-shadow: 0 0 12px rgba(46, 248, 114, 0.3);
+  box-shadow: 0 0 10px rgba(46, 248, 114, 0.3);
 }
 
 .pkg-header {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .pkg-icon {
-  font-size: 32px;
+  font-size: 28px;
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .pkg-title {
-  font-size: 19px;
+  font-size: 17.5px;
   font-weight: 900;
   color: var(--text-main);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   line-height: 1.3;
 }
 
 .pkg-target {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-muted);
-  line-height: 1.5;
-  min-height: 58px;
+  line-height: 1.45;
+  min-height: 48px;
 }
 
-/* PRICING DISPLAY BOX INSIDE CARD */
 .pkg-pricing-display {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
-  margin-bottom: 20px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
 }
 
 .pkg-license-row,
@@ -669,8 +791,8 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12.5px;
-  margin-bottom: 6px;
+  font-size: 12px;
+  margin-bottom: 5px;
 }
 
 .license-label,
@@ -680,7 +802,6 @@ button {
 
 .license-price,
 .hw-price {
-  font-family: var(--font-numeric);
   font-weight: 700;
   color: var(--text-secondary);
 }
@@ -692,7 +813,7 @@ button {
 .pkg-total-divider {
   height: 1px;
   background: var(--border-subtle);
-  margin: 8px 0;
+  margin: 6px 0;
 }
 
 .pkg-total-row {
@@ -702,7 +823,7 @@ button {
 }
 
 .total-lbl {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--text-main);
 }
@@ -710,12 +831,11 @@ button {
 .pkg-total-val {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 3px;
 }
 
 .pkg-sum-digits {
-  font-family: var(--font-numeric);
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 900;
   color: var(--text-main);
   line-height: 1;
@@ -726,33 +846,25 @@ button {
 }
 
 .pkg-total-val .curr {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
-/* FEATURES LIST */
 .pkg-features-list {
   flex: 1;
-  margin-bottom: 22px;
-}
-
-.pkg-features-list h4 {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--text-secondary);
-  margin-bottom: 10px;
+  margin-bottom: 18px;
 }
 
 .pkg-features-list ul {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .pkg-features-list li {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .pkg-features-list li strong {
@@ -761,17 +873,16 @@ button {
 
 .pkg-features-list .pkg-feature-muted {
   color: var(--text-dim);
-  font-size: 12px;
+  font-size: 11.5px;
 }
 
-/* PACKAGE SELECT BUTTON */
 .btn-package-select {
   width: 100%;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: var(--bg-surface);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--text-main);
   transition: var(--transition);
@@ -789,51 +900,49 @@ button {
   background: var(--neon-green);
   color: #06080c;
   border-color: var(--neon-green);
-  box-shadow: 0 0 16px rgba(46, 248, 114, 0.35);
+  box-shadow: 0 0 14px rgba(46, 248, 114, 0.35);
 }
 
-/* --------------------------------------------------------------------------
-   EXTERNAL ADDONS BUILDER & QUOTATION SUMMARY
-   -------------------------------------------------------------------------- */
+/* EXTERNAL BUILDER */
 .custom-builder-box {
   background: var(--bg-card);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-lg);
-  padding: 28px 24px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  padding: 24px 20px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
 }
 
 .builder-header {
-  margin-bottom: 22px;
+  margin-bottom: 18px;
   text-align: center;
 }
 
 .builder-badge {
   display: inline-block;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--neon-green);
   text-transform: uppercase;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .builder-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 900;
   color: var(--text-main);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .builder-sub {
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--text-muted);
 }
 
 .builder-addons-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 12px;
-  margin-bottom: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
 }
 
 .builder-item {
@@ -844,11 +953,11 @@ button {
 
 .builder-item input[type="checkbox"] {
   position: absolute;
-  top: 14px;
-  left: 14px;
+  top: 12px;
+  left: 12px;
   accent-color: var(--neon-green);
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   cursor: pointer;
   z-index: 2;
 }
@@ -857,7 +966,7 @@ button {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 14px 14px 14px 40px;
+  padding: 12px 12px 12px 36px;
   transition: var(--transition);
   height: 100%;
 }
@@ -875,28 +984,27 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
-  gap: 8px;
+  margin-bottom: 3px;
+  gap: 6px;
 }
 
 .item-title {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--text-main);
 }
 
 .item-price {
-  font-family: var(--font-numeric);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 800;
   color: var(--neon-green);
   white-space: nowrap;
 }
 
 .item-desc {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-dim);
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 /* SUMMARY BAR */
@@ -904,22 +1012,22 @@ button {
   background: #06090f;
   border: 1px solid var(--neon-green-border);
   border-radius: var(--radius-md);
-  padding: 18px 22px;
+  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
-  box-shadow: 0 0 25px rgba(46, 248, 114, 0.1);
+  gap: 16px;
+  box-shadow: 0 0 20px rgba(46, 248, 114, 0.1);
 }
 
 .summary-details {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .selected-pkg-name {
-  font-size: 15px;
+  font-size: 14.5px;
   color: var(--text-secondary);
 }
 
@@ -929,24 +1037,24 @@ button {
 
 .selected-plan-tag {
   display: inline-block;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 800;
   color: var(--neon-green);
   background: var(--neon-green-subtle);
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: var(--radius-full);
   margin-inline-start: 6px;
 }
 
 .selected-extras-text {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--text-dim);
 }
 
 .summary-pricing-action {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
 }
 
 .grand-total-box {
@@ -955,7 +1063,7 @@ button {
 
 .grand-total-label {
   display: block;
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 
@@ -966,180 +1074,30 @@ button {
 }
 
 .grand-digits {
-  font-family: var(--font-numeric);
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 900;
   color: var(--neon-green);
   line-height: 1;
 }
 
 .grand-total-val .curr {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-secondary);
   font-weight: 700;
 }
 
 /* --------------------------------------------------------------------------
-   SECTION 3: COMPARISON (الهدر vs النظام)
+   SLIDE 5: الشروط والضمان (TERMS & WARRANTY)
    -------------------------------------------------------------------------- */
-.section-comp {
-  padding: 50px 0;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.section-title-wrap {
-  margin-bottom: 28px;
-}
-
-.sub-badge {
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--neon-green);
-  background: var(--neon-green-subtle);
-  padding: 3px 12px;
-  border-radius: var(--radius-full);
-  margin-bottom: 8px;
-}
-
-.section-heading {
-  font-size: clamp(22px, 2.8vw, 32px);
-  font-weight: 900;
-  color: var(--text-main);
-  line-height: 1.35;
-}
-
-.direct-comp-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-
-.comp-col {
-  background: var(--bg-card);
-  border-radius: var(--radius-md);
-  padding: 24px 20px;
-  border: 1px solid var(--border-subtle);
-}
-
-.col-waste {
-  border-color: rgba(255, 59, 78, 0.3);
-}
-
-.col-solution {
-  border-color: var(--neon-green-border);
-  box-shadow: 0 0 25px rgba(46, 248, 114, 0.08);
-}
-
-.comp-head-tag {
-  display: inline-block;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 5px 12px;
-  border-radius: var(--radius-full);
-  margin-bottom: 16px;
-}
-
-.head-red {
-  background: var(--accent-red-subtle);
-  color: var(--accent-red);
-}
-
-.head-green {
-  background: var(--neon-green-subtle);
-  color: var(--neon-green);
-}
-
-.comp-items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.comp-items-list li {
-  font-size: 13.5px;
-  color: var(--text-secondary);
-  line-height: 1.55;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.comp-items-list li:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.comp-items-list strong {
-  display: block;
-  font-size: 14.5px;
-  color: var(--text-main);
-  margin-bottom: 2px;
-}
-
-/* --------------------------------------------------------------------------
-   SECTION 4: CORE 6 DIFFERENTIATORS
-   -------------------------------------------------------------------------- */
-.section-features {
-  padding: 50px 0;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.features-6-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.feat-tile {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 20px 18px;
-  transition: var(--transition);
-}
-
-.feat-tile:hover {
-  border-color: var(--neon-green-border);
-  transform: translateY(-2px);
-  background: var(--bg-card-hover);
-}
-
-.tile-icon {
-  font-size: 26px;
-  margin-bottom: 10px;
-}
-
-.feat-tile h3 {
-  font-size: 15.5px;
-  font-weight: 800;
-  color: var(--text-main);
-  margin-bottom: 4px;
-  line-height: 1.35;
-}
-
-.feat-tile p {
-  font-size: 12.5px;
-  color: var(--text-secondary);
-  line-height: 1.55;
-}
-
-/* --------------------------------------------------------------------------
-   SECTION 5: TERMS & WARRANTY
-   -------------------------------------------------------------------------- */
-.section-terms {
-  padding: 50px 0;
-  border-top: 1px solid var(--border-subtle);
-}
-
 .terms-capsules-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
 }
 
 .capsule {
   display: flex;
-  align-items: flex-start;
   gap: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
@@ -1148,205 +1106,253 @@ button {
 }
 
 .cap-num {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 900;
   color: var(--neon-green);
   line-height: 1;
 }
 
 .capsule h4 {
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--text-main);
   margin-bottom: 3px;
 }
 
 .capsule p {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--text-muted);
   line-height: 1.5;
 }
 
-/* --------------------------------------------------------------------------
-   SECTION 6: FINAL CALL TO ACTION
-   -------------------------------------------------------------------------- */
-.section-final {
-  padding: 60px 0 80px;
-  border-top: 1px solid var(--border-subtle);
-}
-
+/* FINAL ACTION BOX */
 .final-box {
   background: linear-gradient(175deg, #131926 0%, #090e17 100%);
   border: 1px solid var(--neon-green-border);
   border-radius: var(--radius-lg);
-  padding: 44px 24px;
-  max-width: 820px;
+  padding: 36px 20px;
+  max-width: 800px;
   margin: 0 auto;
-  box-shadow: 0 0 45px rgba(46, 248, 114, 0.15);
+  box-shadow: 0 0 35px rgba(46, 248, 114, 0.12);
 }
 
 .final-highlight {
   display: inline-block;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--neon-green);
   text-transform: uppercase;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .final-heading {
-  font-size: clamp(24px, 3.2vw, 36px);
+  font-size: clamp(22px, 3vw, 32px);
   font-weight: 900;
   color: var(--text-main);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   line-height: 1.35;
 }
 
 .final-sub {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--text-secondary);
-  max-width: 540px;
-  margin: 0 auto 24px;
-  line-height: 1.65;
+  max-width: 520px;
+  margin: 0 auto 20px;
+  line-height: 1.6;
 }
 
 .final-btn-wrap {
   display: flex;
   justify-content: center;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .final-features-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 14px;
   font-size: 12px;
   color: var(--text-dim);
   flex-wrap: wrap;
 }
 
-/* --------------------------------------------------------------------------
-   FOOTER
-   -------------------------------------------------------------------------- */
-.site-footer {
-  background: #040608;
-  border-top: 1px solid var(--border-subtle);
-  padding: 22px 0 65px; /* Extra bottom padding so floating pill doesn't obscure copyright */
-}
-
-.footer-flex {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.footer-logo-block {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.footer-logo {
-  width: 26px;
-  height: 26px;
-  object-fit: contain;
-}
-
-.footer-title {
-  font-family: var(--font-numeric);
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text-main);
-}
-
-.footer-copy {
-  font-size: 11.5px;
-  color: var(--text-dim);
-}
-
-/* --------------------------------------------------------------------------
-   FLOATING ACTION PILL — SHOWN ONLY AT BOTTOM OF PAGE
-   -------------------------------------------------------------------------- */
-.bottom-action-pill {
-  position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%) translateY(100px);
-  z-index: 99;
-  background: rgba(15, 20, 31, 0.96);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--neon-green-border);
-  border-radius: var(--radius-full);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 25px rgba(46, 248, 114, 0.2);
-  padding: 8px 12px 8px 20px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
-  opacity: 0;
-  pointer-events: none;
-  max-width: 92vw;
-}
-
-.bottom-action-pill.is-visible {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.pill-text-wrap {
-  display: flex;
-  flex-direction: column;
-}
-
-.pill-tag {
-  font-size: 10.5px;
-  color: var(--neon-green);
-  font-weight: 700;
-}
-
-.pill-digits {
-  font-size: 13px;
-  color: var(--text-main);
-}
-
-.pill-digits strong {
-  color: var(--neon-green);
-  font-size: 14.5px;
-}
-
-.pill-btn {
+/* BUTTONS */
+.btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: #25d366;
-  color: #fff;
-  border-radius: var(--radius-full);
-  font-size: 12.5px;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
   font-weight: 800;
+  transition: var(--transition);
+  cursor: pointer;
   white-space: nowrap;
 }
 
-.pill-btn:hover {
-  background: #20bd5a;
+.btn-primary {
+  background: var(--neon-green);
+  color: #06080c;
+  box-shadow: 0 4px 18px rgba(46, 248, 114, 0.35);
 }
 
-.pill-btn svg {
-  width: 15px;
-  height: 15px;
+.btn-primary:hover {
+  background: var(--neon-green-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(46, 248, 114, 0.45);
+}
+
+.btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text-main);
+  border: 1px solid var(--border-medium);
+}
+
+.btn-secondary:hover {
+  border-color: var(--neon-green-border);
+  color: var(--neon-green);
+}
+
+.btn-whatsapp {
+  background: #25d366;
+  color: #ffffff;
+}
+
+.btn-whatsapp:hover {
+  background: #20bd5a;
+  transform: translateY(-1px);
+}
+
+.btn-whatsapp svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-large {
+  padding: 13px 26px;
+  font-size: 15px;
+}
+
+.pulse-glow {
+  animation: pulseGlow 2.5s infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 18px rgba(46, 248, 114, 0.25); }
+  50% { box-shadow: 0 0 32px rgba(46, 248, 114, 0.45); }
+}
+
+/* --------------------------------------------------------------------------
+   FIXED SLIDE DECK BOTTOM BAR (NEXT / PREV)
+   -------------------------------------------------------------------------- */
+.deck-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background: rgba(6, 8, 12, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px 0;
+}
+
+.bottom-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.btn-deck-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius-full);
+  font-size: 13.5px;
+  font-weight: 800;
+  transition: var(--transition);
+}
+
+.btn-prev {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.btn-prev:hover:not(:disabled) {
+  color: var(--text-main);
+  border-color: var(--border-bright);
+}
+
+.btn-prev:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-next {
+  background: var(--neon-green);
+  color: #06080c;
+  box-shadow: 0 0 16px rgba(46, 248, 114, 0.3);
+}
+
+.btn-next:hover {
+  background: var(--neon-green-hover);
+  transform: translateY(-1px);
+}
+
+.deck-nav-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.deck-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.deck-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.deck-dot.active {
+  background: var(--neon-green);
+  width: 22px;
+  border-radius: 4px;
+}
+
+.deck-step-text {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.deck-step-text strong {
+  color: var(--text-secondary);
 }
 
 /* --------------------------------------------------------------------------
    RESPONSIVE DESIGN — TABLET & PHONE OPTIMIZATION
    -------------------------------------------------------------------------- */
 @media (max-width: 860px) {
-  .container {
-    padding-inline: 16px;
+  .slide-tabs-nav {
+    display: none; /* Hide top pill tabs on mobile, use clean bottom nav */
+  }
+
+  .deck-content-wrap {
+    padding-top: 74px;
+    padding-bottom: 84px;
   }
 
   .loss-grid {
@@ -1357,25 +1363,30 @@ button {
   .total-bleeding-banner {
     flex-direction: column;
     text-align: center;
-    padding: 18px 16px;
+    padding: 16px;
   }
 
   .bleeding-text {
     text-align: center;
   }
 
-  .bleeding-text span {
-    font-size: 17px;
-  }
-
   .total-bleeding-banner .btn {
     width: 100%;
   }
 
-  /* Packages on Tablets/Phones */
+  .direct-comp-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .features-6-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
   .packages-grid {
     grid-template-columns: 1fr;
-    gap: 18px;
+    gap: 16px;
   }
 
   .billing-switcher {
@@ -1386,19 +1397,23 @@ button {
 
   .billing-btn {
     border-radius: var(--radius-sm);
-    padding: 10px;
+    padding: 9px;
+  }
+
+  .builder-addons-grid {
+    grid-template-columns: 1fr;
   }
 
   .builder-summary-bar {
     flex-direction: column;
     align-items: stretch;
     text-align: center;
-    gap: 16px;
+    gap: 14px;
   }
 
   .summary-pricing-action {
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
   }
 
   .grand-total-box {
@@ -1409,135 +1424,69 @@ button {
     width: 100%;
   }
 
-  .builder-addons-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* Comparison & Features on Phone */
-  .direct-comp-grid {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
-  .features-6-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
   .terms-capsules-grid {
     grid-template-columns: 1fr;
     gap: 10px;
   }
 
-  /* Bottom Floating Pill on Phone */
-  .bottom-action-pill {
-    width: calc(100% - 24px);
-    inset-inline: 12px;
-    bottom: 12px;
-    padding: 8px 12px;
-    justify-content: space-between;
-  }
-
-  .pill-tag {
-    display: none;
-  }
-
-  .pill-digits {
+  .btn-deck-nav {
+    padding: 9px 14px;
     font-size: 12.5px;
-  }
-
-  .pill-digits strong {
-    font-size: 14px;
-  }
-
-  .pill-btn {
-    padding: 8px 14px;
-    font-size: 12px;
   }
 }
 
 @media (max-width: 540px) {
-  body {
-    font-size: 14.5px;
-  }
-
-  .minimal-header {
-    padding: 12px 0;
-  }
-
-  .brand-logo-img {
-    width: 34px;
-    height: 34px;
-  }
-
-  .brand-title {
-    font-size: 16px;
-  }
-
-  .brand-sub {
-    font-size: 9px;
-  }
-
-  .btn-whatsapp-direct {
-    padding: 6px 10px;
-    font-size: 12px;
-  }
-
-  .main-shock-title {
-    font-size: 24px;
-    line-height: 1.35;
-  }
-
-  .main-shock-sub {
+  body.deck-body {
     font-size: 14px;
   }
 
-  .loss-card {
-    padding: 16px 14px;
+  .brand-logo-img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .brand-title {
+    font-size: 15px;
+  }
+
+  .brand-sub {
+    font-size: 8.5px;
+  }
+
+  .btn-whatsapp-direct {
+    padding: 5px 9px;
+    font-size: 11.5px;
+  }
+
+  .slide-headline {
+    font-size: 22px;
+  }
+
+  .slide-heading {
+    font-size: 20px;
   }
 
   .loss-number {
     font-size: 24px;
   }
 
-  .package-card {
-    padding: 24px 16px 20px;
-  }
-
-  .pkg-title {
-    font-size: 18px;
-  }
-
-  .pkg-target {
-    min-height: auto;
-  }
-
-  .custom-builder-box {
-    padding: 22px 16px;
-  }
-
-  .builder-title {
-    font-size: 18px;
-  }
-
   .features-6-grid {
     grid-template-columns: 1fr;
   }
 
-  .footer-flex {
-    flex-direction: column;
-    text-align: center;
-  }
-
   .final-box {
-    padding: 30px 16px;
+    padding: 26px 14px;
   }
 
   .final-heading {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .final-btn-wrap .btn {
     width: 100%;
+  }
+
+  #next-btn-text {
+    font-size: 12px;
   }
 }

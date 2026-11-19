@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SYSTEMIZE — باقات إدارة وأتمتة الجيم الذكي | اقفل ثغرات التسريب فوراً</title>
-  <meta name="description" content="اختر باقة SYSTEMIZE المناسبة لجيمك: باقة البداية الرقمية، باقة الترقية الذكية، أو باقة الأتمتة الكاملة وبصمة الوجه. خطط دفع شهرية، سنوية، أو مدى الحياة.">
+  <title>SYSTEMIZE — عرض أنظمة وباقات إدارة الجيم الذكي</title>
+  <meta name="description" content="عرض تقديمي وباقات نظام SYSTEMIZE لإدارة وأتمتة الجيم وبصمة الوجه وحساب الإجمالي الصافي.">
   <link rel="icon" type="image/x-icon" href="assets/gym_icon.ico">
   
   <!-- Google Fonts: Cairo & Plus Jakarta Sans -->
@@ -14,595 +14,649 @@
   
   <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+<body class="deck-body">
   <!-- Ambient Lights -->
   <div class="ambient-glow glow-red" aria-hidden="true"></div>
   <div class="ambient-glow glow-green" aria-hidden="true"></div>
 
-  <!-- MINIMAL HEADER (NO NAVBAR) -->
-  <header class="minimal-header">
-    <div class="container header-flex">
-      <div class="brand-block">
-        <img src="assets/logo.png" alt="SYSTEMIZE" class="brand-logo-img">
-        <div>
-          <span class="brand-title">SYSTEMIZE</span>
-          <span class="brand-sub">Gym Intelligence & Gate Automation</span>
+  <div class="presentation-layout">
+    
+    <!-- TOP SLIDE DECK HEADER -->
+    <header class="deck-header">
+      <div class="container header-flex">
+        <div class="brand-block">
+          <img src="assets/logo.png" alt="SYSTEMIZE" class="brand-logo-img">
+          <div>
+            <span class="brand-title">SYSTEMIZE</span>
+            <span class="brand-sub">Gym Intelligence & Gate Automation</span>
+          </div>
         </div>
+
+        <!-- Slide Steps Tabs -->
+        <nav class="slide-tabs-nav" id="slide-tabs-nav" aria-label="شرائح العرض">
+          <button type="button" class="tab-btn active" data-target="1">
+            <span class="tab-idx">1</span>
+            <span class="tab-txt">النزيف المالي</span>
+          </button>
+          <button type="button" class="tab-btn" data-target="2">
+            <span class="tab-idx">2</span>
+            <span class="tab-txt">الهدر vs الحل</span>
+          </button>
+          <button type="button" class="tab-btn" data-target="3">
+            <span class="tab-idx">3</span>
+            <span class="tab-txt">مميزات السيستم</span>
+          </button>
+          <button type="button" class="tab-btn" data-target="4">
+            <span class="tab-idx">4</span>
+            <span class="tab-txt">الباقات والأسعار</span>
+          </button>
+          <button type="button" class="tab-btn" data-target="5">
+            <span class="tab-idx">5</span>
+            <span class="tab-txt">الشروط والضمان</span>
+          </button>
+        </nav>
+
+        <a href="https://wa.me/201000000000?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%AA%D8%AC%D9%87%D9%8A%D8%B2%20%D9%88%D8%AA%D8%B4%D8%BA%D9%8A%D9%84%20%D9%86%D8%B8%D8%A7%D9%85%20SYSTEMIZE%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AC%D9%8A%D9%85" target="_blank" class="btn btn-whatsapp-direct">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+          <span>واتساب مباشر</span>
+        </a>
       </div>
-      <a href="https://wa.me/201000000000?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%AA%D8%AC%D9%87%D9%8A%D8%B2%20%D9%88%D8%AA%D8%B4%D8%BA%D9%8A%D9%84%20%D9%86%D8%B8%D8%A7%D9%85%20SYSTEMIZE%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AC%D9%8A%D9%85" target="_blank" class="btn btn-whatsapp-direct">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-        <span>واتساب مباشر للإدارة</span>
-      </a>
-    </div>
-  </header>
 
-  <main>
-    <!-- SECTION 1: THE SHOCK HOOK (أرقام الخسارة بالأحمر) -->
-    <section class="section-shock">
-      <div class="container text-center">
-        
-        <div class="alert-pill">
-          <span class="alert-dot"></span>
-          <span>حقيقة تشغيلية ومالية بالأرقام لأصحاب الجيم</span>
-        </div>
-
-        <h1 class="main-shock-title">
-          أنت بتخسر أكتر من <span class="highlight-red">67,000 جنيه سنوياً</span> في جيمك...<br>
-          من غير ما تحس!
-        </h1>
-
-        <p class="main-shock-sub">
-          تسريب كروت الباركود، دخول الأعضاء المنتهية، وعدم متابعة المتغيبين بيطيروا أرباحك كل شهر. اختر الباقة المناسبة لجيمك واقفل الثغرات دي فوراً.
-        </p>
-
-        <!-- 3 Big Loss Numbers Cards -->
-        <div class="loss-grid">
-          
-          <div class="loss-card">
-            <div class="loss-badge-wrap">
-              <span class="loss-tag">تسريب واستلاف الكروت</span>
-              <span class="loss-number">- 14,400 <span class="curr">ج.م/سنة</span></span>
-            </div>
-            <p class="loss-explain">
-              لو <strong>3 أعضاء بس شهرياً</strong> استلفوا كارت باركود ودخلوا أصحابهم بيه بدون علم الاستقبال = ضياع <strong>1,200 ج.م شهرياً</strong> في اشتراكات كان المفروض تتدفع!
-            </p>
-          </div>
-
-          <div class="loss-card">
-            <div class="loss-badge-wrap">
-              <span class="loss-tag">تجديدات المتغيبين الضائعة</span>
-              <span class="loss-number">- 48,000 <span class="curr">ج.م/سنة</span></span>
-            </div>
-            <p class="loss-explain">
-              <strong>10 أعضاء شهرياً</strong> بينقطعوا ومحدش يتابعهم على الواتساب فينتهي اشتراكهم وميجددوش = هدر <strong>4,000 ج.م شهرياً</strong> (بمتوسط 400 ج للاشتراك).
-            </p>
-          </div>
-
-          <div class="loss-card">
-            <div class="loss-badge-wrap">
-              <span class="loss-tag">طباعة وتلف كروت البلاستيك</span>
-              <span class="loss-number">- 4,800 <span class="curr">ج.م/سنة</span></span>
-            </div>
-            <p class="loss-explain">
-              تكلفة طباعة كروت باركود وبلاستيك بتوصل <strong>400 ج.م شهرياً</strong> لكروت بتضيع وتتلف وتترمي في الآخر بدون أي قيمة حقيقية للبيزنس.
-            </p>
-          </div>
-
-        </div>
-
-        <!-- Total Bleeding Banner -->
-        <div class="total-bleeding-banner">
-          <div class="bleeding-text">
-            <strong>إجمالي النزيف المالي في جيمك:</strong>
-            <span>أكتر من 67,200 جنيه سنوياً بتخرج من جيبك!</span>
-          </div>
-          <a href="#packages-section" class="btn btn-primary pulse-btn">
-            <span>اختر باقة جيمك واقفل الثغرات فوراً ↓</span>
-          </a>
-        </div>
-
+      <!-- Linear progress indicator -->
+      <div class="deck-progress-track">
+        <div class="deck-progress-bar" id="deck-progress-bar" style="width: 20%;"></div>
       </div>
-    </section>
+    </header>
 
-    <!-- SECTION 2: THE 3 PACKAGES & BILLING SELECTOR -->
-    <section class="section-packages" id="packages-section">
-      <div class="container">
-        
-        <div class="section-title-wrap text-center">
-          <span class="sub-badge">اختر باقة جيمك</span>
-          <h2 class="section-heading">باقات مصممة خصيصاً لوضع جيمك الحالي</h2>
-          <p class="section-subtext">سواء كنت لسه شغال بالورق، أو عندك سيستم قديم وعايز توفر، أو عايز أعلى أتمتة وبصمة وجه:</p>
-        </div>
+    <!-- MAIN SLIDES VIEWPORT -->
+    <main class="deck-content-wrap">
+      <div class="container deck-stage">
 
-        <!-- BILLING FREQUENCY SWITCHER (شهري / سنوي / مدى الحياة) -->
-        <div class="billing-switcher-wrap">
-          <div class="billing-switcher">
-            <button type="button" class="billing-btn" data-plan="monthly">
-              <span>شهري</span>
-              <span class="billing-badge">550 ج.م/شهر</span>
-            </button>
-            <button type="button" class="billing-btn active" data-plan="yearly">
-              <span>سنوي (موصى به)</span>
-              <span class="billing-badge green">5,500 ج.م (وفرت شهرين)</span>
-            </button>
-            <button type="button" class="billing-btn" data-plan="lifetime">
-              <span>مدى الحياة (Lifetime)</span>
-              <span class="billing-badge gold">11,000 ج.م للأبد</span>
-            </button>
-          </div>
-          <div class="billing-notice" id="billing-notice-text">
-            * خطة الاشتراك السنوي تشمل شهرين مجاناً (تدفع 10 شهور فقط وتعمل سنة كاملة).
-          </div>
-        </div>
-
-        <!-- THE 3 PACKAGES CARDS -->
-        <div class="packages-grid">
-          
-          <!-- PACKAGE 1: PAPER TO DIGITAL -->
-          <div class="package-card" data-pkg-id="paper">
-            <div class="pkg-top-badge">مخصصة للجيمات الورقية</div>
-            <div class="pkg-header">
-              <span class="pkg-icon">📝</span>
-              <h3 class="pkg-title">باقة «البداية الرقمية»</h3>
-              <p class="pkg-target">للجيم اللي لسه شغال بدفاتر وكروت باركود، ومحتاج ينظم الشغل والخزينة والاشتراكات بدون تعقيد.</p>
-            </div>
-
-            <div class="pkg-pricing-display">
-              <div class="pkg-license-row">
-                <span class="license-label">ترخيص البرنامج:</span>
-                <span class="license-price" id="pkg-paper-license">5,500 ج.م/سنة</span>
-              </div>
-              <div class="pkg-hardware-row">
-                <span class="hw-label">+ جهاز بصمة إصبع 500 بصمة:</span>
-                <span class="hw-price">3,500 ج.م (شامل التركيب)</span>
-              </div>
-              <div class="pkg-total-divider"></div>
-              <div class="pkg-total-row">
-                <span class="total-lbl">إجمالي التجهيز والترخيص:</span>
-                <div class="pkg-total-val">
-                  <span class="pkg-sum-digits" id="pkg-paper-total">9,000</span>
-                  <span class="curr">ج.م</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="pkg-features-list">
-              <h4>ماذا تتضمن الباقة؟</h4>
-              <ul>
-                <li>✓ <strong>برنامج SYSTEMIZE الأساسي بالكامل:</strong> إدارة الأعضاء، الاشتراكات، الخزينة وتقفيل الشيفتات.</li>
-                <li>✓ <strong>جهاز بصمة إصبع (500 بصمة):</strong> شامل التركيب والربط لإنهاء مهزلة كروت الباركود.</li>
-                <li>✓ <strong>إدارة المدربين والـ PT:</strong> حساب نسب وحصص الكباتن تلقائياً.</li>
-                <li>✓ <strong>النسخ الاحتياطي:</strong> حفظ البيانات محلياً وعلى Google Drive الخاص بك.</li>
-                <li class="pkg-feature-muted">✕ بدون واتساب أو تليجرام (لتقليل التكلفة والتركيز على الأساسيات).</li>
-              </ul>
-            </div>
-
-            <button type="button" class="btn btn-package-select" data-select-pkg="paper">
-              <span>اختيار باقة البداية الرقمية</span>
-            </button>
-          </div>
-
-          <!-- PACKAGE 2: SMART SWITCH (BUDGET PRO) -->
-          <div class="package-card" data-pkg-id="switch">
-            <div class="pkg-top-badge blue">بديل ذكي وموفر</div>
-            <div class="pkg-header">
-              <span class="pkg-icon">🔄</span>
-              <h3 class="pkg-title">باقة «الترقية الذكية»</h3>
-              <p class="pkg-target">للجيم اللي عنده سيستم قديم أو بطيء وعايز يغير لـ SYSTEMIZE بميزانية موفرة واسترجاع أعضاءه فوراً.</p>
-            </div>
-
-            <div class="pkg-pricing-display">
-              <div class="pkg-license-row">
-                <span class="license-label">ترخيص البرنامج:</span>
-                <span class="license-price" id="pkg-switch-license">5,500 ج.م/سنة</span>
-              </div>
-              <div class="pkg-hardware-row">
-                <span class="hw-label">+ واتساب آلي + تليجرام للخزينة:</span>
-                <span class="hw-price">3,500 ج.م (مرة واحدة)</span>
-              </div>
-              <div class="pkg-total-divider"></div>
-              <div class="pkg-total-row">
-                <span class="total-lbl">إجمالي التجهيز والترخيص:</span>
-                <div class="pkg-total-val">
-                  <span class="pkg-sum-digits" id="pkg-switch-total">9,000</span>
-                  <span class="curr">ج.م</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="pkg-features-list">
-              <h4>ماذا تتضمن الباقة؟</h4>
-              <ul>
-                <li>✓ <strong>برنامج SYSTEMIZE بالكامل + نقل بيانات مجاني:</strong> استيراد بيانات أعضائك من السيستم القديم.</li>
-                <li>✓ <strong>مرسل الواتساب الآلي (WhatsApp Sender):</strong> تذكير بالتجديدات واسترجاع المتغيبين لرفع الدخل فوراً.</li>
-                <li>✓ <strong>بوت تليجرام الذكي (Telegram Bot):</strong> تقارير الخزينة وتقفيل الشيفت تصل لهاتفك لحظة بلحظة.</li>
-                <li>✓ <strong>ربط وتشغيل جهاز بصمتك الحالي مجاناً</strong> (أو استخدام النظام بدون أجهزة إضافية).</li>
-                <li class="pkg-feature-muted">✕ بدون كاميرا بصمة وجه (لتوفير التكلفة للميزانيات الاقتصادية).</li>
-              </ul>
-            </div>
-
-            <button type="button" class="btn btn-package-select" data-select-pkg="switch">
-              <span>اختيار باقة الترقية الذكية</span>
-            </button>
-          </div>
-
-          <!-- PACKAGE 3: ULTIMATE VIP (FACE AI) -->
-          <div class="package-card featured-pkg" data-pkg-id="vip">
-            <div class="pkg-top-badge neon">الأعلى كفاءة والأكثر طلباً</div>
-            <div class="pkg-header">
-              <span class="pkg-icon">👑</span>
-              <h3 class="pkg-title">باقة «الأتمتة الكاملة والـ VIP»</h3>
-              <p class="pkg-target">للجيم اللي عايز أعلى مستوى احترافية، يقفل أبواب السرقة وتبديل الكروت تماماً، ويدير الجيم بأحدث تكنولوجيا.</p>
-            </div>
-
-            <div class="pkg-pricing-display">
-              <div class="pkg-license-row">
-                <span class="license-label">ترخيص البرنامج:</span>
-                <span class="license-price" id="pkg-vip-license">5,500 ج.م/سنة</span>
-              </div>
-              <div class="pkg-hardware-row">
-                <span class="hw-label">+ كاميرا وجه + واتساب + تليجرام:</span>
-                <span class="hw-price text-green">8,500 ج.م (وفرت 1,000 ج)</span>
-              </div>
-              <div class="pkg-total-divider"></div>
-              <div class="pkg-total-row">
-                <span class="total-lbl">إجمالي التجهيز والترخيص:</span>
-                <div class="pkg-total-val">
-                  <span class="pkg-sum-digits text-green" id="pkg-vip-total">14,000</span>
-                  <span class="curr">ج.م</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="pkg-features-list">
-              <h4>ماذا تتضمن الباقة؟</h4>
-              <ul>
-                <li>✓ <strong>برنامج SYSTEMIZE الشامل + نقل كافة البيانات السابقة مجاناً.</strong></li>
-                <li>✓ <strong>بصمة الوجه الذكية بالكاميرا:</strong> شاملة الكاميرا وجهاز الوجه والربط (مستحيل عضو يسلف وشه لصاحبه!).</li>
-                <li>✓ <strong>مرسل الواتساب الآلي:</strong> تذكير تجديد، إيصالات، واسترجاع المتغيبين تلقائياً.</li>
-                <li>✓ <strong>بوت تليجرام الذكي للخزينة:</strong> تقفيل شيفت ومراقبة الصندوق لحظياً من الموبايل.</li>
-                <li>✓ <strong>أولوية الدعم الفني المباشر والتحديثات المستمرة.</strong></li>
-              </ul>
-            </div>
-
-            <button type="button" class="btn btn-primary btn-package-select" data-select-pkg="vip">
-              <span>اختيار باقة الأتمتة الكاملة (VIP)</span>
-            </button>
-          </div>
-
-        </div>
-
-        <!-- SECTION 2.5: EXTERNAL OPTIONAL ADDONS & LIVE QUOTATION -->
-        <div class="custom-builder-box" id="builder-box">
-          <div class="builder-header">
-            <span class="builder-badge">حساب الإجمالي النهائي</span>
-            <h3 class="builder-title">تخصيص باقتك وإضافة الأجهزة الطرفية (اختياري)</h3>
-            <p class="builder-sub">حدد إذا كنت بحاجة لكالون كهربائي، جهاز كمبيوتر، أو أجهزة إضافية:</p>
-          </div>
-
-          <div class="builder-addons-grid">
+        <!-- ==========================================
+             SLIDE 1: النزيف المالي السنوي
+             ========================================== -->
+        <article class="slide-panel active" id="slide-1" data-index="1">
+          <div class="slide-inner text-center">
             
-            <label class="builder-item">
-              <input type="checkbox" class="external-check" value="1500" data-name="كالون كهربائي للأبواب الخشبية">
-              <div class="item-box">
-                <div class="item-top">
-                  <span class="item-title">🚪 كالون كهربائي باب خشب</span>
-                  <span class="item-price">+1,500 ج.م</span>
-                </div>
-                <p class="item-desc">قفل إلكتروني للأبواب الخشبية يفتح بنبضة البصمة/الوجه (1,000–2,000 ج استرشادي).</p>
-              </div>
-            </label>
-
-            <label class="builder-item">
-              <input type="checkbox" class="external-check" value="2250" data-name="كالون كهربائي للأبواب الزجاجية سيكوريت">
-              <div class="item-box">
-                <div class="item-top">
-                  <span class="item-title">🪟 كالون كهربائي باب زجاج سيكوريت</span>
-                  <span class="item-price">+2,250 ج.م</span>
-                </div>
-                <p class="item-desc">مغناطيس إلكتروني قوي مخصص للأبواب الزجاجية بدون إطار (2,000–2,500 ج استرشادي).</p>
-              </div>
-            </label>
-
-            <label class="builder-item">
-              <input type="checkbox" class="external-check" value="7500" data-name="توريد جهاز كمبيوتر كاونتر أساسي i5">
-              <div class="item-box">
-                <div class="item-top">
-                  <span class="item-title">💻 كمبيوتر استقبال أساسي i5</span>
-                  <span class="item-price">+~7,500 ج.م</span>
-                </div>
-                <p class="item-desc">Core i5 الجيل 6، 8GB RAM (توريد اختياري؛ يمكنك تشغيل البرنامج على جهازك الحالي).</p>
-              </div>
-            </label>
-
-            <label class="builder-item">
-              <input type="checkbox" class="external-check" value="1500" data-name="رخصة ربط جهاز كمبيوتر إضافي (Extra PC)">
-              <div class="item-box">
-                <div class="item-top">
-                  <span class="item-title">🖥️ رخصة كمبيوتر إضافي (Extra PC)</span>
-                  <span class="item-price">+1,500 ج.م</span>
-                </div>
-                <p class="item-desc">لربط شاشة كاونتر استقبال ثانية أو جهاز منفصل لغرفة الإدارة على نفس الشبكة.</p>
-              </div>
-            </label>
-
-            <label class="builder-item">
-              <input type="checkbox" class="external-check" value="2500" data-name="ربط سحابي أونلاين متعدد الفروع (Cloud Hosting)">
-              <div class="item-box">
-                <div class="item-top">
-                  <span class="item-title">☁️ ربط سحابي أونلاين للفروع</span>
-                  <span class="item-price">+2,500 ج.م/سنة</span>
-                </div>
-                <p class="item-desc">استضافة سحابية آمنة في حال رغبتك بإدارة فروع متعددة ومتابعة التقارير أونلاين عن بُعد.</p>
-              </div>
-            </label>
-
-          </div>
-
-          <!-- THE FINAL INVOICE & WHATSAPP ACTION -->
-          <div class="builder-summary-bar">
-            
-            <div class="summary-details">
-              <div class="selected-pkg-name">
-                الباقة المختارة: <strong id="summary-pkg-title">باقة «الأتمتة الكاملة والـ VIP»</strong>
-                <span class="selected-plan-tag" id="summary-plan-tag">نظام سنوي: 5,500 ج.م</span>
-              </div>
-              <div class="selected-extras-text" id="summary-extras-text">
-                بدون إضافات خارجية إضافية
-              </div>
+            <div class="alert-pill">
+              <span class="alert-dot"></span>
+              <span>حقيقة تشغيلية ومالية بالأرقام لأصحاب الجيم</span>
             </div>
 
-            <div class="summary-pricing-action">
-              <div class="grand-total-box">
-                <span class="grand-total-label">الإجمالي الصافي المقدر:</span>
-                <div class="grand-total-val">
-                  <span class="grand-digits" id="grand-total-digits">14,000</span>
-                  <span class="curr">جنيه مصري</span>
+            <h1 class="slide-headline">
+              أنت بتخسر أكتر من <span class="highlight-red">67,000 جنيه سنوياً</span> في جيمك...<br>
+              من غير ما تحس!
+            </h1>
+
+            <p class="slide-subtext">
+              تسريب كروت الباركود، دخول الأعضاء المنتهية، وعدم متابعة المتغيبين بيطيروا أرباحك كل شهر:
+            </p>
+
+            <div class="loss-grid">
+              
+              <div class="loss-card">
+                <div class="loss-badge-wrap">
+                  <span class="loss-tag">تسريب واستلاف الكروت</span>
+                  <span class="loss-number">- 14,400 <span class="curr">ج.م/سنة</span></span>
                 </div>
+                <p class="loss-explain">
+                  <strong>3 أعضاء فقط شهرياً</strong> يستلفوا كارت باركود ويدخلوا أصحابهم بيه بدون علم الاستقبال = ضياع <strong>1,200 ج.م شهرياً</strong> اشتراكات ضائعة!
+                </p>
               </div>
-              <button type="button" class="btn btn-whatsapp btn-large pulse-glow" id="btn-order-whatsapp">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-                <span>طلب هذا التجهيز المخصص عبر واتساب</span>
+
+              <div class="loss-card">
+                <div class="loss-badge-wrap">
+                  <span class="loss-tag">تجديدات المتغيبين الضائعة</span>
+                  <span class="loss-number">- 48,000 <span class="curr">ج.م/سنة</span></span>
+                </div>
+                <p class="loss-explain">
+                  <strong>10 أعضاء شهرياً</strong> ينقطعوا وبدون متابعة واتساب فينتهي اشتراكهم وميجددوش = هدر <strong>4,000 ج.م شهرياً</strong> في المتوسط.
+                </p>
+              </div>
+
+              <div class="loss-card">
+                <div class="loss-badge-wrap">
+                  <span class="loss-tag">طباعة وتلف كروت البلاستيك</span>
+                  <span class="loss-number">- 4,800 <span class="curr">ج.م/سنة</span></span>
+                </div>
+                <p class="loss-explain">
+                  تكلفة طباعة كروت باركود وبلاستيك بتوصل <strong>400 ج.م شهرياً</strong> لكروت بتضيع وتتلف وتترمي بدون أي عائد تشغيلي.
+                </p>
+              </div>
+
+            </div>
+
+            <div class="total-bleeding-banner">
+              <div class="bleeding-text">
+                <strong>إجمالي النزيف المالي التقديري:</strong>
+                <span>أكتر من 67,200 جنيه سنوياً بتخرج من جيبك!</span>
+              </div>
+              <button type="button" class="btn btn-primary btn-advance-slide" data-go="2">
+                <span>إزاي SYSTEMIZE بيقفل الثغرات دي؟ ←</span>
               </button>
             </div>
 
           </div>
+        </article>
 
-        </div>
+        <!-- ==========================================
+             SLIDE 2: الهدر القديم vs حل SYSTEMIZE
+             ========================================== -->
+        <article class="slide-panel" id="slide-2" data-index="2">
+          <div class="slide-inner">
+            
+            <div class="text-center slide-header-block">
+              <span class="sub-badge">مقارنة مباشرة وسريعة</span>
+              <h2 class="slide-heading">إنت بتدفع في إيه دلوقتي... والحل الذكي إيه؟</h2>
+              <p class="slide-subtext">بدل الهدر المالي والمواقف المحرجة، شوف الفرق العملي مع SYSTEMIZE:</p>
+            </div>
+
+            <div class="direct-comp-grid">
+              
+              <div class="comp-col col-waste">
+                <div class="comp-head-tag head-red">❌ الهدر في الطرق القديمة والباركود</div>
+                <ul class="comp-items-list">
+                  <li>
+                    <strong>استلاف وتبديل الكروت:</strong>
+                    عضو يستلف كارت صاحبه ويدخل بيه الكاونتر، أو يدخل 2 بكارت واحد (14,400 ج هدر سنوي).
+                  </li>
+                  <li>
+                    <strong>طباعة كروت بلاستيك دورية:</strong>
+                    400 ج شهرياً بتتصرف على كروت بتضيع وتتلف وتترمي (4,800 ج سنوياً).
+                  </li>
+                  <li>
+                    <strong>إحراج الاستقبال ودخول المنتهي:</strong>
+                    مشترك منتهي اشتراكه يدخل لأن موظف الاستقبال مكسوف يوقفه أو مخدش باله.
+                  </li>
+                  <li>
+                    <strong>أعضاء بتضيع للأبد:</strong>
+                    عضو يغيب 15 يوم ومحدش يسأل عليه ولا يبعتله، فيتكاسل وينقطع عن التجديد.
+                  </li>
+                </ul>
+              </div>
+
+              <div class="comp-col col-solution">
+                <div class="comp-head-tag head-green">✅ الحل المنضبط مع SYSTEMIZE</div>
+                <ul class="comp-items-list">
+                  <li>
+                    <strong>بصمة وجه حية بالكاميرا:</strong>
+                    مستحيل عضو يسلف وشه لصاحبه؛ التحقق يتم من وجه المشترك الحي فقط في ثانية.
+                  </li>
+                  <li>
+                    <strong>البوابة الإلكترونية تقفل آلياً:</strong>
+                    الكالون يرفض فتح الباب فور انتهاء الاشتراك أو الزيارات، بدون أي إحراج للموظف.
+                  </li>
+                  <li>
+                    <strong>بدون أي كروت مطبوعة:</strong>
+                    وفر مصاريف الطباعة تماماً؛ النظام يتعرف على المشترك فورياً عبر البصمة/الوجه.
+                  </li>
+                  <li>
+                    <strong>رسائل واتساب ترجع العضو:</strong>
+                    تنبيهات تلقائية قبل انتهاء الاشتراك ورسائل متابعة للمتغيبين ترجعهم فوراً.
+                  </li>
+                </ul>
+              </div>
+
+            </div>
+
+            <div class="slide-action-center">
+              <button type="button" class="btn btn-primary btn-advance-slide" data-go="3">
+                <span>مميزات وقدرات السيستم الأساسية ←</span>
+              </button>
+            </div>
+
+          </div>
+        </article>
+
+        <!-- ==========================================
+             SLIDE 3: مميزات السيستم الأساسية
+             ========================================== -->
+        <article class="slide-panel" id="slide-3" data-index="3">
+          <div class="slide-inner">
+            
+            <div class="text-center slide-header-block">
+              <span class="sub-badge">كفاءة تشغيلية كاملة</span>
+              <h2 class="slide-heading">المميزات الأساسية الفارقة في إدارة جيمك</h2>
+              <p class="slide-subtext">كل ما يحتاجه جيمك في شاشة واحدة منظمة وسريعة:</p>
+            </div>
+
+            <div class="features-6-grid">
+              
+              <div class="feat-tile">
+                <div class="tile-icon">🚪</div>
+                <h3>تحكم البوابات الآلي (Face & Fingerprint)</h3>
+                <p>ربط مباشر مع بصمة الوجه أو الإصبع والكالون الكهربائي؛ يفتح للساري فوراً ويغلق للمنتهي آلياً.</p>
+              </div>
+
+              <div class="feat-tile">
+                <div class="tile-icon">📱</div>
+                <h3>واتساب وتليجرام آلي</h3>
+                <p>إرسال تذكيرات التجديد، إيصالات الاشتراك، والتقارير المالية اليومية لإدارة الجيم لحظة بلحظة.</p>
+              </div>
+
+              <div class="feat-tile">
+                <div class="tile-icon">💰</div>
+                <h3>خزينة ومصروفات وسلف</h3>
+                <p>تسجيل كل قرش داخل وخارج، حساب مسير رواتب الموظفين والسلف، وإصدار تقفيل الشيفت بدون ثغرات.</p>
+              </div>
+
+              <div class="feat-tile">
+                <div class="tile-icon">📋</div>
+                <h3>إدارة الاشتراكات الشاملة</h3>
+                <p>دعم الاشتراكات الشهرية، باقات الزيارات المحددة، وساعات الدخول الخاصة مع فحص فوري للصلاحية.</p>
+              </div>
+
+              <div class="feat-tile">
+                <div class="tile-icon">🏋️</div>
+                <h3>إدارة المدربين وحصص PT</h3>
+                <p>متابعة حصص التدريب الخاص، حساب نسب وعمولات كل كابتن تلقائياً ومنع النزاعات الإدارية.</p>
+              </div>
+
+              <div class="feat-tile">
+                <div class="tile-icon">💾</div>
+                <h3>بياناتك ملكك على جهازك ودرايفك</h3>
+                <p>قاعدة البيانات مشفرة وتعمل محلياً بسرعة فائقة حتى لو انقطع النت، مع نسخ احتياطي سحابي تلقائي.</p>
+              </div>
+
+            </div>
+
+            <div class="slide-action-center">
+              <button type="button" class="btn btn-primary btn-advance-slide" data-go="4">
+                <span>اختيار باقة جيمك وحساب السعر الإجمالي ←</span>
+              </button>
+            </div>
+
+          </div>
+        </article>
+
+        <!-- ==========================================
+             SLIDE 4: اختيار الباقة وحساب السعر الإجمالي
+             (في الآخر من تحت قبل الشروط والأحكام)
+             ========================================== -->
+        <article class="slide-panel" id="slide-4" data-index="4">
+          <div class="slide-inner">
+            
+            <div class="text-center slide-header-block">
+              <span class="sub-badge">تحديد الباقة والسعر النهائي</span>
+              <h2 class="slide-heading">اختر باقة جيمك واحسب التكلفة الصافية</h2>
+              <p class="slide-subtext">حدد خطة ترخيص البرنامج، الباقة المناسبة لوضع جيمك، وأي أجهزة إضافية:</p>
+            </div>
+
+            <!-- BILLING FREQUENCY SWITCHER -->
+            <div class="billing-switcher-wrap">
+              <div class="billing-switcher">
+                <button type="button" class="billing-btn" data-plan="monthly">
+                  <span>شهري</span>
+                  <span class="billing-badge">550 ج.م/شهر</span>
+                </button>
+                <button type="button" class="billing-btn active" data-plan="yearly">
+                  <span>سنوي (موصى به)</span>
+                  <span class="billing-badge green">5,500 ج.م (وفرت شهرين)</span>
+                </button>
+                <button type="button" class="billing-btn" data-plan="lifetime">
+                  <span>مدى الحياة (Lifetime)</span>
+                  <span class="billing-badge gold">11,000 ج.م للأبد</span>
+                </button>
+              </div>
+              <div class="billing-notice" id="billing-notice-text">
+                * خطة الاشتراك السنوي تشمل شهرين مجاناً (تدفع 10 شهور فقط وتعمل سنة كاملة).
+              </div>
+            </div>
+
+            <!-- THE 3 PACKAGES GRID -->
+            <div class="packages-grid">
+              
+              <!-- PACKAGE 1: PAPER TO DIGITAL -->
+              <div class="package-card" data-pkg-id="paper">
+                <div class="pkg-top-badge">مخصصة للجيمات الورقية</div>
+                <div class="pkg-header">
+                  <span class="pkg-icon">📝</span>
+                  <h3 class="pkg-title">باقة «البداية الرقمية»</h3>
+                  <p class="pkg-target">للجيم اللي شغال بدفاتر أو كروت باركود ومحتاج ينظم الشغل والخزينة بدون تعقيد.</p>
+                </div>
+
+                <div class="pkg-pricing-display">
+                  <div class="pkg-license-row">
+                    <span class="license-label">ترخيص البرنامج:</span>
+                    <span class="license-price" id="pkg-paper-license">5,500 ج.م/سنة</span>
+                  </div>
+                  <div class="pkg-hardware-row">
+                    <span class="hw-label">+ جهاز بصمة إصبع 500 بصمة:</span>
+                    <span class="hw-price">3,500 ج.م (شامل التركيب)</span>
+                  </div>
+                  <div class="pkg-total-divider"></div>
+                  <div class="pkg-total-row">
+                    <span class="total-lbl">إجمالي التجهيز والترخيص:</span>
+                    <div class="pkg-total-val">
+                      <span class="pkg-sum-digits" id="pkg-paper-total">9,000</span>
+                      <span class="curr">ج.م</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pkg-features-list">
+                  <ul>
+                    <li>✓ <strong>برنامج SYSTEMIZE الأساسي:</strong> إدارة الأعضاء والاشتراكات والخزينة.</li>
+                    <li>✓ <strong>جهاز بصمة إصبع 500 بصمة:</strong> شامل التركيب لإنهاء مهزلة كروت الباركود.</li>
+                    <li>✓ <strong>إدارة الكباتن ونسب PT:</strong> حساب الحصص والعمولات تلقائياً.</li>
+                    <li class="pkg-feature-muted">✕ بدون واتساب أو تليجرام (لتقليل التكلفة والتركيز على الأساسيات).</li>
+                  </ul>
+                </div>
+
+                <button type="button" class="btn btn-package-select" data-select-pkg="paper">
+                  <span>اختيار باقة البداية الرقمية</span>
+                </button>
+              </div>
+
+              <!-- PACKAGE 2: SMART SWITCH -->
+              <div class="package-card" data-pkg-id="switch">
+                <div class="pkg-top-badge blue">بديل ذكي وموفر</div>
+                <div class="pkg-header">
+                  <span class="pkg-icon">🔄</span>
+                  <h3 class="pkg-title">باقة «الترقية الذكية»</h3>
+                  <p class="pkg-target">للجيم اللي عنده سيستم قديم بطيء وعايز يغير لـ SYSTEMIZE بميزانية موفرة وبدون أجهزة جديدة.</p>
+                </div>
+
+                <div class="pkg-pricing-display">
+                  <div class="pkg-license-row">
+                    <span class="license-label">ترخيص البرنامج:</span>
+                    <span class="license-price" id="pkg-switch-license">5,500 ج.م/سنة</span>
+                  </div>
+                  <div class="pkg-hardware-row">
+                    <span class="hw-label">+ واتساب آلي + تليجرام للخزينة:</span>
+                    <span class="hw-price">3,500 ج.م (مرة واحدة)</span>
+                  </div>
+                  <div class="pkg-total-divider"></div>
+                  <div class="pkg-total-row">
+                    <span class="total-lbl">إجمالي التجهيز والترخيص:</span>
+                    <div class="pkg-total-val">
+                      <span class="pkg-sum-digits" id="pkg-switch-total">9,000</span>
+                      <span class="curr">ج.م</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pkg-features-list">
+                  <ul>
+                    <li>✓ <strong>برنامج SYSTEMIZE بالكامل + نقل بيانات مجاني</strong> من سيستمك القديم.</li>
+                    <li>✓ <strong>مرسل الواتساب الآلي:</strong> تذكير تجديد واسترجاع المتغيبين فورياً.</li>
+                    <li>✓ <strong>بوت تليجرام الذكي:</strong> تقارير الخزينة وتقفيل الشيفت على موبايلك.</li>
+                    <li>✓ <strong>ربط وتشغيل جهاز بصمتك الحالي مجاناً</strong> بدون أي مصاريف إضافية.</li>
+                  </ul>
+                </div>
+
+                <button type="button" class="btn btn-package-select" data-select-pkg="switch">
+                  <span>اختيار باقة الترقية الذكية</span>
+                </button>
+              </div>
+
+              <!-- PACKAGE 3: ULTIMATE VIP (FACE AI) -->
+              <div class="package-card featured-pkg" data-pkg-id="vip">
+                <div class="pkg-top-badge neon">الأعلى كفاءة والأكثر طلباً</div>
+                <div class="pkg-header">
+                  <span class="pkg-icon">👑</span>
+                  <h3 class="pkg-title">باقة «الأتمتة الكاملة والـ VIP»</h3>
+                  <p class="pkg-target">للجيم اللي عايز أعلى مستوى احترافية وبصمة وجه ذكية لمنع تبديل الكروت تماماً.</p>
+                </div>
+
+                <div class="pkg-pricing-display">
+                  <div class="pkg-license-row">
+                    <span class="license-label">ترخيص البرنامج:</span>
+                    <span class="license-price" id="pkg-vip-license">5,500 ج.م/سنة</span>
+                  </div>
+                  <div class="pkg-hardware-row">
+                    <span class="hw-label">+ كاميرا وجه + واتساب + تليجرام:</span>
+                    <span class="hw-price text-green">8,500 ج.م (وفرت 1,000 ج)</span>
+                  </div>
+                  <div class="pkg-total-divider"></div>
+                  <div class="pkg-total-row">
+                    <span class="total-lbl">إجمالي التجهيز والترخيص:</span>
+                    <div class="pkg-total-val">
+                      <span class="pkg-sum-digits text-green" id="pkg-vip-total">14,000</span>
+                      <span class="curr">ج.م</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pkg-features-list">
+                  <ul>
+                    <li>✓ <strong>برنامج SYSTEMIZE الشامل + نقل كافة البيانات مجاناً.</strong></li>
+                    <li>✓ <strong>بصمة الوجه الذكية بالكاميرا:</strong> شاملة الكاميرا وجهاز الوجه والربط.</li>
+                    <li>✓ <strong>مرسل الواتساب الآلي:</strong> تذكير تجديد، إيصالات، واسترجاع المتغيبين.</li>
+                    <li>✓ <strong>بوت تليجرام الذكي للخزينة:</strong> مراقبة الإيرادات والشيفتات لحظياً.</li>
+                  </ul>
+                </div>
+
+                <button type="button" class="btn btn-primary btn-package-select" data-select-pkg="vip">
+                  <span>اختيار باقة الأتمتة الكاملة (VIP)</span>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- EXTERNAL OPTIONAL ADDONS & QUOTATION STRIP -->
+            <div class="custom-builder-box" id="builder-box">
+              <div class="builder-header">
+                <span class="builder-badge">تخصيص اختياري</span>
+                <h3 class="builder-title">الأجهزة الطرفية والإضافات الخارجية</h3>
+                <p class="builder-sub">حدد إذا كنت بحاجة لكالون كهربائي، جهاز كمبيوتر، أو ترخيص إضافي:</p>
+              </div>
+
+              <div class="builder-addons-grid">
+                
+                <label class="builder-item">
+                  <input type="checkbox" class="external-check" value="1500" data-name="كالون كهربائي للأبواب الخشبية">
+                  <div class="item-box">
+                    <div class="item-top">
+                      <span class="item-title">🚪 كالون كهربائي باب خشب</span>
+                      <span class="item-price">+1,500 ج.م</span>
+                    </div>
+                    <p class="item-desc">قفل إلكتروني للأبواب الخشبية يفتح بنبضة البصمة/الوجه (1,000–2,000 ج استرشادي).</p>
+                  </div>
+                </label>
+
+                <label class="builder-item">
+                  <input type="checkbox" class="external-check" value="2250" data-name="كالون كهربائي للأبواب الزجاجية سيكوريت">
+                  <div class="item-box">
+                    <div class="item-top">
+                      <span class="item-title">🪟 كالون كهربائي باب زجاج سيكوريت</span>
+                      <span class="item-price">+2,250 ج.م</span>
+                    </div>
+                    <p class="item-desc">مغناطيس إلكتروني قوي مخصص للأبواب الزجاجية بدون إطار (2,000–2,500 ج استرشادي).</p>
+                  </div>
+                </label>
+
+                <label class="builder-item">
+                  <input type="checkbox" class="external-check" value="7500" data-name="توريد جهاز كمبيوتر كاونتر أساسي i5">
+                  <div class="item-box">
+                    <div class="item-top">
+                      <span class="item-title">💻 كمبيوتر كاونتر أساسي i5</span>
+                      <span class="item-price">+~7,500 ج.م</span>
+                    </div>
+                    <p class="item-desc">Core i5 الجيل 6، 8GB RAM (توريد اختياري؛ يمكنك تشغيل البرنامج على جهازك الحالي).</p>
+                  </div>
+                </label>
+
+                <label class="builder-item">
+                  <input type="checkbox" class="external-check" value="1500" data-name="رخصة ربط جهاز كمبيوتر إضافي (Extra PC)">
+                  <div class="item-box">
+                    <div class="item-top">
+                      <span class="item-title">🖥️ رخصة كمبيوتر إضافي (Extra PC)</span>
+                      <span class="item-price">+1,500 ج.م</span>
+                    </div>
+                    <p class="item-desc">لربط شاشة ثانية للاستقبال أو جهاز منفصل لغرفة الإدارة على نفس الشبكة.</p>
+                  </div>
+                </label>
+
+                <label class="builder-item">
+                  <input type="checkbox" class="external-check" value="2500" data-name="ربط سحابي أونلاين متعدد الفروع (Cloud Hosting)">
+                  <div class="item-box">
+                    <div class="item-top">
+                      <span class="item-title">☁️ ربط سحابي أونلاين للفروع</span>
+                      <span class="item-price">+2,500 ج.م/سنة</span>
+                    </div>
+                    <p class="item-desc">استضافة سحابية آمنة لإدارة فروع متعددة ومتابعة التقارير أونلاين عن بُعد.</p>
+                  </div>
+                </label>
+
+              </div>
+
+              <!-- THE SUMMARY BAR & WHATSAPP ACTION -->
+              <div class="builder-summary-bar">
+                
+                <div class="summary-details">
+                  <div class="selected-pkg-name">
+                    الباقة المختارة: <strong id="summary-pkg-title">باقة «الأتمتة الكاملة والـ VIP»</strong>
+                    <span class="selected-plan-tag" id="summary-plan-tag">نظام سنوي: 5,500 ج.م</span>
+                  </div>
+                  <div class="selected-extras-text" id="summary-extras-text">
+                    بدون إضافات خارجية إضافية
+                  </div>
+                </div>
+
+                <div class="summary-pricing-action">
+                  <div class="grand-total-box">
+                    <span class="grand-total-label">الإجمالي الصافي المقدر:</span>
+                    <div class="grand-total-val">
+                      <span class="grand-digits" id="grand-total-digits">14,000</span>
+                      <span class="curr">جنيه مصري</span>
+                    </div>
+                  </div>
+                  <button type="button" class="btn btn-whatsapp btn-large pulse-glow" id="btn-order-whatsapp">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                    <span>طلب هذا التجهيز المخصص عبر واتساب</span>
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="slide-action-center" style="margin-top: 24px;">
+              <button type="button" class="btn btn-secondary btn-advance-slide" data-go="5">
+                <span>التالي: الشروط وسياسة الضمان المعتمدة ←</span>
+              </button>
+            </div>
+
+          </div>
+        </article>
+
+        <!-- ==========================================
+             SLIDE 5: الشروط والترخيص وسياسة الضمان
+             ========================================== -->
+        <article class="slide-panel" id="slide-5" data-index="5">
+          <div class="slide-inner">
+            
+            <div class="text-center slide-header-block">
+              <span class="sub-badge">سياسة واضحة ومباشرة</span>
+              <h2 class="slide-heading">الشروط والترخيص وسياسة الضمان</h2>
+              <p class="slide-subtext">التزاماتنا التعاقدية وحقوقك كصاحب بيزنس بكل شفافية:</p>
+            </div>
+
+            <div class="terms-capsules-grid">
+              
+              <div class="capsule">
+                <span class="cap-num">01</span>
+                <div>
+                  <h4>الفرع الأول والجهاز الأول مشمولان</h4>
+                  <p>يشمل الاتفاق والترخيص تشغيل الفرع الأول على الجهاز الأول ضمن العقد الأساسي.</p>
+                </div>
+              </div>
+
+              <div class="capsule">
+                <span class="cap-num">02</span>
+                <div>
+                  <h4>بدون أي رسوم تركيب إضافية للبرنامج</h4>
+                  <p>لا توجد مصاريف تنصيب أو تركيب منفصلة للبرنامج الأساسي على جهازك المعتمد.</p>
+                </div>
+              </div>
+
+              <div class="capsule">
+                <span class="cap-num">03</span>
+                <div>
+                  <h4>بياناتك ملكك وعلى جهازك</h4>
+                  <p>قاعدة البيانات مشفرة محلياً على جهازك، مع نسخة احتياطية على Google Drive الخاص بك أنت وحدك.</p>
+                </div>
+              </div>
+
+              <div class="capsule">
+                <span class="cap-num">04</span>
+                <div>
+                  <h4>عدم وجود أي غرامات</h4>
+                  <p>أنت صاحب القرار دائماً؛ في حال عدم الرغبة في التجديد يتوقف النظام بعد فترة السماح بدون أي التزامات جزائية.</p>
+                </div>
+              </div>
+
+              <div class="capsule">
+                <span class="cap-num">05</span>
+                <div>
+                  <h4>إعادة التفعيل مجاناً</h4>
+                  <p>عند التجديد في أي وقت، يُعاد تفعيل البرنامج فوراً ومجاناً عبر كود معرّف الجهاز (Hardware ID) ومفتاح الترخيص.</p>
+                </div>
+              </div>
+
+              <div class="capsule">
+                <span class="cap-num">06</span>
+                <div>
+                  <h4>سياسة الضمان المعتمدة</h4>
+                  <p>أي عيوب برمجية أو عيوب بالأجهزة ناجمة عن مسؤوليتنا يتم إصلاحها مجاناً خلال فترة الضمان؛ وخارج الضمان تُحسب الزيارات بتكلفة منفصلة.</p>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- FINAL CALL TO ACTION BOX -->
+            <div class="final-box text-center" style="margin-top: 32px;">
+              <span class="final-highlight">ابدأ تأمين أرباحك فوراً</span>
+              <h3 class="final-heading">اقفل ثغرات تسريب الفلوس في جيمك... <span class="text-green">النهاردة!</span></h3>
+              <p class="final-sub">تواصل معنا الآن لتجهيز باقتك المناسبة وتحديد الأجهزة لمداخل جيمك وبدء التنصيب والتشغيل الفوري.</p>
+              
+              <div class="final-btn-wrap">
+                <a href="https://wa.me/201000000000?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%AA%D8%AC%D9%87%D9%8A%D8%B2%20%D9%88%D8%AA%D8%B4%D8%BA%D9%8A%D9%84%20%D9%86%D8%B8%D8%A7%D9%85%20SYSTEMIZE%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AC%D9%8A%D9%85" target="_blank" class="btn btn-whatsapp btn-large pulse-glow">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                  <span>تواصل عبر واتساب للتنصيب والتشغيل الفوري</span>
+                </a>
+              </div>
+
+              <div class="final-features-row">
+                <span>✓ تنصيب سريع وتدريب كامل</span>
+                <span>✓ بياناتك على جهازك بأمان</span>
+                <span>✓ دعم فني محترف ومستمر</span>
+              </div>
+            </div>
+
+          </div>
+        </article>
 
       </div>
-    </section>
+    </main>
 
-    <!-- SECTION 3: THE WASTEFUL HABITS VS SYSTEMIZE -->
-    <section class="section-comp">
-      <div class="container">
+    <!-- FIXED SLIDE DECK BOTTOM BAR (NEXT / PREV) -->
+    <footer class="deck-bottom-bar">
+      <div class="container bottom-inner">
         
-        <div class="section-title-wrap text-center">
-          <span class="sub-badge">مقارنة سريعة</span>
-          <h2 class="section-heading">إنت بتدفع في إيه دلوقتي... وممكن توفر إيه؟</h2>
+        <button type="button" class="btn-deck-nav btn-prev" id="btn-prev-slide" disabled>
+          <span>السابق →</span>
+        </button>
+
+        <div class="deck-nav-center">
+          <div class="deck-dots" id="deck-dots">
+            <span class="deck-dot active" data-target="1"></span>
+            <span class="deck-dot" data-target="2"></span>
+            <span class="deck-dot" data-target="3"></span>
+            <span class="deck-dot" data-target="4"></span>
+            <span class="deck-dot" data-target="5"></span>
+          </div>
+          <span class="deck-step-text">شريحة <strong id="current-slide-num">1</strong> من <strong id="total-slides-num">5</strong></span>
         </div>
 
-        <div class="direct-comp-grid">
-          
-          <div class="comp-col col-waste">
-            <div class="comp-head-tag head-red">❌ الهدر في الطرق القديمة والباركود</div>
-            <ul class="comp-items-list">
-              <li>
-                <strong>استلاف وتبديل الكروت (14,400 ج.م سنوياً هدر):</strong>
-                عضو يستلف كارت صاحبه ويدخل بيه الكاونتر، أو يدخل 2 بكارت واحد.
-              </li>
-              <li>
-                <strong>400 ج شهرياً على كروت بلاستيك (4,800 ج سنوياً):</strong>
-                فلوس بتتصرف على طباعة كروت وبلاستيك بيضيع ويتلف ويترمي.
-              </li>
-              <li>
-                <strong>إحراج الاستقبال ودخول المنتهي:</strong>
-                مشترك منتهي اشتراكه يدخل لأن موظف الاستقبال مكسوف يوقفه أو مخدش باله.
-              </li>
-              <li>
-                <strong>أعضاء بتضيع للأبد:</strong>
-                عضو يغيب 15 يوم ومحدش يسأل عليه ولا يبعتله، فيتكاسل وميجددش اشتراكه.
-              </li>
-            </ul>
-          </div>
-
-          <div class="comp-col col-solution">
-            <div class="comp-head-tag head-green">✅ الحل المنضبط مع SYSTEMIZE</div>
-            <ul class="comp-items-list">
-              <li>
-                <strong>بصمة وجه وكاميرا ذكية (مستحيل يسلف وشه):</strong>
-                التحقق يتم من وجه المشترك الحي فقط في جزء من الثانية؛ لا كروت ولا تلاعب.
-              </li>
-              <li>
-                <strong>البوابة الإلكترونية تقفل آلياً:</strong>
-                الكالون يرفض فتح الباب فور انتهاء الاشتراك أو استنفاد الزيارات، بدون أي إحراج.
-              </li>
-              <li>
-                <strong>رسائل واتساب ترجع العضو قبل ما يضيع:</strong>
-                تنبيهات تلقائية قبل انتهاء الاشتراك ورسائل متابعة وتحفيز للمتغيبين ترجعهم فوراً.
-              </li>
-              <li>
-                <strong>خزينة وتقارير مشفرة على موبايلك:</strong>
-                تقفيل شيفت ومسير رواتب وسلف منضبط بالقرش بدون دفاتر يدوية ولا ثغرات نقدية.
-              </li>
-            </ul>
-          </div>
-
-        </div>
+        <button type="button" class="btn-deck-nav btn-next pulse-glow" id="btn-next-slide">
+          <span id="next-btn-text">التالي: إزاي بنحل المشكلة؟ ←</span>
+        </button>
 
       </div>
-    </section>
+    </footer>
 
-    <!-- SECTION 4: CORE 6 DIFFERENTIATORS -->
-    <section class="section-features">
-      <div class="container">
-        
-        <div class="section-title-wrap text-center">
-          <span class="sub-badge">كفاءة تشغيلية كاملة</span>
-          <h2 class="section-heading">المميزات الأساسية الفارقة في إدارة جيمك</h2>
-        </div>
-
-        <div class="features-6-grid">
-          
-          <div class="feat-tile">
-            <div class="tile-icon">🚪</div>
-            <h3>تحكم البوابات الآلي (Face & Fingerprint)</h3>
-            <p>ربط مباشر مع بصمة الوجه أو الإصبع والكالون الكهربائي؛ يفتح للساري فوراً ويغلق للمنتهي آلياً.</p>
-          </div>
-
-          <div class="feat-tile">
-            <div class="tile-icon">📱</div>
-            <h3>واتساب وتليجرام آلي</h3>
-            <p>إرسال تذكيرات التجديد، إيصالات الاشتراك، والتقارير المالية اليومية لإدارة الجيم لحظة بلحظة.</p>
-          </div>
-
-          <div class="feat-tile">
-            <div class="tile-icon">💰</div>
-            <h3>خزينة ومصروفات وسلف</h3>
-            <p>تسجيل كل قرش داخل وخارج، حساب مسير رواتب الموظفين والسلف، وإصدار تقفيل الشيفت بدون ثغرات.</p>
-          </div>
-
-          <div class="feat-tile">
-            <div class="tile-icon">📋</div>
-            <h3>إدارة الاشتراكات الشاملة</h3>
-            <p>دعم الاشتراكات الشهرية، باقات الزيارات المحددة، وساعات الدخول الخاصة مع فحص فوري للصلاحية.</p>
-          </div>
-
-          <div class="feat-tile">
-            <div class="tile-icon">🏋️</div>
-            <h3>إدارة المدربين وحصص PT</h3>
-            <p>متابعة حصص التدريب الخاص، حساب نسب وعمولات كل كابتن تلقائياً ومنع النزاعات الإدارية.</p>
-          </div>
-
-          <div class="feat-tile">
-            <div class="tile-icon">💾</div>
-            <h3>بياناتك ملكك على جهازك ودرايفك</h3>
-            <p>قاعدة البيانات مشفرة وتعمل محلياً بسرعة فائقة حتى لو انقطع النت، مع نسخ احتياطي سحابي تلقائي.</p>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-
-    <!-- SECTION 5: TERMS & WARRANTY -->
-    <section class="section-terms">
-      <div class="container">
-        
-        <div class="section-title-wrap text-center">
-          <span class="sub-badge">سياسة واضحة ومباشرة</span>
-          <h2 class="section-heading">الشروط والترخيص وسياسة الضمان</h2>
-        </div>
-
-        <div class="terms-capsules-grid">
-          
-          <div class="capsule">
-            <span class="cap-num">01</span>
-            <div>
-              <h4>الفرع الأول والجهاز الأول مشمولان</h4>
-              <p>يشمل الاتفاق والترخيص تشغيل الفرع الأول على الجهاز الأول ضمن العقد الأساسي.</p>
-            </div>
-          </div>
-
-          <div class="capsule">
-            <span class="cap-num">02</span>
-            <div>
-              <h4>بدون أي رسوم تركيب إضافية للبرنامج</h4>
-              <p>لا توجد مصاريف تنصيب أو تركيب منفصلة للبرنامج الأساسي على جهازك المعتمد.</p>
-            </div>
-          </div>
-
-          <div class="capsule">
-            <span class="cap-num">03</span>
-            <div>
-              <h4>بياناتك ملكك وعلى جهازك</h4>
-              <p>قاعدة البيانات مشفرة محلياً على جهازك، مع نسخة احتياطية على Google Drive الخاص بك أنت وحدك.</p>
-            </div>
-          </div>
-
-          <div class="capsule">
-            <span class="cap-num">04</span>
-            <div>
-              <h4>عدم وجود أي غرامات</h4>
-              <p>أنت صاحب القرار دائماً؛ في حال عدم الرغبة في التجديد يتوقف النظام بعد فترة السماح بدون أي التزامات جزائية.</p>
-            </div>
-          </div>
-
-          <div class="capsule">
-            <span class="cap-num">05</span>
-            <div>
-              <h4>إعادة التفعيل مجاناً</h4>
-              <p>عند التجديد في أي وقت، يُعاد تفعيل البرنامج فوراً ومجاناً عبر كود معرّف الجهاز (Hardware ID) ومفتاح الترخيص.</p>
-            </div>
-          </div>
-
-          <div class="capsule">
-            <span class="cap-num">06</span>
-            <div>
-              <h4>سياسة الضمان المعتمدة</h4>
-              <p>أي عيوب برمجية أو عيوب بالأجهزة ناجمة عن مسؤوليتنا يتم إصلاحها مجاناً خلال فترة الضمان المحددة في العقد؛ وخارج الضمان تُحسب الزيارات وقطع الغيار بتكلفة منفصلة حسب كل حالة.</p>
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-    </section>
-
-    <!-- SECTION 6: FINAL CALL TO ACTION -->
-    <section class="section-final" id="final-cta">
-      <div class="container text-center">
-        
-        <div class="final-box">
-          <span class="final-highlight">ابدأ تأمين أرباحك فوراً</span>
-          <h2 class="final-heading">
-            اقفل ثغرات تسريب الفلوس في جيمك... <span class="text-green">النهاردة!</span>
-          </h2>
-          <p class="final-sub">
-            تواصل معنا الآن لتجهيز باقتك المناسبة، تحديد الأجهزة لمداخل جيمك، وبدء التنصيب والتشغيل الفوري.
-          </p>
-
-          <div class="final-btn-wrap">
-            <a href="https://wa.me/201000000000?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%AA%D8%AC%D9%87%D9%8A%D8%B2%20%D9%88%D8%AA%D8%B4%D8%BA%D9%8A%D9%84%20%D9%86%D8%B8%D8%A7%D9%85%20SYSTEMIZE%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AC%D9%8A%D9%85" target="_blank" class="btn btn-whatsapp btn-large pulse-glow">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-              <span>تواصل عبر واتساب للتنصيب والتشغيل الفوري</span>
-            </a>
-          </div>
-
-          <div class="final-features-row">
-            <span>✓ تنصيب سريع وتدريب كامل</span>
-            <span>✓ بياناتك على جهازك بأمان</span>
-            <span>✓ دعم فني محترف ومستمر</span>
-          </div>
-        </div>
-
-      </div>
-    </section>
-  </main>
-
-  <!-- MINIMAL FOOTER -->
-  <footer class="site-footer">
-    <div class="container footer-flex">
-      <div class="footer-logo-block">
-        <img src="assets/logo.png" alt="SYSTEMIZE" class="footer-logo">
-        <span class="footer-title">SYSTEMIZE</span>
-      </div>
-      <p class="footer-copy">
-        © 2026 SYSTEMIZE — نظام إدارة الجيم وأتمتة الأعمال الذكي. جميع الأسعار بالجنيه المصري (EGP).
-      </p>
-    </div>
-  </footer>
-
-  <!-- FLOATING ACTION PILL — SHOWN ONLY AT BOTTOM OF PAGE -->
-  <div class="bottom-action-pill" id="bottom-pill">
-    <div class="pill-text-wrap">
-      <span class="pill-tag" id="pill-pkg-tag">باقة الأتمتة الكاملة (VIP)</span>
-      <span class="pill-digits">الإجمالي: <strong id="pill-price-val">14,000</strong> ج.م</span>
-    </div>
-    <a href="https://wa.me/201000000000?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%AA%D8%AC%D9%87%D9%8A%D8%B2%20%D9%88%D8%AA%D8%B4%D8%BA%D9%8A%D9%84%20%D9%86%D8%B8%D8%A7%D9%85%20SYSTEMIZE" target="_blank" class="pill-btn" id="pill-whatsapp-link">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-      <span>طلب الباقة فوراً</span>
-    </a>
   </div>
 
   <script src="js/app.js"></script>
