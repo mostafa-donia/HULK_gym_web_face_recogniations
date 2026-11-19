@@ -1,5 +1,7 @@
 @echo off
 chcp 65001 > nul
+set PYTHONUTF8=1
+set PYTHONIOENCODING=utf-8
 title Systemize Gym OS - Change User Password
 color 0B
 
@@ -7,10 +9,11 @@ cd /d "%~dp0"
 
 echo ===================================================================
 echo   SYSTEMIZE GYM OS - CHANGE USER PASSWORD TOOL
+echo   أداة تغيير كلمة مرور أي مستخدم أو موظف استقبال
 echo ===================================================================
 echo.
-echo المستخدمون الأساسيون:
-echo   - manager    (المالك / مدير الصالة)
+echo الحسابات الأساسية في النظام:
+echo   - manager    (المالك / مدير الصالة بكافة الصلاحيات)
 echo   - reception  (موظف الاستقبال)
 echo ===================================================================
 echo.
@@ -27,13 +30,17 @@ if "%NEWPASS%"=="" (
 
 if exist "runtime\python.exe" (
     set "PY_EXE=runtime\python.exe"
-) else if exist "dist\Systemize\runtime\python.exe" (
-    set "PY_EXE=dist\Systemize\runtime\python.exe"
+) else if exist "..\dist\Systemize\runtime\python.exe" (
+    set "PY_EXE=..\dist\Systemize\runtime\python.exe"
 ) else (
     set "PY_EXE=python"
 )
 
-"%PY_EXE%" -s -c "import django, os; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings'); django.setup(); from apps.accounts.models import User; u = User.objects.filter(username='%USERNAME%').first(); (u.set_password('%NEWPASS%'), u.save(), print('SUCCESS')) if u else print('NOT_FOUND')" > "%TEMP%\pw_res.txt"
+if exist "web_face\manage.py" (
+    cd /d "%~dp0web_face"
+)
+
+"%PY_EXE%" -c "import sys; sys.path.insert(0, '.'); import django, os; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings'); django.setup(); from apps.accounts.models import User; u = User.objects.filter(username='%USERNAME%').first(); (u.set_password('%NEWPASS%'), u.save(), print('SUCCESS')) if u else print('NOT_FOUND')" > "%TEMP%\pw_res.txt"
 
 findstr /C:"SUCCESS" "%TEMP%\pw_res.txt" > nul
 if %errorlevel% equ 0 (

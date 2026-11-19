@@ -43,7 +43,7 @@ if %ERRORLEVEL% equ 0 (
 
 rem 2. If server is not running, run migrations and start server
 echo [*] فحص ترحيلات قاعدة البيانات...
-"%PY_EXE%" -s manage.py migrate --noinput >nul 2>&1
+"%PY_EXE%" manage.py migrate --noinput >nul 2>&1
 
 echo [*] جارٍ تشغيل معمل الفحص في المتصفح...
 start "" "http://127.0.0.1:8000/qa/"
@@ -53,7 +53,7 @@ echo [*] بدء تشغيل خادم المنظومة - Listening on 0.0.0.0:8000
 echo [*] تنبيه: اترك هذه النافذة مفتوحة أثناء الفحص والاستخدام.
 echo ===================================================================
 echo.
-"%PY_EXE%" -s manage.py runserver 0.0.0.0:8000
+"%PY_EXE%" manage.py runserver 0.0.0.0:8000
 
 if %ERRORLEVEL% neq 0 (
     echo.

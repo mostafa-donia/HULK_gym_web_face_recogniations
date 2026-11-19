@@ -41,13 +41,13 @@ if %ERRORLEVEL% equ 0 (
 )
 
 echo [*] Checking database migrations...
-"%PY_EXE%" -s manage.py migrate --noinput >nul 2>&1
+"%PY_EXE%" manage.py migrate --noinput >nul 2>&1
 
 echo [*] Checking Local Network Connection...
 if exist "show_network_ip.py" (
-    "%PY_EXE%" -s show_network_ip.py
+    "%PY_EXE%" show_network_ip.py
 ) else if exist "..\dist\Systemize\show_network_ip.py" (
-    "%PY_EXE%" -s "..\dist\Systemize\show_network_ip.py"
+    "%PY_EXE%" "..\dist\Systemize\show_network_ip.py"
 ) else (
     echo   [>] الرابط المحلي:  http://127.0.0.1:8000
 )
@@ -61,7 +61,7 @@ echo [*] Starting Systemize Server - listening on 0.0.0.0:8000...
 echo [*] Note: Keep this window open while using Systemize.
 echo ===================================================================
 echo.
-"%PY_EXE%" -s manage.py runserver 0.0.0.0:8000
+"%PY_EXE%" manage.py runserver 0.0.0.0:8000
 
 if %ERRORLEVEL% neq 0 (
     echo.

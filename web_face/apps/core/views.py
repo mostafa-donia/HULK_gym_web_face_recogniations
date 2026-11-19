@@ -1779,6 +1779,84 @@ def settings_view(request):
             messages.success(request, "👤 تم تحديث كلمة مرور حسابك بنجاح.")
             return redirect("core:settings")
 
+        elif action == "add_receptionist":
+            from apps.accounts.models import User, UserRole
+            from apps.core.models import AuditLog, Branch
+            new_u = request.POST.get("new_username", "").strip()
+            new_p = request.POST.get("new_password", "").strip()
+            full_n = request.POST.get("full_name", "").strip()
+            phone = request.POST.get("phone", "").strip()
+            b_id = request.POST.get("branch_id", "").strip()
+
+            if not new_u:
+                messages.error(request, "❌ اسم المستخدم مطلوب.")
+                return redirect("core:settings")
+            if User.objects.filter(username=new_u).exists():
+                messages.error(request, f"❌ اسم المستخدم '{new_u}' مسجل بالفعل لموظف آخر.")
+                return redirect("core:settings")
+            if not new_p or len(new_p) < 4:
+                messages.error(request, "❌ كلمة المرور يجب أن تكون 4 خانات على الأقل.")
+                return redirect("core:settings")
+
+            assigned_branch = Branch.objects.filter(id=b_id).first() if b_id else None
+            user_obj = User.objects.create(
+                username=new_u,
+                role=UserRole.RECEPTION,
+                first_name=full_n,
+                phone=phone,
+                branch=assigned_branch,
+                is_staff=False,
+                is_superuser=False,
+            )
+            user_obj.set_password(new_p)
+            user_obj.save()
+
+            AuditLog.objects.create(
+                user=request.user,
+                action="create_receptionist",
+                target_model="User",
+                target_id=str(user_obj.id),
+                details=f"إضافة موظف استقبال جديد: {new_u} ({full_n})",
+            )
+            messages.success(request, f"👥 تم بنجاح إنشاء حساب موظف الاستقبال '{new_u}' ({full_n}).")
+            return redirect("core:settings")
+
+        elif action == "reset_user_password":
+            from apps.accounts.models import User
+            from apps.core.models import AuditLog
+            target_id = request.POST.get("target_user_id")
+            new_pwd = request.POST.get("target_new_password", "").strip()
+            target_usr = get_object_or_404(User, id=target_id)
+
+            if not new_pwd or len(new_pwd) < 4:
+                messages.error(request, "❌ كلمة المرور الجديدة يجب أن تكون 4 خانات على الأقل.")
+                return redirect("core:settings")
+
+            target_usr.set_password(new_pwd)
+            target_usr.save()
+
+            AuditLog.objects.create(
+                user=request.user,
+                action="reset_password",
+                target_model="User",
+                target_id=str(target_usr.id),
+                details=f"تغيير كلمة المرور للمستخدم: {target_usr.username}",
+            )
+            messages.success(request, f"🔐 تم تغيير وتعيين كلمة المرور للمستخدم '{target_usr.username}' بنجاح.")
+            return redirect("core:settings")
+
+        elif action == "toggle_user_active":
+            from apps.accounts.models import User
+            target_id = request.POST.get("target_user_id")
+            target_usr = get_object_or_404(User, id=target_id)
+            if target_usr.id == request.user.id:
+                messages.error(request, "❌ لا يمكنك تعطيل حسابك الحالي المسجل دخول به.")
+                return redirect("core:settings")
+            target_usr.is_active = not target_usr.is_active
+            target_usr.save()
+            messages.info(request, f"تم تحديث حالة تفعيل المستخدم '{target_usr.username}'.")
+            return redirect("core:settings")
+
         elif action == "sync_google_contacts":
             synced, skipped, failed, errors = sync_all_google_contacts(force=False)
             if failed > 0:
@@ -2065,6 +2143,12 @@ def settings_view(request):
     system_hostname = socket.gethostname()
     host_url = f"http://{system_hostname}:8000"
 
+    from apps.accounts.models import User
+    from apps.core.models import Branch, AuditLog
+    system_users = User.objects.all().order_by("-is_superuser", "role", "username")
+    branches_list = Branch.objects.filter(is_active=True).order_by("-is_main", "name")
+    recent_staff_audits = AuditLog.objects.select_related("user").order_by("-created_at")[:25]
+
     context = {
         "profile": profile,
         "plans": plans,
@@ -2083,6 +2167,9 @@ def settings_view(request):
         "lan_url": lan_url,
         "system_hostname": system_hostname,
         "host_url": host_url,
+        "system_users": system_users,
+        "branches_list": branches_list,
+        "recent_staff_audits": recent_staff_audits,
     }
     return render(request, "core/settings.html", context)
 
@@ -2570,149 +2657,23 @@ def api_qa_level_check(request, level):
 @login_required
 def load_test_data_view(request):
     """
-    Populates realistic gym test data with 1 click:
-    - Active, Expiring soon, and Expired members.
-    - Members with remaining debt.
-    - Bar inventory and unpaid deferred bar orders.
-    - Check-in events for today.
+    Populates full realistic gym big data with 1 click:
+    - 60+ members cleanly distributed across this month, this week, and today.
+    - True temporal revenues (today, week, month) and comparative analytics.
+    - Active, Expiring soon (1-3 days), Expired, and Debtors.
+    - Bar inventory with paid and unpaid tabs.
+    - Check-in attendance logs across time windows.
+    - Standard accounts guaranteed: manager / 1234 & reception / 1234.
     """
-    from apps.members.models import Member, Subscription, Plan, CheckInEvent
-    from apps.payments.models import Payment, BarSale, BarProduct, PaymentMethod
-    from apps.expenses.models import Expense, ExpenseCategory
-    from apps.core.models import Branch
-
-    today = timezone.localdate()
-    branch = getattr(request.user, "branch", None) or Branch.objects.filter(is_main=True).first() or Branch.objects.first()
-
-    # 1. Ensure Standard Plans exist
-    p_monthly, _ = Plan.objects.get_or_create(
-        name="اشتراك شهري عادي",
-        defaults={"price": Decimal("350.00"), "duration_days": 30, "is_active": True}
+    from apps.core.demo_data import seed_temporal_big_data
+    stats = seed_temporal_big_data()
+    messages.success(
+        request,
+        f"🎉 تم بنجاح تحميل البيانات الشاملة الموزعة زمنياً (اليوم، الأسبوع، الشهر)! "
+        f"({stats['members']} مشترك، {stats['payments']} حركة دفع، {stats['checkins']} حركة حضور، "
+        f"{stats['expenses']} بنود مصروفات، {stats['bar_sales']} طلبات بار)."
     )
-    p_quarterly, _ = Plan.objects.get_or_create(
-        name="اشتراك 3 شهور VIP",
-        defaults={"price": Decimal("900.00"), "duration_days": 90, "is_active": True}
-    )
-    p_yearly, _ = Plan.objects.get_or_create(
-        name="اشتراك سنوي شامل",
-        defaults={"price": Decimal("2800.00"), "duration_days": 365, "is_active": True}
-    )
-
-    # 2. Ensure Bar Products exist
-    bp_water, _ = BarProduct.objects.get_or_create(
-        name="مياه معدنية 600 مل",
-        defaults={"price": Decimal("10.00"), "cost_price": Decimal("6.00"), "stock_quantity": 48, "is_active": True}
-    )
-    bp_redbull, _ = BarProduct.objects.get_or_create(
-        name="ريد بول كلاسيك",
-        defaults={"price": Decimal("60.00"), "cost_price": Decimal("45.00"), "stock_quantity": 24, "is_active": True}
-    )
-    bp_protein, _ = BarProduct.objects.get_or_create(
-        name="بروتين بار شوكولاتة",
-        defaults={"price": Decimal("45.00"), "cost_price": Decimal("30.00"), "stock_quantity": 30, "is_active": True}
-    )
-
-    # 3. Create 15 Realistic Test Members
-    test_members_data = [
-        # (Name, Phone, Status type, Remaining debt)
-        ("أحمد الشناوي", "01011112221", "active", 0),
-        ("محمود عبد العزيز", "01011112222", "active", 150),
-        ("كريم عادل مصطفى", "01011112223", "active", 0),
-        ("سارة إبراهيم فتحي", "01122223331", "active", 0),
-        ("طارق يحيى العطار", "01122223332", "active", 250),
-        ("يوسف مصطفى كمال", "01233334441", "active", 0),
-        ("نور الدين عمر حامد", "01233334442", "active", 0),
-        ("عمر الفاروق إبراهيم", "01544445551", "expiring", 0),
-        ("خالد وليد الجوهري", "01544445552", "expiring", 200),
-        ("مروان عطية السيد", "01055556661", "expiring", 0),
-        ("محمد صلاح رجب", "01055556662", "expired", 350),
-        ("عمرو السولية فوزي", "01166667771", "expired", 0),
-        ("علي معلول شكري", "01166667772", "expired", 500),
-        ("حسين الشحات علي", "01277778881", "expired", 0),
-        ("إمام عاشور متولي", "01277778882", "expired", 0),
-    ]
-
-    created_members = []
-    for idx, (name, phone, stype, debt) in enumerate(test_members_data, start=101):
-        m, created = Member.objects.get_or_create(
-            mobile=phone,
-            defaults={
-                "member_id": idx,
-                "name": name,
-                "gender": "male" if "سارة" not in name else "female",
-                "branch": branch,
-                "current_remaining": Decimal(str(debt)),
-            }
-        )
-        if not created:
-            m.name = name
-            m.current_remaining = Decimal(str(debt))
-            m.branch = branch
-
-        # Set Subscription dates
-        if stype == "active":
-            m.last_subscription_start = today - timedelta(days=10)
-            m.last_subscription_end = today + timedelta(days=20)
-            plan = p_monthly
-        elif stype == "expiring":
-            m.last_subscription_start = today - timedelta(days=28)
-            m.last_subscription_end = today + timedelta(days=2)
-            plan = p_monthly
-        else:  # expired
-            m.last_subscription_start = today - timedelta(days=60)
-            m.last_subscription_end = today - timedelta(days=15)
-            plan = p_monthly
-
-        m.save()
-        created_members.append(m)
-
-        # Create subscription record
-        Subscription.objects.get_or_create(
-            member=m,
-            start_date=m.last_subscription_start,
-            defaults={
-                "plan": plan,
-                "plan_name": plan.name,
-                "end_date": m.last_subscription_end,
-                "plan_price": plan.price,
-                "net_amount": plan.price,
-                "paid_amount": plan.price - Decimal(str(debt)),
-                "remaining_amount": Decimal(str(debt)),
-            }
-        )
-
-        # Log some check-ins for active members today
-        if stype in ["active", "expiring"] and idx % 2 == 0:
-            CheckInEvent.objects.get_or_create(
-                member=m,
-                checked_in_at__date=today,
-                defaults={"method": "face", "confidence": 0.92, "branch": branch}
-            )
-
-    # 4. Create 3 Unpaid Bar Sales with valid phone numbers
-    BarSale.objects.filter(notes="طلب تجريبي").delete()
-    unpaid_samples = [
-        ("محمود عبد العزيز", "01011112222", bp_redbull, 1, Decimal("60.00")),
-        ("طارق يحيى العطار", "01122223332", bp_water, 2, Decimal("20.00")),
-        ("علي معلول شكري", "01166667772", bp_protein, 1, Decimal("45.00")),
-    ]
-    for i, (b_name, b_phone, prod, qty, tot) in enumerate(unpaid_samples, start=1):
-        sale_code = f"BAR-TEST-{int(time.time()) % 100000:05d}-{i}"
-        BarSale.objects.create(
-            sale_id=sale_code,
-            product=prod,
-            quantity=qty,
-            unit_price=prod.price,
-            total_price=tot,
-            buyer_name=b_name,
-            buyer_phone=b_phone,
-            is_paid=False,
-            branch=branch,
-            notes="طلب تجريبي",
-            created_by=request.user,
-        )
-
-    messages.success(request, "✓ تم بنجاح تحميل البيانات التجريبية الكاملة (أعضاء نشطين، منتهيين، ديون، وطلبات بار معلقة)!")
+    return redirect("core:dashboard")
     return redirect("core:dashboard")
 
 
@@ -2725,6 +2686,8 @@ def clear_test_data_view(request):
     from apps.members.models import Member, Subscription, CheckInEvent
     from apps.payments.models import Payment, BarSale
     from apps.expenses.models import Expense
+    from apps.core.models import AuditLog
+    from apps.messaging.models import WhatsAppMessage
 
     CheckInEvent.objects.all().delete()
     Subscription.objects.all().delete()
@@ -2732,6 +2695,8 @@ def clear_test_data_view(request):
     BarSale.objects.all().delete()
     Payment.objects.all().delete()
     Expense.objects.all().delete()
+    AuditLog.objects.all().delete()
+    WhatsAppMessage.objects.all().delete()
 
     messages.success(request, "✓ تم بنجاح تصفير وحذف كافة بيانات الأعضاء والعمليات التجريبية. النظام نظيف 100% وجاهز للعمل الفعلي.")
     return redirect("core:dashboard")

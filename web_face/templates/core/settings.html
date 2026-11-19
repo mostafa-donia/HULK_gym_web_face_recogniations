@@ -1452,7 +1452,215 @@
 
   </div>
 
+  <!-- Row 2.5: Staff & Receptionists Management -->
+  <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 22px; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
+    <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h3 class="card-title" style="color: var(--text-main); font-size: 1.15rem; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">
+          👥 إدارة حسابات موظفي الاستقبال ومستخدمي النظام
+        </h3>
+        <span style="color: var(--text-muted); font-size: 0.82rem;">
+          إضافة موظفي استقبال جدد، تغيير كلمات المرور، وضمان تسجيل كل حركة مالية باسم الموظف المنفذ في سجل الرقابة (Action Log).
+        </span>
+      </div>
+      <span class="badge" style="background: rgba(132, 204, 22, 0.15); border: 1px solid #84cc16; color: #84cc16; font-weight: 800; font-size: 0.82rem; padding: 6px 14px; border-radius: 20px;">
+        {{ system_users|length }} مستخدم مسجل
+      </span>
+    </div>
 
+    <!-- Info Tip regarding Action Log -->
+    <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 1.3rem;">🛡️</span>
+      <span style="color: var(--text-main); font-size: 0.85rem; line-height: 1.5;">
+        <strong>تتبع الحركات والرقابة (Action Log):</strong> عند تسجيل كل موظف استقبال دخوله بحسابه الخاص، يتم تلقائياً تدوين أي خصم مالي، أو اشتراك جديد، أو تسليم نقدية باسمه وتوقيته الدقيق في <a href="{% url 'core:manager_dashboard' %}#tab-audit" style="color: #38bdf8; font-weight: 800; text-decoration: underline;">سجل رقابة لوحة المدير</a>.
+      </span>
+    </div>
+
+    <!-- Grid: Users Table + Add New Receptionist Form -->
+    <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 20px; align-items: start;">
+
+      <!-- Column A: Registered Staff Accounts Table -->
+      <div style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; overflow-x: auto;">
+        <h4 style="color: var(--text-main); font-size: 0.95rem; font-weight: 800; margin: 0 0 12px 0;">
+          الحسابات والموظفون الحاليون
+        </h4>
+        <table class="dark-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); text-align: right;">
+              <th style="padding: 8px;">المستخدم</th>
+              <th style="padding: 8px;">الاسم / الهاتف</th>
+              <th style="padding: 8px;">الرتبة</th>
+              <th style="padding: 8px;">الفرع</th>
+              <th style="padding: 8px;">الحالة</th>
+              <th style="padding: 8px; text-align: center;">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in system_users %}
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 10px 8px; font-weight: 800; color: #38bdf8; font-family: monospace;">
+                {{ u.username }}
+              </td>
+              <td style="padding: 10px 8px; color: var(--text-main);">
+                {{ u.first_name|default:u.username }}
+                {% if u.phone %}<span style="display: block; font-size: 0.76rem; color: var(--text-muted); direction: ltr; text-align: right;">{{ u.phone }}</span>{% endif %}
+              </td>
+              <td style="padding: 10px 8px;">
+                {% if u.is_superuser or u.role == "OWNER" %}
+                  <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-weight: 800;">مالك النظام</span>
+                {% elif u.role == "MANAGER" %}
+                  <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-weight: 800;">مدير فرع</span>
+                {% else %}
+                  <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 800;">استقبال</span>
+                {% endif %}
+              </td>
+              <td style="padding: 10px 8px; color: var(--text-secondary); font-size: 0.82rem;">
+                {{ u.branch.name|default:"كافة الفروع" }}
+              </td>
+              <td style="padding: 10px 8px;">
+                {% if u.is_active %}
+                  <span style="color: #22c55e; font-weight: 800; font-size: 0.78rem;">● نشط</span>
+                {% else %}
+                  <span style="color: #ef4444; font-weight: 800; font-size: 0.78rem;">○ معطل</span>
+                {% endif %}
+              </td>
+              <td style="padding: 10px 8px; text-align: center;">
+                <div style="display: inline-flex; gap: 6px;">
+                  <button type="button" onclick="openResetUserPwdModal('{{ u.id }}', '{{ u.username }}')" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 6px;" title="تعيين كلمة مرور جديدة">
+                    🔑 كلمة السر
+                  </button>
+                  {% if u.id != request.user.id %}
+                  <form method="post" action="{% url 'core:settings' %}" style="display: inline;" onsubmit="return confirm('هل تريد تغيير حالة تفعيل هذا المستخدم؟');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle_user_active">
+                    <input type="hidden" name="target_user_id" value="{{ u.id }}">
+                    <button type="submit" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; opacity: 0.8;">
+                      {% if u.is_active %}تعطيل{% else %}تفعيل{% endif %}
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                لا يوجد مستخدمين مسجلين
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Column B: Add New Receptionist Form -->
+      <form method="post" action="{% url 'core:settings' %}" style="background: var(--bg-surface-subtle); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_receptionist">
+
+        <h4 style="color: #84cc16; font-size: 0.95rem; font-weight: 800; margin: 0 0 12px 0;">
+          ➕ إضافة موظف استقبال جديد
+        </h4>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            اسم المستخدم للدخول (Username) *
+          </label>
+          <input type="text" name="new_username" class="form-control" placeholder="مثال: reception2 أو omar" required style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); height: 36px; border-radius: 6px; padding: 0 10px; width: 100%; font-family: monospace;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            كلمة المرور (Password) *
+          </label>
+          <input type="password" name="new_password" class="form-control" placeholder="كلمة مرور الدخول (4 خانات فأكثر)..." required style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); height: 36px; border-radius: 6px; padding: 0 10px; width: 100%;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            الاسم الكامل لموظف الاستقبال
+          </label>
+          <input type="text" name="full_name" class="form-control" placeholder="مثال: عمر خالد إبراهيم" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); height: 36px; border-radius: 6px; padding: 0 10px; width: 100%;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 10px;">
+          <label class="form-label" style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            رقم الهاتف
+          </label>
+          <input type="text" name="phone" class="form-control" placeholder="01xxxxxxxxx" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); height: 36px; border-radius: 6px; padding: 0 10px; width: 100%;">
+        </div>
+
+        {% if branches_list %}
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            الفرع التابع له
+          </label>
+          <select name="branch_id" class="form-control" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); height: 36px; border-radius: 6px; padding: 0 10px; width: 100%;">
+            <option value="">كافة الفروع (أو الفرع الرئيسي)</option>
+            {% for b in branches_list %}
+              <option value="{{ b.id }}">{{ b.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary" style="background: #15803d; border: 1px solid #22c55e; color: #fff; font-weight: 800; font-size: 0.84rem; padding: 8px 16px; border-radius: 6px; width: 100%; cursor: pointer;">
+          ✓ إنشاء حساب موظف الاستقبال
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Modal for Manager to Reset Any User's Password -->
+  <div id="resetUserPwdModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; width: 92%; max-width: 440px; padding: 22px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 14px;">
+        <h4 style="margin: 0; color: var(--text-main); font-size: 1.05rem; font-weight: 800;">
+          🔑 تعيين كلمة مرور جديدة للمستخدم
+        </h4>
+        <button type="button" onclick="closeResetUserPwdModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer;">✕</button>
+      </div>
+
+      <form method="post" action="{% url 'core:settings' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reset_user_password">
+        <input type="hidden" id="modalTargetUserId" name="target_user_id" value="">
+
+        <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 14px;">
+          المستخدم المستهدف: <strong id="modalTargetUsername" style="color: #38bdf8; font-family: monospace;"></strong>
+        </p>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label style="color: var(--text-secondary); font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; display: block;">
+            كلمة المرور الجديدة *
+          </label>
+          <input type="password" name="target_new_password" required placeholder="4 خانات أو أحرف على الأقل..." style="background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-main); height: 38px; border-radius: 6px; padding: 0 10px; width: 100%;">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" onclick="closeResetUserPwdModal()" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.84rem; border-radius: 6px;">
+            إلغاء
+          </button>
+          <button type="submit" class="btn btn-primary" style="background: #0284c7; border: 1px solid #38bdf8; color: #fff; font-weight: 800; font-size: 0.84rem; padding: 6px 18px; border-radius: 6px;">
+            حفظ كلمة المرور
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openResetUserPwdModal(userId, username) {
+      document.getElementById('modalTargetUserId').value = userId;
+      document.getElementById('modalTargetUsername').innerText = username;
+      const modal = document.getElementById('resetUserPwdModal');
+      modal.style.display = 'flex';
+    }
+    function closeResetUserPwdModal() {
+      document.getElementById('resetUserPwdModal').style.display = 'none';
+    }
+  </script>
 
   <!-- Row 3: Plans Management -->
 
